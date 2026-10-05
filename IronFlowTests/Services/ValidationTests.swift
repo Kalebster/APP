@@ -46,11 +46,12 @@ struct ValidationTests {
         }
         #expect(throws: ValidationError.tooManyDecimals) { try Validation.weight(22.255) }
         #expect(throws: ValidationError.tooManyDecimals) { try Validation.weight(0.001) }
+        #expect(throws: ValidationError.tooManyDecimals) { try Validation.weight(2.675) }
     }
 
     @Test("Values with binary floating-point noise are not rejected")
     func weightFloatingPointNoise() throws {
-        for value in [0.1, 0.2, 0.3, 0.1 + 0.2, 1.15, 2.675, 4.35, 1_000.07] {
+        for value in [0.1, 0.2, 0.3, 0.1 + 0.2, 1.13, 1.15, 2.67, 4.35, 1_000.07] {
             try Validation.weight(value)
         }
     }
