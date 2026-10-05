@@ -8,7 +8,11 @@ private let persistenceLogger = Logger(subsystem: "com.ironflow.app", category: 
 struct IronFlowApp: App {
     /// Result of opening the data store. On failure the store is left untouched
     /// and the app shows `PersistenceErrorView` instead of the main tabs.
-    @State private var store: Result<ModelContainer, any Error> = IronFlowApp.openStore()
+    @State private var store: Result<ModelContainer, any Error>
+
+    init() {
+        _store = State(initialValue: Self.loadStore())
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -19,9 +23,34 @@ struct IronFlowApp: App {
             case .failure(let error):
                 PersistenceErrorView(error: error) {
                     // Only tries to open the same store again.
-                    store = Self.openStore()
+                    store = Self.loadStore()
                 }
             }
+        }
+    }
+
+    /// Opens the store and, when it opened, installs or updates the built-in exercise library
+    /// before the tabs are shown.
+    @MainActor
+    private static func loadStore() -> Result<ModelContainer, any Error> {
+        let result = openStore()
+        if case .success(let container) = result {
+            seedExerciseLibrary(in: container)
+        }
+        return result
+    }
+
+    /// A seeding failure does not block the app: the store is left as it was (the seeder
+    /// rolls back) and seeding runs again on the next launch.
+    @MainActor
+    private static func seedExerciseLibrary(in container: ModelContainer) {
+        do {
+            let result = try ExerciseLibrarySeeder(context: container.mainContext).seed()
+            if !result.skippedKeys.isEmpty {
+                persistenceLogger.error("Library entries skipped because their id is in use: \(result.skippedKeys.joined(separator: ", "), privacy: .public)")
+            }
+        } catch {
+            persistenceLogger.error("Could not seed the exercise library: \(String(describing: error), privacy: .private)")
         }
     }
 
