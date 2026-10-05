@@ -1,0 +1,263 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - "claude/**"
+      - main
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  # Never cancel runs on main, so every commit there gets a result.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Xcode and simulator are pinned on purpose. Updating them must be a
+# deliberate, reviewed change: edit these values, never rely on runner defaults.
+env:
+  XCODE_PATH: /Applications/Xcode_26.6.app
+  XCODE_VERSION: "26.6"
+  XCODE_BUILD: 17F113
+  SIMULATOR_DESTINATION: "platform=iOS Simulator,arch=arm64,name=iPhone 17,OS=26.5"
+  DERIVED_DATA_PATH: build/DerivedData
+  RESULT_BUNDLE_PATH: build/TestResults.xcresult
+
+jobs:
+  build-and-test:
+    name: Build and test (Xcode 26.6, iPhone 17, iOS 26.5)
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Select and verify pinned Xcode
+        run: |
+          set -euo pipefail
+          sudo xcode-select --switch "$XCODE_PATH"
+          version_output="$(xcodebuild -version)"
+          echo "$version_output"
+          actual_version="$(echo "$version_output" | sed -n '1p')"
+          actual_build="$(echo "$version_output" | sed -n '2p')"
+          if [ "$actual_version" != "Xcode $XCODE_VERSION" ] || [ "$actual_build" != "Build version $XCODE_BUILD" ]; then
+            echo "::error::Expected Xcode $XCODE_VERSION ($XCODE_BUILD) but found: $version_output"
+            exit 1
+          fi
+
+      - name: Show environment
+        run: |
+          set -euo pipefail
+          sw_vers
+          xcodebuild -showsdks
+          xcrun simctl list runtimes
+          xcrun simctl list devices available
+
+      - name: Validate project
+        run: |
+          set -euo pipefail
+          xcodebuild -list -project IronFlow.xcodeproj
+
+      - name: Build for testing
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          xcodebuild build-for-testing \
+            -project IronFlow.xcodeproj \
+            -scheme IronFlow \
+            -configuration Debug \
+            -destination "$SIMULATOR_DESTINATION" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/build.log
+
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          xcodebuild test-without-building \
+            -project IronFlow.xcodeproj \
+            -scheme IronFlow \
+            -configuration Debug \
+            -destination "$SIMULATOR_DESTINATION" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            -resultBundlePath "$RESULT_BUNDLE_PATH" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/test.log
+
+      # Warnings are reported, not treated as errors: they must be reviewed by hand.
+      - name: Summarize build warnings
+        if: always()
+        run: |
+          set -euo pipefail
+          logs=()
+          for log in build/build.log build/test.log; do
+            if [ -f "$log" ]; then logs+=("$log"); fi
+          done
+          if [ "${#logs[@]}" -eq 0 ]; then
+            echo "No build log found." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Compiler, build-system and build-tool diagnostics are printed as "warning: ...".
+          warnings="$(grep -hE '(^|[]:] )warning: ' "${logs[@]}" | sort -u || true)"
+          count="$(printf '%s' "$warnings" | grep -c . || true)"
+          {
+            echo "## Build warnings: $count"
+            if [ "$count" -gt 0 ]; then
+              echo
+              echo '```'
+              echo "$warnings"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Export screenshots
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ ! -d "$RESULT_BUNDLE_PATH" ]; then
+            echo "No result bundle found; skipping screenshot export."
+            exit 0
+          fi
+          mkdir -p build/screenshots
+          xcrun xcresulttool export attachments \
+            --path "$RESULT_BUNDLE_PATH" \
+            --output-path build/screenshots
+          # Give exported files their readable attachment names when the manifest provides them.
+          # Name clashes get a numeric suffix (never overwrite) and the manifest is kept in sync.
+          python3 - <<'PY'
+          import json, os
+          folder = "build/screenshots"
+          manifest_path = os.path.join(folder, "manifest.json")
+          if not os.path.exists(manifest_path):
+              print("No manifest.json; keeping exported file names.")
+              raise SystemExit(0)
+          with open(manifest_path) as f:
+              manifest = json.load(f)
+          for test in manifest:
+              for attachment in test.get("attachments", []):
+                  exported = attachment.get("exportedFileName")
+                  readable = attachment.get("suggestedHumanReadableName")
+                  if not exported or not readable:
+                      continue
+                  source = os.path.join(folder, exported)
+                  if not os.path.exists(source):
+                      print(f"Missing exported file: {exported}")
+                      continue
+                  # Suggested names may lack the file extension (e.g. "1-tab.home_0_<id>.root").
+                  extension = os.path.splitext(exported)[1]
+                  if extension and not readable.endswith(extension):
+                      readable += extension
+                  stem, ext = os.path.splitext(readable)
+                  target, n = readable, 2
+                  while os.path.exists(os.path.join(folder, target)):
+                      target, n = f"{stem}-{n}{ext}", n + 1
+                  os.rename(source, os.path.join(folder, target))
+                  attachment["exportedFileName"] = target
+          with open(manifest_path, "w") as f:
+              json.dump(manifest, f, indent=2)
+          PY
+          ls -la build/screenshots
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: build-logs
+          path: build/*.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results
+          path: ${{ env.RESULT_BUNDLE_PATH }}
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: screenshots
+          path: build/screenshots
+          if-no-files-found: warn
+          retention-days: 7
+
+  # Publishes the screenshots of a green push run to the "ci-screenshots" branch,
+  # so they can be viewed in the GitHub app without downloading artifacts.
+  # That branch holds only images and is overwritten on every publish; no code lives there.
+  publish-screenshots:
+    name: Publish screenshots to ci-screenshots branch
+    needs: build-and-test
+    if: github.event_name == 'push' && needs.build-and-test.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download screenshots
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: screenshots
+          path: screenshots
+
+      - name: Publish to ci-screenshots branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          pngs=(screenshots/*.png)
+          if [ "${#pngs[@]}" -eq 0 ]; then
+            echo "::error::No screenshots found to publish."
+            exit 1
+          fi
+
+          mkdir publish
+          # Short names: "1-tab.home_0_<id>.root.png" becomes "1-home.png".
+          for file in "${pngs[@]}"; do
+            name="$(basename "$file")"
+            short="$(echo "$name" | sed -E 's/^([0-9]+)-tab\.([a-z]+)_.*\.png$/\1-\2.png/')"
+            if [ -e "publish/$short" ]; then
+              short="$name"
+            fi
+            cp "$file" "publish/$short"
+          done
+
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          {
+            echo "# Screenshots do CI"
+            echo
+            echo "- Branch: \`$GITHUB_REF_NAME\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Execução: $run_url"
+            echo "- Data (UTC): $(date -u '+%Y-%m-%d %H:%M')"
+            for image in $(cd publish && ls *.png | sort); do
+              echo
+              echo "## ${image%.png}"
+              echo
+              echo "![${image%.png}]($image)"
+            done
+          } > publish/README.md
+
+          cd publish
+          git init -q -b ci-screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Screenshots from ${GITHUB_SHA:0:7} ($GITHUB_REF_NAME)"
+          git push --force -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
+          echo "Published $(ls *.png | wc -l) screenshots to branch ci-screenshots."
