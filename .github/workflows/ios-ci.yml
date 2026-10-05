@@ -26,7 +26,7 @@ env:
   XCODE_PATH: /Applications/Xcode_26.6.app
   XCODE_VERSION: "26.6"
   XCODE_BUILD: 17F113
-  SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 17,OS=26.5"
+  SIMULATOR_DESTINATION: "platform=iOS Simulator,arch=arm64,name=iPhone 17,OS=26.5"
   DERIVED_DATA_PATH: build/DerivedData
   RESULT_BUNDLE_PATH: build/TestResults.xcresult
 
@@ -107,8 +107,8 @@ jobs:
             echo "No build log found." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          # Compiler and build-system diagnostics are printed as "warning: ...".
-          warnings="$(grep -hE '(^|: )warning: ' "${logs[@]}" | sort -u || true)"
+          # Compiler, build-system and build-tool diagnostics are printed as "warning: ...".
+          warnings="$(grep -hE '(^|[]:] )warning: ' "${logs[@]}" | sort -u || true)"
           count="$(printf '%s' "$warnings" | grep -c . || true)"
           {
             echo "## Build warnings: $count"
@@ -153,6 +153,10 @@ jobs:
                   if not os.path.exists(source):
                       print(f"Missing exported file: {exported}")
                       continue
+                  # Suggested names may lack the file extension (e.g. "1-tab.home_0_<id>.root").
+                  extension = os.path.splitext(exported)[1]
+                  if extension and not readable.endswith(extension):
+                      readable += extension
                   stem, ext = os.path.splitext(readable)
                   target, n = readable, 2
                   while os.path.exists(os.path.join(folder, target)):
