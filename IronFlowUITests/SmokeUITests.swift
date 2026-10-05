@@ -14,6 +14,7 @@ final class SmokeUITests: XCTestCase {
         ]
 
         let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing"]
         app.launch()
 
         let tabBar = app.tabBars.firstMatch
