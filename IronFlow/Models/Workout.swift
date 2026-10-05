@@ -30,11 +30,7 @@ extension SchemaV1 {
 
         /// `exercises` in plan order.
         var orderedExercises: [WorkoutExercise] {
-            exercises.sorted { lhs, rhs in
-                if lhs.sortIndex != rhs.sortIndex { return lhs.sortIndex < rhs.sortIndex }
-                if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
-                return lhs.id < rhs.id
-            }
+            exercises.sortedByPosition()
         }
     }
 }

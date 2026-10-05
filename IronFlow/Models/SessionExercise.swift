@@ -41,11 +41,7 @@ extension SchemaV1 {
 
         /// `setLogs` in set order.
         var orderedSetLogs: [SetLog] {
-            setLogs.sorted { lhs, rhs in
-                if lhs.sortIndex != rhs.sortIndex { return lhs.sortIndex < rhs.sortIndex }
-                if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
-                return lhs.id < rhs.id
-            }
+            setLogs.sortedByPosition()
         }
     }
 }

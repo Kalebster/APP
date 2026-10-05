@@ -49,19 +49,20 @@ struct ExerciseLibrarySeeder {
             }
         }
         let storedIDs = Set(stored.map(\.id))
-        var activeNames = Set(stored.filter { !$0.isArchived }.map { Validation.comparisonKey(forName: $0.name) })
+        // Built only when the first new exercise is inserted; normal launches insert nothing.
+        var activeNames: Set<String>?
 
         let timestamp = now()
         var result = ExerciseLibrarySeedResult()
 
+        // Corrections are applied after the inserts, so that name clashes are always checked
+        // against the names stored before this run.
+        var corrections: [(exercise: Exercise, entry: DefaultExercise)] = []
+
         for (entry, id) in library {
             if let existing = storedByKey[entry.key] {
-                guard !existing.isCustom else { continue }
-                if existing.name != entry.name || existing.muscleGroup != entry.muscleGroup {
-                    existing.name = entry.name
-                    existing.muscleGroup = entry.muscleGroup
-                    existing.updatedAt = timestamp
-                    result.updatedKeys.append(entry.key)
+                if !existing.isCustom && (existing.name != entry.name || existing.muscleGroup != entry.muscleGroup) {
+                    corrections.append((existing, entry))
                 }
                 continue
             }
@@ -78,13 +79,23 @@ struct ExerciseLibrarySeeder {
             exercise.updatedAt = timestamp
             // Active exercise names stay unique: a built-in exercise whose name is already used
             // by an active exercise is created hidden.
+            if activeNames == nil {
+                activeNames = Set(stored.filter { !$0.isArchived }.map { Validation.comparisonKey(forName: $0.name) })
+            }
             let nameKey = Validation.comparisonKey(forName: entry.name)
-            exercise.isArchived = activeNames.contains(nameKey)
+            exercise.isArchived = activeNames?.contains(nameKey) == true
             if !exercise.isArchived {
-                activeNames.insert(nameKey)
+                activeNames?.insert(nameKey)
             }
             context.insert(exercise)
             result.insertedKeys.append(entry.key)
+        }
+
+        for (existing, entry) in corrections {
+            existing.name = entry.name
+            existing.muscleGroup = entry.muscleGroup
+            existing.updatedAt = timestamp
+            result.updatedKeys.append(entry.key)
         }
 
         if !result.insertedKeys.isEmpty || !result.updatedKeys.isEmpty {

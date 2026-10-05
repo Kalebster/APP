@@ -43,11 +43,7 @@ extension SchemaV1 {
 
         /// `exercises` in performed order.
         var orderedExercises: [SessionExercise] {
-            exercises.sorted { lhs, rhs in
-                if lhs.sortIndex != rhs.sortIndex { return lhs.sortIndex < rhs.sortIndex }
-                if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
-                return lhs.id < rhs.id
-            }
+            exercises.sortedByPosition()
         }
     }
 }

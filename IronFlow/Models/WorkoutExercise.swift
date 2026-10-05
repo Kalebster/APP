@@ -29,11 +29,7 @@ extension SchemaV1 {
 
         /// `plannedSets` in set order.
         var orderedPlannedSets: [PlannedSet] {
-            plannedSets.sorted { lhs, rhs in
-                if lhs.sortIndex != rhs.sortIndex { return lhs.sortIndex < rhs.sortIndex }
-                if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
-                return lhs.id < rhs.id
-            }
+            plannedSets.sortedByPosition()
         }
     }
 }
