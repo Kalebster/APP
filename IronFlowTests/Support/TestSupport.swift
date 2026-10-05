@@ -147,3 +147,86 @@ struct SampleGraph {
         )
     }
 }
+
+/// A clock that tests control, so service timestamps are exact.
+@MainActor
+final class TestClock {
+    private(set) var current: Date
+
+    init(start: Date = Date(timeIntervalSinceReferenceDate: 800_000_000)) {
+        current = start
+    }
+
+    func advance(by seconds: TimeInterval) {
+        current = current.addingTimeInterval(seconds)
+    }
+
+    var now: @MainActor () -> Date {
+        { self.current }
+    }
+}
+
+/// Number of stored records of every model, to prove that a failed operation changed nothing.
+@MainActor
+func storeCounts(in context: ModelContext) throws -> [String: Int] {
+    [
+        "Exercise": try count(Exercise.self, in: context),
+        "Workout": try count(Workout.self, in: context),
+        "WorkoutExercise": try count(WorkoutExercise.self, in: context),
+        "PlannedSet": try count(PlannedSet.self, in: context),
+        "Session": try count(Session.self, in: context),
+        "SessionExercise": try count(SessionExercise.self, in: context),
+        "SetLog": try count(SetLog.self, in: context),
+    ]
+}
+
+/// Services sharing one isolated in-memory store and one test clock.
+@MainActor
+struct ServiceTestHarness {
+    let container: ModelContainer
+    let clock: TestClock
+    let exercises: ExerciseService
+    let workouts: WorkoutService
+    let sessions: SessionService
+
+    var context: ModelContext { container.mainContext }
+
+    init() throws {
+        try self.init(container: ModelContainerFactory.makeInMemory())
+    }
+
+    init(container: ModelContainer) {
+        let clock = TestClock()
+        self.container = container
+        self.clock = clock
+        exercises = ExerciseService(context: container.mainContext, now: clock.now)
+        workouts = WorkoutService(context: container.mainContext, now: clock.now)
+        sessions = SessionService(context: container.mainContext, now: clock.now)
+    }
+
+    /// Inserts a built-in (system) exercise directly; there is no service for them yet.
+    func insertSystemExercise(name: String, muscleGroup: MuscleGroup, libraryKey: String) throws -> Exercise {
+        let exercise = Exercise(name: name, muscleGroup: muscleGroup, isCustom: false, libraryKey: libraryKey)
+        context.insert(exercise)
+        try context.save()
+        return exercise
+    }
+
+    /// A valid workout built through the services: one item per entry, with the given planned sets.
+    func makeWorkout(name: String, items: [(Exercise, [PlannedSetValues])]) throws -> Workout {
+        let workout = try workouts.createWorkout(name: name)
+        for (exercise, sets) in items {
+            let item = try workouts.addExercise(exercise, to: workout, firstSet: sets[0])
+            for values in sets.dropFirst() {
+                try workouts.addPlannedSet(to: item, values: values)
+            }
+        }
+        return workout
+    }
+}
+
+extension PlannedSetValues {
+    static func reps(_ min: Int, _ max: Int, kg: Double? = nil) -> PlannedSetValues {
+        PlannedSetValues(weightKg: kg, repsMin: min, repsMax: max)
+    }
+}
