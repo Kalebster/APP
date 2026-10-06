@@ -22,14 +22,10 @@ struct RootView: View {
 
             Tab("Treinos", systemImage: "list.bullet.rectangle") {
                 NavigationStack {
-                    ContentUnavailableView(
-                        "Nenhum treino ainda",
-                        systemImage: "list.bullet.rectangle",
-                        description: Text("Seus treinos aparecerão aqui.")
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityIdentifier("tab.workouts.root")
-                    .navigationTitle("Treinos")
+                    WorkoutListView()
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("tab.workouts.root")
+                        .navigationTitle("Treinos")
                 }
             }
 
