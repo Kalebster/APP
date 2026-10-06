@@ -64,52 +64,31 @@ struct WorkoutServiceTests {
 
     // MARK: - Exercises
 
-    @Test("Adding an exercise appends it with its first planned set")
-    func addExercise() throws {
+    @Test("Adding to an empty workout starts at the first position")
+    func addExercisesToEmptyWorkout() throws {
         let workout = try harness.workouts.createWorkout(name: "Push")
         harness.clock.advance(by: 10)
 
-        let first = try harness.workouts.addExercise(bench, to: workout, firstSet: .reps(8, 10, kg: 40))
-        let second = try harness.workouts.addExercise(row, to: workout, firstSet: .reps(10, 12))
+        let items = try harness.workouts.addExercises([bench], to: workout)
 
-        #expect(workout.orderedExercises.map(\.id) == [first.id, second.id])
-        #expect(sortIndexes(of: workout) == [0, 1])
-        #expect(first.exercise?.id == bench.id)
-        let plannedSet = try #require(first.orderedPlannedSets.first)
-        #expect(first.plannedSets.count == 1)
-        #expect(plannedSet.sortIndex == 0)
-        #expect(plannedSet.weightKg == 40)
-        #expect(plannedSet.repsMin == 8)
-        #expect(plannedSet.repsMax == 10)
-        #expect(plannedSet.createdAt == harness.clock.current)
+        let item = try #require(items.first)
+        #expect(items.count == 1)
+        #expect(workout.orderedExercises.map(\.id) == [item.id])
+        #expect(item.sortIndex == 0)
+        #expect(item.exercise?.id == bench.id)
+        #expect(item.plannedSets.count == WorkoutService.defaultPlannedSets.count)
+        #expect(item.plannedSets.allSatisfy { $0.createdAt == harness.clock.current })
+        #expect(item.createdAt == harness.clock.current)
         #expect(workout.updatedAt == harness.clock.current)
-    }
-
-    @Test("An archived exercise cannot be added")
-    func addArchivedExercise() throws {
-        let workout = try harness.workouts.createWorkout(name: "Push")
-        try harness.exercises.archive(bench)
-
-        #expect(throws: WorkoutError.exerciseArchived) {
-            try harness.workouts.addExercise(bench, to: workout, firstSet: .reps(8, 10))
-        }
-        #expect(workout.exercises.isEmpty)
         #expect(harness.context.hasChanges == false)
     }
 
-    @Test("An invalid first set creates nothing")
-    func addExerciseInvalidFirstSet() throws {
-        let workout = try harness.workouts.createWorkout(name: "Push")
-        let before = try storeCounts(in: harness.context)
-
-        #expect(throws: ValidationError.repsMinGreaterThanMax) {
-            try harness.workouts.addExercise(bench, to: workout, firstSet: .reps(12, 8))
+    @Test("The default planned sets are 3 valid sets of 8–12 reps without load")
+    func defaultPlannedSetsAreValid() throws {
+        #expect(WorkoutService.defaultPlannedSets == Array(repeating: .reps(8, 12), count: 3))
+        for values in WorkoutService.defaultPlannedSets {
+            try values.validate()
         }
-        #expect(throws: ValidationError.tooManyDecimals) {
-            try harness.workouts.addExercise(bench, to: workout, firstSet: .reps(8, 10, kg: 20.125))
-        }
-        #expect(try storeCounts(in: harness.context) == before)
-        #expect(harness.context.hasChanges == false)
     }
 
     @Test("Removing an exercise from the middle renumbers the rest")
@@ -177,7 +156,6 @@ struct WorkoutServiceTests {
             #expect(item.orderedPlannedSets.allSatisfy { $0.repsMin == 8 && $0.repsMax == 12 && $0.weightKg == nil })
             #expect(item.createdAt == harness.clock.current)
         }
-        #expect(WorkoutService.defaultPlannedSets == Array(repeating: .reps(8, 12), count: 3))
         #expect(workout.updatedAt == harness.clock.current)
         #expect(harness.context.hasChanges == false)
     }
@@ -207,12 +185,15 @@ struct WorkoutServiceTests {
         #expect(workout.exercises.isEmpty)
     }
 
-    @Test("An archived exercise anywhere in the request means nothing is added")
+    @Test("An archived exercise cannot be added, alone or anywhere in the request, and nothing is added")
     func addExercisesArchived() throws {
         let workout = try harness.workouts.createWorkout(name: "Push")
         try harness.exercises.archive(row)
         let before = try storeCounts(in: harness.context)
 
+        #expect(throws: WorkoutError.exerciseArchived) {
+            try harness.workouts.addExercises([row], to: workout)
+        }
         #expect(throws: WorkoutError.exerciseArchived) {
             try harness.workouts.addExercises([bench, row], to: workout)
         }
@@ -221,19 +202,37 @@ struct WorkoutServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
-    @Test("Invalid or missing sets mean nothing is added")
-    func addExercisesInvalidSets() throws {
-        let workout = try harness.workouts.createWorkout(name: "Push")
+    @Test("After reordering and removing others, an exercise still in the workout cannot be added again")
+    func duplicateCheckFollowsPlanChanges() throws {
+        let workout = try harness.workouts.createWorkout(name: "Full")
+        try harness.workouts.addExercises([bench, row, squat], to: workout)
+        try harness.workouts.moveExercises(in: workout, fromOffsets: [0], toOffset: 3)
+        try harness.workouts.removeExercise(workout.orderedExercises[0])
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [squat.id, bench.id])
         let before = try storeCounts(in: harness.context)
 
-        #expect(throws: ValidationError.repsMinGreaterThanMax) {
-            try harness.workouts.addExercises([bench], to: workout, sets: [.reps(8, 12), .reps(12, 8)])
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) {
+            try harness.workouts.addExercises([bench], to: workout)
         }
-        #expect(throws: WorkoutError.plannedSetsMissing) {
-            try harness.workouts.addExercises([bench], to: workout, sets: [])
+        // The removed exercise alone could be added, but not together with one still in the workout.
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) {
+            try harness.workouts.addExercises([row, squat], to: workout)
         }
         #expect(try storeCounts(in: harness.context) == before)
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [squat.id, bench.id])
         #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("The same exercise can be in different workouts")
+    func sameExerciseInDifferentWorkouts() throws {
+        let push = try harness.workouts.createWorkout(name: "Push")
+        let full = try harness.workouts.createWorkout(name: "Full")
+
+        try harness.workouts.addExercises([bench], to: push)
+        try harness.workouts.addExercises([bench, row], to: full)
+
+        #expect(push.orderedExercises.map { $0.exercise?.id } == [bench.id])
+        #expect(full.orderedExercises.map { $0.exercise?.id } == [bench.id, row.id])
     }
 
     @Test("Adding no exercises changes nothing")
@@ -383,14 +382,19 @@ struct WorkoutServiceTests {
     @Test("Repeated add, remove and move never leave duplicate or missing indexes")
     func sortIndexStaysContiguous() throws {
         let workout = try harness.workouts.createWorkout(name: "Ordem")
-        let exercises = [bench, row, squat]
+        // Each round adds three exercises that are not in the workout yet: an exercise is never added twice.
+        let others = try (1...9).map { try harness.exercises.createCustomExercise(name: "Exercício \($0)", muscleGroup: .other) }
+        let pool = [bench, row, squat] + others
         for round in 0..<4 {
-            for exercise in exercises {
-                try harness.workouts.addExercise(exercise, to: workout, firstSet: .reps(8, 10))
-            }
+            try harness.workouts.addExercises(Array(pool[(round * 3)..<(round * 3 + 3)]), to: workout)
             try harness.workouts.moveExercises(in: workout, fromOffsets: [0, 2], toOffset: workout.exercises.count)
             try harness.workouts.removeExercise(workout.orderedExercises[round % workout.exercises.count])
             let item = workout.orderedExercises[0]
+            // Down to the one-set minimum, removing the first set each time.
+            while item.plannedSets.count > 1 {
+                try harness.workouts.removePlannedSet(item.orderedPlannedSets[0])
+                #expect(sortIndexes(of: item) == Array(0..<item.plannedSets.count))
+            }
             try harness.workouts.addPlannedSet(to: item, values: .reps(5, 5))
             try harness.workouts.movePlannedSets(in: item, fromOffsets: [0], toOffset: item.plannedSets.count)
             try harness.workouts.removePlannedSet(item.orderedPlannedSets[0])

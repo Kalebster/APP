@@ -3,10 +3,11 @@ import SwiftData
 
 /// Business rules for planned workouts, their exercises and planned sets.
 ///
-/// Every workout item keeps at least one planned set, and `sortIndex` values stay 0...n-1.
+/// An exercise appears at most once in a workout, every workout item keeps at least one
+/// planned set, and `sortIndex` values stay 0...n-1.
 @MainActor
 struct WorkoutService {
-    /// Planned sets of an exercise added from the picker: 3 sets of 8–12 reps, no load.
+    /// Planned sets every exercise starts with when added to a workout: 3 sets of 8–12 reps, no load.
     static let defaultPlannedSets = Array(repeating: PlannedSetValues(weightKg: nil, repsMin: 8, repsMax: 12), count: 3)
 
     let context: ModelContext
@@ -50,41 +51,13 @@ struct WorkoutService {
 
     // MARK: - Exercises
 
-    /// Appends the exercise to the workout together with its first planned set.
+    /// Appends the exercises in the given order, each with `defaultPlannedSets`.
+    ///
+    /// The only way to add exercises to a workout, so its rules hold everywhere: an exercise
+    /// cannot be added twice to the same workout and an archived exercise cannot be added.
+    /// All or nothing: if any exercise breaks a rule, nothing is changed.
     @discardableResult
-    func addExercise(_ exercise: Exercise, to workout: Workout, firstSet: PlannedSetValues) throws -> WorkoutExercise {
-        try firstSet.validate()
-        guard !exercise.isArchived else { throw WorkoutError.exerciseArchived }
-
-        let timestamp = now()
-        let item = WorkoutExercise(sortIndex: workout.exercises.count)
-        item.createdAt = timestamp
-        item.updatedAt = timestamp
-        context.insert(item)
-        item.workout = workout
-        item.exercise = exercise
-
-        let plannedSet = makePlannedSet(sortIndex: 0, values: firstSet, at: timestamp)
-        plannedSet.workoutExercise = item
-
-        workout.updatedAt = timestamp
-        try context.saveOrRollback()
-        return item
-    }
-
-    /// Appends the exercises in the given order, each with `sets`. All or nothing: if any
-    /// exercise is archived, already in the workout or repeated, or any set is invalid,
-    /// nothing is changed.
-    @discardableResult
-    func addExercises(
-        _ exercises: [Exercise],
-        to workout: Workout,
-        sets: [PlannedSetValues] = WorkoutService.defaultPlannedSets
-    ) throws -> [WorkoutExercise] {
-        guard !sets.isEmpty else { throw WorkoutError.plannedSetsMissing }
-        for values in sets {
-            try values.validate()
-        }
+    func addExercises(_ exercises: [Exercise], to workout: Workout) throws -> [WorkoutExercise] {
         var usedIDs = Set(workout.exercises.compactMap { $0.exercise?.id })
         for exercise in exercises {
             guard !exercise.isArchived else { throw WorkoutError.exerciseArchived }
@@ -101,7 +74,7 @@ struct WorkoutService {
             context.insert(item)
             item.workout = workout
             item.exercise = exercise
-            for (setIndex, values) in sets.enumerated() {
+            for (setIndex, values) in Self.defaultPlannedSets.enumerated() {
                 makePlannedSet(sortIndex: setIndex, values: values, at: timestamp).workoutExercise = item
             }
             return item
