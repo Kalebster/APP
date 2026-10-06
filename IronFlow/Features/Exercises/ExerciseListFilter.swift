@@ -1,6 +1,6 @@
 import Foundation
 
-/// Search, muscle group filter and sections of the exercise list.
+/// Search, muscle group filter, sections and group summaries of the exercise list.
 /// Pure logic: no UI and no store access.
 enum ExerciseListFilter {
     struct Section: Identifiable {
@@ -8,6 +8,23 @@ enum ExerciseListFilter {
         let exercises: [Exercise]
 
         var id: MuscleGroup { group }
+    }
+
+    struct GroupSummary: Identifiable {
+        let group: MuscleGroup
+        let count: Int
+
+        var id: MuscleGroup { group }
+    }
+
+    /// Every muscle group, in the approved group order, with its number of active
+    /// (non-archived) exercises. Groups without exercises are included with a count of zero.
+    static func groupSummaries(from exercises: [Exercise]) -> [GroupSummary] {
+        var counts: [MuscleGroup: Int] = [:]
+        for exercise in exercises where !exercise.isArchived {
+            counts[exercise.muscleGroup, default: 0] += 1
+        }
+        return MuscleGroup.allCases.map { GroupSummary(group: $0, count: counts[$0, default: 0]) }
     }
 
     /// Active (non-archived) exercises that match `search` and `group`, in one section per

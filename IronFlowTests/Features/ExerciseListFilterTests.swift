@@ -112,4 +112,52 @@ struct ExerciseListFilterTests {
         let expected = Dictionary(grouping: DefaultExerciseLibrary.all, by: \.muscleGroup).mapValues(\.count)
         #expect(counts == expected)
     }
+
+    @Test("Group summaries list every group in the approved order")
+    func summariesAllGroupsInOrder() {
+        let summaries = ExerciseListFilter.groupSummaries(from: sample)
+
+        #expect(summaries.map(\.group) == MuscleGroup.allCases)
+        #expect(summaries.count == MuscleGroup.allCases.count)
+    }
+
+    @Test("With the real library, group summaries count every exercise of each group")
+    func summariesRealLibraryCounts() {
+        let library = DefaultExerciseLibrary.all.map { exercise($0.name, $0.muscleGroup) }
+
+        let summaries = ExerciseListFilter.groupSummaries(from: library)
+
+        let counts = Dictionary(uniqueKeysWithValues: summaries.map { ($0.group, $0.count) })
+        let expected = Dictionary(grouping: DefaultExerciseLibrary.all, by: \.muscleGroup).mapValues(\.count)
+        #expect(counts.filter { $0.value > 0 } == expected)
+        #expect(summaries.map(\.count).reduce(0, +) == DefaultExerciseLibrary.all.count)
+    }
+
+    @Test("Archived exercises are not counted")
+    func summariesExcludeArchived() {
+        let exercises = sample + [exercise("Supino Antigo", .chest, archived: true)]
+
+        let chest = ExerciseListFilter.groupSummaries(from: exercises).first { $0.group == .chest }
+
+        #expect(chest?.count == 3)
+    }
+
+    @Test("Groups without exercises are kept with a count of zero")
+    func summariesZeroCount() {
+        let summaries = ExerciseListFilter.groupSummaries(from: [exercise("Antigo", .calves, archived: true)])
+
+        #expect(summaries.count == MuscleGroup.allCases.count)
+        #expect(summaries.allSatisfy { $0.count == 0 })
+    }
+
+    @Test("Custom exercises are counted in their group")
+    func summariesCountCustom() {
+        let summaries = ExerciseListFilter.groupSummaries(from: sample)
+        let counts = Dictionary(uniqueKeysWithValues: summaries.map { ($0.group, $0.count) })
+
+        #expect(counts[.chest] == 3)
+        #expect(counts[.back] == 2)
+        #expect(counts[.glutes] == 1)
+        #expect(counts[.shoulders] == 0)
+    }
 }

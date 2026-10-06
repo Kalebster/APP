@@ -1,6 +1,7 @@
 import XCTest
 
-/// The Exercises tab lists the built-in library, with search and a muscle group filter.
+/// The Exercises tab shows one card per muscle group; a card opens that group's exercises.
+/// Searching from the groups screen finds exercises in every group.
 /// Runs on an in-memory store where the 71 built-in exercises are installed at launch.
 final class ExerciseListUITests: XCTestCase {
     @MainActor
@@ -21,6 +22,25 @@ final class ExerciseListUITests: XCTestCase {
     }
 
     @MainActor
+    private func groupCard(_ rawValue: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any)["exercises.group.\(rawValue)"]
+    }
+
+    /// The search field of the current screen. Some layouts collapse it into a search button.
+    @MainActor
+    private func searchField(in app: XCUIApplication) -> XCUIElement {
+        let field = app.searchFields.firstMatch
+        if !field.waitForExistence(timeout: 5) {
+            for label in ["Search", "Buscar"] where app.buttons[label].exists {
+                app.buttons[label].tap()
+                break
+            }
+        }
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Search field not found")
+        return field
+    }
+
+    @MainActor
     private func attachScreenshot(named name: String, of app: XCUIApplication) {
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = name
@@ -29,57 +49,93 @@ final class ExerciseListUITests: XCTestCase {
     }
 
     @MainActor
-    func testListShowsLibraryInSections() throws {
+    func testGroupsAreShownFirst() throws {
         continueAfterFailure = false
         let app = launchOnExercisesTab()
 
-        XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
-        XCTAssertTrue(app.descendants(matching: .any)["exercises.section.chest"].exists, "Chest section not shown")
+        let chest = groupCard("chest", in: app)
+        XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
+        XCTAssertTrue(chest.label.contains("9 exercícios"), "Unexpected chest card label: \(chest.label)")
+        let back = groupCard("back", in: app)
+        XCTAssertTrue(back.exists, "Back card not found")
+        XCTAssertTrue(back.label.contains("7 exercícios"), "Unexpected back card label: \(back.label)")
+        XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
 
-        attachScreenshot(named: "6-exercises-list", of: app)
+        attachScreenshot(named: "6-exercises-groups", of: app)
     }
 
     @MainActor
-    func testSearchFindsMatchesAndShowsNoResults() throws {
+    func testGroupCardOpensItsExercises() throws {
         continueAfterFailure = false
         let app = launchOnExercisesTab()
-        XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
 
-        let searchField = app.searchFields.firstMatch
-        XCTAssertTrue(searchField.waitForExistence(timeout: 10), "Search field not found")
-        searchField.tap()
-        searchField.typeText("agachamento")
+        let back = groupCard("back", in: app)
+        XCTAssertTrue(back.waitForExistence(timeout: 10), "Back card not found")
+        back.tap()
+
+        XCTAssertTrue(element(labeled: "Barra Fixa", in: app).waitForExistence(timeout: 10))
+        XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
+        attachScreenshot(named: "7-exercises-group", of: app)
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(groupCard("chest", in: app).waitForExistence(timeout: 10), "Groups not shown after going back")
+    }
+
+    @MainActor
+    func testGlobalSearchFindsMatchesAndShowsNoResults() throws {
+        continueAfterFailure = false
+        let app = launchOnExercisesTab()
+        XCTAssertTrue(groupCard("chest", in: app).waitForExistence(timeout: 10), "Chest card not found")
+
+        let field = searchField(in: app)
+        field.tap()
+        field.typeText("agachamento")
 
         XCTAssertTrue(element(labeled: "Agachamento Livre com Barra", in: app).waitForExistence(timeout: 10))
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
-        attachScreenshot(named: "7-exercises-search", of: app)
+        XCTAssertTrue(app.descendants(matching: .any)["exercises.section.quadriceps"].exists, "Quadriceps section not shown")
+        XCTAssertFalse(groupCard("chest", in: app).exists, "Group cards shown during search")
+        attachScreenshot(named: "8-exercises-search", of: app)
 
-        searchField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "agachamento".count))
-        searchField.typeText("xyz")
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "agachamento".count))
+        field.typeText("xyz")
         XCTAssertTrue(app.descendants(matching: .any)["exercises.empty.search"].waitForExistence(timeout: 10))
     }
 
     @MainActor
-    func testGroupFilter() throws {
+    func testSearchInsideGroup() throws {
         continueAfterFailure = false
         let app = launchOnExercisesTab()
+
+        let chest = groupCard("chest", in: app)
+        XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
+        chest.tap()
         XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
 
-        let filter = app.buttons["exercises.filter"]
-        XCTAssertTrue(filter.waitForExistence(timeout: 10), "Filter button not found")
-        filter.tap()
-        let backOption = app.buttons["Costas"]
-        XCTAssertTrue(backOption.waitForExistence(timeout: 10), "Back filter option not found")
-        backOption.tap()
+        let field = searchField(in: app)
+        field.tap()
+        field.typeText("inclinado")
 
-        XCTAssertTrue(element(labeled: "Barra Fixa", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(labeled: "Supino Inclinado com Barra", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(labeled: "Supino Inclinado com Halteres", in: app).exists)
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
-        attachScreenshot(named: "8-exercises-filter", of: app)
+    }
 
-        filter.tap()
-        let allOption = app.buttons["Todos"]
-        XCTAssertTrue(allOption.waitForExistence(timeout: 10), "All filter option not found")
-        allOption.tap()
+    @MainActor
+    func testDarkAppearance() throws {
+        continueAfterFailure = false
+        let device = XCUIDevice.shared
+        let originalAppearance = device.appearance
+        defer { device.appearance = originalAppearance }
+        device.appearance = .dark
+
+        let app = launchOnExercisesTab()
+        let chest = groupCard("chest", in: app)
+        XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
+        attachScreenshot(named: "9-exercises-groups-dark", of: app)
+
+        chest.tap()
         XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
+        attachScreenshot(named: "10-exercises-group-dark", of: app)
     }
 }
