@@ -20,6 +20,7 @@ struct IronFlowApp: App {
             case .success(let container):
                 RootView()
                     .modelContainer(container)
+                    .preferredColorScheme(Self.forcedColorScheme)
             case .failure(let error):
                 PersistenceErrorView(error: error) {
                     // Only tries to open the same store again.
@@ -28,6 +29,17 @@ struct IronFlowApp: App {
             }
         }
     }
+
+    /// `nil` follows the device appearance. Debug builds can force dark with
+    /// `-ui-dark-appearance` (test hook: the CI simulator ignores appearance changes).
+    private static let forcedColorScheme: ColorScheme? = {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-dark-appearance") {
+            return .dark
+        }
+        #endif
+        return nil
+    }()
 
     /// Opens the store and, when it opened, installs or updates the built-in exercise library
     /// before the tabs are shown.
