@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 
 /// The Exercises tab shows one card per muscle group; a card opens that group's exercises.
@@ -114,21 +115,45 @@ final class ExerciseListUITests: XCTestCase {
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
     }
 
+    /// Brightness (0...1) of the screen background, sampled at the left margin below the title.
+    @MainActor
+    private func backgroundBrightness(of app: XCUIApplication) -> CGFloat? {
+        guard let image = app.screenshot().image.cgImage else { return nil }
+        var pixel = [UInt8](repeating: 0, count: 4)
+        guard let context = CGContext(
+            data: &pixel, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        let x = 4, y = image.height / 4
+        context.draw(image, in: CGRect(x: -x, y: y - image.height + 1, width: image.width, height: image.height))
+        return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
+    }
+
     @MainActor
     func testDarkAppearance() throws {
         continueAfterFailure = false
         let device = XCUIDevice.shared
         let originalAppearance = device.appearance
         defer { device.appearance = originalAppearance }
-        device.appearance = .dark
 
         let app = launchOnExercisesTab()
         let chest = groupCard("chest", in: app)
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
+
+        device.appearance = .dark
+        // The appearance change is applied asynchronously: wait until the background is dark.
+        let deadline = Date().addingTimeInterval(10)
+        var brightness = backgroundBrightness(of: app) ?? 1
+        while brightness >= 0.3 && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            brightness = backgroundBrightness(of: app) ?? 1
+        }
+        XCTAssertLessThan(brightness, 0.3, "Groups screen did not switch to dark")
         attachScreenshot(named: "9-exercises-groups-dark", of: app)
 
         chest.tap()
         XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
+        XCTAssertLessThan(backgroundBrightness(of: app) ?? 1, 0.3, "Group screen is not dark")
         attachScreenshot(named: "10-exercises-group-dark", of: app)
     }
 }
