@@ -27,7 +27,12 @@ struct ExerciseGroupView: View {
         }
         .screenBackground()
         .navigationTitle(Text(group.displayName))
-        .searchable(text: $searchText, prompt: Text("Buscar exercício"))
+        // Always visible: a pushed screen would otherwise hide the field until the list is pulled down.
+        .searchable(
+            text: $searchText,
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: Text("Buscar exercício")
+        )
     }
 
     @ViewBuilder

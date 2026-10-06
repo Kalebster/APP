@@ -26,16 +26,9 @@ final class ExerciseListUITests: XCTestCase {
         app.descendants(matching: .any)["exercises.group.\(rawValue)"]
     }
 
-    /// The search field of the current screen. Some layouts collapse it into a search button.
     @MainActor
     private func searchField(in app: XCUIApplication) -> XCUIElement {
         let field = app.searchFields.firstMatch
-        if !field.waitForExistence(timeout: 5) {
-            for label in ["Search", "Buscar"] where app.buttons[label].exists {
-                app.buttons[label].tap()
-                break
-            }
-        }
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Search field not found")
         return field
     }
