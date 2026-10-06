@@ -6,9 +6,9 @@ import XCTest
 /// Runs on an in-memory store where the 71 built-in exercises are installed at launch.
 final class ExerciseListUITests: XCTestCase {
     @MainActor
-    private func launchOnExercisesTab() -> XCUIApplication {
+    private func launchOnExercisesTab(extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"]
+        app.launchArguments = ["-ui-testing"] + extraArguments
         app.launch()
         let tab = app.tabBars.buttons["Exercícios"]
         XCTAssertTrue(tab.waitForExistence(timeout: 10), "Exercises tab not found")
@@ -129,26 +129,14 @@ final class ExerciseListUITests: XCTestCase {
         return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
     }
 
+    /// Dark appearance, forced with a Debug-only launch argument.
     @MainActor
     func testDarkAppearance() throws {
         continueAfterFailure = false
-        let device = XCUIDevice.shared
-        let originalAppearance = device.appearance
-        defer { device.appearance = originalAppearance }
-
-        let app = launchOnExercisesTab()
+        let app = launchOnExercisesTab(extraArguments: ["-ui-dark-appearance"])
         let chest = groupCard("chest", in: app)
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
-
-        device.appearance = .dark
-        // The appearance change is applied asynchronously: wait until the background is dark.
-        let deadline = Date().addingTimeInterval(10)
-        var brightness = backgroundBrightness(of: app) ?? 1
-        while brightness >= 0.3 && Date() < deadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-            brightness = backgroundBrightness(of: app) ?? 1
-        }
-        XCTAssertLessThan(brightness, 0.3, "Groups screen did not switch to dark")
+        XCTAssertLessThan(backgroundBrightness(of: app) ?? 1, 0.3, "Groups screen is not dark")
         attachScreenshot(named: "9-exercises-groups-dark", of: app)
 
         chest.tap()
