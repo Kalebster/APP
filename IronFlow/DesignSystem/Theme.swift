@@ -29,6 +29,19 @@ extension View {
             .overlay(shape.strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
     }
 
+    /// A `List` row laid out like the card stacks: no separator, transparent row
+    /// background and the same spacing and margins. The row content draws its own card.
+    func cardListRow() -> some View {
+        listRowInsets(EdgeInsets(
+            top: Theme.Metrics.cardSpacing / 2,
+            leading: Theme.Metrics.screenPadding,
+            bottom: Theme.Metrics.cardSpacing / 2,
+            trailing: Theme.Metrics.screenPadding
+        ))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
     /// The screen background, extended under the bars.
     func screenBackground() -> some View {
         background {

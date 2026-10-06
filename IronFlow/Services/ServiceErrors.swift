@@ -25,6 +25,8 @@ enum ExerciseError: Error, Equatable {
 /// A workout operation that the business rules do not allow.
 enum WorkoutError: Error, Equatable {
     case exerciseArchived
+    /// The exercise is already in the workout (or chosen twice in the same request).
+    case exerciseAlreadyInWorkout
     case lastPlannedSet
     case workoutHasNoExercises
     /// A workout item has no library exercise.

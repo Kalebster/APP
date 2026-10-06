@@ -23,10 +23,68 @@
         }
       }
     },
+    "%lld séries" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld série"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld séries"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "A carga não pode ser negativa." : {
+
+    },
+    "A carga pode ter no máximo duas casas decimais." : {
+
+    },
     "Abdômen" : {
 
     },
+    "Adicionar" : {
+
+    },
+    "Adicionar (%lld)" : {
+
+    },
+    "Adicionar exercícios" : {
+
+    },
+    "Adicione exercícios ao treino" : {
+
+    },
+    "Algo deu errado. Tente novamente." : {
+
+    },
     "Antebraços" : {
+
+    },
+    "Arquivado" : {
+
+    },
+    "As repetições devem ser maiores que zero." : {
+
+    },
+    "As repetições máximas devem ser maiores que zero." : {
+
+    },
+    "As repetições mínimas devem ser maiores que zero." : {
+
+    },
+    "As séries planejadas deste exercício também serão removidas." : {
 
     },
     "Buscar exercício" : {
@@ -35,10 +93,40 @@
     "Bíceps" : {
 
     },
+    "Cancelar" : {
+
+    },
+    "Carga inválida." : {
+
+    },
+    "Concluir" : {
+
+    },
     "Corpo inteiro" : {
 
     },
     "Costas" : {
+
+    },
+    "Criar treino" : {
+
+    },
+    "Este exercício está arquivado e não pode ser adicionado." : {
+
+    },
+    "Este exercício já está no treino." : {
+
+    },
+    "Excluir" : {
+
+    },
+    "Excluir treino" : {
+
+    },
+    "Excluir “%@”?" : {
+
+    },
+    "Exercício removido" : {
 
     },
     "Exercícios" : {
@@ -50,10 +138,16 @@
     "Histórico" : {
 
     },
+    "Informe um nome." : {
+
+    },
     "Início" : {
 
     },
     "Iron Flow" : {
+
+    },
+    "Já existe um exercício com esse nome." : {
 
     },
     "Nada por aqui ainda." : {
@@ -71,10 +165,52 @@
     "Nenhum treino realizado" : {
 
     },
+    "No treino" : {
+
+    },
+    "Nome do treino" : {
+
+    },
+    "Novo treino" : {
+
+    },
     "Não foi possível abrir seus dados" : {
 
     },
+    "Não foi possível concluir" : {
+
+    },
+    "Não foi possível mover o exercício." : {
+
+    },
+    "Não foi possível salvar. Nenhuma alteração foi feita." : {
+
+    },
+    "O exercício precisa ter pelo menos uma série." : {
+
+    },
+    "O histórico de treinos realizados será mantido." : {
+
+    },
+    "O mínimo de repetições não pode ser maior que o máximo." : {
+
+    },
+    "O nome pode ter no máximo %lld caracteres." : {
+
+    },
+    "O treino não tem exercícios." : {
+
+    },
+    "OK" : {
+
+    },
     "Ombros" : {
+
+    },
+    "Opções" : {
+
+    },
+    "Ordenar" : {
 
     },
     "Outro" : {
@@ -95,6 +231,24 @@
     "Quadríceps" : {
 
     },
+    "Remover" : {
+
+    },
+    "Remover este exercício?" : {
+
+    },
+    "Remover exercício" : {
+
+    },
+    "Renomear" : {
+
+    },
+    "Renomear treino" : {
+
+    },
+    "Salvar" : {
+
+    },
     "Seus dados não foram apagados. Feche e abra o app novamente. Se o problema continuar, atualize o app." : {
 
     },
@@ -111,6 +265,12 @@
 
     },
     "Tríceps" : {
+
+    },
+    "Um exercício deste treino está sem séries." : {
+
+    },
+    "Um exercício deste treino não existe mais." : {
 
     }
   },

@@ -80,7 +80,7 @@ private struct GroupCard: View {
 }
 
 /// The muscle group title above its exercises in search results.
-private struct ExerciseSectionHeader: View {
+struct ExerciseSectionHeader: View {
     let group: MuscleGroup
 
     var body: some View {

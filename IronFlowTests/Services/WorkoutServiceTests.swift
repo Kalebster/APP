@@ -160,6 +160,137 @@ struct WorkoutServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    // MARK: - Adding from the picker
+
+    @Test("Adding exercises appends them in order, each with 3 sets of 8–12 reps and no load")
+    func addExercisesDefaultSets() throws {
+        let workout = try harness.makeWorkout(name: "Full", items: [(squat, [.reps(5, 5)])])
+        harness.clock.advance(by: 10)
+
+        let items = try harness.workouts.addExercises([bench, row], to: workout)
+
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [squat.id, bench.id, row.id])
+        #expect(items.map(\.id) == Array(workout.orderedExercises.dropFirst()).map(\.id))
+        #expect(sortIndexes(of: workout) == [0, 1, 2])
+        for item in items {
+            #expect(sortIndexes(of: item) == [0, 1, 2])
+            #expect(item.orderedPlannedSets.allSatisfy { $0.repsMin == 8 && $0.repsMax == 12 && $0.weightKg == nil })
+            #expect(item.createdAt == harness.clock.current)
+        }
+        #expect(WorkoutService.defaultPlannedSets == Array(repeating: .reps(8, 12), count: 3))
+        #expect(workout.updatedAt == harness.clock.current)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("An exercise already in the workout cannot be added again, and nothing is added")
+    func addExercisesAlreadyInWorkout() throws {
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10)])])
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) {
+            try harness.workouts.addExercises([row, bench], to: workout)
+        }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [bench.id])
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("The same exercise chosen twice in one request is rejected, and nothing is added")
+    func addExercisesRepeatedInRequest() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) {
+            try harness.workouts.addExercises([bench, row, bench], to: workout)
+        }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(workout.exercises.isEmpty)
+    }
+
+    @Test("An archived exercise anywhere in the request means nothing is added")
+    func addExercisesArchived() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        try harness.exercises.archive(row)
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: WorkoutError.exerciseArchived) {
+            try harness.workouts.addExercises([bench, row], to: workout)
+        }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(workout.exercises.isEmpty)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("Invalid or missing sets mean nothing is added")
+    func addExercisesInvalidSets() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: ValidationError.repsMinGreaterThanMax) {
+            try harness.workouts.addExercises([bench], to: workout, sets: [.reps(8, 12), .reps(12, 8)])
+        }
+        #expect(throws: WorkoutError.plannedSetsMissing) {
+            try harness.workouts.addExercises([bench], to: workout, sets: [])
+        }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("Adding no exercises changes nothing")
+    func addExercisesEmpty() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        let updatedAt = workout.updatedAt
+        harness.clock.advance(by: 10)
+
+        #expect(try harness.workouts.addExercises([], to: workout).isEmpty)
+        #expect(workout.updatedAt == updatedAt)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("An exercise removed from the workout can be added again")
+    func addExercisesAfterRemoval() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        let items = try harness.workouts.addExercises([bench, row], to: workout)
+
+        try harness.workouts.removeExercise(items[0])
+        #expect(try count(PlannedSet.self, in: harness.context) == 3)
+        try harness.workouts.addExercises([bench], to: workout)
+
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [row.id, bench.id])
+        #expect(sortIndexes(of: workout) == [0, 1])
+    }
+
+    @Test("Exercises added from the picker can be reordered")
+    func addExercisesThenMove() throws {
+        let workout = try harness.workouts.createWorkout(name: "Full")
+        try harness.workouts.addExercises([bench, row, squat], to: workout)
+
+        try harness.workouts.moveExercises(in: workout, fromOffsets: [2], toOffset: 0)
+
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [squat.id, bench.id, row.id])
+        #expect(sortIndexes(of: workout) == [0, 1, 2])
+    }
+
+    @Test("Deleting a workout built from the picker keeps its session history")
+    func addExercisesDeleteKeepsHistory() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        try harness.workouts.addExercises([bench, row], to: workout)
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: 40, reps: 10)
+        try harness.sessions.finishSession(session)
+
+        try harness.workouts.delete(workout)
+
+        #expect(try count(Workout.self, in: harness.context) == 0)
+        #expect(try count(WorkoutExercise.self, in: harness.context) == 0)
+        #expect(try count(PlannedSet.self, in: harness.context) == 0)
+        #expect(try count(Session.self, in: harness.context) == 1)
+        #expect(try count(SessionExercise.self, in: harness.context) == 2)
+        #expect(try count(SetLog.self, in: harness.context) == 6)
+        #expect(session.workout == nil)
+        #expect(session.workoutNameSnapshot == "Push")
+    }
+
     // MARK: - Planned sets
 
     @Test("Adding a planned set appends it with the given values")
