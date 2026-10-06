@@ -64,6 +64,8 @@ struct ExercisePickerView: View {
                 .accessibilityIdentifier("picker.add")
                 .padding(.horizontal, Theme.Metrics.screenPadding)
                 .padding(.vertical, 8)
+                // Opaque, so the list never shows through the button.
+                .background(Theme.Colors.screenBackground)
             }
             .screenBackground()
             .navigationTitle("Adicionar exercícios")
