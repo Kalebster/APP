@@ -159,6 +159,9 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertTrue(reorder.label.contains("Ordenar"), "Reorder mode not left: \(reorder.label)")
     }
 
+    /// A double tap on "Adicionar (N)" adds the exercises once, closes the picker and shows no error.
+    /// The service also rejects adding the same exercises again, so this checks what the user sees,
+    /// whichever layer stops the second tap (the picker ignores it; the service would reject it).
     @MainActor
     func testDoubleTapOnAddAddsExercisesOnce() throws {
         continueAfterFailure = false
