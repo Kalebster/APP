@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import Testing
 @testable import IronFlow
 
 /// Creates a unique temporary folder for one test.
@@ -212,16 +213,32 @@ struct ServiceTestHarness {
         return exercise
     }
 
-    /// A valid workout built through the services: one item per entry, with the given planned sets.
+    /// A valid workout built through the services, the way the app builds it: the exercises are
+    /// added (each starts with the default planned sets), then each item's planned sets are
+    /// edited to exactly the given values, in order.
     func makeWorkout(name: String, items: [(Exercise, [PlannedSetValues])]) throws -> Workout {
         let workout = try workouts.createWorkout(name: name)
-        for (exercise, sets) in items {
-            let item = try workouts.addExercise(exercise, to: workout, firstSet: sets[0])
-            for values in sets.dropFirst() {
-                try workouts.addPlannedSet(to: item, values: values)
-            }
+        let added = try workouts.addExercises(items.map { $0.0 }, to: workout)
+        for (item, (_, sets)) in zip(added, items) {
+            try setPlannedSets(of: item, to: sets)
         }
         return workout
+    }
+
+    /// Edits the item's planned sets through the service until they are exactly `values`, in order.
+    func setPlannedSets(of item: WorkoutExercise, to values: [PlannedSetValues]) throws {
+        try #require(!values.isEmpty, "A workout item keeps at least one planned set")
+        let existing = item.orderedPlannedSets
+        for (index, value) in values.enumerated() {
+            if index < existing.count {
+                try workouts.updatePlannedSet(existing[index], values: value)
+            } else {
+                try workouts.addPlannedSet(to: item, values: value)
+            }
+        }
+        for extra in existing.dropFirst(values.count) {
+            try workouts.removePlannedSet(extra)
+        }
     }
 }
 

@@ -13,6 +13,8 @@ struct ExercisePickerView: View {
     @State private var selection: ExerciseSelection
     @State private var searchText = ""
     @State private var errorMessage: String?
+    /// Set once the exercises were added, so a second tap while the picker closes adds nothing.
+    @State private var isAdded = false
 
     init(workoutExerciseIDs: Set<UUID>, onAdd: @escaping @MainActor ([Exercise]) throws -> Void) {
         self.onAdd = onAdd
@@ -60,7 +62,7 @@ struct ExercisePickerView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(selection.count == 0)
+                .disabled(selection.count == 0 || isAdded)
                 .accessibilityIdentifier("picker.add")
                 .padding(.horizontal, Theme.Metrics.screenPadding)
                 .padding(.vertical, 8)
@@ -100,8 +102,10 @@ struct ExercisePickerView: View {
     }
 
     private func add() {
+        guard !isAdded else { return }
         do {
             try onAdd(selection.selectedExercises(from: exercises))
+            isAdded = true
             dismiss()
         } catch {
             errorMessage = UserFacingError.message(for: error)

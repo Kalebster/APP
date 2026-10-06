@@ -159,6 +159,35 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertTrue(reorder.label.contains("Ordenar"), "Reorder mode not left: \(reorder.label)")
     }
 
+    /// A double tap on "Adicionar (N)" adds the exercises once, closes the picker and shows no error.
+    /// The service also rejects adding the same exercises again, so this checks what the user sees,
+    /// whichever layer stops the second tap (the picker ignores it; the service would reject it).
+    @MainActor
+    func testDoubleTapOnAddAddsExercisesOnce() throws {
+        continueAfterFailure = false
+        let app = launchOnWorkoutsTab()
+        createWorkout(named: "Push", in: app)
+
+        app.buttons["workout.addExercises"].tap()
+        // The first exercises of the library are visible without searching.
+        for name in ["Crossover na Polia", "Crucifixo com Halteres"] {
+            let row = app.buttons[name]
+            XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
+            row.tap()
+        }
+        let confirm = app.buttons["picker.add"]
+        XCTAssertTrue(confirm.isEnabled, "Add button disabled after selecting exercises")
+        confirm.doubleTap()
+
+        XCTAssertTrue(confirm.waitForNonExistence(timeout: 10), "Picker not closed after adding")
+        XCTAssertFalse(app.alerts.firstMatch.waitForExistence(timeout: 3), "An error alert appeared after a double tap")
+        let rows = exerciseRows(in: app)
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
+        XCTAssertEqual(rows.count, 2, "Exercises added more than once")
+        XCTAssertTrue(rows.element(boundBy: 0).label.contains("Crossover na Polia"), "First row: \(rows.element(boundBy: 0).label)")
+        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Crucifixo com Halteres"), "Second row: \(rows.element(boundBy: 1).label)")
+    }
+
     @MainActor
     func testRemoveExerciseCancelAndConfirm() throws {
         continueAfterFailure = false
