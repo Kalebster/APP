@@ -1,13 +1,13 @@
 {
   "sourceLanguage" : "pt-BR",
   "strings" : {
-    "A biblioteca de exercícios aparecerá aqui." : {
-
-    },
     "Abdômen" : {
 
     },
     "Antebraços" : {
+
+    },
+    "Buscar exercício" : {
 
     },
     "Bíceps" : {
@@ -22,7 +22,13 @@
     "Exercícios" : {
 
     },
+    "Filtrar por grupo" : {
+
+    },
     "Glúteos" : {
+
+    },
+    "Grupo muscular" : {
 
     },
     "Histórico" : {
@@ -34,10 +40,16 @@
     "Iron Flow" : {
 
     },
+    "Mostrar todos" : {
+
+    },
     "Nada por aqui ainda." : {
 
     },
-    "Nenhum exercício ainda" : {
+    "Nenhum exercício disponível" : {
+
+    },
+    "Nenhum exercício em %@" : {
 
     },
     "Nenhum treino ainda" : {
@@ -61,6 +73,9 @@
     "Peito" : {
 
     },
+    "Personalizado" : {
+
+    },
     "Posteriores de coxa" : {
 
     },
@@ -77,6 +92,9 @@
 
     },
     "Tentar novamente" : {
+
+    },
+    "Todos" : {
 
     },
     "Treinos" : {
