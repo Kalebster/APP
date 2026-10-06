@@ -1,9 +1,9 @@
+import SwiftData
 import SwiftUI
 
 /// The app's main navigation: four tabs.
 ///
-/// Each tab currently shows only an empty-state placeholder. The real screens
-/// replace these placeholders in later stages.
+/// Tabs without a real screen yet show an empty-state placeholder, replaced in later stages.
 struct RootView: View {
     var body: some View {
         TabView {
@@ -35,14 +35,10 @@ struct RootView: View {
 
             Tab("Exercícios", systemImage: "dumbbell") {
                 NavigationStack {
-                    ContentUnavailableView(
-                        "Nenhum exercício ainda",
-                        systemImage: "dumbbell",
-                        description: Text("A biblioteca de exercícios aparecerá aqui.")
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityIdentifier("tab.exercises.root")
-                    .navigationTitle("Exercícios")
+                    ExerciseListView()
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("tab.exercises.root")
+                        .navigationTitle("Exercícios")
                 }
             }
 
@@ -63,5 +59,9 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView()
+    if let container = try? ModelContainerFactory.makeInMemory() {
+        let _ = try? ExerciseLibrarySeeder(context: container.mainContext).seed()
+        RootView()
+            .modelContainer(container)
+    }
 }
