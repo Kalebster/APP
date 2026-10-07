@@ -57,6 +57,28 @@ struct ValidationTests {
         try Validation.performedReps(150)
     }
 
+    @Test("Body weight is 20–300 kg with at most two decimal places")
+    func bodyWeight() throws {
+        for valid in [20, 300, 80.5, 72.25] {
+            try Validation.bodyWeight(valid)
+        }
+        for invalid in [19.99, 300.01, 80.123, 0, -80, .nan, .infinity] {
+            #expect(throws: ValidationError.invalidBodyWeight) { try Validation.bodyWeight(invalid) }
+        }
+    }
+
+    @Test("Height is 100–250 cm and the daily calorie goal is 800–8.000 kcal")
+    func heightAndCalorieGoal() throws {
+        try Validation.height(100)
+        try Validation.height(250)
+        #expect(throws: ValidationError.invalidHeight) { try Validation.height(99) }
+        #expect(throws: ValidationError.invalidHeight) { try Validation.height(251) }
+        try Validation.dailyCalorieGoal(800)
+        try Validation.dailyCalorieGoal(8_000)
+        #expect(throws: ValidationError.invalidCalorieGoal) { try Validation.dailyCalorieGoal(799) }
+        #expect(throws: ValidationError.invalidCalorieGoal) { try Validation.dailyCalorieGoal(8_001) }
+    }
+
     @Test("Load is optional and cannot be negative")
     func weightSign() throws {
         try Validation.weight(nil)

@@ -32,6 +32,30 @@ enum Validation {
         guard abs(hundredths - hundredths.rounded()) < 1e-6 else { throw ValidationError.tooManyDecimals }
     }
 
+    static let bodyWeightRangeKg: ClosedRange<Double> = 20...300
+    static let heightRangeCm: ClosedRange<Int> = 100...250
+    static let dailyCalorieGoalRangeKcal: ClosedRange<Int> = 800...8_000
+
+    /// A body weight in kilograms: within `bodyWeightRangeKg`, at most two decimal places.
+    static func bodyWeight(_ weightKg: Double) throws {
+        guard weightKg.isFinite, bodyWeightRangeKg.contains(weightKg) else { throw ValidationError.invalidBodyWeight }
+        do {
+            try weight(weightKg)
+        } catch {
+            throw ValidationError.invalidBodyWeight
+        }
+    }
+
+    /// A height in whole centimeters within `heightRangeCm`.
+    static func height(_ heightCm: Int) throws {
+        guard heightRangeCm.contains(heightCm) else { throw ValidationError.invalidHeight }
+    }
+
+    /// A daily calorie goal in whole kilocalories within `dailyCalorieGoalRangeKcal`.
+    static func dailyCalorieGoal(_ kcal: Int) throws {
+        guard dailyCalorieGoalRangeKcal.contains(kcal) else { throw ValidationError.invalidCalorieGoal }
+    }
+
     /// Repetitions actually performed.
     static func performedReps(_ reps: Int) throws {
         guard reps > 0 else { throw ValidationError.invalidReps }
