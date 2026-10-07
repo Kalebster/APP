@@ -110,4 +110,16 @@ struct HomeSummaryTests {
         #expect(earlierText.hasPrefix("Iniciado em 4 de outubro"))
         #expect(earlierText.hasSuffix(", às 19:30"))
     }
+
+    @Test("Today's workout start shows minutes 0 to 9 with two digits")
+    func startedTextSingleDigitMinutes() throws {
+        let calendar = Calendar.current
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 7, hour: 21)))
+        for minute in 0...9 {
+            let start = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 7, hour: 19, minute: minute)))
+            #expect(HomeSummary.startedText(start, now: now, calendar: calendar) == "Iniciado às 19:0\(minute)")
+        }
+        let earlier = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 7, minute: 5)))
+        #expect(HomeSummary.startedText(earlier, now: now, calendar: calendar).hasSuffix(", às 07:05"))
+    }
 }

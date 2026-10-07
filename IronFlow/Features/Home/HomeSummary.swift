@@ -116,7 +116,7 @@ enum HomeSummary {
     /// "Iniciado às 19:30" for a session started today; otherwise the day comes first,
     /// so a session left open on another day does not read as today's.
     static func startedText(_ startedAt: Date, now: Date = .now, calendar: Calendar = .current) -> String {
-        let time = startedAt.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
+        let time = startedAt.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
         guard !calendar.isDate(startedAt, inSameDayAs: now) else {
             return String(localized: "Iniciado às \(time)")
         }
