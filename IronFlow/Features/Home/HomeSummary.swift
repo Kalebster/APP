@@ -32,23 +32,27 @@ enum HomeSummary {
     static let defaultMetrics: [SummaryMetric] = [.bodyWeight, .height, .dailyCalorieGoal]
     /// Key of the saved choice of indicators in the app preferences.
     static let metricsPreferenceKey = "home.summaryMetrics"
+    /// The saved form of an explicit choice of no indicators.
+    static let noMetricsStoredValue = "none"
 
-    /// The indicators to show for a saved choice. `nil` (never chosen) shows the defaults;
-    /// unknown or repeated entries are ignored, and at most `maxVisibleMetrics` are kept.
+    /// The indicators to show for a saved choice. `noMetricsStoredValue` shows none. Unknown and
+    /// repeated entries are ignored and at most `maxVisibleMetrics` are kept; a value with no known
+    /// indicator (never chosen, empty or invalid) shows the defaults.
     static func metrics(fromStored stored: String?) -> [SummaryMetric] {
         guard let stored else { return defaultMetrics }
+        guard stored != noMetricsStoredValue else { return [] }
         var metrics: [SummaryMetric] = []
         for rawValue in stored.split(separator: ",") {
             if let metric = SummaryMetric(rawValue: String(rawValue)), !metrics.contains(metric) {
                 metrics.append(metric)
             }
         }
-        return Array(metrics.prefix(maxVisibleMetrics))
+        return metrics.isEmpty ? defaultMetrics : Array(metrics.prefix(maxVisibleMetrics))
     }
 
-    /// The saved form of a choice of indicators.
+    /// The saved form of a choice of indicators; `noMetricsStoredValue` when none is chosen.
     static func storedValue(for metrics: [SummaryMetric]) -> String {
-        metrics.map(\.rawValue).joined(separator: ",")
+        metrics.isEmpty ? noMetricsStoredValue : metrics.map(\.rawValue).joined(separator: ",")
     }
 
     /// Removes the indicator when it is shown; otherwise adds it last, if there is room.

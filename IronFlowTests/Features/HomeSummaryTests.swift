@@ -10,13 +10,41 @@ struct HomeSummaryTests {
         #expect(HomeSummary.defaultMetrics == SummaryMetric.allCases)
     }
 
-    @Test("A saved choice keeps its order; unknown and repeated entries are ignored")
+    @Test("A saved choice keeps its order")
     func savedChoice() {
-        #expect(HomeSummary.metrics(fromStored: "") == [])
         #expect(HomeSummary.metrics(fromStored: "dailyCalorieGoal,bodyWeight") == [.dailyCalorieGoal, .bodyWeight])
-        #expect(HomeSummary.metrics(fromStored: "height,height,unknown,bodyWeight") == [.height, .bodyWeight])
         let choice: [SummaryMetric] = [.height, .dailyCalorieGoal]
         #expect(HomeSummary.metrics(fromStored: HomeSummary.storedValue(for: choice)) == choice)
+    }
+
+    @Test("An empty or entirely invalid saved value shows the defaults")
+    func invalidSavedValue() {
+        #expect(HomeSummary.metrics(fromStored: "") == HomeSummary.defaultMetrics)
+        #expect(HomeSummary.metrics(fromStored: "abc") == HomeSummary.defaultMetrics)
+        #expect(HomeSummary.metrics(fromStored: "unknown,,other") == HomeSummary.defaultMetrics)
+    }
+
+    @Test("Unknown entries are ignored when known ones are saved with them")
+    func partlyInvalidSavedValue() {
+        #expect(HomeSummary.metrics(fromStored: "unknown,height,abc,bodyWeight") == [.height, .bodyWeight])
+    }
+
+    @Test("Repeated entries are kept once")
+    func repeatedEntries() {
+        #expect(HomeSummary.metrics(fromStored: "height,height,bodyWeight,height") == [.height, .bodyWeight])
+    }
+
+    @Test("At most three indicators are kept")
+    func atMostThree() {
+        let stored = "dailyCalorieGoal,height,bodyWeight,dailyCalorieGoal,height"
+        #expect(HomeSummary.metrics(fromStored: stored) == [.dailyCalorieGoal, .height, .bodyWeight])
+    }
+
+    @Test("Choosing no indicators is saved explicitly and shows none")
+    func noIndicators() {
+        #expect(HomeSummary.storedValue(for: []) == HomeSummary.noMetricsStoredValue)
+        #expect(HomeSummary.metrics(fromStored: HomeSummary.noMetricsStoredValue) == [])
+        #expect(HomeSummary.metrics(fromStored: HomeSummary.storedValue(for: [])) == [])
     }
 
     @Test("Toggling removes a shown indicator or adds it last")
