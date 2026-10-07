@@ -52,7 +52,7 @@ enum SessionFormatting {
         let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
         let dayStyle = Date.FormatStyle.dateTime.day().month(.wide).locale(locale)
         let day = date.formatted(sameYear ? dayStyle : dayStyle.year())
-        let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
+        let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
         return "\(day), \(time)"
     }
 

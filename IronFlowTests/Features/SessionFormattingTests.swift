@@ -35,6 +35,8 @@ struct SessionFormattingTests {
         let nextYear = try #require(calendar.date(from: DateComponents(year: 2027, month: 1, day: 2)))
         #expect(SessionFormatting.dateText(date, now: sameYear, calendar: calendar) == "4 de outubro, 19:30")
         #expect(SessionFormatting.dateText(date, now: nextYear, calendar: calendar) == "4 de outubro de 2026, 19:30")
+        let early = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 7, minute: 5)))
+        #expect(SessionFormatting.dateText(early, now: sameYear, calendar: calendar) == "4 de outubro, 07:05")
     }
 
     @Test("Summary counts completed work, with singular forms")
