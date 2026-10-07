@@ -91,10 +91,12 @@ struct ProfileServiceTests {
             try service.setDailyCalorieGoal(2_300)
         } read: { context in
             let service = ProfileService(context: context)
-            #expect(try count(BodyWeightEntry.self, in: context) == 2)
+            let weightCount = try count(BodyWeightEntry.self, in: context)
+            let profile = try #require(try service.profile())
+            #expect(weightCount == 2)
             #expect(try service.latestWeight()?.weightKg == 80.25)
-            #expect(try service.profile()?.heightCm == 180)
-            #expect(try service.profile()?.dailyCalorieGoalKcal == 2_300)
+            #expect(profile.heightCm == 180)
+            #expect(profile.dailyCalorieGoalKcal == 2_300)
         }
     }
 }
