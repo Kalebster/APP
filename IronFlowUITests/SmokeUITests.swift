@@ -1,6 +1,6 @@
 import XCTest
 
-/// Smoke test: the app launches and each of the four main tabs opens its screen.
+/// Smoke test: the app launches and each of the five main tabs opens its screen.
 final class SmokeUITests: XCTestCase {
     @MainActor
     func testLaunchAndOpenEachTab() throws {
@@ -11,6 +11,7 @@ final class SmokeUITests: XCTestCase {
             ("Treinos", "tab.workouts.root"),
             ("Exercícios", "tab.exercises.root"),
             ("Histórico", "tab.history.root"),
+            ("Ajustes", "tab.settings.root"),
         ]
 
         let app = XCUIApplication()

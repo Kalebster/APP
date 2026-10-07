@@ -53,14 +53,18 @@ final class WorkoutUITests: XCTestCase {
         add.tap()
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        var previous = ""
         for name in names {
+            // The search field's clear button (shown while editing) empties it wherever the tap
+            // left the cursor.
             search.tap()
-            search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + name)
+            let clear = search.buttons.firstMatch
+            if clear.exists {
+                clear.tap()
+            }
+            search.typeText(name)
             let row = app.buttons[name]
             XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
             row.tap()
-            previous = name
         }
         let confirm = app.buttons["picker.add"]
         XCTAssertTrue(confirm.isEnabled, "Add button disabled after selecting exercises")

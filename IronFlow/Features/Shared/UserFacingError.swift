@@ -48,6 +48,12 @@ enum UserFacingError {
             String(localized: "A carga pode ser no máximo \(PlannedSetFormatting.weightText(Validation.maxPlannedWeightKg)).")
         case .invalidReps:
             String(localized: "As repetições devem ser maiores que zero.")
+        case .invalidBodyWeight:
+            String(localized: "Informe um peso entre \(HomeSummary.weightText(Validation.bodyWeightRangeKg.lowerBound)) e \(HomeSummary.weightText(Validation.bodyWeightRangeKg.upperBound)), com até duas casas decimais.")
+        case .invalidHeight:
+            String(localized: "Informe uma altura entre \(HomeSummary.heightText(Validation.heightRangeCm.lowerBound)) e \(HomeSummary.heightText(Validation.heightRangeCm.upperBound)), em número inteiro.")
+        case .invalidCalorieGoal:
+            String(localized: "Informe uma meta entre \(HomeSummary.calorieText(Validation.dailyCalorieGoalRangeKcal.lowerBound)) e \(HomeSummary.calorieText(Validation.dailyCalorieGoalRangeKcal.upperBound)), em número inteiro.")
         }
     }
 

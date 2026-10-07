@@ -97,13 +97,22 @@
     "Adicione exercícios ao treino" : {
 
     },
+    "Ajustes" : {
+
+    },
     "Algo deu errado. Tente novamente." : {
+
+    },
+    "Altura" : {
 
     },
     "Antebraços" : {
 
     },
     "Arquivado" : {
+
+    },
+    "As opções do app chegarão em breve." : {
 
     },
     "As repetições devem ser maiores que zero." : {
@@ -127,6 +136,9 @@
     "Bíceps" : {
 
     },
+    "Cada novo peso fica registrado com a data de hoje." : {
+
+    },
     "Cancelar" : {
 
     },
@@ -146,6 +158,12 @@
 
     },
     "Criar treino" : {
+
+    },
+    "Escolha até %lld indicadores em Personalizar." : {
+
+    },
+    "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
 
     },
     "Este exercício está arquivado e não pode ser adicionado." : {
@@ -181,22 +199,34 @@
     "Informe um nome." : {
 
     },
+    "Informe um peso entre %@ e %@, com até duas casas decimais." : {
+
+    },
+    "Informe uma altura entre %@ e %@, em número inteiro." : {
+
+    },
+    "Informe uma meta entre %@ e %@, em número inteiro." : {
+
+    },
+    "Iniciado em %@, às %@" : {
+
+    },
+    "Iniciado às %@" : {
+
+    },
     "Início" : {
 
     },
-    "Iron Flow" : {
+    "Já existe um exercício com esse nome." : {
 
     },
-    "Já existe um exercício com esse nome." : {
+    "Meta diária" : {
 
     },
     "Máximo" : {
 
     },
     "Mínimo" : {
-
-    },
-    "Nada por aqui ainda." : {
 
     },
     "Nenhum exercício" : {
@@ -206,6 +236,9 @@
 
     },
     "Nenhum treino ainda" : {
+
+    },
+    "Nenhum treino planejado para hoje." : {
 
     },
     "Nenhum treino realizado" : {
@@ -277,6 +310,12 @@
     "Personalizado" : {
 
     },
+    "Personalizar" : {
+
+    },
+    "Peso corporal" : {
+
+    },
     "Posteriores de coxa" : {
 
     },
@@ -301,6 +340,9 @@
     "Repetições" : {
 
     },
+    "Resumo rápido" : {
+
+    },
     "Salvar" : {
 
     },
@@ -322,6 +364,15 @@
     "Tentar novamente" : {
 
     },
+    "Treino de hoje" : {
+
+    },
+    "Treino em andamento" : {
+
+    },
+    "Treino livre" : {
+
+    },
     "Treinos" : {
 
     },
@@ -332,6 +383,12 @@
 
     },
     "Um exercício deste treino não existe mais." : {
+
+    },
+    "Valor" : {
+
+    },
+    "Você ainda não tem treinos." : {
 
     }
   },

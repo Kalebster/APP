@@ -16,6 +16,12 @@ enum ValidationError: Error, Equatable {
     /// More load than a planned set allows.
     case weightTooHigh
     case invalidReps
+    /// A body weight outside the allowed range or with more than two decimal places.
+    case invalidBodyWeight
+    /// A height that is not a whole number of centimeters within the allowed range.
+    case invalidHeight
+    /// A daily calorie goal that is not a whole number of kilocalories within the allowed range.
+    case invalidCalorieGoal
 }
 
 /// An exercise operation that the business rules do not allow.

@@ -5,18 +5,21 @@ import Testing
 
 @MainActor
 struct ModelContainerFactoryTests {
-    @Test("Store uses schema V1 with exactly the seven models")
-    func schemaV1() throws {
+    @Test("Store uses schema V2: the seven V1 models plus the body data models")
+    func schemaV2() throws {
         let container = try ModelContainerFactory.makeInMemory()
 
         let entityNames = Set(container.schema.entities.map(\.name))
         #expect(entityNames == [
             "Exercise", "Workout", "WorkoutExercise", "PlannedSet",
             "Session", "SessionExercise", "SetLog",
+            "BodyWeightEntry", "UserProfile",
         ])
+        #expect(Set(SchemaV1.models.map { ObjectIdentifier($0) }).isSubset(of: Set(SchemaV2.models.map { ObjectIdentifier($0) })))
         #expect(SchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
-        #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [ObjectIdentifier(SchemaV1.self)])
-        #expect(IronFlowMigrationPlan.stages.isEmpty)
+        #expect(SchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
+        #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [ObjectIdentifier(SchemaV1.self), ObjectIdentifier(SchemaV2.self)])
+        #expect(IronFlowMigrationPlan.stages.count == 1)
     }
 
     @Test("In-memory stores are isolated from each other")

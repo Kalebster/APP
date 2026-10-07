@@ -1,22 +1,18 @@
 import SwiftData
 import SwiftUI
 
-/// The app's main navigation: four tabs.
+/// The app's main navigation: five tabs.
 ///
-/// Tabs without a real screen yet show an empty-state placeholder, replaced in later stages.
+/// Tabs without a real screen yet show a simple placeholder, replaced in later stages.
 struct RootView: View {
     var body: some View {
         TabView {
             Tab("Início", systemImage: "house") {
                 NavigationStack {
-                    ContentUnavailableView(
-                        "Iron Flow",
-                        systemImage: "house",
-                        description: Text("Nada por aqui ainda.")
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityIdentifier("tab.home.root")
-                    .navigationTitle("Início")
+                    HomeView()
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("tab.home.root")
+                        .navigationTitle("Início")
                 }
             }
 
@@ -48,6 +44,15 @@ struct RootView: View {
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("tab.history.root")
                     .navigationTitle("Histórico")
+                }
+            }
+
+            Tab("Ajustes", systemImage: "gearshape") {
+                NavigationStack {
+                    SettingsView()
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("tab.settings.root")
+                        .navigationTitle("Ajustes")
                 }
             }
         }
