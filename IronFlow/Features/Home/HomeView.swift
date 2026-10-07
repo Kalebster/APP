@@ -98,7 +98,9 @@ struct HomeView: View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(spacing: Theme.Metrics.cardSpacing) { cards }
         } else {
+            // Cards in a row share the height of the tallest one.
             HStack(alignment: .top, spacing: Theme.Metrics.cardSpacing) { cards }
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -186,9 +188,10 @@ private struct SummaryMetricCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center) {
                 Image(systemName: metric.systemImage)
                     .font(.title3)
+                    .frame(height: 28)
                     .foregroundStyle(metric == .dailyCalorieGoal ? Color.accentColor : Color.secondary)
                 Spacer(minLength: 4)
                 if valueText == nil {
@@ -207,9 +210,10 @@ private struct SummaryMetricCard: View {
                 Text(metric.title)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(2, reservesSpace: true)
             }
         }
+        .frame(maxHeight: .infinity, alignment: .topLeading)
         .cardStyle()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: metric.title)), \(valueText ?? String(localized: "Adicionar"))"))
