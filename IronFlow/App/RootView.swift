@@ -7,7 +7,8 @@ import SwiftUI
 /// bar, and the session screen opens over the tabs.
 struct RootView: View {
     @Query(SessionService.activeSessionsDescriptor) private var activeSessions: [Session]
-    @State private var isSessionOpen = false
+    /// The session shown over the tabs; `nil` while it is minimized or when none is in progress.
+    @State private var openedSession: Session?
 
     var body: some View {
         // Normally at most one; should there be more, the most recent is shown first.
@@ -21,7 +22,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.home.root")
                         .navigationTitle("Início")
                 }
-                .activeSessionBar(currentSession, open: openSession)
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Treinos", systemImage: "list.bullet.rectangle") {
@@ -31,7 +32,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.workouts.root")
                         .navigationTitle("Treinos")
                 }
-                .activeSessionBar(currentSession, open: openSession)
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Exercícios", systemImage: "dumbbell") {
@@ -41,7 +42,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.exercises.root")
                         .navigationTitle("Exercícios")
                 }
-                .activeSessionBar(currentSession, open: openSession)
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Histórico", systemImage: "clock.arrow.circlepath") {
@@ -51,7 +52,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.history.root")
                         .navigationTitle("Histórico")
                 }
-                .activeSessionBar(currentSession, open: openSession)
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Ajustes", systemImage: "gearshape") {
@@ -61,26 +62,25 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.settings.root")
                         .navigationTitle("Ajustes")
                 }
-                .activeSessionBar(currentSession, open: openSession)
+                .activeSessionBar(currentSession) { openSession() }
             }
         }
-        .fullScreenCover(isPresented: $isSessionOpen) {
-            if let currentSession {
-                SessionView(session: currentSession) {
-                    isSessionOpen = false
-                }
-                .id(currentSession.id)
+        .fullScreenCover(item: $openedSession) { session in
+            SessionView(session: session) {
+                openedSession = nil
             }
         }
-        .onChange(of: currentSession == nil) { _, hasNoSession in
-            if hasNoSession {
-                isSessionOpen = false
+        // A session finished or discarded elsewhere is never left on screen.
+        .onChange(of: activeSessions.map(\.id)) { _, activeIDs in
+            if let openedSession, !activeIDs.contains(openedSession.id) {
+                self.openedSession = nil
             }
         }
     }
 
-    private func openSession() {
-        isSessionOpen = true
+    /// Opens `session` over the tabs, or else the session in progress; nothing happens when there is none.
+    private func openSession(_ session: Session? = nil) {
+        openedSession = session ?? activeSessions.first
     }
 }
 
@@ -89,7 +89,11 @@ private extension View {
     func activeSessionBar(_ session: Session?, open: @escaping @MainActor () -> Void) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             if let session {
-                ActiveSessionBar(session: session, onOpen: open)
+                ActiveSessionBar(
+                    name: SessionFormatting.name(session.workoutNameSnapshot),
+                    startedAt: session.startedAt,
+                    onOpen: open
+                )
             }
         }
     }

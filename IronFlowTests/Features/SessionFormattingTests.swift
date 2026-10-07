@@ -27,10 +27,14 @@ struct SessionFormattingTests {
         #expect(SessionFormatting.durationText(65 * 60) == "1 h 05 min")
     }
 
-    @Test("Date and time in Brazilian Portuguese")
+    @Test("Date and time in Brazilian Portuguese, with the year only for another year")
     func date() throws {
-        let date = try #require(Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 19, minute: 30)))
-        #expect(SessionFormatting.dateText(date) == "4 de outubro, 19:30")
+        let calendar = Calendar.current
+        let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 19, minute: 30)))
+        let sameYear = try #require(calendar.date(from: DateComponents(year: 2026, month: 12, day: 1)))
+        let nextYear = try #require(calendar.date(from: DateComponents(year: 2027, month: 1, day: 2)))
+        #expect(SessionFormatting.dateText(date, now: sameYear, calendar: calendar) == "4 de outubro, 19:30")
+        #expect(SessionFormatting.dateText(date, now: nextYear, calendar: calendar) == "4 de outubro de 2026, 19:30")
     }
 
     @Test("Summary counts completed work, with singular forms")
@@ -65,9 +69,9 @@ struct SessionFormattingTests {
 
     @Test("Unreadable values are rejected with the matching error")
     func invalidValues() {
-        #expect(throws: ValidationError.invalidReps) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "1,5")) }
-        #expect(throws: ValidationError.invalidReps) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "abc")) }
-        #expect(throws: ValidationError.invalidReps) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "99999999999999999999")) }
+        #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "1,5")) }
+        #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "abc")) }
+        #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "99999999999999999999")) }
         #expect(throws: ValidationError.invalidWeight) { try SessionFormatting.values(of: SetDraft(weight: "abc", reps: "")) }
         #expect(throws: PlannedSetInputError.thousandsSeparator) { try SessionFormatting.values(of: SetDraft(weight: "1.000", reps: "")) }
     }

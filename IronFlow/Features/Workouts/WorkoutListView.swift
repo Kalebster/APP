@@ -4,8 +4,8 @@ import SwiftUI
 /// The Workouts tab: one card per planned workout. Creating a workout opens its editor;
 /// "Iniciar" starts a session from it.
 struct WorkoutListView: View {
-    /// Opens the session in progress over the tabs.
-    let openSession: @MainActor () -> Void
+    /// Opens the given session over the tabs, or the one in progress when `nil`.
+    let openSession: @MainActor (Session?) -> Void
 
     @Query(sort: [SortDescriptor(\Workout.createdAt), SortDescriptor(\Workout.name)]) private var workouts: [Workout]
     @Environment(\.modelContext) private var context
@@ -65,7 +65,9 @@ struct WorkoutListView: View {
             WorkoutEditorView(workout: workout)
         }
         .alert("Você já tem um treino em andamento.", isPresented: $isSessionInProgress) {
-            Button("Continuar treino atual", action: openSession)
+            Button("Continuar treino atual") {
+                openSession(nil)
+            }
             Button("Cancelar", role: .cancel) {}
         } message: {
             Text("Conclua ou descarte o treino atual antes de iniciar outro.")
@@ -75,8 +77,8 @@ struct WorkoutListView: View {
 
     private func start(_ workout: Workout) {
         do {
-            try SessionService(context: context).startSession(from: workout)
-            openSession()
+            let session = try SessionService(context: context).startSession(from: workout)
+            openSession(session)
         } catch SessionError.activeSessionExists {
             isSessionInProgress = true
         } catch {

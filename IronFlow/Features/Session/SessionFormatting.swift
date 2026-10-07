@@ -47,9 +47,11 @@ enum SessionFormatting {
         return String(localized: "\(hours) h \(String(format: "%02ld", rest)) min")
     }
 
-    /// "7 de outubro, 19:30".
-    static func dateText(_ date: Date) -> String {
-        let day = date.formatted(.dateTime.day().month(.wide).locale(locale))
+    /// "7 de outubro, 19:30"; the year is added for another year: "7 de outubro de 2025, 19:30".
+    static func dateText(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
+        let dayStyle = Date.FormatStyle.dateTime.day().month(.wide).locale(locale)
+        let day = date.formatted(sameYear ? dayStyle : dayStyle.year())
         let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
         return "\(day), \(time)"
     }
@@ -81,14 +83,17 @@ enum SessionFormatting {
         SetDraft(weight: PlannedSetFormatting.weightFieldText(weightKg), reps: reps.map { String($0) } ?? "")
     }
 
-    /// Reads a draft. Empty fields have no value. The load follows the planned load reading
-    /// (decimal comma or dot); repetitions are a whole number. Range rules are checked by the service.
+    /// Reads a draft. Empty fields have no value. The load and the repetitions are read like the
+    /// planned ones (decimal comma or dot; whole repetitions); range rules are checked by the service.
+    /// Repetitions that are not a whole number, or too large to store, throw
+    /// `PlannedSetInputError.repsRequired`.
     static func values(of draft: SetDraft) throws -> SetValues {
         let weightKg = try PlannedSetFormatting.weightKg(draft.weight)
-        let repsText = draft.reps.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !repsText.isEmpty else { return SetValues(weightKg: weightKg, reps: nil) }
-        guard repsText.allSatisfy({ $0.isASCII && $0.isNumber }), let reps = Int(repsText) else {
-            throw ValidationError.invalidReps
+        guard !draft.reps.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return SetValues(weightKg: weightKg, reps: nil)
+        }
+        guard let reps = PlannedSetFormatting.reps(draft.reps), reps != Int.max else {
+            throw PlannedSetInputError.repsRequired
         }
         return SetValues(weightKg: weightKg, reps: reps)
     }

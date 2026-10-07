@@ -17,6 +17,8 @@ struct SessionView: View {
     @FocusState private var focusedField: SetField?
     @State private var isPickingExercises = false
     @State private var isConfirmingFinish = false
+    /// Sets not completed when "Concluir" was tapped, for the confirmation message.
+    @State private var notCompletedCount = 0
     @State private var isConfirmingDiscard = false
     /// Set once the session is finished or discarded, so the view stops reading it.
     @State private var isClosed = false
@@ -36,7 +38,6 @@ struct SessionView: View {
 
     private var content: some View {
         let exercises = session.orderedExercises
-        let notCompletedCount = exercises.reduce(0) { $0 + $1.setLogs.filter { !$0.isCompleted }.count }
 
         return NavigationStack {
             ScrollView {
@@ -181,22 +182,32 @@ struct SessionView: View {
     }
 
     /// Saves the typed values of a set, if they changed. Invalid values are not saved: the field
-    /// shows the stored value again and the problem is reported.
-    private func commit(_ logID: UUID) {
-        guard let draft = drafts.removeValue(forKey: logID), let log = setLog(id: logID) else { return }
+    /// shows the stored value again and the problem is reported. Returns whether nothing failed.
+    @discardableResult
+    private func commit(_ logID: UUID) -> Bool {
+        guard let draft = drafts.removeValue(forKey: logID), let log = setLog(id: logID) else { return true }
         do {
             let values = try SessionFormatting.values(of: draft)
-            guard values.weightKg != log.weightKg || values.reps != log.reps else { return }
+            guard values.weightKg != log.weightKg || values.reps != log.reps else { return true }
             try service.updateSetValues(log, weightKg: values.weightKg, reps: values.reps)
+            return true
         } catch {
             errorMessage = UserFacingError.message(for: error)
+            return false
         }
     }
 
-    private func commitAll() {
+    /// Saves every typed value. Returns whether nothing failed, so a failure is shown before the
+    /// screen closes or the session is finished.
+    @discardableResult
+    private func commitAll() -> Bool {
+        var succeeded = true
         for logID in Array(drafts.keys) {
-            commit(logID)
+            if !commit(logID) {
+                succeeded = false
+            }
         }
+        return succeeded
     }
 
     // MARK: - Actions
@@ -237,19 +248,20 @@ struct SessionView: View {
 
     private func minimize() {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         onClose()
     }
 
     private func requestFinish() {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         let logs = session.exercises.flatMap(\.setLogs)
         guard logs.contains(where: \.isCompleted) else {
             errorMessage = UserFacingError.message(for: SessionError.noCompletedSets)
             return
         }
-        if logs.contains(where: { !$0.isCompleted }) {
+        notCompletedCount = logs.filter { !$0.isCompleted }.count
+        if notCompletedCount > 0 {
             isConfirmingFinish = true
         } else {
             finish()
@@ -267,10 +279,10 @@ struct SessionView: View {
     }
 
     private func discard() {
-        drafts = [:]
         isClosed = true
         do {
             try service.discardSession(session)
+            drafts = [:]
             onClose()
         } catch {
             isClosed = false

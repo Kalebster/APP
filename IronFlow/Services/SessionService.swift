@@ -230,7 +230,7 @@ struct SessionService {
 
     /// Only one session can be in progress; any session still open blocks a new one.
     private func ensureNoActiveSession() throws {
-        var descriptor = FetchDescriptor<Session>(predicate: #Predicate { $0.endedAt == nil })
+        var descriptor = Self.activeSessionsDescriptor
         descriptor.fetchLimit = 1
         guard try context.fetchCount(descriptor) == 0 else { throw SessionError.activeSessionExists }
     }

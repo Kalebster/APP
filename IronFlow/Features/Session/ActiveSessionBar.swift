@@ -2,8 +2,12 @@ import SwiftUI
 
 /// Shown above the tab bar while a session is in progress: its name and time, and tapping it
 /// opens the session again.
+///
+/// It takes plain values, not the session itself, so its clock never reads a session that was
+/// just finished or discarded.
 struct ActiveSessionBar: View {
-    let session: Session
+    let name: String
+    let startedAt: Date
     let onOpen: @MainActor () -> Void
 
     var body: some View {
@@ -16,8 +20,8 @@ struct ActiveSessionBar: View {
                     Text("Treino em andamento")
                         .font(.caption.weight(.semibold))
                         .opacity(0.85)
-                    TimelineView(.periodic(from: session.startedAt, by: 1)) { timeline in
-                        Text(verbatim: "\(SessionFormatting.name(session.workoutNameSnapshot)) · \(SessionFormatting.elapsedText(from: session.startedAt, to: timeline.date))")
+                    TimelineView(.periodic(from: startedAt, by: 1)) { timeline in
+                        Text(verbatim: "\(name) · \(SessionFormatting.elapsedText(from: startedAt, to: timeline.date))")
                             .font(.subheadline.weight(.semibold).monospacedDigit())
                             .lineLimit(1)
                     }
