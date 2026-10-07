@@ -8,8 +8,13 @@ enum UserFacingError {
             message(for: error)
         case let error as WorkoutError:
             message(for: error)
-        case is PlannedSetInputError:
-            String(localized: "Informe as repetições com números inteiros.")
+        case let error as PlannedSetInputError:
+            switch error {
+            case .repsRequired:
+                String(localized: "Informe as repetições com números inteiros.")
+            case .thousandsSeparator:
+                String(localized: "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais.")
+            }
         case is SaveError:
             String(localized: "Não foi possível salvar. Nenhuma alteração foi feita.")
         default:

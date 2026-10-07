@@ -46,12 +46,16 @@ struct PlannedSetFormattingTests {
         #expect(try PlannedSetFormatting.weightKg("82.5") == 82.5)
         #expect(try PlannedSetFormatting.weightKg(" 82, ") == 82)
         #expect(try PlannedSetFormatting.weightKg("0") == 0)
+        #expect(try PlannedSetFormatting.weightKg("1000") == 1_000)
         for invalid in ["abc", "1,2,3", "1.2,3", "-5", ",5", "8 2", "82kg"] {
             #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.weightKg(invalid) }
         }
-        // A grouped number is never read as a decimal load.
-        for grouped in ["1.000", "1.500", "82,505"] {
-            #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetFormatting.weightKg(grouped) }
+        // The separator is only for decimals: a thousands separator is reported, never read as a smaller load.
+        for grouped in ["1.000", "1,000", "1.500", "12,500"] {
+            #expect(throws: PlannedSetInputError.thousandsSeparator) { try PlannedSetFormatting.weightKg(grouped) }
+        }
+        for tooPrecise in ["1,0000", "82.5055"] {
+            #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetFormatting.weightKg(tooPrecise) }
         }
     }
 
@@ -67,6 +71,8 @@ struct PlannedSetFormattingTests {
         #expect(throws: ValidationError.invalidRepsMin) { try PlannedSetFormatting.values(repsMin: "0", repsMax: "8", weight: "") }
         #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "abc") }
         #expect(throws: ValidationError.weightTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1001") }
-        #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1,005") }
+        #expect(try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1000") == .reps(8, 12, kg: 1_000))
+        #expect(throws: PlannedSetInputError.thousandsSeparator) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1.000") }
+        #expect(throws: PlannedSetInputError.thousandsSeparator) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1,000") }
     }
 }
