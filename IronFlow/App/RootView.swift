@@ -3,9 +3,17 @@ import SwiftUI
 
 /// The app's main navigation: five tabs.
 ///
-/// Tabs without a real screen yet show a simple placeholder, replaced in later stages.
+/// While a session is in progress, every tab shows the "Treino em andamento" bar above the tab
+/// bar, and the session screen opens over the tabs.
 struct RootView: View {
+    @Query(SessionService.activeSessionsDescriptor) private var activeSessions: [Session]
+    /// The session shown over the tabs; `nil` while it is minimized or when none is in progress.
+    @State private var openedSession: Session?
+
     var body: some View {
+        // Normally at most one; should there be more, the most recent is shown first.
+        let currentSession = activeSessions.first
+
         TabView {
             Tab("Início", systemImage: "house") {
                 NavigationStack {
@@ -14,15 +22,17 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.home.root")
                         .navigationTitle("Início")
                 }
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Treinos", systemImage: "list.bullet.rectangle") {
                 NavigationStack {
-                    WorkoutListView()
+                    WorkoutListView(openSession: openSession)
                         .accessibilityElement(children: .contain)
                         .accessibilityIdentifier("tab.workouts.root")
                         .navigationTitle("Treinos")
                 }
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Exercícios", systemImage: "dumbbell") {
@@ -32,19 +42,17 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.exercises.root")
                         .navigationTitle("Exercícios")
                 }
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Histórico", systemImage: "clock.arrow.circlepath") {
                 NavigationStack {
-                    ContentUnavailableView(
-                        "Nenhum treino realizado",
-                        systemImage: "clock.arrow.circlepath",
-                        description: Text("Seus treinos concluídos aparecerão aqui.")
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityIdentifier("tab.history.root")
-                    .navigationTitle("Histórico")
+                    HistoryView()
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("tab.history.root")
+                        .navigationTitle("Histórico")
                 }
+                .activeSessionBar(currentSession) { openSession() }
             }
 
             Tab("Ajustes", systemImage: "gearshape") {
@@ -54,6 +62,38 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.settings.root")
                         .navigationTitle("Ajustes")
                 }
+                .activeSessionBar(currentSession) { openSession() }
+            }
+        }
+        .fullScreenCover(item: $openedSession) { session in
+            SessionView(session: session) {
+                openedSession = nil
+            }
+        }
+        // A session finished or discarded elsewhere is never left on screen.
+        .onChange(of: activeSessions.map(\.id)) { _, activeIDs in
+            if let openedSession, !activeIDs.contains(openedSession.id) {
+                self.openedSession = nil
+            }
+        }
+    }
+
+    /// Opens `session` over the tabs, or else the session in progress; nothing happens when there is none.
+    private func openSession(_ session: Session? = nil) {
+        openedSession = session ?? activeSessions.first
+    }
+}
+
+private extension View {
+    /// The "Treino em andamento" bar above the tab bar, while `session` is in progress.
+    func activeSessionBar(_ session: Session?, open: @escaping @MainActor () -> Void) -> some View {
+        safeAreaInset(edge: .bottom, spacing: 0) {
+            if let session {
+                ActiveSessionBar(
+                    name: SessionFormatting.name(session.workoutNameSnapshot),
+                    startedAt: session.startedAt,
+                    onOpen: open
+                )
             }
         }
     }

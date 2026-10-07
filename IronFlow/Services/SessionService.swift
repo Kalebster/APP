@@ -24,11 +24,20 @@ struct SessionService {
         return sessions.first
     }
 
+    /// Sessions in progress, the most recently started first. Normally at most one; should the
+    /// store ever hold more, the screens show the first and the next once it is finished or discarded.
+    nonisolated static var activeSessionsDescriptor: FetchDescriptor<Session> {
+        FetchDescriptor<Session>(
+            predicate: #Predicate { $0.endedAt == nil },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
+        )
+    }
+
     /// Starts a session from a workout, copying names, muscle groups, order and targets.
     /// Later changes to the workout do not affect the session.
     @discardableResult
     func startSession(from workout: Workout) throws -> Session {
-        guard try activeSession() == nil else { throw SessionError.activeSessionExists }
+        try ensureNoActiveSession()
 
         let items = workout.orderedExercises
         guard !items.isEmpty else { throw WorkoutError.workoutHasNoExercises }
@@ -77,6 +86,70 @@ struct SessionService {
 
         try context.saveOrRollback()
         return session
+    }
+
+    /// Starts a session without a planned workout ("treino livre"); exercises are added during it.
+    @discardableResult
+    func startFreeSession() throws -> Session {
+        try ensureNoActiveSession()
+
+        let timestamp = now()
+        let session = Session(startedAt: timestamp, workoutNameSnapshot: "")
+        session.createdAt = timestamp
+        session.updatedAt = timestamp
+        context.insert(session)
+        try context.saveOrRollback()
+        return session
+    }
+
+    /// Appends exercises to the active session, in the given order, each with one empty set.
+    ///
+    /// Changes only the session: the planned workout is never touched. An exercise cannot be in
+    /// the session twice and an archived exercise cannot be added. All or nothing.
+    @discardableResult
+    func addExercises(_ exercises: [Exercise], to session: Session) throws -> [SessionExercise] {
+        guard session.isActive else { throw SessionError.sessionNotActive }
+        var usedIDs = Set(session.exercises.compactMap { $0.exercise?.id })
+        for exercise in exercises {
+            guard !exercise.isArchived else { throw WorkoutError.exerciseArchived }
+            guard usedIDs.insert(exercise.id).inserted else { throw WorkoutError.exerciseAlreadyInWorkout }
+        }
+        guard !exercises.isEmpty else { return [] }
+
+        let timestamp = now()
+        let firstIndex = session.exercises.count
+        let added = exercises.enumerated().map { offset, exercise in
+            let performed = SessionExercise(
+                sortIndex: firstIndex + offset,
+                exerciseNameSnapshot: exercise.name,
+                muscleGroupSnapshot: exercise.muscleGroup
+            )
+            performed.createdAt = timestamp
+            performed.updatedAt = timestamp
+            context.insert(performed)
+            performed.session = session
+            performed.exercise = exercise
+            makeSetLog(sortIndex: 0, copying: nil, at: timestamp).sessionExercise = performed
+            return performed
+        }
+        session.updatedAt = timestamp
+        try context.saveOrRollback()
+        return added
+    }
+
+    /// Appends a set to a performed exercise of the active session, with the load and targets of
+    /// its last set and no repetitions. Changes only the session, never the planned workout.
+    @discardableResult
+    func addSetCopyingLast(to performed: SessionExercise) throws -> SetLog {
+        guard let session = performed.session, session.isActive else { throw SessionError.sessionNotActive }
+
+        let timestamp = now()
+        let log = makeSetLog(sortIndex: performed.setLogs.count, copying: performed.orderedSetLogs.last, at: timestamp)
+        log.sessionExercise = performed
+        performed.updatedAt = timestamp
+        session.updatedAt = timestamp
+        try context.saveOrRollback()
+        return log
     }
 
     /// Edits the values of a set without changing whether it is completed.
@@ -154,6 +227,29 @@ struct SessionService {
     }
 
     // MARK: - Private
+
+    /// Only one session can be in progress; any session still open blocks a new one.
+    private func ensureNoActiveSession() throws {
+        var descriptor = Self.activeSessionsDescriptor
+        descriptor.fetchLimit = 1
+        guard try context.fetchCount(descriptor) == 0 else { throw SessionError.activeSessionExists }
+    }
+
+    /// A new, not completed set: the load and targets of `previous` when given, otherwise empty.
+    private func makeSetLog(sortIndex: Int, copying previous: SetLog?, at timestamp: Date) -> SetLog {
+        let log = SetLog(
+            sortIndex: sortIndex,
+            weightKg: previous?.weightKg,
+            reps: nil,
+            targetWeightKg: previous?.targetWeightKg,
+            targetRepsMin: previous?.targetRepsMin,
+            targetRepsMax: previous?.targetRepsMax
+        )
+        log.createdAt = timestamp
+        log.updatedAt = timestamp
+        context.insert(log)
+        return log
+    }
 
     private func activeSession(of log: SetLog) throws -> Session {
         guard let session = log.sessionExercise?.session, session.isActive else {

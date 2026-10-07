@@ -5,7 +5,7 @@ import Testing
 struct UserFacingErrorTests {
     private struct UnknownError: Error {}
 
-    @Test("Every validation and workout error has its own message")
+    @Test("Every validation, workout, session and exercise error has its own message")
     func distinctMessages() {
         let errors: [any Error] = [
             ValidationError.emptyName, ValidationError.nameTooLong, ValidationError.duplicateExerciseName,
@@ -17,6 +17,10 @@ struct UserFacingErrorTests {
             WorkoutError.exerciseArchived, WorkoutError.exerciseAlreadyInWorkout, WorkoutError.lastPlannedSet,
             WorkoutError.workoutHasNoExercises, WorkoutError.exerciseMissing, WorkoutError.plannedSetsMissing,
             WorkoutError.invalidPosition,
+            SessionError.activeSessionExists, SessionError.multipleActiveSessions, SessionError.sessionNotActive,
+            SessionError.noCompletedSets, SessionError.repsRequired,
+            ExerciseError.systemExerciseNotEditable, ExerciseError.systemExerciseNotDeletable,
+            ExerciseError.confirmationRequired(workoutIDs: []),
         ]
 
         let messages = errors.map { UserFacingError.message(for: $0) }
@@ -36,6 +40,15 @@ struct UserFacingErrorTests {
         #expect(UserFacingError.message(for: ValidationError.weightTooHigh) == "A carga pode ser no máximo 1.000 kg.")
         #expect(UserFacingError.message(for: PlannedSetInputError.repsRequired) == "Informe as repetições com números inteiros.")
         #expect(UserFacingError.message(for: PlannedSetInputError.thousandsSeparator) == "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais.")
+    }
+
+    @Test("Specific messages for the errors the session screens show")
+    func sessionMessages() {
+        #expect(UserFacingError.message(for: SessionError.activeSessionExists) == "Você já tem um treino em andamento.")
+        #expect(UserFacingError.message(for: SessionError.noCompletedSets) == "Conclua pelo menos uma série ou descarte o treino.")
+        #expect(UserFacingError.message(for: SessionError.repsRequired) == "Informe as repetições.")
+        #expect(UserFacingError.message(for: SessionError.sessionNotActive) == "Este treino já foi encerrado.")
+        #expect(UserFacingError.message(for: ValidationError.invalidReps) == "As repetições devem ser maiores que zero.")
     }
 
     @Test("Save failures and unknown errors get a generic message")

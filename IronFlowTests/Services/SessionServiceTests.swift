@@ -354,4 +354,159 @@ struct SessionServiceTests {
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.discardSession(session) }
         #expect(try storeCounts(in: harness.context) == before)
     }
+
+    // MARK: - Free sessions and changes during a session
+
+    /// Counts of the planned workout's records, to prove a session change never touches the plan.
+    private func planCounts() throws -> [Int] {
+        [
+            try count(Workout.self, in: harness.context),
+            try count(WorkoutExercise.self, in: harness.context),
+            try count(PlannedSet.self, in: harness.context),
+        ]
+    }
+
+    @Test("A free session starts empty, without a workout")
+    func startFreeSession() throws {
+        let session = try harness.sessions.startFreeSession()
+
+        #expect(session.isActive)
+        #expect(session.startedAt == harness.clock.current)
+        #expect(session.workout == nil)
+        #expect(session.workoutNameSnapshot == "")
+        #expect(session.exercises.isEmpty)
+        #expect(try harness.sessions.activeSession()?.id == session.id)
+    }
+
+    @Test("No session can start while another is in progress, of either kind")
+    func startWhileActive() throws {
+        try harness.sessions.startFreeSession()
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: SessionError.activeSessionExists) { try harness.sessions.startFreeSession() }
+        #expect(throws: SessionError.activeSessionExists) { try harness.sessions.startSession(from: workout) }
+        #expect(try storeCounts(in: harness.context) == before)
+    }
+
+    @Test("With two sessions left open, a new one is refused and the most recent is listed first")
+    func twoActiveSessions() throws {
+        let older = Session(startedAt: harness.clock.current, workoutNameSnapshot: "A")
+        let newer = Session(startedAt: harness.clock.current.addingTimeInterval(60), workoutNameSnapshot: "B")
+        harness.context.insert(older)
+        harness.context.insert(newer)
+        try harness.context.save()
+
+        #expect(throws: SessionError.activeSessionExists) { try harness.sessions.startSession(from: workout) }
+        let listed = try harness.context.fetch(SessionService.activeSessionsDescriptor)
+        #expect(listed.map(\.workoutNameSnapshot) == ["B", "A"])
+
+        // Discarding the shown one leaves the other, which is shown next; nothing else is lost.
+        try harness.sessions.discardSession(newer)
+        #expect(try harness.context.fetch(SessionService.activeSessionsDescriptor).map(\.id) == [older.id])
+    }
+
+    @Test("Exercises added to a session get one empty set and change only the session")
+    func addExercisesToSession() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
+        let plan = try planCounts()
+        harness.clock.advance(by: 30)
+
+        let added = try harness.sessions.addExercises([row], to: session)
+
+        #expect(added.count == 1)
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Supino Reto", "Rosca Direta", "Remada"])
+        #expect(session.orderedExercises.map(\.sortIndex) == [0, 1, 2])
+        let performed = try #require(added.first)
+        #expect(performed.exercise?.id == row.id)
+        #expect(performed.muscleGroupSnapshot == .back)
+        let sets = performed.orderedSetLogs
+        #expect(sets.count == 1)
+        #expect(sets[0].isCompleted == false)
+        #expect(sets[0].reps == nil && sets[0].weightKg == nil && sets[0].targetRepsMax == nil)
+        #expect(session.updatedAt == harness.clock.current)
+        #expect(try planCounts() == plan)
+        #expect(workout.orderedExercises.count == 2)
+    }
+
+    @Test("A free session receives exercises in the chosen order")
+    func addExercisesToFreeSession() throws {
+        let session = try harness.sessions.startFreeSession()
+
+        try harness.sessions.addExercises([curl, bench], to: session)
+
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Rosca Direta", "Supino Reto"])
+        #expect(session.orderedExercises.map(\.sortIndex) == [0, 1])
+    }
+
+    @Test("Adding exercises is all or nothing: repeated or archived exercises change nothing")
+    func addExercisesRules() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
+        let hidden = try harness.exercises.createCustomExercise(name: "Antigo", muscleGroup: .back)
+        try harness.exercises.archive(hidden)
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) { try harness.sessions.addExercises([row, bench], to: session) }
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) { try harness.sessions.addExercises([row, row], to: session) }
+        #expect(throws: WorkoutError.exerciseArchived) { try harness.sessions.addExercises([row, hidden], to: session) }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(harness.context.hasChanges == false)
+        #expect(try harness.sessions.addExercises([], to: session).isEmpty)
+    }
+
+    @Test("A finished session receives no exercises or sets")
+    func changesAfterFinishing() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        try harness.sessions.finishSession(session)
+        let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.addExercises([row], to: session) }
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.addSetCopyingLast(to: session.orderedExercises[0]) }
+        #expect(try storeCounts(in: harness.context) == before)
+    }
+
+    @Test("An added set copies the last set's load and targets, without repetitions, and changes only the session")
+    func addSet() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let performed = session.orderedExercises[0]
+        try harness.sessions.completeSet(performed.orderedSetLogs[1], weightKg: 25, reps: 7)
+        let plan = try planCounts()
+
+        let added = try harness.sessions.addSetCopyingLast(to: performed)
+
+        #expect(performed.orderedSetLogs.map(\.id).last == added.id)
+        #expect(added.sortIndex == 2)
+        #expect(added.weightKg == 25)
+        #expect(added.reps == nil)
+        #expect(added.isCompleted == false)
+        #expect(added.completedAt == nil)
+        #expect(added.targetWeightKg == 22.25)
+        #expect(added.targetRepsMin == 6)
+        #expect(added.targetRepsMax == 8)
+        #expect(try planCounts() == plan)
+        #expect(workout.orderedExercises[0].orderedPlannedSets.count == 2)
+    }
+
+    @Test("A free session with added exercises and sets is kept after the store is reopened")
+    func freeSessionSurvivesReopening() throws {
+        try roundTripThroughDisk { context in
+            let services = ServiceTestHarness(container: context.container)
+            let exercise = try services.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
+            let session = try services.sessions.startFreeSession()
+            let performed = try #require(try services.sessions.addExercises([exercise], to: session).first)
+            try services.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 40, reps: 10)
+            try services.sessions.addSetCopyingLast(to: performed)
+        } read: { context in
+            let session = try #require(try SessionService(context: context).activeSession())
+            let logs = session.orderedExercises[0].orderedSetLogs
+            #expect(session.workout == nil)
+            #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Remada"])
+            #expect(logs.map(\.isCompleted) == [true, false])
+            #expect(logs.map(\.weightKg) == [40, 40])
+            #expect(logs.map(\.reps) == [10, nil])
+        }
+    }
 }

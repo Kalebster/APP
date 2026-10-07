@@ -139,6 +139,19 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertTrue(save.waitForNonExistence(timeout: 10), "Set editor not closed")
     }
 
+    /// Swipes the row to reveal "Remover" and taps it. A swipe made while the list is still
+    /// animating may not open the row, so it is repeated once when the button does not appear.
+    @MainActor
+    private func swipeAndTapRemove(_ row: XCUIElement, in app: XCUIApplication) {
+        let remove = app.buttons["Remover"].firstMatch
+        row.swipeLeft()
+        if !remove.waitForExistence(timeout: 3) {
+            row.swipeLeft()
+        }
+        XCTAssertTrue(remove.waitForExistence(timeout: 5), "\"Remover\" not revealed by the swipe")
+        remove.tap()
+    }
+
     @MainActor
     private func attachScreenshot(named name: String, of app: XCUIApplication) {
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -253,13 +266,11 @@ final class WorkoutUITests: XCTestCase {
         addExercises(["Crossover na Polia", "Barra Fixa"], in: app)
         let rows = exerciseRows(in: app)
 
-        rows.element(boundBy: 0).swipeLeft()
-        app.buttons["Remover"].firstMatch.tap()
+        swipeAndTapRemove(rows.element(boundBy: 0), in: app)
         cancelDialog(confirmLabel: "Remover exercício", in: app)
         XCTAssertEqual(rows.count, 2, "Cancel removed the exercise")
 
-        rows.element(boundBy: 0).swipeLeft()
-        app.buttons["Remover"].firstMatch.tap()
+        swipeAndTapRemove(rows.element(boundBy: 0), in: app)
         let confirm = app.buttons["Remover exercício"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Removal confirmation not shown")
         confirm.tap()
@@ -386,16 +397,14 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertTrue(added.label.contains("40 kg"), "Added set: \(added.label)")
 
         // Removing the second set renumbers the others.
-        sets.element(boundBy: 1).swipeLeft()
-        app.buttons["Remover"].firstMatch.tap()
+        swipeAndTapRemove(sets.element(boundBy: 1), in: app)
         XCTAssertTrue(waitForCount(sets, 3), "Set not removed")
         XCTAssertTrue(sets.element(boundBy: 1).label.contains("Série 2"), "Second set: \(sets.element(boundBy: 1).label)")
         XCTAssertTrue(sets.element(boundBy: 1).label.contains("6–8 reps"), "Second set: \(sets.element(boundBy: 1).label)")
 
         // The last set cannot be removed.
         for expected in [2, 1] {
-            sets.element(boundBy: 0).swipeLeft()
-            app.buttons["Remover"].firstMatch.tap()
+            swipeAndTapRemove(sets.element(boundBy: 0), in: app)
             XCTAssertTrue(waitForCount(sets, expected), "Set not removed")
         }
         XCTAssertTrue(element("exercise.lastSetHint", in: app).waitForExistence(timeout: 10), "Last set hint not shown")
