@@ -63,8 +63,9 @@ enum SessionFormatting {
         if let duration {
             parts.append(durationText(duration))
         }
-        parts.append(exercises == 1 ? String(localized: "1 exercício") : String(localized: "\(exercises) exercícios"))
-        parts.append(sets == 1 ? String(localized: "1 série") : String(localized: "\(sets) séries"))
+        // The catalog gives the singular and plural forms.
+        parts.append(String(localized: "\(exercises) exercícios"))
+        parts.append(String(localized: "\(sets) séries"))
         return parts.joined(separator: " · ")
     }
 

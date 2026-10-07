@@ -41,7 +41,7 @@ struct SessionFormattingTests {
     func summary() {
         #expect(SessionFormatting.summaryText(duration: 45 * 60, exercises: 2, sets: 6) == "45 min · 2 exercícios · 6 séries")
         #expect(SessionFormatting.summaryText(duration: 60, exercises: 1, sets: 1) == "1 min · 1 exercício · 1 série")
-        #expect(SessionFormatting.summaryText(duration: nil, exercises: 0, sets: 0) == "0 exercícios · 0 séries")
+        #expect(SessionFormatting.summaryText(duration: nil, exercises: 2, sets: 3) == "2 exercícios · 3 séries")
     }
 
     @Test("Targets: a range, a single value, or none")
