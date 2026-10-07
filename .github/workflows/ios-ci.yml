@@ -34,7 +34,8 @@ jobs:
   build-and-test:
     name: Build and test (Xcode 26.6, iPhone 17, iOS 26.5)
     runs-on: macos-26
-    timeout-minutes: 30
+    # The interface tests take most of the run; this leaves room as screens are added.
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository

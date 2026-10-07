@@ -23,6 +23,15 @@
         }
       }
     },
+    "%lld h" : {
+
+    },
+    "%lld h %@ min" : {
+
+    },
+    "%lld min" : {
+
+    },
     "%lld reps" : {
       "localizations" : {
         "pt-BR" : {
@@ -67,7 +76,19 @@
         }
       }
     },
+    "%lld séries não foram concluídas e ficarão registradas como não feitas." : {
+
+    },
     "%lld–%lld reps" : {
+
+    },
+    "1 exercício" : {
+
+    },
+    "1 série" : {
+
+    },
+    "1 série não foi concluída e ficará registrada como não feita." : {
 
     },
     "A carga não pode ser negativa." : {
@@ -88,6 +109,9 @@
     "Adicionar (%lld)" : {
 
     },
+    "Adicionar exercício" : {
+
+    },
     "Adicionar exercícios" : {
 
     },
@@ -95,6 +119,9 @@
 
     },
     "Adicione exercícios ao treino" : {
+
+    },
+    "Adicione exercícios para começar." : {
 
     },
     "Ajustes" : {
@@ -145,10 +172,34 @@
     "Carga (kg)" : {
 
     },
+    "Carga da série %lld" : {
+
+    },
     "Carga inválida." : {
 
     },
+    "Conclua ou descarte o treino atual antes de iniciar outro." : {
+
+    },
+    "Conclua pelo menos uma série ou descarte o treino." : {
+
+    },
     "Concluir" : {
+
+    },
+    "Concluir série %lld" : {
+
+    },
+    "Concluir treino" : {
+
+    },
+    "Concluir treino?" : {
+
+    },
+    "Continuar" : {
+
+    },
+    "Continuar treino atual" : {
 
     },
     "Corpo inteiro" : {
@@ -160,6 +211,18 @@
     "Criar treino" : {
 
     },
+    "Descartar" : {
+
+    },
+    "Descartar este treino?" : {
+
+    },
+    "Descartar treino" : {
+
+    },
+    "Desmarcar série %lld" : {
+
+    },
     "Escolha até %lld indicadores em Personalizar." : {
 
     },
@@ -169,7 +232,13 @@
     "Este exercício está arquivado e não pode ser adicionado." : {
 
     },
+    "Este exercício está em uso em treinos. Confirme a remoção." : {
+
+    },
     "Este exercício já está no treino." : {
+
+    },
+    "Este treino já foi encerrado." : {
 
     },
     "Excluir" : {
@@ -187,13 +256,25 @@
     "Exercícios" : {
 
     },
+    "Exercícios padrão não podem ser editados." : {
+
+    },
+    "Exercícios padrão não podem ser excluídos, apenas arquivados." : {
+
+    },
     "Glúteos" : {
 
     },
     "Histórico" : {
 
     },
+    "Há mais de um treino em andamento. Conclua ou descarte o atual." : {
+
+    },
     "Informe as repetições com números inteiros." : {
+
+    },
+    "Informe as repetições." : {
 
     },
     "Informe um nome." : {
@@ -214,13 +295,28 @@
     "Iniciado às %@" : {
 
     },
+    "Iniciar" : {
+
+    },
     "Início" : {
 
     },
     "Já existe um exercício com esse nome." : {
 
     },
+    "kg" : {
+
+    },
+    "Meta" : {
+
+    },
     "Meta diária" : {
+
+    },
+    "Meta: %@" : {
+
+    },
+    "Minimizar" : {
 
     },
     "Máximo" : {
@@ -340,6 +436,12 @@
     "Repetições" : {
 
     },
+    "Repetições da série %lld" : {
+
+    },
+    "Reps" : {
+
+    },
     "Resumo rápido" : {
 
     },
@@ -349,6 +451,9 @@
     "Sem carga" : {
 
     },
+    "Sem meta" : {
+
+    },
     "Seus dados não foram apagados. Feche e abra o app novamente. Se o problema continuar, atualize o app." : {
 
     },
@@ -356,6 +461,9 @@
 
     },
     "Seus treinos concluídos aparecerão aqui." : {
+
+    },
+    "Série" : {
 
     },
     "Série %lld" : {
@@ -379,6 +487,9 @@
     "Tríceps" : {
 
     },
+    "Tudo o que foi registrado neste treino será apagado. O treino planejado não muda." : {
+
+    },
     "Um exercício deste treino está sem séries." : {
 
     },
@@ -389,6 +500,9 @@
 
     },
     "Você ainda não tem treinos." : {
+
+    },
+    "Você já tem um treino em andamento." : {
 
     }
   },

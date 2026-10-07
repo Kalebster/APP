@@ -8,6 +8,10 @@ enum UserFacingError {
             message(for: error)
         case let error as WorkoutError:
             message(for: error)
+        case let error as SessionError:
+            message(for: error)
+        case let error as ExerciseError:
+            message(for: error)
         case let error as PlannedSetInputError:
             switch error {
             case .repsRequired:
@@ -73,6 +77,32 @@ enum UserFacingError {
             String(localized: "Um exercício deste treino está sem séries.")
         case .invalidPosition:
             String(localized: "Não foi possível mover o exercício.")
+        }
+    }
+
+    private static func message(for error: SessionError) -> String {
+        switch error {
+        case .activeSessionExists:
+            String(localized: "Você já tem um treino em andamento.")
+        case .multipleActiveSessions:
+            String(localized: "Há mais de um treino em andamento. Conclua ou descarte o atual.")
+        case .sessionNotActive:
+            String(localized: "Este treino já foi encerrado.")
+        case .noCompletedSets:
+            String(localized: "Conclua pelo menos uma série ou descarte o treino.")
+        case .repsRequired:
+            String(localized: "Informe as repetições.")
+        }
+    }
+
+    private static func message(for error: ExerciseError) -> String {
+        switch error {
+        case .systemExerciseNotEditable:
+            String(localized: "Exercícios padrão não podem ser editados.")
+        case .systemExerciseNotDeletable:
+            String(localized: "Exercícios padrão não podem ser excluídos, apenas arquivados.")
+        case .confirmationRequired:
+            String(localized: "Este exercício está em uso em treinos. Confirme a remoção.")
         }
     }
 }
