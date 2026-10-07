@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// A planned workout: its exercises in plan order, with adding, removing and reordering,
-/// renaming and deleting. Every change is saved immediately.
+/// renaming and deleting. Tapping an exercise opens its planned sets. Every change is saved immediately.
 struct WorkoutEditorView: View {
     let workout: Workout
 
@@ -14,6 +14,7 @@ struct WorkoutEditorView: View {
     @State private var isConfirmingDelete = false
     @State private var isConfirmingRemoval = false
     @State private var itemPendingRemoval: WorkoutExercise?
+    @State private var openedItem: WorkoutExercise?
     /// Set right before the workout is deleted, so the view stops reading it.
     @State private var isDeleted = false
     @State private var errorMessage: String?
@@ -35,9 +36,18 @@ struct WorkoutEditorView: View {
 
         return List {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                WorkoutExerciseRow(position: index + 1, item: item)
-                    .cardStyle()
-                    .cardListRow()
+                Button {
+                    // While reordering, rows are only dragged.
+                    if !editMode.isEditing {
+                        openedItem = item
+                    }
+                } label: {
+                    WorkoutExerciseRow(position: index + 1, item: item)
+                        .cardStyle()
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("workout.exercise")
+                .cardListRow()
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button("Remover") {
                             confirmRemoval(of: item)
@@ -138,6 +148,9 @@ struct WorkoutEditorView: View {
         } message: {
             Text("O histórico de treinos realizados será mantido.")
         }
+        .navigationDestination(item: $openedItem) { item in
+            WorkoutExerciseView(item: item)
+        }
         .sheet(isPresented: $isPickingExercises) {
             ExercisePickerView(workoutExerciseIDs: Set(workout.exercises.compactMap { $0.exercise?.id })) { exercises in
                 try service.addExercises(exercises, to: workout)
@@ -185,7 +198,8 @@ struct WorkoutEditorView: View {
     }
 }
 
-/// An exercise of the workout: position, name, muscle group and number of planned sets.
+/// An exercise of the workout: position, name, muscle group, number of planned sets and a
+/// disclosure chevron.
 private struct WorkoutExerciseRow: View {
     let position: Int
     let item: WorkoutExercise
@@ -223,8 +237,10 @@ private struct WorkoutExerciseRow: View {
                     .padding(.vertical, 2)
                     .background(.fill.tertiary, in: Capsule())
             }
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("workout.exercise")
     }
 }

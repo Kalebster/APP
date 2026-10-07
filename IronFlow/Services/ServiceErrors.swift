@@ -7,10 +7,14 @@ enum ValidationError: Error, Equatable {
     case duplicateExerciseName
     case invalidRepsMin
     case invalidRepsMax
+    /// More repetitions than a planned set allows.
+    case repsTooHigh
     case repsMinGreaterThanMax
     case negativeWeight
     case invalidWeight
     case tooManyDecimals
+    /// More load than a planned set allows.
+    case weightTooHigh
     case invalidReps
 }
 

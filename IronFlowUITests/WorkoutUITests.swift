@@ -82,6 +82,43 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertTrue(app.buttons[confirmLabel].waitForNonExistence(timeout: 10), "Confirmation not dismissed")
     }
 
+    /// Opens the planned sets of the exercise at `index` in the open workout.
+    @MainActor
+    private func openExercise(at index: Int, in app: XCUIApplication) {
+        exerciseRows(in: app).element(boundBy: index).tap()
+        XCTAssertTrue(app.buttons["exercise.addSet"].waitForExistence(timeout: 10), "Planned sets not shown")
+    }
+
+    /// The planned set rows of the open exercise, top to bottom.
+    @MainActor
+    private func setRows(in app: XCUIApplication) -> XCUIElementQuery {
+        app.descendants(matching: .any).matching(identifier: "exercise.set")
+    }
+
+    /// Replaces the text of a right-aligned field: places the cursor at its end, deletes, types.
+    @MainActor
+    private func replaceText(of field: XCUIElement, with text: String) {
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        // An empty field reports its placeholder as value; extra deletes do nothing.
+        let current = (field.value as? String) ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count) + text)
+    }
+
+    /// Opens the set at `index`, types its values and saves.
+    @MainActor
+    private func editSet(at index: Int, min: String, max: String, weight: String, in app: XCUIApplication) {
+        setRows(in: app).element(boundBy: index).tap()
+        let minField = app.textFields["set.editor.min"]
+        XCTAssertTrue(minField.waitForExistence(timeout: 10), "Set editor not shown")
+        replaceText(of: minField, with: min)
+        replaceText(of: app.textFields["set.editor.max"], with: max)
+        replaceText(of: app.textFields["set.editor.weight"], with: weight)
+        let save = app.buttons["set.editor.save"]
+        XCTAssertTrue(save.isEnabled, "Save disabled with valid values")
+        save.tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: 10), "Set editor not closed")
+    }
+
     @MainActor
     private func attachScreenshot(named name: String, of app: XCUIApplication) {
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -267,12 +304,103 @@ final class WorkoutUITests: XCTestCase {
     }
 
     @MainActor
+    func testEditPlannedSet() throws {
+        continueAfterFailure = false
+        let app = launchOnWorkoutsTab()
+        createWorkout(named: "Push", in: app)
+        addExercises(["Crossover na Polia"], in: app)
+        openExercise(at: 0, in: app)
+
+        let sets = setRows(in: app)
+        XCTAssertEqual(sets.count, 3)
+        let first = sets.element(boundBy: 0)
+        XCTAssertTrue(first.label.contains("Série 1"), "First set: \(first.label)")
+        XCTAssertTrue(first.label.contains("8–12 reps"), "First set: \(first.label)")
+        XCTAssertTrue(first.label.contains("Sem carga"), "First set: \(first.label)")
+        attachScreenshot(named: "18-workout-exercise", of: app)
+
+        first.tap()
+        let minField = app.textFields["set.editor.min"]
+        let maxField = app.textFields["set.editor.max"]
+        XCTAssertTrue(minField.waitForExistence(timeout: 10), "Set editor not shown")
+        XCTAssertEqual(minField.value as? String, "8")
+        XCTAssertEqual(maxField.value as? String, "12")
+        replaceText(of: minField, with: "12")
+        replaceText(of: maxField, with: "10")
+        let save = app.buttons["set.editor.save"]
+        XCTAssertFalse(save.isEnabled, "Save enabled with the minimum above the maximum")
+        XCTAssertTrue(element("set.editor.error", in: app).exists, "Error not shown")
+
+        replaceText(of: maxField, with: "15")
+        replaceText(of: app.textFields["set.editor.weight"], with: "80")
+        XCTAssertTrue(save.isEnabled, "Save disabled with valid values")
+        XCTAssertFalse(element("set.editor.error", in: app).exists, "Error still shown")
+        attachScreenshot(named: "19-set-editor", of: app)
+        save.tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: 10), "Set editor not closed")
+        XCTAssertTrue(first.label.contains("12–15 reps"), "Edited set: \(first.label)")
+        XCTAssertTrue(first.label.contains("80 kg"), "Edited set: \(first.label)")
+
+        // Clearing the load removes it.
+        editSet(at: 0, min: "12", max: "15", weight: "", in: app)
+        XCTAssertTrue(first.label.contains("Sem carga"), "Load not removed: \(first.label)")
+        XCTAssertTrue(sets.element(boundBy: 1).label.contains("8–12 reps"), "Another set changed")
+    }
+
+    @MainActor
+    func testAddAndRemovePlannedSets() throws {
+        continueAfterFailure = false
+        let app = launchOnWorkoutsTab()
+        createWorkout(named: "Push", in: app)
+        addExercises(["Crossover na Polia"], in: app)
+        openExercise(at: 0, in: app)
+        let sets = setRows(in: app)
+
+        // A new set copies the last one.
+        editSet(at: 2, min: "6", max: "8", weight: "40", in: app)
+        app.buttons["exercise.addSet"].tap()
+        XCTAssertEqual(sets.count, 4)
+        let added = sets.element(boundBy: 3)
+        XCTAssertTrue(added.label.contains("Série 4"), "Added set: \(added.label)")
+        XCTAssertTrue(added.label.contains("6–8 reps"), "Added set: \(added.label)")
+        XCTAssertTrue(added.label.contains("40 kg"), "Added set: \(added.label)")
+
+        // Removing the second set renumbers the others.
+        sets.element(boundBy: 1).swipeLeft()
+        app.buttons["Remover"].firstMatch.tap()
+        XCTAssertEqual(sets.count, 3)
+        XCTAssertTrue(sets.element(boundBy: 1).label.contains("Série 2"), "Second set: \(sets.element(boundBy: 1).label)")
+        XCTAssertTrue(sets.element(boundBy: 1).label.contains("6–8 reps"), "Second set: \(sets.element(boundBy: 1).label)")
+
+        // The last set cannot be removed.
+        for _ in 0..<2 {
+            sets.element(boundBy: 0).swipeLeft()
+            app.buttons["Remover"].firstMatch.tap()
+        }
+        XCTAssertTrue(element("exercise.lastSetHint", in: app).waitForExistence(timeout: 10), "Last set hint not shown")
+        XCTAssertEqual(sets.count, 1)
+        sets.element(boundBy: 0).swipeLeft()
+        XCTAssertFalse(app.buttons["Remover"].exists, "The last set can be removed")
+
+        // The workout shows the new number of sets.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let row = exerciseRows(in: app).element(boundBy: 0)
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "Workout not shown")
+        XCTAssertTrue(row.label.contains("1 série"), "Exercise row: \(row.label)")
+    }
+
+    @MainActor
     func testDarkAppearance() throws {
         continueAfterFailure = false
         let app = launchOnWorkoutsTab(extraArguments: ["-ui-dark-appearance"])
         createWorkout(named: "Push", in: app)
         addExercises(["Crossover na Polia", "Barra Fixa"], in: app)
         attachScreenshot(named: "16-workout-editor-dark", of: app)
+
+        openExercise(at: 0, in: app)
+        attachScreenshot(named: "20-workout-exercise-dark", of: app)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(exerciseRows(in: app).firstMatch.waitForExistence(timeout: 10), "Workout not shown")
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["workouts.card"].waitForExistence(timeout: 10))

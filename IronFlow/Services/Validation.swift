@@ -3,6 +3,10 @@ import Foundation
 /// Input rules shared by the services. Pure functions: no store access.
 enum Validation {
     static let maxNameLength = 60
+    /// Highest repetition count of a planned set.
+    static let maxPlannedReps = 100
+    /// Highest load of a planned set, in kilograms.
+    static let maxPlannedWeightKg: Double = 1_000
 
     /// Returns the name without leading and trailing whitespace, or throws.
     static func name(_ raw: String) throws -> String {
@@ -40,10 +44,19 @@ struct PlannedSetValues: Equatable, Sendable {
     var repsMin: Int
     var repsMax: Int
 
+    /// Repetitions from 1 to `Validation.maxPlannedReps` with minimum ≤ maximum; an optional
+    /// load up to `Validation.maxPlannedWeightKg` that follows the load rules.
+    /// The limits apply only to planned sets; performed sets are checked by `Validation` alone.
     func validate() throws {
         guard repsMin > 0 else { throw ValidationError.invalidRepsMin }
         guard repsMax > 0 else { throw ValidationError.invalidRepsMax }
+        guard repsMin <= Validation.maxPlannedReps, repsMax <= Validation.maxPlannedReps else {
+            throw ValidationError.repsTooHigh
+        }
         guard repsMin <= repsMax else { throw ValidationError.repsMinGreaterThanMax }
         try Validation.weight(weightKg)
+        if let weightKg, weightKg > Validation.maxPlannedWeightKg {
+            throw ValidationError.weightTooHigh
+        }
     }
 }

@@ -11,7 +11,8 @@ struct UserFacingErrorTests {
             ValidationError.emptyName, ValidationError.nameTooLong, ValidationError.duplicateExerciseName,
             ValidationError.invalidRepsMin, ValidationError.invalidRepsMax, ValidationError.repsMinGreaterThanMax,
             ValidationError.negativeWeight, ValidationError.invalidWeight, ValidationError.tooManyDecimals,
-            ValidationError.invalidReps,
+            ValidationError.invalidReps, ValidationError.repsTooHigh, ValidationError.weightTooHigh,
+            PlannedSetInputError.repsRequired,
             WorkoutError.exerciseArchived, WorkoutError.exerciseAlreadyInWorkout, WorkoutError.lastPlannedSet,
             WorkoutError.workoutHasNoExercises, WorkoutError.exerciseMissing, WorkoutError.plannedSetsMissing,
             WorkoutError.invalidPosition,
@@ -27,6 +28,9 @@ struct UserFacingErrorTests {
     func workoutMessages() {
         #expect(UserFacingError.message(for: WorkoutError.exerciseAlreadyInWorkout) == "Este exercício já está no treino.")
         #expect(UserFacingError.message(for: ValidationError.nameTooLong) == "O nome pode ter no máximo 60 caracteres.")
+        #expect(UserFacingError.message(for: ValidationError.repsTooHigh) == "As repetições podem ser no máximo 100.")
+        #expect(UserFacingError.message(for: ValidationError.weightTooHigh) == "A carga pode ser no máximo 1.000 kg.")
+        #expect(UserFacingError.message(for: PlannedSetInputError.repsRequired) == "Informe as repetições com números inteiros.")
     }
 
     @Test("Save failures and unknown errors get a generic message")

@@ -32,6 +32,31 @@ struct ValidationTests {
         try PlannedSetValues.reps(10, 10).validate()
     }
 
+    @Test("Planned repetitions go up to 100")
+    func plannedRepsLimit() throws {
+        try PlannedSetValues.reps(100, 100).validate()
+        try PlannedSetValues.reps(1, 100).validate()
+        #expect(throws: ValidationError.repsTooHigh) { try PlannedSetValues.reps(8, 101).validate() }
+        #expect(throws: ValidationError.repsTooHigh) { try PlannedSetValues.reps(101, 101).validate() }
+        #expect(throws: ValidationError.repsTooHigh) { try PlannedSetValues.reps(101, 12).validate() }
+    }
+
+    @Test("Planned load goes up to 1.000 kg and keeps the other load rules")
+    func plannedWeightLimit() throws {
+        try PlannedSetValues.reps(8, 12, kg: 1_000).validate()
+        try PlannedSetValues.reps(8, 12, kg: 999.99).validate()
+        #expect(throws: ValidationError.weightTooHigh) { try PlannedSetValues.reps(8, 12, kg: 1_000.01).validate() }
+        #expect(throws: ValidationError.weightTooHigh) { try PlannedSetValues.reps(8, 12, kg: 5_000).validate() }
+        #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetValues.reps(8, 12, kg: 1_000.005).validate() }
+        #expect(throws: ValidationError.negativeWeight) { try PlannedSetValues.reps(8, 12, kg: -1).validate() }
+    }
+
+    @Test("The planned set limits do not apply to performed values")
+    func performedValuesHaveNoPlannedLimits() throws {
+        try Validation.weight(1_500)
+        try Validation.performedReps(150)
+    }
+
     @Test("Load is optional and cannot be negative")
     func weightSign() throws {
         try Validation.weight(nil)
