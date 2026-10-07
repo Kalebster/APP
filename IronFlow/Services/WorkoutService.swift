@@ -121,6 +121,13 @@ struct WorkoutService {
         return plannedSet
     }
 
+    /// Appends a planned set with the same values as the item's last set.
+    @discardableResult
+    func addPlannedSetCopyingLast(to item: WorkoutExercise) throws -> PlannedSet {
+        guard let last = item.orderedPlannedSets.last else { throw WorkoutError.plannedSetsMissing }
+        return try addPlannedSet(to: item, values: PlannedSetValues(last))
+    }
+
     func updatePlannedSet(_ plannedSet: PlannedSet, values: PlannedSetValues) throws {
         try values.validate()
 

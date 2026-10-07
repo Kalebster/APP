@@ -23,6 +23,28 @@
         }
       }
     },
+    "%lld reps" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rep"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reps"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld séries" : {
       "localizations" : {
         "pt-BR" : {
@@ -45,7 +67,13 @@
         }
       }
     },
+    "%lld–%lld reps" : {
+
+    },
     "A carga não pode ser negativa." : {
+
+    },
+    "A carga pode ser no máximo %@." : {
 
     },
     "A carga pode ter no máximo duas casas decimais." : {
@@ -61,6 +89,9 @@
 
     },
     "Adicionar exercícios" : {
+
+    },
+    "Adicionar série" : {
 
     },
     "Adicione exercícios ao treino" : {
@@ -84,6 +115,9 @@
     "As repetições mínimas devem ser maiores que zero." : {
 
     },
+    "As repetições podem ser no máximo %lld." : {
+
+    },
     "As séries planejadas deste exercício também serão removidas." : {
 
     },
@@ -94,6 +128,9 @@
 
     },
     "Cancelar" : {
+
+    },
+    "Carga (kg)" : {
 
     },
     "Carga inválida." : {
@@ -138,6 +175,9 @@
     "Histórico" : {
 
     },
+    "Informe as repetições com números inteiros." : {
+
+    },
     "Informe um nome." : {
 
     },
@@ -148,6 +188,12 @@
 
     },
     "Já existe um exercício com esse nome." : {
+
+    },
+    "Máximo" : {
+
+    },
+    "Mínimo" : {
 
     },
     "Nada por aqui ainda." : {
@@ -207,6 +253,9 @@
     "Ombros" : {
 
     },
+    "Opcional" : {
+
+    },
     "Opções" : {
 
     },
@@ -217,6 +266,9 @@
 
     },
     "Panturrilhas" : {
+
+    },
+    "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais." : {
 
     },
     "Peito" : {
@@ -246,7 +298,13 @@
     "Renomear treino" : {
 
     },
+    "Repetições" : {
+
+    },
     "Salvar" : {
+
+    },
+    "Sem carga" : {
 
     },
     "Seus dados não foram apagados. Feche e abra o app novamente. Se o problema continuar, atualize o app." : {
@@ -256,6 +314,9 @@
 
     },
     "Seus treinos concluídos aparecerão aqui." : {
+
+    },
+    "Série %lld" : {
 
     },
     "Tentar novamente" : {

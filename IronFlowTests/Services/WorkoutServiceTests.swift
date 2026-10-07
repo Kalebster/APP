@@ -335,6 +335,91 @@ struct WorkoutServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    @Test("Adding a set copies the values of the last set and appends it")
+    func addPlannedSetCopyingLast() throws {
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10, kg: 20), .reps(6, 8, kg: 82.5)])])
+        let item = workout.orderedExercises[0]
+        harness.clock.advance(by: 5)
+
+        let added = try harness.workouts.addPlannedSetCopyingLast(to: item)
+
+        #expect(item.orderedPlannedSets.last?.id == added.id)
+        #expect(sortIndexes(of: item) == [0, 1, 2])
+        #expect(added.repsMin == 6)
+        #expect(added.repsMax == 8)
+        #expect(added.weightKg == 82.5)
+        #expect(added.createdAt == harness.clock.current)
+        #expect(workout.updatedAt == harness.clock.current)
+        #expect(harness.context.hasChanges == false)
+
+        try harness.workouts.addPlannedSetCopyingLast(to: item)
+        #expect(item.orderedPlannedSets.map(\.repsMin) == [8, 6, 6, 6])
+        #expect(sortIndexes(of: item) == [0, 1, 2, 3])
+    }
+
+    @Test("Copying the last set of an item without sets changes nothing")
+    func addPlannedSetCopyingLastWithoutSets() throws {
+        // Such items cannot be produced through the services; it is built directly.
+        let workout = try harness.workouts.createWorkout(name: "Inconsistente")
+        let item = WorkoutExercise(sortIndex: 0)
+        harness.context.insert(item)
+        item.workout = workout
+        item.exercise = bench
+        try harness.context.save()
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: WorkoutError.plannedSetsMissing) { try harness.workouts.addPlannedSetCopyingLast(to: item) }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("Planned set values above the limits are rejected and change nothing")
+    func plannedSetLimits() throws {
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10, kg: 20)])])
+        let item = workout.orderedExercises[0]
+        let plannedSet = item.orderedPlannedSets[0]
+        let updatedAt = plannedSet.updatedAt
+        let before = try storeCounts(in: harness.context)
+        harness.clock.advance(by: 5)
+
+        #expect(throws: ValidationError.repsTooHigh) { try harness.workouts.updatePlannedSet(plannedSet, values: .reps(8, 101)) }
+        #expect(throws: ValidationError.weightTooHigh) { try harness.workouts.updatePlannedSet(plannedSet, values: .reps(8, 10, kg: 1_000.5)) }
+        #expect(throws: ValidationError.repsTooHigh) { try harness.workouts.addPlannedSet(to: item, values: .reps(120, 150)) }
+
+        #expect(plannedSet.repsMin == 8)
+        #expect(plannedSet.repsMax == 10)
+        #expect(plannedSet.weightKg == 20)
+        #expect(plannedSet.updatedAt == updatedAt)
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(harness.context.hasChanges == false)
+
+        try harness.workouts.updatePlannedSet(plannedSet, values: .reps(100, 100, kg: 1_000))
+        #expect(plannedSet.repsMax == 100)
+        #expect(plannedSet.weightKg == 1_000)
+    }
+
+    @Test("Editing, adding and removing planned sets does not change the history")
+    func plannedSetChangesKeepHistory() throws {
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10, kg: 20), .reps(6, 8, kg: 22.5)])])
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: 20, reps: 9)
+        try harness.sessions.finishSession(session)
+        func history() -> [[Double?]] {
+            session.orderedExercises[0].orderedSetLogs.map {
+                [$0.targetWeightKg, $0.targetRepsMin.map { Double($0) }, $0.targetRepsMax.map { Double($0) }, $0.weightKg, $0.reps.map { Double($0) }]
+            }
+        }
+        let before = history()
+
+        let item = workout.orderedExercises[0]
+        try harness.workouts.updatePlannedSet(item.orderedPlannedSets[0], values: .reps(12, 15, kg: 100))
+        try harness.workouts.addPlannedSetCopyingLast(to: item)
+        try harness.workouts.removePlannedSet(item.orderedPlannedSets[1])
+
+        #expect(history() == before)
+        #expect(session.orderedExercises[0].setLogs.count == 2)
+    }
+
     @Test("Removing a planned set renumbers; the last one cannot be removed")
     func removePlannedSet() throws {
         let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10), .reps(6, 8), .reps(4, 6)])])

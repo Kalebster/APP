@@ -8,6 +8,13 @@ enum UserFacingError {
             message(for: error)
         case let error as WorkoutError:
             message(for: error)
+        case let error as PlannedSetInputError:
+            switch error {
+            case .repsRequired:
+                String(localized: "Informe as repetições com números inteiros.")
+            case .thousandsSeparator:
+                String(localized: "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais.")
+            }
         case is SaveError:
             String(localized: "Não foi possível salvar. Nenhuma alteração foi feita.")
         default:
@@ -27,6 +34,8 @@ enum UserFacingError {
             String(localized: "As repetições mínimas devem ser maiores que zero.")
         case .invalidRepsMax:
             String(localized: "As repetições máximas devem ser maiores que zero.")
+        case .repsTooHigh:
+            String(localized: "As repetições podem ser no máximo \(Validation.maxPlannedReps).")
         case .repsMinGreaterThanMax:
             String(localized: "O mínimo de repetições não pode ser maior que o máximo.")
         case .negativeWeight:
@@ -35,6 +44,8 @@ enum UserFacingError {
             String(localized: "Carga inválida.")
         case .tooManyDecimals:
             String(localized: "A carga pode ter no máximo duas casas decimais.")
+        case .weightTooHigh:
+            String(localized: "A carga pode ser no máximo \(PlannedSetFormatting.weightText(Validation.maxPlannedWeightKg)).")
         case .invalidReps:
             String(localized: "As repetições devem ser maiores que zero.")
         }
