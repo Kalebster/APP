@@ -95,13 +95,19 @@ final class WorkoutUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "exercise.set")
     }
 
-    /// Replaces the text of a right-aligned field: places the cursor at its end, deletes, types.
+    /// Replaces the whole number in a field. Selecting it with a double tap does not depend on
+    /// where the cursor lands; what is typed then replaces the selection.
     @MainActor
     private func replaceText(of field: XCUIElement, with text: String) {
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
-        // An empty field reports its placeholder as value; extra deletes do nothing.
-        let current = (field.value as? String) ?? ""
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count) + text)
+        field.tap()
+        // An empty field reports its placeholder as its value.
+        let isEmpty = (field.value as? String) == field.placeholderValue
+        if !isEmpty {
+            field.doubleTap()
+        }
+        field.typeText(text.isEmpty ? XCUIKeyboardKey.delete.rawValue : text)
+        let expected = text.isEmpty ? field.placeholderValue : text
+        XCTAssertEqual(field.value as? String, expected, "Field text not replaced")
     }
 
     /// Opens the set at `index`, types its values and saves.
