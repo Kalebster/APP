@@ -42,14 +42,17 @@ enum PlannedSetFormatting {
     }
 
     /// A whole number of repetitions, or `nil` when the text is empty or not a whole number.
+    /// A number too large to store is read as `Int.max`, so it is reported as too high.
     static func reps(_ text: String) -> Int? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.allSatisfy(isDigit) else { return nil }
-        return Int(trimmed)
+        return Int(trimmed) ?? Int.max
     }
 
     /// The typed load: `nil` when empty, otherwise digits with an optional decimal comma or dot
-    /// ("82,5", "82.5", "82,"). Throws `ValidationError.invalidWeight` for anything else.
+    /// ("82,5", "82.5", "82,"). Throws `ValidationError.invalidWeight` for anything else, and
+    /// `ValidationError.tooManyDecimals` for more than two digits after the separator, so that a
+    /// grouped number such as "1.000" is never read as 1 kg.
     static func weightKg(_ text: String) throws -> Double? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -65,6 +68,9 @@ enum PlannedSetFormatting {
             } else {
                 throw ValidationError.invalidWeight
             }
+        }
+        if let separator = number.firstIndex(of: "."), number[number.index(after: separator)...].count > 2 {
+            throw ValidationError.tooManyDecimals
         }
         if number.hasSuffix(".") {
             number.removeLast()

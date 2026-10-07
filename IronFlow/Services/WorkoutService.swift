@@ -125,8 +125,7 @@ struct WorkoutService {
     @discardableResult
     func addPlannedSetCopyingLast(to item: WorkoutExercise) throws -> PlannedSet {
         guard let last = item.orderedPlannedSets.last else { throw WorkoutError.plannedSetsMissing }
-        let values = PlannedSetValues(weightKg: last.weightKg, repsMin: last.repsMin, repsMax: last.repsMax)
-        return try addPlannedSet(to: item, values: values)
+        return try addPlannedSet(to: item, values: PlannedSetValues(last))
     }
 
     func updatePlannedSet(_ plannedSet: PlannedSet, values: PlannedSetValues) throws {

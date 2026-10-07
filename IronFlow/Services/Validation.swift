@@ -44,6 +44,17 @@ struct PlannedSetValues: Equatable, Sendable {
     var repsMin: Int
     var repsMax: Int
 
+    init(weightKg: Double?, repsMin: Int, repsMax: Int) {
+        self.weightKg = weightKg
+        self.repsMin = repsMin
+        self.repsMax = repsMax
+    }
+
+    /// The values stored in a planned set.
+    init(_ plannedSet: PlannedSet) {
+        self.init(weightKg: plannedSet.weightKg, repsMin: plannedSet.repsMin, repsMax: plannedSet.repsMax)
+    }
+
     /// Repetitions from 1 to `Validation.maxPlannedReps` with minimum ≤ maximum; an optional
     /// load up to `Validation.maxPlannedWeightKg` that follows the load rules.
     /// The limits apply only to planned sets; performed sets are checked by `Validation` alone.

@@ -110,6 +110,16 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, expected, "Field text not replaced")
     }
 
+    /// Waits until the query has `expected` elements, so row animations do not race the check.
+    @MainActor
+    private func waitForCount(_ query: XCUIElementQuery, _ expected: Int) -> Bool {
+        let deadline = Date().addingTimeInterval(5)
+        while query.count != expected && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return query.count == expected
+    }
+
     /// Opens the set at `index`, types its values and saves.
     @MainActor
     private func editSet(at index: Int, min: String, max: String, weight: String, in app: XCUIApplication) {
@@ -365,7 +375,7 @@ final class WorkoutUITests: XCTestCase {
         // A new set copies the last one.
         editSet(at: 2, min: "6", max: "8", weight: "40", in: app)
         app.buttons["exercise.addSet"].tap()
-        XCTAssertEqual(sets.count, 4)
+        XCTAssertTrue(waitForCount(sets, 4), "Set not added")
         let added = sets.element(boundBy: 3)
         XCTAssertTrue(added.label.contains("Série 4"), "Added set: \(added.label)")
         XCTAssertTrue(added.label.contains("6–8 reps"), "Added set: \(added.label)")
@@ -374,23 +384,28 @@ final class WorkoutUITests: XCTestCase {
         // Removing the second set renumbers the others.
         sets.element(boundBy: 1).swipeLeft()
         app.buttons["Remover"].firstMatch.tap()
-        XCTAssertEqual(sets.count, 3)
+        XCTAssertTrue(waitForCount(sets, 3), "Set not removed")
         XCTAssertTrue(sets.element(boundBy: 1).label.contains("Série 2"), "Second set: \(sets.element(boundBy: 1).label)")
         XCTAssertTrue(sets.element(boundBy: 1).label.contains("6–8 reps"), "Second set: \(sets.element(boundBy: 1).label)")
 
         // The last set cannot be removed.
-        for _ in 0..<2 {
+        for expected in [2, 1] {
             sets.element(boundBy: 0).swipeLeft()
             app.buttons["Remover"].firstMatch.tap()
+            XCTAssertTrue(waitForCount(sets, expected), "Set not removed")
         }
         XCTAssertTrue(element("exercise.lastSetHint", in: app).waitForExistence(timeout: 10), "Last set hint not shown")
-        XCTAssertEqual(sets.count, 1)
         sets.element(boundBy: 0).swipeLeft()
         XCTAssertFalse(app.buttons["Remover"].exists, "The last set can be removed")
+        XCTAssertEqual(sets.count, 1)
 
-        // The workout shows the new number of sets.
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        // The workout shows the new number of sets. The first tap may only end the swipe.
+        let back = app.navigationBars.buttons.element(boundBy: 0)
+        back.tap()
         let row = exerciseRows(in: app).element(boundBy: 0)
+        if !row.waitForExistence(timeout: 3) {
+            back.tap()
+        }
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Workout not shown")
         XCTAssertTrue(row.label.contains("1 série"), "Exercise row: \(row.label)")
     }

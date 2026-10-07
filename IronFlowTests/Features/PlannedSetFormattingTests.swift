@@ -32,7 +32,8 @@ struct PlannedSetFormattingTests {
     func repsParsing() {
         #expect(PlannedSetFormatting.reps("8") == 8)
         #expect(PlannedSetFormatting.reps(" 12 ") == 12)
-        for invalid in ["", "  ", "8.5", "8,5", "-3", "abc", "1 2", "99999999999999999999"] {
+        #expect(PlannedSetFormatting.reps("99999999999999999999") == Int.max)
+        for invalid in ["", "  ", "8.5", "8,5", "-3", "abc", "1 2"] {
             #expect(PlannedSetFormatting.reps(invalid) == nil, "\(invalid)")
         }
     }
@@ -48,6 +49,10 @@ struct PlannedSetFormattingTests {
         for invalid in ["abc", "1,2,3", "1.2,3", "-5", ",5", "8 2", "82kg"] {
             #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.weightKg(invalid) }
         }
+        // A grouped number is never read as a decimal load.
+        for grouped in ["1.000", "1.500", "82,505"] {
+            #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetFormatting.weightKg(grouped) }
+        }
     }
 
     @Test("Typed fields become checked values, or report the first problem")
@@ -58,6 +63,7 @@ struct PlannedSetFormattingTests {
         #expect(throws: PlannedSetInputError.repsRequired) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "x", weight: "") }
         #expect(throws: ValidationError.repsMinGreaterThanMax) { try PlannedSetFormatting.values(repsMin: "12", repsMax: "8", weight: "") }
         #expect(throws: ValidationError.repsTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "101", weight: "") }
+        #expect(throws: ValidationError.repsTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "99999999999999999999", weight: "") }
         #expect(throws: ValidationError.invalidRepsMin) { try PlannedSetFormatting.values(repsMin: "0", repsMax: "8", weight: "") }
         #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "abc") }
         #expect(throws: ValidationError.weightTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1001") }

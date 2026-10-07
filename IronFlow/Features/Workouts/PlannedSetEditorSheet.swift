@@ -24,17 +24,11 @@ struct PlannedSetEditorSheet: View {
         _weightText = State(initialValue: PlannedSetFormatting.weightFieldText(values.weightKg))
     }
 
-    /// The typed values, checked, or the first problem with them.
-    private var input: Result<PlannedSetValues, any Error> {
-        Result { try PlannedSetFormatting.values(repsMin: repsMinText, repsMax: repsMaxText, weight: weightText) }
-    }
-
-    private var inputErrorMessage: String? {
-        guard case .failure(let error) = input else { return nil }
-        return UserFacingError.message(for: error)
-    }
-
     var body: some View {
+        // The typed values, checked once per update, or the first problem with them.
+        let input = Result { try PlannedSetFormatting.values(repsMin: repsMinText, repsMax: repsMaxText, weight: weightText) }
+        let inputErrorMessage = input.failureMessage
+
         NavigationStack {
             Form {
                 Section("Repetições") {
@@ -66,6 +60,7 @@ struct PlannedSetEditorSheet: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(Text("Série \(number)"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -89,7 +84,8 @@ struct PlannedSetEditorSheet: View {
                 saveErrorMessage = nil
             }
         }
-        .presentationDetents([.medium])
+        // The number keyboards have no return key; the large size keeps every field reachable.
+        .presentationDetents([.medium, .large])
     }
 
     private func save(_ values: PlannedSetValues) {
@@ -106,5 +102,13 @@ struct PlannedSetEditorSheet: View {
         } catch {
             saveErrorMessage = UserFacingError.message(for: error)
         }
+    }
+}
+
+private extension Result where Failure == any Error {
+    /// The message to show for a failure; `nil` on success.
+    var failureMessage: String? {
+        guard case .failure(let error) = self else { return nil }
+        return UserFacingError.message(for: error)
     }
 }

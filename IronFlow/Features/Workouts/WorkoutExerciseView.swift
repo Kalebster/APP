@@ -58,7 +58,7 @@ struct WorkoutExerciseView: View {
             .cardListRow()
 
             if !canRemove {
-                Text("O exercício precisa de pelo menos uma série.")
+                Text(UserFacingError.message(for: WorkoutError.lastPlannedSet))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("exercise.lastSetHint")
@@ -72,7 +72,7 @@ struct WorkoutExerciseView: View {
         .sheet(item: $editingSet) { plannedSet in
             PlannedSetEditorSheet(
                 number: (sets.firstIndex { $0.id == plannedSet.id } ?? 0) + 1,
-                values: PlannedSetValues(weightKg: plannedSet.weightKg, repsMin: plannedSet.repsMin, repsMax: plannedSet.repsMax)
+                values: PlannedSetValues(plannedSet)
             ) { values in
                 try service.updatePlannedSet(plannedSet, values: values)
             }
