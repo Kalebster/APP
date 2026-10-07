@@ -16,7 +16,7 @@ struct RootView: View {
                 }
             }
 
-            Tab("Treinos", systemImage: "list.bullet.clipboard") {
+            Tab("Treinos", systemImage: "list.bullet.rectangle") {
                 NavigationStack {
                     WorkoutListView()
                         .accessibilityElement(children: .contain)

@@ -5,8 +5,8 @@ import SwiftUI
 struct HomeView: View {
     @Query(filter: #Predicate<Session> { $0.endedAt == nil }) private var activeSessions: [Session]
     @Query(HomeView.anyWorkout) private var anyWorkout: [Workout]
-    @Query(HomeView.latestWeight) private var latestWeight: [BodyWeightEntry]
-    @Query(HomeView.firstProfile) private var profiles: [UserProfile]
+    @Query(ProfileService.latestWeightDescriptor) private var latestWeight: [BodyWeightEntry]
+    @Query(ProfileService.profileDescriptor) private var profiles: [UserProfile]
     @AppStorage(HomeSummary.metricsPreferenceKey, store: AppPreferences.store) private var storedMetrics: String?
 
     @Environment(\.modelContext) private var context
@@ -17,22 +17,6 @@ struct HomeView: View {
     /// Only whether a workout exists matters here.
     nonisolated private static var anyWorkout: FetchDescriptor<Workout> {
         var descriptor = FetchDescriptor<Workout>()
-        descriptor.fetchLimit = 1
-        return descriptor
-    }
-
-    /// The most recent measurement only, however long the history is.
-    nonisolated private static var latestWeight: FetchDescriptor<BodyWeightEntry> {
-        var descriptor = FetchDescriptor<BodyWeightEntry>(
-            sortBy: [SortDescriptor(\.measuredAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        descriptor.fetchLimit = 1
-        return descriptor
-    }
-
-    /// The same profile `ProfileService` uses: the oldest.
-    nonisolated private static var firstProfile: FetchDescriptor<UserProfile> {
-        var descriptor = FetchDescriptor<UserProfile>(sortBy: [SortDescriptor(\.createdAt)])
         descriptor.fetchLimit = 1
         return descriptor
     }
@@ -73,7 +57,7 @@ struct HomeView: View {
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $editingMetric) { metric in
-            MetricEditorSheet(metric: metric, initialValue: value(of: metric)) { value in
+            MetricEditorSheet(metric: metric, initialValue: value(of: metric), savesUnchangedValue: savesUnchangedValue(for: metric)) { value in
                 try save(value, for: metric)
             }
         }
@@ -126,6 +110,12 @@ struct HomeView: View {
         }
     }
 
+    /// The same weight on a new day is a new measurement; an unchanged height or goal needs no write.
+    private func savesUnchangedValue(for metric: SummaryMetric) -> Bool {
+        guard metric == .bodyWeight, let latest = latestWeight.first else { return false }
+        return !Calendar.current.isDateInToday(latest.measuredAt)
+    }
+
     private func valueText(of metric: SummaryMetric) -> String? {
         switch metric {
         case .bodyWeight: latestWeight.first.map { HomeSummary.weightText($0.weightKg) }
@@ -172,7 +162,7 @@ private struct TodayWorkoutCard: View {
                 Text("Treino em andamento")
                     .font(.headline)
                 Text(name.isEmpty ? String(localized: "Treino livre") : name)
-                Text("Iniciado às \(startedAt.formatted(date: .omitted, time: .shortened))")
+                Text(HomeSummary.startedText(startedAt))
                     .foregroundStyle(.secondary)
             case .noWorkouts:
                 Text("Você ainda não tem treinos.")

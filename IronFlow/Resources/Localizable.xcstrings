@@ -208,6 +208,9 @@
     "Informe uma meta entre %@ e %@, em número inteiro." : {
 
     },
+    "Iniciado em %@, às %@" : {
+
+    },
     "Iniciado às %@" : {
 
     },

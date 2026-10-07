@@ -62,12 +62,12 @@ enum HomeSummary {
 
     // MARK: - Values
 
-    /// The app is in Brazilian Portuguese only: decimal comma, dot for thousands.
+    /// The app is in Brazilian Portuguese only: decimal comma, dot for thousands, 24-hour clock.
     private static let locale = Locale(identifier: "pt_BR")
 
-    /// "80 kg", "80,5 kg".
+    /// "80 kg", "80,5 kg": the same format as a planned load.
     static func weightText(_ weightKg: Double) -> String {
-        "\(weightKg.formatted(.number.precision(.fractionLength(0...2)).locale(locale))) kg"
+        PlannedSetFormatting.weightText(weightKg)
     }
 
     /// "180 cm".
@@ -82,8 +82,7 @@ enum HomeSummary {
 
     /// The value as it is typed in the editor ("80,5", "180", "2300"); empty when there is none.
     static func fieldText(_ value: Double?) -> String {
-        guard let value else { return "" }
-        return value.formatted(.number.precision(.fractionLength(0...2)).grouping(.never).locale(locale))
+        PlannedSetFormatting.weightFieldText(value)
     }
 
     /// Reads and checks a typed value for `metric`. Returns `nil` for an empty field; throws the
@@ -98,20 +97,27 @@ enum HomeSummary {
             try Validation.bodyWeight(weightKg)
             return weightKg
         case .height:
-            guard let heightCm = wholeNumber(trimmed) else { throw ValidationError.invalidHeight }
+            guard let heightCm = PlannedSetFormatting.reps(trimmed) else { throw ValidationError.invalidHeight }
             try Validation.height(heightCm)
             return Double(heightCm)
         case .dailyCalorieGoal:
-            guard let kcal = wholeNumber(trimmed) else { throw ValidationError.invalidCalorieGoal }
+            guard let kcal = PlannedSetFormatting.reps(trimmed) else { throw ValidationError.invalidCalorieGoal }
             try Validation.dailyCalorieGoal(kcal)
             return Double(kcal)
         }
     }
 
-    /// Digits only; a number too large to store is read as `Int.max`, so it is out of range.
-    private static func wholeNumber(_ text: String) -> Int? {
-        guard text.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
-        return Int(text) ?? Int.max
+    // MARK: - Today's workout
+
+    /// "Iniciado às 19:30" for a session started today; otherwise the day comes first,
+    /// so a session left open on another day does not read as today's.
+    static func startedText(_ startedAt: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let time = startedAt.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
+        guard !calendar.isDate(startedAt, inSameDayAs: now) else {
+            return String(localized: "Iniciado às \(time)")
+        }
+        let day = startedAt.formatted(.dateTime.day().month(.wide).locale(locale))
+        return String(localized: "Iniciado em \(day), às \(time)")
     }
 }
 

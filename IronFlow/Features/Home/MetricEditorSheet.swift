@@ -2,21 +2,31 @@ import SwiftUI
 
 /// Edits one quick summary value: body weight (a new measurement), height or daily calorie goal.
 /// `onSave` receives the checked value; when it throws, the sheet stays open and shows the error.
+/// An unchanged value closes the sheet without saving, unless `savesUnchangedValue` is set.
 struct MetricEditorSheet: View {
     let metric: SummaryMetric
     let initialValue: Double?
+    let savesUnchangedValue: Bool
     let onSave: @MainActor (Double) throws -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var text: String
     @State private var saveErrorMessage: String?
+    /// A typed value is checked when Salvar is tapped, so no error shows while it is still being typed.
+    @State private var showsInputError = false
     /// Set by a successful save, so a second tap while the sheet closes saves nothing.
     @State private var isSaved = false
     @FocusState private var isFieldFocused: Bool
 
-    init(metric: SummaryMetric, initialValue: Double?, onSave: @escaping @MainActor (Double) throws -> Void) {
+    init(
+        metric: SummaryMetric,
+        initialValue: Double?,
+        savesUnchangedValue: Bool = false,
+        onSave: @escaping @MainActor (Double) throws -> Void
+    ) {
         self.metric = metric
         self.initialValue = initialValue
+        self.savesUnchangedValue = savesUnchangedValue
         self.onSave = onSave
         _text = State(initialValue: HomeSummary.fieldText(initialValue))
     }
@@ -33,7 +43,7 @@ struct MetricEditorSheet: View {
         // The typed value, checked once per update: nil while empty.
         let input = Result { try HomeSummary.value(for: metric, text: text) }
         let value = try? input.get()
-        let inputErrorMessage = Self.message(for: input)
+        let inputErrorMessage = showsInputError ? Self.message(for: input) : nil
 
         NavigationStack {
             Form {
@@ -75,14 +85,17 @@ struct MetricEditorSheet: View {
                     Button("Salvar") {
                         if let value {
                             save(value)
+                        } else {
+                            showsInputError = true
                         }
                     }
-                    .disabled(value == nil)
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityIdentifier("metric.editor.save")
                 }
             }
             .onChange(of: text) {
                 saveErrorMessage = nil
+                showsInputError = false
             }
             .onAppear {
                 isFieldFocused = true
@@ -99,7 +112,7 @@ struct MetricEditorSheet: View {
     private func save(_ value: Double) {
         guard !isSaved else { return }
         // An unchanged value needs no write.
-        guard value != initialValue else {
+        guard value != initialValue || savesUnchangedValue else {
             dismiss()
             return
         }

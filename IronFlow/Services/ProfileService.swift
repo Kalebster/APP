@@ -14,18 +14,28 @@ struct ProfileService {
 
     /// The most recent body weight measurement, if any.
     func latestWeight() throws -> BodyWeightEntry? {
-        var descriptor = FetchDescriptor<BodyWeightEntry>(
-            sortBy: [SortDescriptor(\.measuredAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        descriptor.fetchLimit = 1
-        return try context.fetch(descriptor).first
+        try context.fetch(Self.latestWeightDescriptor).first
     }
 
     /// The user's profile, if it was ever saved. If a store holds more than one, the oldest is used.
     func profile() throws -> UserProfile? {
+        try context.fetch(Self.profileDescriptor).first
+    }
+
+    /// The most recent measurement only. Shared with the screens that observe it.
+    nonisolated static var latestWeightDescriptor: FetchDescriptor<BodyWeightEntry> {
+        var descriptor = FetchDescriptor<BodyWeightEntry>(
+            sortBy: [SortDescriptor(\.measuredAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return descriptor
+    }
+
+    /// The profile in use: the oldest. Shared with the screens that observe it.
+    nonisolated static var profileDescriptor: FetchDescriptor<UserProfile> {
         var descriptor = FetchDescriptor<UserProfile>(sortBy: [SortDescriptor(\.createdAt)])
         descriptor.fetchLimit = 1
-        return try context.fetch(descriptor).first
+        return descriptor
     }
 
     /// Records a new body weight measured now. Earlier measurements are kept as history.

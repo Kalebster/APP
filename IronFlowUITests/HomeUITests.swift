@@ -83,14 +83,17 @@ final class HomeUITests: XCTestCase {
         enterValue("80", on: "bodyWeight", in: app)
         XCTAssertTrue(card("bodyWeight", in: app).label.contains("80 kg"), "Weight: \(card("bodyWeight", in: app).label)")
 
-        // An out-of-range value cannot be saved.
+        // An out-of-range value is not saved: the error shows when Salvar is tapped, not while typing.
         card("height", in: app).tap()
         let field = app.textFields["metric.editor.field"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown")
         field.tap()
         field.typeText("99")
-        XCTAssertFalse(app.buttons["metric.editor.save"].isEnabled, "Save enabled with an invalid height")
-        XCTAssertTrue(app.descendants(matching: .any)["metric.editor.error"].exists, "Error not shown")
+        let error = app.descendants(matching: .any)["metric.editor.error"]
+        XCTAssertFalse(error.exists, "Error shown while typing")
+        app.buttons["metric.editor.save"].tap()
+        XCTAssertTrue(error.waitForExistence(timeout: 5), "Error not shown")
+        XCTAssertTrue(field.exists, "Editor closed with an invalid height")
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 2) + "180")
         app.buttons["metric.editor.save"].tap()
         XCTAssertTrue(app.buttons["metric.editor.save"].waitForNonExistence(timeout: 10), "Editor not closed")

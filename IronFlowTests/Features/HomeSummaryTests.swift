@@ -69,4 +69,17 @@ struct HomeSummaryTests {
         #expect(TodayWorkoutState.resolve(activeSessions: [older, newer], hasWorkouts: false)
             == .inProgress(name: "Pull", startedAt: Date(timeIntervalSinceReferenceDate: 2_000)))
     }
+
+    @Test("Today's workout start: the time for today, the day first for an earlier day")
+    func startedText() throws {
+        let calendar = Calendar.current
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 7, hour: 21)))
+        let today = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 7, hour: 19, minute: 30)))
+        let earlier = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 19, minute: 30)))
+
+        #expect(HomeSummary.startedText(today, now: now, calendar: calendar) == "Iniciado às 19:30")
+        let earlierText = HomeSummary.startedText(earlier, now: now, calendar: calendar)
+        #expect(earlierText.hasPrefix("Iniciado em 4 de outubro"))
+        #expect(earlierText.hasSuffix(", às 19:30"))
+    }
 }
