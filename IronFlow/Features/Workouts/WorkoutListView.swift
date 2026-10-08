@@ -4,8 +4,8 @@ import SwiftUI
 /// The Workouts tab: one card per planned workout. Creating a workout opens its editor;
 /// "Iniciar" starts a session from it.
 struct WorkoutListView: View {
-    /// Opens the given session over the tabs, or the one in progress when `nil`.
-    let openSession: @MainActor (Session?) -> Void
+    /// Starts a session from a workout ("Iniciar").
+    let sessionActions: SessionActions
 
     @Query(sort: [SortDescriptor(\Workout.createdAt), SortDescriptor(\Workout.name)]) private var workouts: [Workout]
     @Environment(\.modelContext) private var context
@@ -13,8 +13,6 @@ struct WorkoutListView: View {
     /// Workout created in the name sheet, opened once the sheet is dismissed.
     @State private var createdWorkout: Workout?
     @State private var openedWorkout: Workout?
-    @State private var isSessionInProgress = false
-    @State private var errorMessage: String?
 
     var body: some View {
         ScrollView {
@@ -23,7 +21,7 @@ struct WorkoutListView: View {
                     WorkoutCard(workout: workout) {
                         openedWorkout = workout
                     } onStart: {
-                        start(workout)
+                        sessionActions.start(workout)
                     }
                 }
             }
@@ -63,26 +61,6 @@ struct WorkoutListView: View {
         }
         .navigationDestination(item: $openedWorkout) { workout in
             WorkoutEditorView(workout: workout)
-        }
-        .alert("Você já tem um treino em andamento.", isPresented: $isSessionInProgress) {
-            Button("Continuar treino atual") {
-                openSession(nil)
-            }
-            Button("Cancelar", role: .cancel) {}
-        } message: {
-            Text("Conclua ou descarte o treino atual antes de iniciar outro.")
-        }
-        .errorAlert($errorMessage)
-    }
-
-    private func start(_ workout: Workout) {
-        do {
-            let session = try SessionService(context: context).startSession(from: workout)
-            openSession(session)
-        } catch SessionError.activeSessionExists {
-            isSessionInProgress = true
-        } catch {
-            errorMessage = UserFacingError.message(for: error)
         }
     }
 

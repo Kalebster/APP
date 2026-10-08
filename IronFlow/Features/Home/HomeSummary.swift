@@ -134,11 +134,35 @@ enum TodayWorkoutState: Equatable {
     /// Workouts exist, but none is planned for today.
     case nothingPlanned
 
-    /// The in-progress session (the most recent, should the store hold more than one) comes first.
+    /// The in-progress session comes first. Should the store hold more than one, it is the one
+    /// "Continuar" opens: the most recently started, then the most recently created
+    /// (`SessionService.activeSessionsDescriptor`).
     static func resolve(activeSessions: [Session], hasWorkouts: Bool) -> TodayWorkoutState {
-        if let session = activeSessions.max(by: { $0.startedAt < $1.startedAt }) {
+        if let session = activeSessions.max(by: { ($0.startedAt, $0.createdAt) < ($1.startedAt, $1.createdAt) }) {
             return .inProgress(name: session.workoutNameSnapshot, startedAt: session.startedAt)
         }
         return hasWorkouts ? .nothingPlanned : .noWorkouts
+    }
+}
+
+/// An action of the "Treino de hoje" card.
+enum TodayWorkoutAction: Hashable {
+    /// Opens the session in progress.
+    case continueSession
+    /// Chooses a planned workout and starts it.
+    case chooseWorkout
+    /// Starts a workout without a plan.
+    case startFreeWorkout
+}
+
+extension TodayWorkoutState {
+    /// The card's actions, the main one first. A session in progress can only be continued;
+    /// choosing a workout needs at least one.
+    var actions: [TodayWorkoutAction] {
+        switch self {
+        case .inProgress: [.continueSession]
+        case .noWorkouts: [.startFreeWorkout]
+        case .nothingPlanned: [.chooseWorkout, .startFreeWorkout]
+        }
     }
 }

@@ -223,6 +223,9 @@
     "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
 
     },
+    "Escolher um treino" : {
+
+    },
     "Este exercício está arquivado e não pode ser adicionado." : {
 
     },
@@ -290,6 +293,9 @@
 
     },
     "Iniciar" : {
+
+    },
+    "Iniciar treino livre" : {
 
     },
     "Início" : {

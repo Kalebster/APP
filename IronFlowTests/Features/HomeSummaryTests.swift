@@ -96,6 +96,16 @@ struct HomeSummaryTests {
         let newer = Session(startedAt: Date(timeIntervalSinceReferenceDate: 2_000), workoutNameSnapshot: "Pull")
         #expect(TodayWorkoutState.resolve(activeSessions: [older, newer], hasWorkouts: false)
             == .inProgress(name: "Pull", startedAt: Date(timeIntervalSinceReferenceDate: 2_000)))
+
+        // Started at the same moment: the most recently created, as "Continuar" opens it.
+        let first = Session(startedAt: Date(timeIntervalSinceReferenceDate: 3_000), workoutNameSnapshot: "Legs")
+        first.createdAt = Date(timeIntervalSinceReferenceDate: 3_000)
+        let second = Session(startedAt: Date(timeIntervalSinceReferenceDate: 3_000), workoutNameSnapshot: "Arms")
+        second.createdAt = Date(timeIntervalSinceReferenceDate: 3_001)
+        for sessions in [[first, second], [second, first]] {
+            #expect(TodayWorkoutState.resolve(activeSessions: sessions, hasWorkouts: true)
+                == .inProgress(name: "Arms", startedAt: Date(timeIntervalSinceReferenceDate: 3_000)))
+        }
     }
 
     @Test("Today's workout start: the time for today, the day first for an earlier day")
@@ -121,5 +131,14 @@ struct HomeSummaryTests {
         }
         let earlier = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 7, minute: 5)))
         #expect(HomeSummary.startedText(earlier, now: now, calendar: calendar).hasSuffix(", às 07:05"))
+    }
+
+    @Test("Today's card actions: continue a session in progress; otherwise choose a workout (when one exists) or start a free one")
+    func todayActions() {
+        let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        #expect(TodayWorkoutState.inProgress(name: "Push", startedAt: start).actions == [.continueSession])
+        #expect(TodayWorkoutState.inProgress(name: "", startedAt: start).actions == [.continueSession])
+        #expect(TodayWorkoutState.nothingPlanned.actions == [.chooseWorkout, .startFreeWorkout])
+        #expect(TodayWorkoutState.noWorkouts.actions == [.startFreeWorkout])
     }
 }
