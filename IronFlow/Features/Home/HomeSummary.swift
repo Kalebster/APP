@@ -142,3 +142,25 @@ enum TodayWorkoutState: Equatable {
         return hasWorkouts ? .nothingPlanned : .noWorkouts
     }
 }
+
+/// An action of the "Treino de hoje" card.
+enum TodayWorkoutAction: Hashable {
+    /// Opens the session in progress.
+    case continueSession
+    /// Chooses a planned workout and starts it.
+    case chooseWorkout
+    /// Starts a workout without a plan.
+    case startFreeWorkout
+}
+
+extension TodayWorkoutState {
+    /// The card's actions, the main one first. A session in progress can only be continued;
+    /// choosing a workout needs at least one.
+    var actions: [TodayWorkoutAction] {
+        switch self {
+        case .inProgress: [.continueSession]
+        case .noWorkouts: [.startFreeWorkout]
+        case .nothingPlanned: [.chooseWorkout, .startFreeWorkout]
+        }
+    }
+}

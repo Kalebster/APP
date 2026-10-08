@@ -104,13 +104,17 @@ final class SessionUITests: XCTestCase {
         XCTAssertTrue(checks(in: app).element(boundBy: 3).waitForExistence(timeout: 10), "Set not added")
         attachScreenshot(named: "25-session", of: app)
 
-        // Minimized, the bar is shown on every tab and opens the session again.
+        // Minimized, the bar is shown on the other tabs and opens the session again; the Home
+        // offers "Continuar" in its card instead of the bar.
         app.buttons["session.minimize"].tap()
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
         attachScreenshot(named: "26-session-bar", of: app)
         openTab("Início", in: app)
-        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown on the Home")
+        XCTAssertTrue(app.buttons["home.continue"].waitForExistence(timeout: 10), "No Continuar on the Home")
+        XCTAssertFalse(bar.exists, "Session bar shown on the Home")
+        openTab("Exercícios", in: app)
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown on Exercícios")
         bar.tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened from the bar")
         XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "Checked set lost after minimizing")

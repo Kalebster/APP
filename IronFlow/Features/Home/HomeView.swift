@@ -1,8 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// The Início tab: the app header, today's workout and the quick summary of the user's body data.
+/// The Início tab: the app header, today's workout (continue, choose a workout or start a free one)
+/// and the quick summary of the user's body data.
 struct HomeView: View {
+    /// Starts and opens sessions; `RootView` owns the session screen.
+    let sessionActions: SessionActions
+
     @Query(filter: #Predicate<Session> { $0.endedAt == nil }) private var activeSessions: [Session]
     @Query(HomeView.anyWorkout) private var anyWorkout: [Workout]
     @Query(ProfileService.latestWeightDescriptor) private var latestWeight: [BodyWeightEntry]
@@ -13,6 +17,9 @@ struct HomeView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var editingMetric: SummaryMetric?
     @State private var isCustomizing = false
+    @State private var isChoosingWorkout = false
+    /// Workout chosen in the sheet, started once the sheet is dismissed.
+    @State private var chosenWorkout: Workout?
 
     /// Only whether a workout exists matters here.
     nonisolated private static var anyWorkout: FetchDescriptor<Workout> {
@@ -30,7 +37,10 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     HomeSectionTitle("Treino de hoje")
-                    TodayWorkoutCard(state: .resolve(activeSessions: activeSessions, hasWorkouts: !anyWorkout.isEmpty))
+                    TodayWorkoutCard(
+                        state: .resolve(activeSessions: activeSessions, hasWorkouts: !anyWorkout.isEmpty),
+                        onAction: perform
+                    )
                 }
 
                 VStack(alignment: .leading, spacing: 16) {
@@ -64,6 +74,26 @@ struct HomeView: View {
         .sheet(isPresented: $isCustomizing) {
             SummaryCustomizeSheet(storedMetrics: $storedMetrics)
         }
+        .sheet(isPresented: $isChoosingWorkout, onDismiss: startChosenWorkout) {
+            WorkoutPickerSheet { workout in
+                chosenWorkout = workout
+            }
+        }
+    }
+
+    private func perform(_ action: TodayWorkoutAction) {
+        switch action {
+        case .continueSession: sessionActions.open()
+        case .chooseWorkout: isChoosingWorkout = true
+        case .startFreeWorkout: sessionActions.startFree()
+        }
+    }
+
+    /// The session screen opens only once the sheet is gone, so two screens never present at once.
+    private func startChosenWorkout() {
+        guard let chosenWorkout else { return }
+        self.chosenWorkout = nil
+        sessionActions.start(chosenWorkout)
     }
 
     private var header: some View {
@@ -153,31 +183,91 @@ private struct HomeSectionTitle: View {
     }
 }
 
-/// The "Treino de hoje" card. Starting a workout from here comes with the session screens.
+/// The "Treino de hoje" card: what is going on today, and its actions (continue the session in
+/// progress, or choose a workout and start a free one).
 private struct TodayWorkoutCard: View {
     let state: TodayWorkoutState
+    let onAction: @MainActor (TodayWorkoutAction) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            switch state {
-            case .inProgress(let name, let startedAt):
-                Text("Treino em andamento")
-                    .font(.headline)
-                Text(name.isEmpty ? String(localized: "Treino livre") : name)
-                Text(HomeSummary.startedText(startedAt))
-                    .foregroundStyle(.secondary)
-            case .noWorkouts:
-                Text("Você ainda não tem treinos.")
-                    .foregroundStyle(.secondary)
-            case .nothingPlanned:
-                Text("Nenhum treino planejado para hoje.")
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 20) {
+            // The text is one accessibility element; the buttons stay separate so they can be reached.
+            VStack(alignment: .leading, spacing: 6) {
+                switch state {
+                case .inProgress(let name, let startedAt):
+                    Text("Treino em andamento")
+                        .font(.headline)
+                    Text(name.isEmpty ? String(localized: "Treino livre") : name)
+                    Text(HomeSummary.startedText(startedAt))
+                        .foregroundStyle(.secondary)
+                case .noWorkouts:
+                    Text("Você ainda não tem treinos.")
+                        .foregroundStyle(.secondary)
+                case .nothingPlanned:
+                    Text("Nenhum treino planejado para hoje.")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("home.today")
+
+            VStack(spacing: 8) {
+                ForEach(state.actions, id: \.self) { action in
+                    actionButton(action)
+                }
             }
         }
         .padding(8)
         .cardStyle()
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("home.today")
+    }
+
+    @ViewBuilder
+    private func actionButton(_ action: TodayWorkoutAction) -> some View {
+        switch action {
+        case .continueSession:
+            Button("Continuar") { onAction(action) }
+                .buttonStyle(CardMainButtonStyle())
+                .accessibilityIdentifier("home.continue")
+        case .chooseWorkout:
+            Button("Escolher um treino") { onAction(action) }
+                .buttonStyle(CardMainButtonStyle())
+                .accessibilityIdentifier("home.chooseWorkout")
+        case .startFreeWorkout:
+            Button("Iniciar treino livre") { onAction(action) }
+                .buttonStyle(CardTextButtonStyle())
+                .accessibilityIdentifier("home.startFree")
+        }
+    }
+}
+
+/// The card's main action: full width, on a gray fill.
+private struct CardMainButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.semibold))
+            .multilineTextAlignment(.center)
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 12)
+            .background(.fill.secondary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .opacity(configuration.isPressed ? 0.6 : 1)
+    }
+}
+
+/// A secondary action of the card: centered gray text.
+private struct CardTextButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.6 : 1)
     }
 }
 

@@ -122,4 +122,13 @@ struct HomeSummaryTests {
         let earlier = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 7, minute: 5)))
         #expect(HomeSummary.startedText(earlier, now: now, calendar: calendar).hasSuffix(", às 07:05"))
     }
+
+    @Test("Today's card actions: continue a session in progress; otherwise choose a workout (when one exists) or start a free one")
+    func todayActions() {
+        let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        #expect(TodayWorkoutState.inProgress(name: "Push", startedAt: start).actions == [.continueSession])
+        #expect(TodayWorkoutState.inProgress(name: "", startedAt: start).actions == [.continueSession])
+        #expect(TodayWorkoutState.nothingPlanned.actions == [.chooseWorkout, .startFreeWorkout])
+        #expect(TodayWorkoutState.noWorkouts.actions == [.startFreeWorkout])
+    }
 }
