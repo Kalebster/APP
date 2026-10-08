@@ -134,9 +134,11 @@ enum TodayWorkoutState: Equatable {
     /// Workouts exist, but none is planned for today.
     case nothingPlanned
 
-    /// The in-progress session (the most recent, should the store hold more than one) comes first.
+    /// The in-progress session comes first. Should the store hold more than one, it is the one
+    /// "Continuar" opens: the most recently started, then the most recently created
+    /// (`SessionService.activeSessionsDescriptor`).
     static func resolve(activeSessions: [Session], hasWorkouts: Bool) -> TodayWorkoutState {
-        if let session = activeSessions.max(by: { $0.startedAt < $1.startedAt }) {
+        if let session = activeSessions.max(by: { ($0.startedAt, $0.createdAt) < ($1.startedAt, $1.createdAt) }) {
             return .inProgress(name: session.workoutNameSnapshot, startedAt: session.startedAt)
         }
         return hasWorkouts ? .nothingPlanned : .noWorkouts

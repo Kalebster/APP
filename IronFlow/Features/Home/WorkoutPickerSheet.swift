@@ -9,8 +9,6 @@ struct WorkoutPickerSheet: View {
 
     @Query(sort: [SortDescriptor(\Workout.createdAt), SortDescriptor(\Workout.name)]) private var workouts: [Workout]
     @Environment(\.dismiss) private var dismiss
-    /// Set once a workout is chosen, so a second tap while the sheet closes chooses nothing.
-    @State private var isChosen = false
 
     var body: some View {
         NavigationStack {
@@ -24,7 +22,7 @@ struct WorkoutPickerSheet: View {
                             WorkoutPickerRow(name: workout.name, exerciseCount: count)
                         }
                         .buttonStyle(.plain)
-                        .disabled(count == 0 || isChosen)
+                        .disabled(count == 0)
                         .accessibilityIdentifier("workoutPicker.workout")
                     }
                 }
@@ -51,8 +49,6 @@ struct WorkoutPickerSheet: View {
     }
 
     private func choose(_ workout: Workout) {
-        guard !isChosen else { return }
-        isChosen = true
         onChoose(workout)
         dismiss()
     }

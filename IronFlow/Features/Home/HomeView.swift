@@ -7,7 +7,7 @@ struct HomeView: View {
     /// Starts and opens sessions; `RootView` owns the session screen.
     let sessionActions: SessionActions
 
-    @Query(filter: #Predicate<Session> { $0.endedAt == nil }) private var activeSessions: [Session]
+    @Query(SessionService.activeSessionsDescriptor) private var activeSessions: [Session]
     @Query(HomeView.anyWorkout) private var anyWorkout: [Workout]
     @Query(ProfileService.latestWeightDescriptor) private var latestWeight: [BodyWeightEntry]
     @Query(ProfileService.profileDescriptor) private var profiles: [UserProfile]
@@ -84,7 +84,10 @@ struct HomeView: View {
     private func perform(_ action: TodayWorkoutAction) {
         switch action {
         case .continueSession: sessionActions.open()
-        case .chooseWorkout: isChoosingWorkout = true
+        case .chooseWorkout:
+            // A choice left from an earlier sheet is never started by this one.
+            chosenWorkout = nil
+            isChoosingWorkout = true
         case .startFreeWorkout: sessionActions.startFree()
         }
     }
@@ -213,8 +216,9 @@ private struct TodayWorkoutCard: View {
             .accessibilityIdentifier("home.today")
 
             VStack(spacing: 8) {
-                ForEach(state.actions, id: \.self) { action in
-                    actionButton(action)
+                // The first action is the main one (a gray button); the others are text.
+                ForEach(Array(state.actions.enumerated()), id: \.element) { index, action in
+                    actionButton(action, isMain: index == 0)
                 }
             }
         }
@@ -223,20 +227,25 @@ private struct TodayWorkoutCard: View {
     }
 
     @ViewBuilder
-    private func actionButton(_ action: TodayWorkoutAction) -> some View {
-        switch action {
-        case .continueSession:
-            Button("Continuar") { onAction(action) }
+    private func actionButton(_ action: TodayWorkoutAction, isMain: Bool) -> some View {
+        let button = switch action {
+        case .continueSession: Button("Continuar") { onAction(action) }
+        case .chooseWorkout: Button("Escolher um treino") { onAction(action) }
+        case .startFreeWorkout: Button("Iniciar treino livre") { onAction(action) }
+        }
+        let identifier = switch action {
+        case .continueSession: "home.continue"
+        case .chooseWorkout: "home.chooseWorkout"
+        case .startFreeWorkout: "home.startFree"
+        }
+        if isMain {
+            button
                 .buttonStyle(CardMainButtonStyle())
-                .accessibilityIdentifier("home.continue")
-        case .chooseWorkout:
-            Button("Escolher um treino") { onAction(action) }
-                .buttonStyle(CardMainButtonStyle())
-                .accessibilityIdentifier("home.chooseWorkout")
-        case .startFreeWorkout:
-            Button("Iniciar treino livre") { onAction(action) }
+                .accessibilityIdentifier(identifier)
+        } else {
+            button
                 .buttonStyle(CardTextButtonStyle())
-                .accessibilityIdentifier("home.startFree")
+                .accessibilityIdentifier(identifier)
         }
     }
 }

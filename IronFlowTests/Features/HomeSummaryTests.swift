@@ -96,6 +96,16 @@ struct HomeSummaryTests {
         let newer = Session(startedAt: Date(timeIntervalSinceReferenceDate: 2_000), workoutNameSnapshot: "Pull")
         #expect(TodayWorkoutState.resolve(activeSessions: [older, newer], hasWorkouts: false)
             == .inProgress(name: "Pull", startedAt: Date(timeIntervalSinceReferenceDate: 2_000)))
+
+        // Started at the same moment: the most recently created, as "Continuar" opens it.
+        let first = Session(startedAt: Date(timeIntervalSinceReferenceDate: 3_000), workoutNameSnapshot: "Legs")
+        first.createdAt = Date(timeIntervalSinceReferenceDate: 3_000)
+        let second = Session(startedAt: Date(timeIntervalSinceReferenceDate: 3_000), workoutNameSnapshot: "Arms")
+        second.createdAt = Date(timeIntervalSinceReferenceDate: 3_001)
+        for sessions in [[first, second], [second, first]] {
+            #expect(TodayWorkoutState.resolve(activeSessions: sessions, hasWorkouts: true)
+                == .inProgress(name: "Arms", startedAt: Date(timeIntervalSinceReferenceDate: 3_000)))
+        }
     }
 
     @Test("Today's workout start: the time for today, the day first for an earlier day")
