@@ -88,9 +88,10 @@ final class SessionUITests: XCTestCase {
         XCTAssertEqual(element("session.name", in: app).label, "Push")
         XCTAssertEqual(checks(in: app).count, 3, "The session should copy the three planned sets")
 
-        // Empty repetitions take the target (8–12 → 12).
+        // Empty repetitions take the target (8–12 → 12): the set is checked here, and its stored
+        // repetitions are proven after the session is opened again (below).
         checks(in: app).element(boundBy: 0).tap()
-        XCTAssertEqual(repsFields(in: app).element(boundBy: 0).value as? String, "12")
+        XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "First set not checked")
 
         // Typed repetitions are recorded.
         repsFields(in: app).element(boundBy: 1).tap()
@@ -118,6 +119,19 @@ final class SessionUITests: XCTestCase {
         bar.tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened from the bar")
         XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "Checked set lost after minimizing")
+
+        // The session screen was created again, so the field shows the stored repetitions. Its
+        // empty hint is also "12", so the value alone proves nothing: typing one digit must give
+        // three characters (1, 2 and 3, wherever the caret is), which only happens when the field
+        // really holds "12"; an empty field would show "3". The digit is then deleted again.
+        let firstReps = repsFields(in: app).element(boundBy: 0)
+        firstReps.tap()
+        firstReps.typeText("3")
+        let typed = try XCTUnwrap(firstReps.value as? String)
+        XCTAssertEqual(typed.count, 3, "The checked set does not hold 12 repetitions: \(typed)")
+        XCTAssertEqual(Set(typed), ["1", "2", "3"], "The checked set does not hold 12 repetitions: \(typed)")
+        firstReps.typeText(XCUIKeyboardKey.delete.rawValue)
+        XCTAssertEqual(firstReps.value as? String, "12")
 
         // Finishing with sets not done asks first; they stay recorded as not done.
         app.buttons["session.finish"].tap()
