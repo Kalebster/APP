@@ -82,7 +82,7 @@ final class ExerciseListUITests: XCTestCase {
         XCTAssertTrue(groupCard("chest", in: app).waitForExistence(timeout: 10), "Chest card not found")
 
         let field = searchField(in: app)
-        field.tap()
+        field.tapAndWaitForKeyboardFocus()
         field.typeText("agachamento")
 
         XCTAssertTrue(element(labeled: "Agachamento Livre com Barra", in: app).waitForExistence(timeout: 10))
@@ -107,7 +107,7 @@ final class ExerciseListUITests: XCTestCase {
         XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
 
         let field = searchField(in: app)
-        field.tap()
+        field.tapAndWaitForKeyboardFocus()
         field.typeText("inclinado")
 
         XCTAssertTrue(element(labeled: "Supino Inclinado com Barra", in: app).waitForExistence(timeout: 10))

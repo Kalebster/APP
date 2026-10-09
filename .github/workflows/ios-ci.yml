@@ -153,6 +153,9 @@ jobs:
           # Name clashes get a numeric suffix (never overwrite) and the manifest is kept in sync.
           python3 - <<'PY'
           import json, os
+          # Characters upload-artifact rejects in file names (failure attachments are named like
+          # 'Debug description for `"Push" NavigationBar`'), plus the path separators.
+          invalid = '":<>|*?\r\n/\\'
           folder = "build/screenshots"
           manifest_path = os.path.join(folder, "manifest.json")
           if not os.path.exists(manifest_path):
@@ -166,6 +169,7 @@ jobs:
                   readable = attachment.get("suggestedHumanReadableName")
                   if not exported or not readable:
                       continue
+                  readable = "".join("_" if c in invalid else c for c in readable)
                   source = os.path.join(folder, exported)
                   if not os.path.exists(source):
                       print(f"Missing exported file: {exported}")

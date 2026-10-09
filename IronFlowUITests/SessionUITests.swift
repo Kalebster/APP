@@ -41,7 +41,7 @@ final class SessionUITests: XCTestCase {
         app.buttons["workout.addExercises"].firstMatch.tap()
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tap()
+        search.tapAndWaitForKeyboardFocus()
         search.typeText(exercise)
         let row = app.buttons[exercise]
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(exercise)' not found in the picker")
