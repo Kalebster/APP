@@ -29,7 +29,7 @@ final class HomeSessionUITests: XCTestCase {
     private func pickExercise(_ name: String, in app: XCUIApplication) {
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tap()
+        search.tapAndWaitForKeyboardFocus()
         search.typeText(name)
         let row = app.buttons[name]
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
