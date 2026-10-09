@@ -56,7 +56,7 @@ final class WorkoutUITests: XCTestCase {
         for name in names {
             // The search field's clear button (shown while editing) empties it wherever the tap
             // left the cursor.
-            search.tap()
+            search.tapAndWaitForKeyboardFocus()
             let clear = search.buttons.firstMatch
             if clear.exists {
                 clear.tap()
@@ -178,8 +178,11 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertFalse(save.isEnabled, "Save enabled with a blank name")
         field.typeText("Push")
         XCTAssertTrue(save.isEnabled, "Save disabled with a valid name")
+        XCTAssertEqual(field.value as? String, "   Push", "Typed name")
         save.tap()
 
+        // Saving closes the name sheet; the new workout's editor opens once the sheet has closed.
+        XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Name sheet did not close after saving")
         XCTAssertTrue(app.navigationBars["Push"].waitForExistence(timeout: 10), "Editor did not open after creating")
         XCTAssertTrue(element("workout.empty", in: app).exists, "Editor empty state not shown")
         attachScreenshot(named: "12-workout-editor-empty", of: app)
