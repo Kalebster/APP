@@ -71,14 +71,59 @@ jobs:
           set -euo pipefail
           xcodebuild -list -project IronFlow.xcodeproj
 
-      # The simulator is booted explicitly while the app builds, so the tests run on one known device
-      # and its boot time is measured instead of being hidden inside the test step. This is for
-      # observation; it is not a proven fix for the intermittent interface test failures.
-      - name: Boot simulator
-        id: boot_simulator
+      # Timed steps source this helper. It appends to build/diagnostics/steps.txt a "start" line and,
+      # when the step's shell exits, an "end" line with the exit code, or with the signal when the step
+      # was stopped by one (as when the job is cancelled). A step killed outright leaves only its
+      # "start" line. Each line ends with the machine's 1-minute load average ("-" when unavailable).
+      # Recording never fails a step.
+      - name: Prepare step records
         run: |
           set -euo pipefail
           mkdir -p build/diagnostics
+          cat > build/diagnostics/record-step.sh <<'SH'
+          step_name="$1"
+          step_signal=""
+          step_record() {
+            local load
+            load="$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')" || true
+            echo "$* $(date +%s) ${load:--}" >> build/diagnostics/steps.txt || true
+          }
+          step_end() {
+            local status=$?
+            if [ -n "$step_signal" ]; then
+              step_record end "$step_name" "signal=$step_signal"
+            else
+              step_record end "$step_name" "exit=$status"
+            fi
+          }
+          trap 'step_signal=INT; exit 130' INT
+          trap 'step_signal=TERM; exit 143' TERM
+          trap step_end EXIT
+          step_record start "$step_name"
+          SH
+
+      - name: Build for testing
+        id: build_for_testing
+        run: |
+          set -euo pipefail
+          source build/diagnostics/record-step.sh build_for_testing || true
+          xcodebuild build-for-testing \
+            -project IronFlow.xcodeproj \
+            -scheme IronFlow \
+            -configuration Debug \
+            -destination "$SIMULATOR_DESTINATION" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            -showBuildTimingSummary \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/build.log
+
+      # The simulator boots only after the build, in its own step, so each one is measured alone: in
+      # run 38645463404, with both at once, the build was much slower (the cause is not proven). The
+      # tests run on this one device, by its UDID, once it has completely booted.
+      - name: Boot simulator
+        id: simulator
+        run: |
+          set -euo pipefail
           xcrun simctl list runtimes --json > build/diagnostics/runtimes.json
           xcrun simctl list devices available --json > build/diagnostics/devices.json
           # The device named by SIMULATOR_DESTINATION (name and OS); exactly one must exist.
@@ -117,53 +162,18 @@ jobs:
           print(json.dumps(simulator, indent=2))
           PY
           udid="$(python3 -c 'import json; print(json.load(open("build/diagnostics/simulator.json"))["udid"])')"
-          state="$(python3 -c 'import json; print(json.load(open("build/diagnostics/simulator.json"))["state"])')"
-          started="$(date +%s)"
-          {
-            echo "SIMULATOR_UDID=$udid"
-            echo "BOOT_STARTED_AT=$started"
-          } >> "$GITHUB_ENV"
-          if [ "$state" = "Shutdown" ]; then
-            xcrun simctl boot "$udid"
-          fi
-          # Records when the boot completes while the build runs; read by the diagnostics report.
-          nohup bash -c 'xcrun simctl bootstatus "$1" > build/diagnostics/bootstatus.log 2>&1; echo "$? $(date +%s)" > build/diagnostics/boot-completed' \
-            _ "$udid" < /dev/null > /dev/null 2>&1 &
-          echo "Simulator $udid was $state; the build runs while it boots."
-
-      # Each step below records its exit code, start and end in build/diagnostics/steps.txt.
-      - name: Build for testing
-        id: build_for_testing
-        run: |
-          set -euo pipefail
-          mkdir -p build/diagnostics
-          started="$(date +%s)"
-          trap 'echo "build_for_testing $? $started $(date +%s)" >> build/diagnostics/steps.txt' EXIT
-          xcodebuild build-for-testing \
-            -project IronFlow.xcodeproj \
-            -scheme IronFlow \
-            -configuration Debug \
-            -destination "$SIMULATOR_DESTINATION" \
-            -derivedDataPath "$DERIVED_DATA_PATH" \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee build/build.log
-
-      # The tests start only once the simulator has completely booted.
-      - name: Wait for simulator
-        id: simulator_ready
-        run: |
-          set -euo pipefail
-          started="$(date +%s)"
-          trap 'echo "simulator_wait $? $started $(date +%s)" >> build/diagnostics/steps.txt' EXIT
-          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+          echo "SIMULATOR_UDID=$udid" >> "$GITHUB_ENV"
+          # Only the boot is timed: from here until the simulator has completely booted.
+          source build/diagnostics/record-step.sh simulator_boot || true
+          xcrun simctl bootstatus "$udid" -b
           xcrun simctl list devices booted | tee build/diagnostics/booted-devices.txt
 
+      # Every test target of the scheme except the interface tests.
       - name: Run unit tests
         id: unit_tests
         run: |
           set -euo pipefail
-          started="$(date +%s)"
-          trap 'echo "unit_tests $? $started $(date +%s)" >> build/diagnostics/steps.txt' EXIT
+          source build/diagnostics/record-step.sh unit_tests || true
           xcodebuild test-without-building \
             -project IronFlow.xcodeproj \
             -scheme IronFlow \
@@ -171,7 +181,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -resultBundlePath "$UNIT_RESULT_BUNDLE_PATH" \
-            -only-testing:IronFlowTests \
+            -skip-testing:IronFlowUITests \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/unit-test.log
 
@@ -179,11 +189,10 @@ jobs:
       # keeps its own exit code, and the job fails if either fails.
       - name: Run UI tests
         id: ui_tests
-        if: ${{ !cancelled() && steps.build_for_testing.outcome == 'success' && steps.simulator_ready.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build_for_testing.outcome == 'success' && steps.simulator.outcome == 'success' }}
         run: |
           set -euo pipefail
-          started="$(date +%s)"
-          trap 'echo "ui_tests $? $started $(date +%s)" >> build/diagnostics/steps.txt' EXIT
+          source build/diagnostics/record-step.sh ui_tests || true
           xcodebuild test-without-building \
             -project IronFlow.xcodeproj \
             -scheme IronFlow \
@@ -196,9 +205,11 @@ jobs:
             2>&1 | tee build/ui-test.log
 
       # When tests fail, the simulator's system log of the run is kept with the build logs.
+      # Bounded so this optional diagnostic cannot use up the job's time; it never replaces the test failure.
       - name: Collect simulator log
         if: ${{ !cancelled() && (steps.unit_tests.outcome == 'failure' || steps.ui_tests.outcome == 'failure') }}
         continue-on-error: true
+        timeout-minutes: 5
         run: |
           set -euo pipefail
           xcrun simctl spawn "$SIMULATOR_UDID" log show --last 45m --style compact \
@@ -213,15 +224,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
-          mkdir -p build/diagnostics
-          started="$(date +%s)"
-          trap 'echo "build_release $? $started $(date +%s)" >> build/diagnostics/steps.txt' EXIT
+          source build/diagnostics/record-step.sh build_release || true
           xcodebuild build \
             -project IronFlow.xcodeproj \
             -scheme IronFlow \
             -configuration Release \
             -destination "generic/platform=iOS" \
             -derivedDataPath "$DERIVED_DATA_PATH" \
+            -showBuildTimingSummary \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/build-release.log
 
@@ -341,9 +351,8 @@ jobs:
         if: always()
         continue-on-error: true
         env:
-          BOOT_OUTCOME: ${{ steps.boot_simulator.outcome }}
           BUILD_OUTCOME: ${{ steps.build_for_testing.outcome }}
-          SIMULATOR_OUTCOME: ${{ steps.simulator_ready.outcome }}
+          SIMULATOR_OUTCOME: ${{ steps.simulator.outcome }}
           UNIT_OUTCOME: ${{ steps.unit_tests.outcome }}
           UI_OUTCOME: ${{ steps.ui_tests.outcome }}
           RELEASE_OUTCOME: ${{ steps.build_release.outcome }}
@@ -403,27 +412,61 @@ jobs:
               matches = re.findall(pattern, text or "")
               return matches[-1] if matches else None
 
-          # "name exit start end" lines written by the steps (epoch seconds).
-          TIMES = {}
+          # Lines written by record-step.sh: "start NAME EPOCH LOAD" and "end NAME exit=N|signal=SIG EPOCH LOAD".
+          RECORDS = {}
           for line in (read_text("build/diagnostics/steps.txt") or "").splitlines():
               parts = line.split()
-              if len(parts) == 4 and all(part.isdigit() for part in parts[1:]):
-                  TIMES[parts[0]] = tuple(int(part) for part in parts[1:])
+              if len(parts) == 4 and parts[0] == "start" and parts[2].isdigit():
+                  RECORDS.setdefault(parts[1], {})["start"] = (int(parts[2]), parts[3])
+              elif len(parts) == 5 and parts[0] == "end" and parts[3].isdigit():
+                  RECORDS.setdefault(parts[1], {})["end"] = (parts[2], int(parts[3]), parts[4])
 
           def duration(name):
-              times = TIMES.get(name)
-              return times[2] - times[1] if times else None
+              record = RECORDS.get(name, {})
+              if "start" in record and "end" in record:
+                  return record["end"][1] - record["start"][0]
+              return None
+
+          def recorded(name):
+              # What the step's own shell recorded; GitHub's result for the step is shown beside it.
+              record = RECORDS.get(name, {})
+              if "start" not in record:
+                  return "sem registro"
+              if "end" not in record:
+                  return "interrompida, sem registro de fim"
+              status = record["end"][0]
+              if status == "exit=0":
+                  return "concluída (código 0)"
+              if status.startswith("exit="):
+                  return f"falhou (código {status[5:]})"
+              if status.startswith("signal="):
+                  return f"encerrada pelo sinal {status[7:]}"
+              return f"{UNAVAILABLE} ({status})"
+
+          def load(name):
+              record = RECORDS.get(name, {})
+              start = record["start"][1] if "start" in record else "-"
+              end = record["end"][2] if "end" in record else "-"
+              if start == "-" and end == "-":
+                  return UNAVAILABLE
+              return f"{start} → {end}"
 
           def environment():
               image = " ".join(v for v in (os.environ.get("ImageOS"), os.environ.get("ImageVersion")) if v)
               runner = " ".join(v for v in (os.environ.get("RUNNER_NAME"), os.environ.get("RUNNER_OS"), os.environ.get("RUNNER_ARCH")) if v)
               macos, macos_build = command("sw_vers", "-productVersion"), command("sw_vers", "-buildVersion")
               xcode = command("xcodebuild", "-version")
+              cpu = command("sysctl", "-n", "machdep.cpu.brand_string")
+              physical, logical = command("sysctl", "-n", "hw.physicalcpu"), command("sysctl", "-n", "hw.logicalcpu")
+              memory = command("sysctl", "-n", "hw.memsize")
               rows = [
                   ("Imagem do runner", image or UNAVAILABLE),
                   ("Runner", runner or UNAVAILABLE),
                   ("macOS", f"{macos} ({macos_build})" if macos else UNAVAILABLE),
                   ("Xcode", xcode.replace("\n", ", ") if xcode else UNAVAILABLE),
+                  ("CPU", cpu or UNAVAILABLE),
+                  ("Núcleos (físicos / lógicos)", f"{physical or UNAVAILABLE} / {logical or UNAVAILABLE}"),
+                  ("Memória", f"{int(memory) / 2**30:.1f} GB" if memory and memory.isdigit() else UNAVAILABLE),
               ]
               simulator = read_json("build/diagnostics/simulator.json")
               if simulator:
@@ -431,42 +474,36 @@ jobs:
                   rows += [
                       ("Simulador", f"{simulator.get('name')} ({simulator.get('udid')})"),
                       ("Runtime", f"{runtime.get('name')} ({runtime.get('buildversion')})"),
-                      ("Estado antes do boot", simulator.get("state") or UNAVAILABLE),
                   ]
               else:
                   rows.append(("Simulador", UNAVAILABLE))
               table(["Item", "Valor"], rows)
 
           def steps():
-              rows = [("Ligar o simulador", os.environ.get("BOOT_OUTCOME") or UNAVAILABLE, "—", "—", "—")]
+              rows = []
               previous_end = None
               for key, label, outcome in (
                   ("build_for_testing", "Compilação para testes", "BUILD_OUTCOME"),
-                  ("simulator_wait", "Espera pelo simulador", "SIMULATOR_OUTCOME"),
+                  ("simulator_boot", "Boot do simulador", "SIMULATOR_OUTCOME"),
                   ("unit_tests", "Testes de unidade", "UNIT_OUTCOME"),
                   ("ui_tests", "Testes de interface", "UI_OUTCOME"),
                   ("build_release", "Compilação Release", "RELEASE_OUTCOME"),
               ):
-                  times = TIMES.get(key)
-                  if times:
-                      status, start, end = times
-                      gap = seconds(start - previous_end) if previous_end is not None else "—"
-                      rows.append((label, os.environ.get(outcome) or UNAVAILABLE, seconds(end - start), status, gap))
-                      previous_end = end
-                  else:
-                      rows.append((label, os.environ.get(outcome) or UNAVAILABLE, "não executada", "—", "—"))
-              table(["Etapa", "Resultado", "Duração", "Código de saída", "Intervalo desde a etapa anterior"], rows)
+                  record = RECORDS.get(key, {})
+                  start = record["start"][0] if "start" in record else None
+                  gap = seconds(start - previous_end) if start is not None and previous_end is not None else "—"
+                  rows.append((label, os.environ.get(outcome) or UNAVAILABLE, recorded(key), seconds(duration(key)), load(key), gap))
+                  if "end" in record:
+                      previous_end = record["end"][1]
+              table(["Etapa", "Resultado no GitHub", "Registro da etapa", "Duração", "Carga de 1 min (início → fim)", "Intervalo desde a etapa anterior"], rows)
 
           def boot():
-              rows = []
-              started = os.environ.get("BOOT_STARTED_AT", "")
-              completed = (read_text("build/diagnostics/boot-completed") or "").split()
-              if started.isdigit() and len(completed) == 2 and completed[1].isdigit():
-                  rows.append(("Da ordem de boot ao boot completo", seconds(int(completed[1]) - int(started))))
-                  rows.append(("Código de saída do monitor de boot", completed[0]))
-              else:
-                  rows.append(("Da ordem de boot ao boot completo", f"{UNAVAILABLE} (o fim do boot não foi registrado)"))
-              rows.append(("Espera depois da compilação", seconds(duration("simulator_wait"))))
+              simulator = read_json("build/diagnostics/simulator.json") or {}
+              rows = [
+                  ("Estado antes do boot", simulator.get("state") or UNAVAILABLE),
+                  ("Duração do boot (até o simulador ficar pronto)", seconds(duration("simulator_boot"))),
+                  ("Registro", recorded("simulator_boot")),
+              ]
               booted = read_text("build/diagnostics/booted-devices.txt")
               if booted is None:
                   rows.append(("Simuladores ligados antes dos testes", UNAVAILABLE))
@@ -580,10 +617,10 @@ jobs:
           def runner_startup(log):
               # From the start of the step to the first interface test (the test runner starting up).
               started = last_match(r"Test Suite 'All tests' started at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+)", log)
-              times = TIMES.get("ui_tests")
-              if not started or not times:
+              record = RECORDS.get("ui_tests", {})
+              if not started or "start" not in record:
                   return UNAVAILABLE
-              return seconds(datetime.strptime(started, "%Y-%m-%d %H:%M:%S.%f").timestamp() - times[1])
+              return seconds(datetime.strptime(started, "%Y-%m-%d %H:%M:%S.%f").timestamp() - record["start"][0])
 
           def ui_tests():
               log = read_text("build/ui-test.log")
@@ -640,8 +677,7 @@ jobs:
                          "lost connection", "timed out while launching", "unable to find a destination",
                          "crashed", "simulator device failed", "unable to lookup in current state")
               found = []
-              for path in ("build/diagnostics/bootstatus.log", "build/build.log", "build/unit-test.log",
-                           "build/ui-test.log", "build/build-release.log"):
+              for path in ("build/build.log", "build/unit-test.log", "build/ui-test.log", "build/build-release.log"):
                   for line in (read_text(path) or "").splitlines():
                       if any(marker in line.lower() for marker in markers):
                           entry = f"{os.path.basename(path)}: {line.strip()[:300]}"
@@ -681,15 +717,45 @@ jobs:
               if listed == 0:
                   add("Nenhum anexo associado a falhas.")
 
+          def builds():
+              # xcodebuild -showBuildTimingSummary: the time spent in each kind of task. Tasks run in
+              # parallel, so their times can add up to more than the duration of the step.
+              for label, path, key in (("Compilação para testes", "build/build.log", "build_for_testing"),
+                                       ("Compilação Release", "build/build-release.log", "build_release")):
+                  add(f"**{label}**: duração {seconds(duration(key))}, carga de 1 min {load(key)}")
+                  add()
+                  log = read_text(path)
+                  if log is None:
+                      add(f"{UNAVAILABLE} (sem log: a etapa não foi executada)")
+                      add()
+                      continue
+                  log_lines = log.splitlines()
+                  starts = [i for i, line in enumerate(log_lines) if line.strip() == "Build Timing Summary"]
+                  if not starts:
+                      add(f"{UNAVAILABLE} (o resumo de tempos não aparece no log)")
+                      add()
+                      continue
+                  summary = []
+                  for line in log_lines[starts[-1] + 1:]:
+                      if line.strip():
+                          summary.append(line.strip())
+                      if line.startswith("** ") or len(summary) >= 40:
+                          break
+                  add("```")
+                  lines.extend(summary)
+                  add("```")
+                  add()
+
           def limitations():
               add("- A abertura do app e a conexão da automação aparecem juntas no log (de “Launch” a “Setting up automation session”).")
-              add("- A carga da máquina não é medida.")
+              add("- A carga da máquina é a média de 1 minuto no início e no fim de cada etapa, não uma medição contínua.")
               add("- Screenshots e resultados completos ficam nos artefatos test-results e screenshots; o registro do simulador fica em build-logs quando algum teste falha.")
               add("- Os tempos das etapas vêm do relógio do runner, com precisão de 1 s.")
 
           add("## Diagnóstico do CI")
           section("Ambiente", environment)
           section("Etapas", steps)
+          section("Compilações", builds)
           section("Simulador", boot)
           section("Testes de unidade", unit_tests)
           section("Testes de interface", ui_tests)
