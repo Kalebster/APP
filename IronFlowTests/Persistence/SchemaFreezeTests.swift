@@ -59,19 +59,52 @@ struct SchemaFreezeTests {
             #expect(entity.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1[name], "\(name)")
         }
 
-        // A set's planned load (an attribute of the history) is lost.
+        // A set's planned load (an attribute of the history) is lost. The same copy without the
+        // removal keeps the fingerprint, so the difference comes from the removal alone.
         let setLog = try #require(model.entitiesByName["SetLog"])
-        let withoutTarget = try #require(setLog.copy() as? NSEntityDescription)
-        withoutTarget.properties = withoutTarget.properties.filter { $0.name != "targetWeightKg" }
+        let setLogControl = try copy(of: setLog, removing: [])
+        #expect(setLogControl.versionHash == setLog.versionHash)
+        let withoutTarget = try copy(of: setLog, removing: ["targetWeightKg"])
         #expect(withoutTarget.properties.count == setLog.properties.count - 1)
         #expect(withoutTarget.versionHash != setLog.versionHash)
 
         // A performed exercise loses the link to its sets (a relationship of the history).
         let performed = try #require(model.entitiesByName["SessionExercise"])
-        let withoutSets = try #require(performed.copy() as? NSEntityDescription)
-        withoutSets.properties = withoutSets.properties.filter { $0.name != "setLogs" }
+        let performedControl = try copy(of: performed, removing: [])
+        #expect(performedControl.versionHash == performed.versionHash)
+        let withoutSets = try copy(of: performed, removing: ["setLogs"])
         #expect(withoutSets.properties.count == performed.properties.count - 1)
         #expect(withoutSets.versionHash != performed.versionHash)
+
+        // The copies left the model's own entities as they were.
+        #expect(setLog.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1["SetLog"])
+        #expect(performed.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1["SessionExercise"])
+    }
+
+    @Test("Retyping a stored attribute or making it required changes a released model's fingerprint")
+    func fingerprintDetectsRetypedAndRequiredAttributes() throws {
+        let model = try #require(NSManagedObjectModel.makeManagedObjectModel(for: SchemaV1.models))
+        let setLog = try #require(model.entitiesByName["SetLog"])
+
+        // The repetitions of a set are stored as decimals instead of whole numbers. The same copy
+        // with the attribute unchanged keeps the fingerprint, so the difference comes from the type.
+        #expect(setLog.attributesByName["reps"]?.attributeType != NSAttributeType.doubleAttributeType)
+        let repsControl = try copy(of: setLog, withAttribute: "reps") { _ in }
+        #expect(repsControl.versionHash == setLog.versionHash)
+        let retyped = try copy(of: setLog, withAttribute: "reps") { $0.attributeType = .doubleAttributeType }
+        #expect(retyped.attributesByName["reps"]?.attributeType == NSAttributeType.doubleAttributeType)
+        #expect(retyped.versionHash != setLog.versionHash)
+
+        // A set's load, empty for sets done without weight, becomes required.
+        #expect(setLog.attributesByName["weightKg"]?.isOptional == true)
+        let weightControl = try copy(of: setLog, withAttribute: "weightKg") { _ in }
+        #expect(weightControl.versionHash == setLog.versionHash)
+        let required = try copy(of: setLog, withAttribute: "weightKg") { $0.isOptional = false }
+        #expect(required.attributesByName["weightKg"]?.isOptional == false)
+        #expect(required.versionHash != setLog.versionHash)
+
+        // The copies left the model's own entity as it was.
+        #expect(setLog.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1["SetLog"])
     }
 
     @Test("Every record of every released version keeps a unique id")
@@ -85,5 +118,28 @@ struct SchemaFreezeTests {
                 #expect(constraints == [["id"]], "\(version.versionIdentifier) \(name): \(constraints)")
             }
         }
+    }
+
+    /// A detached copy of `entity` without the properties named in `removed` (none for a control).
+    private func copy(of entity: NSEntityDescription, removing removed: Set<String>) throws -> NSEntityDescription {
+        let detached = try #require(entity.copy() as? NSEntityDescription)
+        detached.properties = detached.properties.filter { !removed.contains($0.name) }
+        return detached
+    }
+
+    /// A detached copy of `entity` whose attribute `name` is replaced by a copy passed through
+    /// `change` (which changes nothing for a control).
+    private func copy(
+        of entity: NSEntityDescription,
+        withAttribute name: String,
+        _ change: (NSAttributeDescription) -> Void
+    ) throws -> NSEntityDescription {
+        let detached = try #require(entity.copy() as? NSEntityDescription)
+        let attribute = try #require(detached.attributesByName[name]?.copy() as? NSAttributeDescription, "No attribute \(name)")
+        change(attribute)
+        detached.properties = detached.properties.map { property -> NSPropertyDescription in
+            property.name == name ? attribute : property
+        }
+        return detached
     }
 }
