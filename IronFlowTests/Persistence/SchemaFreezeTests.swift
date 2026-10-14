@@ -51,60 +51,65 @@ struct SchemaFreezeTests {
 
     @Test("Losing a stored property or relationship of a released model changes its fingerprint")
     func fingerprintDetectsLostPropertiesAndRelationships() throws {
-        // The models Core Data builds for version 1 are the ones the stores record: same entities,
-        // same hashes. So a hash that changes here is a store that no longer matches the frozen one.
         let model = try #require(NSManagedObjectModel.makeManagedObjectModel(for: SchemaV1.models))
-        #expect(Set(model.entitiesByName.keys) == Set(FrozenSchemaFingerprints.v1.keys))
-        for (name, entity) in model.entitiesByName {
-            #expect(entity.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1[name], "\(name)")
-        }
 
-        // A set's planned load (an attribute of the history) is lost. The same copy without the
-        // removal keeps the fingerprint, so the difference comes from the removal alone.
-        let setLog = try #require(model.entitiesByName["SetLog"])
-        let setLogControl = try copy(of: setLog, removing: [])
-        #expect(setLogControl.versionHash == setLog.versionHash)
-        let withoutTarget = try copy(of: setLog, removing: ["targetWeightKg"])
-        #expect(withoutTarget.properties.count == setLog.properties.count - 1)
-        #expect(withoutTarget.versionHash != setLog.versionHash)
+        // Control: the whole model copied without a change keeps the frozen fingerprints, so a
+        // different fingerprint below comes from the change alone, not from the copy.
+        let setLogControl = try fingerprint(of: "SetLog", inCopyOf: model)
+        #expect(setLogControl == FrozenSchemaFingerprints.v1["SetLog"])
+        let performedControl = try fingerprint(of: "SessionExercise", inCopyOf: model)
+        #expect(performedControl == FrozenSchemaFingerprints.v1["SessionExercise"])
+
+        // A set's planned load (an attribute of the history) is lost.
+        let withoutTarget = try fingerprint(of: "SetLog", inCopyOf: model) { entity in
+            let count = entity.properties.count
+            #expect(entity.attributesByName["targetWeightKg"] != nil)
+            entity.properties = entity.properties.filter { $0.name != "targetWeightKg" }
+            #expect(entity.properties.count == count - 1)
+        }
+        #expect(withoutTarget != FrozenSchemaFingerprints.v1["SetLog"])
 
         // A performed exercise loses the link to its sets (a relationship of the history).
-        let performed = try #require(model.entitiesByName["SessionExercise"])
-        let performedControl = try copy(of: performed, removing: [])
-        #expect(performedControl.versionHash == performed.versionHash)
-        let withoutSets = try copy(of: performed, removing: ["setLogs"])
-        #expect(withoutSets.properties.count == performed.properties.count - 1)
-        #expect(withoutSets.versionHash != performed.versionHash)
+        let withoutSets = try fingerprint(of: "SessionExercise", inCopyOf: model) { entity in
+            let count = entity.properties.count
+            #expect(entity.relationshipsByName["setLogs"] != nil)
+            entity.properties = entity.properties.filter { $0.name != "setLogs" }
+            #expect(entity.properties.count == count - 1)
+        }
+        #expect(withoutSets != FrozenSchemaFingerprints.v1["SessionExercise"])
 
-        // The copies left the model's own entities as they were.
-        #expect(setLog.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1["SetLog"])
-        #expect(performed.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1["SessionExercise"])
+        // The models Core Data builds for version 1 are the ones the stores record: same entities,
+        // same hashes, untouched by the copies. So a hash that changes here is a store that no
+        // longer matches the frozen one.
+        expectFrozenVersionOne(model)
     }
 
     @Test("Retyping a stored attribute or making it required changes a released model's fingerprint")
     func fingerprintDetectsRetypedAndRequiredAttributes() throws {
         let model = try #require(NSManagedObjectModel.makeManagedObjectModel(for: SchemaV1.models))
-        let setLog = try #require(model.entitiesByName["SetLog"])
 
-        // The repetitions of a set are stored as decimals instead of whole numbers. The same copy
-        // with the attribute unchanged keeps the fingerprint, so the difference comes from the type.
-        #expect(setLog.attributesByName["reps"]?.attributeType != NSAttributeType.doubleAttributeType)
-        let repsControl = try copy(of: setLog, withAttribute: "reps") { _ in }
-        #expect(repsControl.versionHash == setLog.versionHash)
-        let retyped = try copy(of: setLog, withAttribute: "reps") { $0.attributeType = .doubleAttributeType }
-        #expect(retyped.attributesByName["reps"]?.attributeType == NSAttributeType.doubleAttributeType)
-        #expect(retyped.versionHash != setLog.versionHash)
+        // Control: the whole model copied without a change keeps the frozen fingerprint.
+        let control = try fingerprint(of: "SetLog", inCopyOf: model)
+        #expect(control == FrozenSchemaFingerprints.v1["SetLog"])
+
+        // The repetitions of a set are stored as decimals instead of whole numbers.
+        let retyped = try fingerprint(of: "SetLog", inCopyOf: model) { entity in
+            let reps = try #require(entity.attributesByName["reps"])
+            #expect(reps.attributeType != NSAttributeType.doubleAttributeType)
+            reps.attributeType = .doubleAttributeType
+        }
+        #expect(retyped != FrozenSchemaFingerprints.v1["SetLog"])
 
         // A set's load, empty for sets done without weight, becomes required.
-        #expect(setLog.attributesByName["weightKg"]?.isOptional == true)
-        let weightControl = try copy(of: setLog, withAttribute: "weightKg") { _ in }
-        #expect(weightControl.versionHash == setLog.versionHash)
-        let required = try copy(of: setLog, withAttribute: "weightKg") { $0.isOptional = false }
-        #expect(required.attributesByName["weightKg"]?.isOptional == false)
-        #expect(required.versionHash != setLog.versionHash)
+        let required = try fingerprint(of: "SetLog", inCopyOf: model) { entity in
+            let weight = try #require(entity.attributesByName["weightKg"])
+            #expect(weight.isOptional)
+            weight.isOptional = false
+        }
+        #expect(required != FrozenSchemaFingerprints.v1["SetLog"])
 
-        // The copies left the model's own entity as it was.
-        #expect(setLog.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1["SetLog"])
+        // The copies left the model as it was.
+        expectFrozenVersionOne(model)
     }
 
     @Test("Every record of every released version keeps a unique id")
@@ -120,26 +125,29 @@ struct SchemaFreezeTests {
         }
     }
 
-    /// A detached copy of `entity` without the properties named in `removed` (none for a control).
-    private func copy(of entity: NSEntityDescription, removing removed: Set<String>) throws -> NSEntityDescription {
-        let detached = try #require(entity.copy() as? NSEntityDescription)
-        detached.properties = detached.properties.filter { !removed.contains($0.name) }
-        return detached
+    /// The fingerprint of the entity `name` in a new copy of the whole `model`, after `change`.
+    ///
+    /// The whole model is copied, never a single entity, so every relationship keeps pointing to
+    /// entities of the same model. Each call makes its own copy, which must not share the entity
+    /// with `model` and stays alive while the fingerprint is read.
+    private func fingerprint(
+        of name: String,
+        inCopyOf model: NSManagedObjectModel,
+        after change: (NSEntityDescription) throws -> Void = { _ in }
+    ) throws -> String {
+        let copy = try #require(model.copy() as? NSManagedObjectModel)
+        let entity = try #require(copy.entitiesByName[name], "No entity \(name) in the copy")
+        let sharesEntity = entity === model.entitiesByName[name]
+        #expect(!sharesEntity, "The copy shares \(name) with the model")
+        try change(entity)
+        return withExtendedLifetime(copy) { entity.versionHash.base64EncodedString() }
     }
 
-    /// A detached copy of `entity` whose attribute `name` is replaced by a copy passed through
-    /// `change` (which changes nothing for a control).
-    private func copy(
-        of entity: NSEntityDescription,
-        withAttribute name: String,
-        _ change: (NSAttributeDescription) -> Void
-    ) throws -> NSEntityDescription {
-        let detached = try #require(entity.copy() as? NSEntityDescription)
-        let attribute = try #require(detached.attributesByName[name]?.copy() as? NSAttributeDescription, "No attribute \(name)")
-        change(attribute)
-        detached.properties = detached.properties.map { property -> NSPropertyDescription in
-            property.name == name ? attribute : property
+    /// Expects `model` to have exactly the version 1 entities, each with its frozen fingerprint.
+    private func expectFrozenVersionOne(_ model: NSManagedObjectModel) {
+        #expect(Set(model.entitiesByName.keys) == Set(FrozenSchemaFingerprints.v1.keys))
+        for (name, entity) in model.entitiesByName {
+            #expect(entity.versionHash.base64EncodedString() == FrozenSchemaFingerprints.v1[name], "\(name)")
         }
-        return detached
     }
 }
