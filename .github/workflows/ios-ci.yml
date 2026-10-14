@@ -95,13 +95,29 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/test.log
 
+      # Release is compiled, not tested again: the tests above cover the behavior, and this proves the
+      # optimized build without the Debug-only test hooks still compiles, for the iPhone SDK the App
+      # Store build uses (one architecture, no signing). Runs even when tests fail, so both are reported.
+      - name: Build Release
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project IronFlow.xcodeproj \
+            -scheme IronFlow \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/build-release.log
+
       # Warnings are reported, not treated as errors: they must be reviewed by hand.
       - name: Summarize build warnings
         if: always()
         run: |
           set -euo pipefail
           logs=()
-          for log in build/build.log build/test.log; do
+          for log in build/build.log build/test.log build/build-release.log; do
             if [ -f "$log" ]; then logs+=("$log"); fi
           done
           if [ "${#logs[@]}" -eq 0 ]; then
