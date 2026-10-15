@@ -185,10 +185,12 @@ private struct WeekDayCell: View {
                     }
                 }
 
+            // Decorative: the day's label already says it was marked.
             Image(systemName: "checkmark")
                 .font(.caption2.weight(.heavy))
                 .foregroundStyle(Color.accentColor)
                 .opacity(day.isMarked ? 1 : 0)
+                .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())

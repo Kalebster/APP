@@ -38,6 +38,20 @@ final class HomeWeekUITests: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
     }
 
+    /// Cancels the confirmation to unmark. Depending on the system layout the dialog has a "Cancelar"
+    /// button or is dismissed by tapping outside it.
+    @MainActor
+    private func cancelUnmarking(in app: XCUIApplication) {
+        XCTAssertTrue(app.buttons["Desmarcar"].waitForExistence(timeout: 10), "Confirmation not shown")
+        let cancel = app.buttons["Cancelar"]
+        if cancel.exists {
+            cancel.tap()
+        } else {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        }
+        XCTAssertTrue(app.buttons["Desmarcar"].waitForNonExistence(timeout: 10), "Confirmation not dismissed")
+    }
+
     @MainActor
     private func attachScreenshot(named name: String, of app: XCUIApplication) {
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -67,8 +81,7 @@ final class HomeWeekUITests: XCTestCase {
         today(in: app).tap()
         let question = app.staticTexts["Desmarcar este dia?"]
         XCTAssertTrue(question.waitForExistence(timeout: 10), "No confirmation before unmarking")
-        app.buttons["Cancelar"].tap()
-        XCTAssertTrue(question.waitForNonExistence(timeout: 10), "Confirmation not closed")
+        cancelUnmarking(in: app)
         expectCounts("1 treino esta semana", "1/7 dias", in: app)
 
         today(in: app).tap()
