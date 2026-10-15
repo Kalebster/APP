@@ -71,7 +71,7 @@ struct HistorySessionDetailTests {
         let after = HistorySessionDetail(stored)
         #expect(after == before)
         #expect(after.name == "Braço")
-        #expect(after.duration == 45 * 60)
+        #expect(after.duration == TimeInterval(45 * 60))
         #expect(after.exercises.map(\.name) == ["Rosca Direta"])
         #expect(after.exercises.map(\.muscleGroup) == [.biceps])
         let sets = try #require(after.exercises.first?.sets)
