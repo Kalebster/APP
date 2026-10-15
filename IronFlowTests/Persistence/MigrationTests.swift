@@ -8,7 +8,7 @@ import Testing
 /// are checked against the frozen ones first, so they are the stores those versions really wrote.
 @MainActor
 struct MigrationTests {
-    @Test("A version 1 store keeps every value and relationship when the current app opens it")
+    @Test("A version 1 store migrates to version 3 and keeps every value and relationship")
     func v1StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -33,24 +33,27 @@ struct MigrationTests {
 
             #expect(try historySnapshot(context) == history)
             #expect(try bodyDataSnapshot(context).isEmpty)
+            #expect(try externalWorkoutDaySnapshot(context).isEmpty)
             try expectHistoricalMeaning(in: context, sessionID: sessionID)
 
-            // The tables added by version 2 work in the migrated store.
+            // The tables added by versions 2 and 3 work in the migrated store.
             let profile = ProfileService(context: context)
             try profile.recordWeight(80.5)
             try profile.setHeight(180)
+            try markTrainedOutsideTheApp(in: context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v2, "Store not migrated to version 2")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v3, "Store not migrated to version 3")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
         #expect(try historySnapshot(reopened.mainContext) == history)
         #expect(try ProfileService(context: reopened.mainContext).latestWeight()?.weightKg == 80.5)
         #expect(try ProfileService(context: reopened.mainContext).profile()?.heightCm == 180)
+        #expect(try reopened.mainContext.fetch(FetchDescriptor<ExternalWorkoutDay>()).map(\.day) == [Self.markedDay])
     }
 
-    @Test("A version 2 store, with body data, keeps every value when the current app opens it")
-    func v2StoreOpens() throws {
+    @Test("A version 2 store, with body data, migrates to version 3 and keeps every value")
+    func v2StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
         let storeURL = directory.appending(path: "IronFlow.store")
@@ -75,14 +78,39 @@ struct MigrationTests {
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v2, "Not a version 2 store")
 
-        let opened = try ModelContainerFactory.makePersistent(at: storeURL)
-        let context = opened.mainContext
-        #expect(try historySnapshot(context) == history)
-        #expect(try bodyDataSnapshot(context) == bodyData)
-        try expectHistoricalMeaning(in: context, sessionID: sessionID)
-        #expect(try ProfileService(context: context).latestWeight()?.weightKg == 80.5)
-        #expect(try ProfileService(context: context).profile()?.heightCm == 180)
-        #expect(try ProfileService(context: context).profile()?.dailyCalorieGoalKcal == nil)
+        do {
+            let migrated = try ModelContainerFactory.makePersistent(at: storeURL)
+            let context = migrated.mainContext
+            #expect(try historySnapshot(context) == history)
+            #expect(try bodyDataSnapshot(context) == bodyData)
+            #expect(try externalWorkoutDaySnapshot(context).isEmpty)
+            try expectHistoricalMeaning(in: context, sessionID: sessionID)
+            #expect(try ProfileService(context: context).latestWeight()?.weightKg == 80.5)
+            #expect(try ProfileService(context: context).profile()?.heightCm == 180)
+            #expect(try ProfileService(context: context).profile()?.dailyCalorieGoalKcal == nil)
+
+            // The table added by version 3 works in the migrated store.
+            try markTrainedOutsideTheApp(in: context)
+        }
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v3, "Store not migrated to version 3")
+
+        // Closed and opened again: nothing was lost and the new data stays.
+        let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
+        #expect(try historySnapshot(reopened.mainContext) == history)
+        #expect(try bodyDataSnapshot(reopened.mainContext) == bodyData)
+        #expect(try reopened.mainContext.fetch(FetchDescriptor<ExternalWorkoutDay>()).map(\.day) == [Self.markedDay])
+    }
+
+    /// The day `markTrainedOutsideTheApp(in:)` marks: the day `SampleGraph`'s session ended, in São Paulo.
+    private static let markedDay = "2026-05-09"
+
+    /// Marks a day as trained outside the app through the service, as the Home does.
+    private func markTrainedOutsideTheApp(in context: ModelContext) throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "America/Sao_Paulo"))
+        let service = ExternalWorkoutService(context: context, now: { SampleGraph.sessionEnd }, calendar: calendar)
+        let marking = try service.mark(SampleGraph.sessionEnd)
+        #expect(marking.day == Self.markedDay)
     }
 
     /// The same values read through the app's relationships and services, as the screens read them.

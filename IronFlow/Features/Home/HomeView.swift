@@ -1,8 +1,9 @@
+import Combine
 import SwiftData
 import SwiftUI
 
-/// The Início tab: the app header, today's workout (continue, choose a workout or start a free one)
-/// and the quick summary of the user's body data.
+/// The Início tab: the app header, today's workout (continue, choose a workout or start a free one),
+/// the current week and the quick summary of the user's body data.
 struct HomeView: View {
     /// Starts and opens sessions; `RootView` owns the session screen.
     let sessionActions: SessionActions
@@ -15,6 +16,10 @@ struct HomeView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.scenePhase) private var scenePhase
+    /// The moment the week is shown for. Updated when the day changes with the app open, when the
+    /// time or time zone changes, and when the app comes back to the foreground.
+    @State private var now = Date.now
     @State private var editingMetric: SummaryMetric?
     @State private var isCustomizing = false
     @State private var isChoosingWorkout = false
@@ -41,6 +46,15 @@ struct HomeView: View {
                         state: .resolve(activeSessions: activeSessions, hasWorkouts: !anyWorkout.isEmpty),
                         onAction: perform
                     )
+                }
+
+                VStack(alignment: .leading, spacing: 16) {
+                    HomeSectionTitle("Sua semana")
+                    let calendar = TrainingDay.calendar
+                    let week = WeekSummary.week(containing: now, calendar: calendar)
+                    // A new week is a new card, so its queries are built again for the new limits.
+                    WeekCard(week: week, now: now, calendar: calendar)
+                        .id(week.start)
                 }
 
                 VStack(alignment: .leading, spacing: 16) {
@@ -77,6 +91,19 @@ struct HomeView: View {
         .sheet(isPresented: $isChoosingWorkout, onDismiss: startChosenWorkout) {
             WorkoutPickerSheet { workout in
                 chosenWorkout = workout
+            }
+        }
+        // The day changed with the app open (midnight).
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: DispatchQueue.main)) { _ in
+            now = .now
+        }
+        // The time or the time zone changed, also while the app was in the background.
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            now = .now
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                now = .now
             }
         }
     }

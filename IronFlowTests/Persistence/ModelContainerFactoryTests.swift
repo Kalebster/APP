@@ -5,8 +5,8 @@ import Testing
 
 @MainActor
 struct ModelContainerFactoryTests {
-    @Test("Store uses schema V2: the seven V1 models plus the body data models")
-    func schemaV2() throws {
+    @Test("Store uses schema V3: the seven V1 models, the body data models and the days trained outside the app")
+    func schemaV3() throws {
         let container = try ModelContainerFactory.makeInMemory()
 
         let entityNames = Set(container.schema.entities.map(\.name))
@@ -14,12 +14,17 @@ struct ModelContainerFactoryTests {
             "Exercise", "Workout", "WorkoutExercise", "PlannedSet",
             "Session", "SessionExercise", "SetLog",
             "BodyWeightEntry", "UserProfile",
+            "ExternalWorkoutDay",
         ])
         #expect(Set(SchemaV1.models.map { ObjectIdentifier($0) }).isSubset(of: Set(SchemaV2.models.map { ObjectIdentifier($0) })))
+        #expect(Set(SchemaV2.models.map { ObjectIdentifier($0) }).isSubset(of: Set(SchemaV3.models.map { ObjectIdentifier($0) })))
         #expect(SchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
         #expect(SchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
-        #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [ObjectIdentifier(SchemaV1.self), ObjectIdentifier(SchemaV2.self)])
-        #expect(IronFlowMigrationPlan.stages.count == 1)
+        #expect(SchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
+        #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [
+            ObjectIdentifier(SchemaV1.self), ObjectIdentifier(SchemaV2.self), ObjectIdentifier(SchemaV3.self),
+        ])
+        #expect(IronFlowMigrationPlan.stages.count == 2)
     }
 
     @Test("In-memory stores are isolated from each other")

@@ -56,6 +56,14 @@ enum SessionError: Error, Equatable {
     case repsRequired
 }
 
+/// A marking of a day trained outside the app that the rules do not allow.
+enum ExternalWorkoutError: Error, Equatable {
+    /// The day has not come yet.
+    case futureDay
+    /// The day is already marked.
+    case alreadyMarked
+}
+
 /// Saving failed. All unsaved changes of the operation were discarded.
 enum SaveError: Error, Equatable {
     case saveFailed(String)
