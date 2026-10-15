@@ -42,9 +42,14 @@ struct WorkoutService {
         try context.saveOrRollback()
     }
 
-    /// Deletes the plan (its items and planned sets). Sessions are history and are
-    /// kept: they only lose the link to the workout.
+    /// Deletes the plan (its items and planned sets) and the days of the weekly plan that point to
+    /// it, in the same save. Sessions are history and are kept: they only lose the link to the workout.
     func delete(_ workout: Workout) throws {
+        let id = workout.id
+        let plannedDays = try context.fetch(FetchDescriptor<WeeklyPlanDay>(predicate: #Predicate { $0.workoutID == id }))
+        for day in plannedDays {
+            context.delete(day)
+        }
         context.delete(workout)
         try context.saveOrRollback()
     }

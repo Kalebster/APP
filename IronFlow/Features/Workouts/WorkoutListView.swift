@@ -1,14 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// The Workouts tab: one card per planned workout. Creating a workout opens its editor;
-/// "Iniciar" starts a session from it.
+/// The Workouts tab: the weekly plan row and one card per planned workout. Creating a workout opens
+/// its editor; "Iniciar" starts a session from it.
 struct WorkoutListView: View {
     /// Starts a session from a workout ("Iniciar").
     let sessionActions: SessionActions
 
     @Query(sort: [SortDescriptor(\Workout.createdAt), SortDescriptor(\Workout.name)]) private var workouts: [Workout]
+    /// The weekly plan: at most seven records, so all of them are read.
+    @Query private var weeklyPlan: [WeeklyPlanDay]
     @Environment(\.modelContext) private var context
+    @State private var isShowingPlan = false
     @State private var isCreating = false
     /// Workout created in the name sheet, opened once the sheet is dismissed.
     @State private var createdWorkout: Workout?
@@ -17,6 +20,21 @@ struct WorkoutListView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: Theme.Metrics.cardSpacing) {
+                // Without workouts there is nothing to plan.
+                if !workouts.isEmpty {
+                    Button {
+                        isShowingPlan = true
+                    } label: {
+                        WeeklyPlanRow(
+                            summary: WeeklyPlanSummary.summaryText(
+                                WeeklyPlanSummary.plannedDayCount(plan: weeklyPlan, workouts: workouts)
+                            )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("workouts.plan")
+                }
+
                 ForEach(workouts) { workout in
                     WorkoutCard(workout: workout) {
                         openedWorkout = workout
@@ -62,12 +80,43 @@ struct WorkoutListView: View {
         .navigationDestination(item: $openedWorkout) { workout in
             WorkoutEditorView(workout: workout)
         }
+        .navigationDestination(isPresented: $isShowingPlan) {
+            WeeklyPlanView()
+        }
     }
 
     private func openCreatedWorkout() {
         guard let createdWorkout else { return }
         self.createdWorkout = nil
         openedWorkout = createdWorkout
+    }
+}
+
+/// The weekly plan row: its name, how many days are planned and a disclosure chevron.
+private struct WeeklyPlanRow: View {
+    let summary: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "calendar")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Programação semanal")
+                    .font(.headline)
+                Text(summary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .cardStyle()
+        .accessibilityElement(children: .combine)
     }
 }
 

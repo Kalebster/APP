@@ -19,6 +19,8 @@ enum UserFacingError {
             case .alreadyMarked:
                 String(localized: "Este dia já está marcado.")
             }
+        case is WeeklyPlanError:
+            String(localized: "Escolha um dia de segunda a domingo.")
         case let error as PlannedSetInputError:
             switch error {
             case .repsRequired:

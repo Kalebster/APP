@@ -129,6 +129,10 @@ enum HomeSummary {
 enum TodayWorkoutState: Equatable {
     /// A session is in progress.
     case inProgress(name: String, startedAt: Date)
+    /// A workout is planned for today in the weekly plan and was not finished today.
+    case scheduled(workoutID: UUID, name: String)
+    /// The workout planned for today was finished today.
+    case scheduledCompleted(name: String)
     /// No planned workout exists yet.
     case noWorkouts
     /// Workouts exist, but none is planned for today.
@@ -137,9 +141,32 @@ enum TodayWorkoutState: Equatable {
     /// The in-progress session comes first. Should the store hold more than one, it is the one
     /// "Continuar" opens: the most recently started, then the most recently created
     /// (`SessionService.activeSessionsDescriptor`).
-    static func resolve(activeSessions: [Session], hasWorkouts: Bool) -> TodayWorkoutState {
+    ///
+    /// Then the workout planned for today, if it exists (`scheduled`, nil when the day is a rest day
+    /// or its workout was deleted): finished today when a finished session of that workout started
+    /// today in `calendar` (`finishedSessions` may hold any sessions; only those count), otherwise
+    /// still to do. Without it, whether workouts exist.
+    static func resolve(
+        activeSessions: [Session],
+        hasWorkouts: Bool,
+        scheduled: Workout? = nil,
+        finishedSessions: [Session] = [],
+        now: Date = .now,
+        calendar: Calendar = TrainingDay.calendar
+    ) -> TodayWorkoutState {
         if let session = activeSessions.max(by: { ($0.startedAt, $0.createdAt) < ($1.startedAt, $1.createdAt) }) {
             return .inProgress(name: session.workoutNameSnapshot, startedAt: session.startedAt)
+        }
+        if let scheduled {
+            let today = TrainingDay.key(for: now, calendar: calendar)
+            let isCompleted = finishedSessions.contains { session in
+                session.endedAt != nil
+                    && session.workout?.id == scheduled.id
+                    && TrainingDay.key(for: session.startedAt, calendar: calendar) == today
+            }
+            return isCompleted
+                ? .scheduledCompleted(name: scheduled.name)
+                : .scheduled(workoutID: scheduled.id, name: scheduled.name)
         }
         return hasWorkouts ? .nothingPlanned : .noWorkouts
     }
@@ -149,6 +176,8 @@ enum TodayWorkoutState: Equatable {
 enum TodayWorkoutAction: Hashable {
     /// Opens the session in progress.
     case continueSession
+    /// Starts the workout planned for today.
+    case startScheduledWorkout
     /// Chooses a planned workout and starts it.
     case chooseWorkout
     /// Starts a workout without a plan.
@@ -156,11 +185,14 @@ enum TodayWorkoutAction: Hashable {
 }
 
 extension TodayWorkoutState {
-    /// The card's actions, the main one first. A session in progress can only be continued;
-    /// choosing a workout needs at least one.
+    /// The card's actions, the main one first. A session in progress can only be continued; the
+    /// workout planned for today is started first, unless it was already finished today; choosing a
+    /// workout needs at least one.
     var actions: [TodayWorkoutAction] {
         switch self {
         case .inProgress: [.continueSession]
+        case .scheduled: [.startScheduledWorkout, .chooseWorkout, .startFreeWorkout]
+        case .scheduledCompleted: [.chooseWorkout, .startFreeWorkout]
         case .noWorkouts: [.startFreeWorkout]
         case .nothingPlanned: [.chooseWorkout, .startFreeWorkout]
         }

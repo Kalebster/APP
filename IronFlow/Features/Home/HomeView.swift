@@ -1,24 +1,24 @@
-import Combine
 import SwiftData
 import SwiftUI
 
-/// The Início tab: the app header, today's workout (continue, choose a workout or start a free one),
-/// the current week and the quick summary of the user's body data.
+/// The Início tab: the app header, today's workout (the workout planned for today, continue, choose a
+/// workout or start a free one), the current week and the quick summary of the user's body data.
 struct HomeView: View {
     /// Starts and opens sessions; `RootView` owns the session screen.
     let sessionActions: SessionActions
 
     @Query(SessionService.activeSessionsDescriptor) private var activeSessions: [Session]
     @Query(HomeView.anyWorkout) private var anyWorkout: [Workout]
+    /// The weekly plan: at most seven records, so all of them are read.
+    @Query private var weeklyPlan: [WeeklyPlanDay]
     @Query(ProfileService.latestWeightDescriptor) private var latestWeight: [BodyWeightEntry]
     @Query(ProfileService.profileDescriptor) private var profiles: [UserProfile]
     @AppStorage(HomeSummary.metricsPreferenceKey, store: AppPreferences.store) private var storedMetrics: String?
 
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.scenePhase) private var scenePhase
-    /// The moment the week is shown for. Updated when the day changes with the app open, when the
-    /// time or time zone changes, and when the app comes back to the foreground.
+    /// The moment the week and today's workout are shown for. Updated when the day changes with the
+    /// app open, when the time or time zone changes, and when the app comes back to the foreground.
     @State private var now = Date.now
     @State private var editingMetric: SummaryMetric?
     @State private var isCustomizing = false
@@ -35,6 +35,12 @@ struct HomeView: View {
 
     var body: some View {
         let metrics = HomeSummary.metrics(fromStored: storedMetrics)
+        let calendar = TrainingDay.calendar
+        let week = WeekSummary.week(containing: now, calendar: calendar)
+        let scheduledID = WeeklyPlanSummary.scheduledWorkoutID(
+            plan: weeklyPlan,
+            weekday: TrainingDay.planWeekday(of: now, calendar: calendar)
+        )
 
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
@@ -42,16 +48,22 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     HomeSectionTitle("Treino de hoje")
-                    TodayWorkoutCard(
-                        state: .resolve(activeSessions: activeSessions, hasWorkouts: !anyWorkout.isEmpty),
-                        onAction: perform
+                    // A new day or a new planned workout is a new section, so its queries are built
+                    // again; a change of the plan reaches it at once, through `weeklyPlan`.
+                    TodayWorkoutSection(
+                        scheduledID: scheduledID,
+                        now: now,
+                        calendar: calendar,
+                        activeSessions: activeSessions,
+                        hasWorkouts: !anyWorkout.isEmpty,
+                        sessionActions: sessionActions,
+                        onChoose: chooseWorkout
                     )
+                    .id("\(TrainingDay.key(for: now, calendar: calendar))/\(scheduledID?.uuidString ?? "-")")
                 }
 
                 VStack(alignment: .leading, spacing: 16) {
                     HomeSectionTitle("Sua semana")
-                    let calendar = TrainingDay.calendar
-                    let week = WeekSummary.week(containing: now, calendar: calendar)
                     // A new week is a new card, so its queries are built again for the new limits.
                     WeekCard(week: week, now: now, calendar: calendar)
                         .id(week.start)
@@ -93,30 +105,13 @@ struct HomeView: View {
                 chosenWorkout = workout
             }
         }
-        // The day changed with the app open (midnight).
-        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: DispatchQueue.main)) { _ in
-            now = .now
-        }
-        // The time or the time zone changed, also while the app was in the background.
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
-            now = .now
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                now = .now
-            }
-        }
+        .updatingCurrentDate($now)
     }
 
-    private func perform(_ action: TodayWorkoutAction) {
-        switch action {
-        case .continueSession: sessionActions.open()
-        case .chooseWorkout:
-            // A choice left from an earlier sheet is never started by this one.
-            chosenWorkout = nil
-            isChoosingWorkout = true
-        case .startFreeWorkout: sessionActions.startFree()
-        }
+    private func chooseWorkout() {
+        // A choice left from an earlier sheet is never started by this one.
+        chosenWorkout = nil
+        isChoosingWorkout = true
     }
 
     /// The session screen opens only once the sheet is gone, so two screens never present at once.
@@ -213,8 +208,83 @@ private struct HomeSectionTitle: View {
     }
 }
 
+/// The "Treino de hoje" section: finds the workout planned for today and the sessions finished today,
+/// works out what the card shows and carries out its actions.
+///
+/// The queries are built from the values it receives when it is created, so `HomeView` gives it an
+/// identity made of the day and the planned workout: another day or another planned workout creates
+/// a new section with new queries. A planned workout that no longer exists finds nothing, and the
+/// day is a rest day.
+private struct TodayWorkoutSection: View {
+    let now: Date
+    let calendar: Calendar
+    let activeSessions: [Session]
+    let hasWorkouts: Bool
+    let sessionActions: SessionActions
+    let onChoose: @MainActor () -> Void
+
+    /// The workout planned for today: none when the day is a rest day or the workout was deleted.
+    @Query private var scheduledWorkouts: [Workout]
+    /// Finished sessions that started today.
+    @Query private var finishedToday: [Session]
+
+    /// Matches no workout, for a day without a planned workout.
+    private static let noWorkoutID = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+
+    init(
+        scheduledID: UUID?,
+        now: Date,
+        calendar: Calendar,
+        activeSessions: [Session],
+        hasWorkouts: Bool,
+        sessionActions: SessionActions,
+        onChoose: @escaping @MainActor () -> Void
+    ) {
+        self.now = now
+        self.calendar = calendar
+        self.activeSessions = activeSessions
+        self.hasWorkouts = hasWorkouts
+        self.sessionActions = sessionActions
+        self.onChoose = onChoose
+        let workoutID = scheduledID ?? Self.noWorkoutID
+        _scheduledWorkouts = Query(filter: #Predicate<Workout> { workout in
+            workout.id == workoutID
+        })
+        let day = TrainingDay.dayInterval(of: now, calendar: calendar)
+        let start = day.start
+        let end = day.end
+        _finishedToday = Query(filter: #Predicate<Session> { session in
+            session.endedAt != nil && session.startedAt >= start && session.startedAt < end
+        })
+    }
+
+    var body: some View {
+        let state = TodayWorkoutState.resolve(
+            activeSessions: activeSessions,
+            hasWorkouts: hasWorkouts,
+            scheduled: scheduledWorkouts.first,
+            finishedSessions: finishedToday,
+            now: now,
+            calendar: calendar
+        )
+        TodayWorkoutCard(state: state, onAction: perform)
+    }
+
+    private func perform(_ action: TodayWorkoutAction) {
+        switch action {
+        case .continueSession: sessionActions.open()
+        case .startScheduledWorkout:
+            if let workout = scheduledWorkouts.first {
+                sessionActions.start(workout)
+            }
+        case .chooseWorkout: onChoose()
+        case .startFreeWorkout: sessionActions.startFree()
+        }
+    }
+}
+
 /// The "Treino de hoje" card: what is going on today, and its actions (continue the session in
-/// progress, or choose a workout and start a free one).
+/// progress; start the workout planned for today; choose another workout or start a free one).
 private struct TodayWorkoutCard: View {
     let state: TodayWorkoutState
     let onAction: @MainActor (TodayWorkoutAction) -> Void
@@ -230,6 +300,14 @@ private struct TodayWorkoutCard: View {
                     Text(name.isEmpty ? String(localized: "Treino livre") : name)
                     Text(HomeSummary.startedText(startedAt))
                         .foregroundStyle(.secondary)
+                case .scheduled(_, let name):
+                    Text(name)
+                        .font(.headline)
+                    Text("Programado para hoje")
+                        .foregroundStyle(.secondary)
+                case .scheduledCompleted(let name):
+                    Text("\(name) concluído hoje")
+                        .font(.headline)
                 case .noWorkouts:
                     Text("Você ainda não tem treinos.")
                         .foregroundStyle(.secondary)
@@ -253,15 +331,30 @@ private struct TodayWorkoutCard: View {
         .cardStyle()
     }
 
+    /// The name of the workout planned for today, when the card is about it.
+    private var scheduledName: String {
+        switch state {
+        case .scheduled(_, let name), .scheduledCompleted(let name): name
+        default: ""
+        }
+    }
+
     @ViewBuilder
     private func actionButton(_ action: TodayWorkoutAction, isMain: Bool) -> some View {
+        // With a workout planned for today the choice is of another one.
+        let chooseTitle: LocalizedStringKey = switch state {
+        case .scheduled, .scheduledCompleted: "Escolher outro treino"
+        default: "Escolher um treino"
+        }
         let button = switch action {
         case .continueSession: Button("Continuar") { onAction(action) }
-        case .chooseWorkout: Button("Escolher um treino") { onAction(action) }
+        case .startScheduledWorkout: Button("Iniciar \(scheduledName)") { onAction(action) }
+        case .chooseWorkout: Button(chooseTitle) { onAction(action) }
         case .startFreeWorkout: Button("Iniciar treino livre") { onAction(action) }
         }
         let identifier = switch action {
         case .continueSession: "home.continue"
+        case .startScheduledWorkout: "home.startPlanned"
         case .chooseWorkout: "home.chooseWorkout"
         case .startFreeWorkout: "home.startFree"
         }

@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "pt-BR",
   "strings" : {
+    "%@ concluído hoje" : {
+
+    },
+    "%lld dias programados" : {
+
+    },
     "%lld exercícios" : {
       "localizations" : {
         "pt-BR" : {
@@ -110,6 +116,9 @@
     "%lld–%lld reps" : {
 
     },
+    "1 dia programado" : {
+
+    },
     "1 série não foi concluída e ficará registrada como não feita." : {
 
     },
@@ -126,6 +135,9 @@
 
     },
     "Abdômen" : {
+
+    },
+    "Abre as opções de treino deste dia." : {
 
     },
     "Adicionar" : {
@@ -242,6 +254,9 @@
     "Criar treino" : {
 
     },
+    "Descanso" : {
+
+    },
     "Descartar" : {
 
     },
@@ -263,6 +278,9 @@
     "dia futuro" : {
 
     },
+    "Domingo" : {
+
+    },
     "Duração: %@" : {
 
     },
@@ -270,6 +288,15 @@
 
     },
     "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
+
+    },
+    "Escolha um dia de segunda a domingo." : {
+
+    },
+    "Escolha um treino para cada dia. A programação não impede treinos em outros dias." : {
+
+    },
+    "Escolher outro treino" : {
 
     },
     "Escolher um treino" : {
@@ -350,6 +377,9 @@
     "Iniciar" : {
 
     },
+    "Iniciar %@" : {
+
+    },
     "Iniciar treino livre" : {
 
     },
@@ -387,6 +417,9 @@
 
     },
     "Mínimo" : {
+
+    },
+    "Nenhum dia programado" : {
 
     },
     "Nenhum exercício" : {
@@ -491,7 +524,19 @@
     "Posteriores de coxa" : {
 
     },
+    "Programado para hoje" : {
+
+    },
+    "Programação semanal" : {
+
+    },
     "Quadríceps" : {
+
+    },
+    "Quarta-feira" : {
+
+    },
+    "Quinta-feira" : {
 
     },
     "Remover" : {
@@ -524,6 +569,9 @@
     "Salvar" : {
 
     },
+    "Segunda-feira" : {
+
+    },
     "Sem carga" : {
 
     },
@@ -545,7 +593,13 @@
     "Seus treinos concluídos aparecerão aqui." : {
 
     },
+    "Sexta-feira" : {
+
+    },
     "Sua semana" : {
+
+    },
+    "Sábado" : {
 
     },
     "Série" : {
@@ -555,6 +609,9 @@
 
     },
     "Tentar novamente" : {
+
+    },
+    "Terça-feira" : {
 
     },
     "Treino de hoje" : {
