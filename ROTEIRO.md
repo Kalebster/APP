@@ -1,0 +1,58 @@
+# Roteiro do Iron Flow
+
+Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de cada etapa são revistos antes de ela começar.
+
+## Concluído
+
+- Fundação: projeto Xcode, SwiftData com schemas versionados e migração testada, CI com screenshots.
+- Exercícios: biblioteca padrão por grupo muscular, com busca e filtro.
+- Treinos: criar, renomear e excluir treinos; adicionar e reordenar exercícios; séries planejadas.
+- Sessão: iniciar a partir de um treino ou livre, registrar carga e repetições, concluir ou descartar, barra de treino em andamento.
+- Início: treino de hoje e resumo rápido personalizável.
+- Histórico: lista das sessões concluídas.
+- S2 — Detalhe somente leitura de uma sessão concluída (PR #14).
+
+## Próximas etapas
+
+### S3 — Sua semana
+- Card "Sua semana" no Início: os 7 dias e a contagem de treinos da semana.
+- Marcar manualmente um dia em que treinou fora do app.
+- Programação semanal opcional, sem impedir treinos em outros dias.
+
+### S4 — Exercícios e Treinos no visual do protótipo
+- Exercícios: lista única com filtros por grupo muscular, botão "+ Novo" para exercício próprio (a lógica já existe no ExerciseService) e equipamento de cada exercício (Barra, Halteres, Máquina, Peso do corpo...).
+- Treinos: treinos em grade com menu, seção Treino Livre e Treinos recentes.
+
+### S5 — Histórico completo
+- Filtro por período: 7, 30 e 90 dias, e tudo.
+- Totais: treinos, tempo, volume e recordes.
+- Volume e recordes em cada treino da lista.
+- Calendário com os dias treinados.
+- Recordes recentes e gráficos de evolução.
+
+### S6 — Durante o treino
+- Timer de descanso.
+- RPE/RIR e notas.
+- Superséries e bi-sets.
+
+### S7 — Ajustes
+- Unidades, idioma, tema e notificações.
+- Preferências de treino.
+
+### S8 — Conta
+- Login e sincronização com Firebase.
+
+### S9 — Assinatura
+- Assinatura pela App Store (StoreKit) e "Gerenciar assinatura".
+
+### S10 — Revisão final e TestFlight
+- Regressão completa, uso offline, acessibilidade e desempenho.
+- Build Release, tamanho do app e envio ao TestFlight.
+
+## Decisões
+
+- Sem recursos sociais no início: "Privacidade e social" fica fora até nova decisão.
+- O repositório é público para o CI rodar sem custo. Nunca colocar senhas, chaves ou dados pessoais nele.
+- Secret Protection e Push protection estão ligados no GitHub.
+- Identidade visual: preto, branco, cinza e azul-escuro.
+- Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.
