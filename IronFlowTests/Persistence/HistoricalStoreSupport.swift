@@ -41,7 +41,7 @@ enum FrozenSchemaFingerprints {
     static let v3: [String: String] = [
         "BodyWeightEntry": "kGO75AdAUmfpekEnf0AsZdNSW0wGvtLcYRFbi7oB0nc=",
         "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
-        "ExternalWorkoutDay": "PENDENTE-CI",
+        "ExternalWorkoutDay": "K9sh48mJ6F+Y/BbOXLaz5n1vJ0en9wZmSRoY+vmsH4o=",
         "PlannedSet": "VrWeWezPhFsb7B+I4pxQZhr0/1xQZ8s8gsxwY1a3Z7Y=",
         "Session": "HNYoMs0B88OrlUPyl8IWVpum9Q+nhSawFatu08CW0Qc=",
         "SessionExercise": "A3XjHUXXqzx8QIAke0/FK5XUb4R/R0xT4w/hqTE8dxc=",
