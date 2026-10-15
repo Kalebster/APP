@@ -12,6 +12,13 @@ enum UserFacingError {
             message(for: error)
         case let error as ExerciseError:
             message(for: error)
+        case let error as ExternalWorkoutError:
+            switch error {
+            case .futureDay:
+                String(localized: "Não é possível marcar um dia que ainda não chegou.")
+            case .alreadyMarked:
+                String(localized: "Este dia já está marcado.")
+            }
         case let error as PlannedSetInputError:
             switch error {
             case .repsRequired:

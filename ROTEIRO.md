@@ -11,12 +11,11 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Início: treino de hoje e resumo rápido personalizável.
 - Histórico: lista das sessões concluídas.
 - S2 — Detalhe somente leitura de uma sessão concluída (PR #14).
+- S3-A — Sua semana e marcação manual (PR #16).
 
 ## Próximas etapas
 
-### S3 — Sua semana
-- Card "Sua semana" no Início: os 7 dias e a contagem de treinos da semana.
-- Marcar manualmente um dia em que treinou fora do app.
+### S3-B — Programação semanal
 - Programação semanal opcional, sem impedir treinos em outros dias.
 
 ### S4 — Exercícios e Treinos no visual do protótipo

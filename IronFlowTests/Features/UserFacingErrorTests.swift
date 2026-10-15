@@ -5,7 +5,7 @@ import Testing
 struct UserFacingErrorTests {
     private struct UnknownError: Error {}
 
-    @Test("Every validation, workout, session and exercise error has its own message")
+    @Test("Every validation, workout, session, exercise and marking error has its own message")
     func distinctMessages() {
         let errors: [any Error] = [
             ValidationError.emptyName, ValidationError.nameTooLong, ValidationError.duplicateExerciseName,
@@ -21,6 +21,7 @@ struct UserFacingErrorTests {
             SessionError.noCompletedSets, SessionError.repsRequired,
             ExerciseError.systemExerciseNotEditable, ExerciseError.systemExerciseNotDeletable,
             ExerciseError.confirmationRequired(workoutIDs: []),
+            ExternalWorkoutError.futureDay, ExternalWorkoutError.alreadyMarked,
         ]
 
         let messages = errors.map { UserFacingError.message(for: $0) }

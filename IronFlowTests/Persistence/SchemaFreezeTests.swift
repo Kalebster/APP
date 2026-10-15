@@ -26,11 +26,14 @@ struct SchemaFreezeTests {
             }
 
             let fingerprint = try storeFingerprint(at: storeURL)
-            let changed = Set(fingerprint.keys).union(frozen.keys).filter { fingerprint[$0] != frozen[$0] }.sorted()
-            #expect(
-                fingerprint == frozen,
-                "\(version.versionIdentifier) changed in \(changed). Released models must not change: add a schema version with a migration stage instead. Written: \(fingerprintLiteral(fingerprint))"
-            )
+            // Every entity written or frozen is compared, so this is as strict as comparing the whole
+            // fingerprints; a difference is reported in one short line per entity, with the written value.
+            for name in Set(fingerprint.keys).union(frozen.keys).sorted() {
+                #expect(
+                    fingerprint[name] == frozen[name],
+                    "\(version.versionIdentifier) \(name): written \(fingerprint[name] ?? "nil"). Released models must not change: add a schema version with a migration stage instead."
+                )
+            }
         }
     }
 

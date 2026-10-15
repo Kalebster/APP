@@ -101,10 +101,19 @@
     "%lld séries não foram concluídas e ficarão registradas como não feitas." : {
 
     },
+    "%lld treinos esta semana" : {
+
+    },
+    "%lld/7 dias" : {
+
+    },
     "%lld–%lld reps" : {
 
     },
     "1 série não foi concluída e ficará registrada como não feita." : {
+
+    },
+    "1 treino esta semana" : {
 
     },
     "A carga não pode ser negativa." : {
@@ -242,7 +251,16 @@
     "Descartar treino" : {
 
     },
+    "Desmarcar" : {
+
+    },
+    "Desmarcar este dia?" : {
+
+    },
     "Desmarcar série %lld" : {
+
+    },
+    "dia futuro" : {
 
     },
     "Duração: %@" : {
@@ -255,6 +273,9 @@
 
     },
     "Escolher um treino" : {
+
+    },
+    "Este dia já está marcado." : {
 
     },
     "Este exercício está arquivado e não pode ser adicionado." : {
@@ -294,6 +315,9 @@
 
     },
     "Histórico" : {
+
+    },
+    "hoje" : {
 
     },
     "Há mais de um treino em andamento. Conclua ou descarte o atual." : {
@@ -336,6 +360,12 @@
 
     },
     "kg" : {
+
+    },
+    "Marca o dia como treino feito fora do app." : {
+
+    },
+    "marcado manualmente" : {
 
     },
     "Meta" : {
@@ -401,6 +431,9 @@
     "Não foi possível salvar. Nenhuma alteração foi feita." : {
 
     },
+    "Não é possível marcar um dia que ainda não chegou." : {
+
+    },
     "O exercício precisa ter pelo menos uma série." : {
 
     },
@@ -438,6 +471,9 @@
 
     },
     "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais." : {
+
+    },
+    "Pede confirmação para desmarcar o dia." : {
 
     },
     "Peito" : {
@@ -497,6 +533,9 @@
     "Sem repetições" : {
 
     },
+    "sem treino" : {
+
+    },
     "Seus dados não foram apagados. Feche e abra o app novamente. Se o problema continuar, atualize o app." : {
 
     },
@@ -504,6 +543,9 @@
 
     },
     "Seus treinos concluídos aparecerão aqui." : {
+
+    },
+    "Sua semana" : {
 
     },
     "Série" : {
@@ -525,6 +567,15 @@
 
     },
     "Treinos" : {
+
+    },
+    "Treinou fora do app? Toque no dia para marcar." : {
+
+    },
+    "treinou no app" : {
+
+    },
+    "treinou no app e marcado manualmente" : {
 
     },
     "Tríceps" : {
