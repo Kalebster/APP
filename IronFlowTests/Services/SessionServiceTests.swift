@@ -509,4 +509,122 @@ struct SessionServiceTests {
             #expect(logs.map(\.reps) == [10, nil])
         }
     }
+
+    // MARK: - Two sessions left open
+
+    /// Inserts a session in progress with one exercise and one set, at explicit times. The services
+    /// never open a second session, so this inconsistent state is built directly.
+    private func insertOpenSession(name: String, startedAt: Date, createdAt: Date, weightKg: Double? = nil) throws -> Session {
+        let session = Session(startedAt: startedAt, workoutNameSnapshot: name)
+        session.createdAt = createdAt
+        session.updatedAt = createdAt
+        harness.context.insert(session)
+        let performed = SessionExercise(sortIndex: 0, exerciseNameSnapshot: "Supino Reto", muscleGroupSnapshot: .chest)
+        performed.createdAt = createdAt
+        performed.updatedAt = createdAt
+        harness.context.insert(performed)
+        performed.session = session
+        performed.exercise = bench
+        let log = SetLog(sortIndex: 0, weightKg: weightKg)
+        log.createdAt = createdAt
+        log.updatedAt = createdAt
+        harness.context.insert(log)
+        log.sessionExercise = performed
+        try harness.context.save()
+        return session
+    }
+
+    @Test("With two sessions left open, reporting it and refusing new starts change nothing")
+    func twoOpenSessionsStayUntouched() throws {
+        let older = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: older), weightKg: 20, reps: 10)
+        try harness.sessions.updateSetValues(older.orderedExercises[0].orderedSetLogs[1], weightKg: 22.5, reps: nil)
+        harness.clock.advance(by: 60)
+        let newer = try insertOpenSession(name: "Livre", startedAt: harness.clock.current, createdAt: harness.clock.current, weightKg: 30)
+        let before = try historySnapshot(harness.context)
+        // Anything written from here on would carry a different time.
+        harness.clock.advance(by: 60)
+
+        #expect(throws: SessionError.multipleActiveSessions) { try harness.sessions.activeSession() }
+        #expect(throws: SessionError.activeSessionExists) { try harness.sessions.startFreeSession() }
+        #expect(throws: SessionError.activeSessionExists) { try harness.sessions.startSession(from: workout) }
+        // What the screens read: the sessions in progress, and the one the Home shows.
+        let listed = try harness.context.fetch(SessionService.activeSessionsDescriptor)
+        #expect(TodayWorkoutState.resolve(activeSessions: listed, hasWorkouts: true)
+            == .inProgress(name: newer.workoutNameSnapshot, startedAt: newer.startedAt))
+
+        // No session is closed, deleted or changed, and nothing is left to save.
+        #expect(try historySnapshot(harness.context) == before)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("The session bar and the Home show the same session: the most recently started, then the most recently created")
+    func openSessionsOrder() throws {
+        let start = harness.clock.current
+        // Inserted in neither the expected order nor its reverse, so the order of insertion explains nothing.
+        let earlierCreated = try insertOpenSession(name: "B", startedAt: start.addingTimeInterval(60), createdAt: start.addingTimeInterval(60))
+        // Started first but created last: the start time decides before the creation time.
+        let earliest = try insertOpenSession(name: "A", startedAt: start, createdAt: start.addingTimeInterval(300))
+        // Started at the same time as "B": the most recently created comes first.
+        let laterCreated = try insertOpenSession(name: "C", startedAt: start.addingTimeInterval(60), createdAt: start.addingTimeInterval(61))
+
+        let listed = try harness.context.fetch(SessionService.activeSessionsDescriptor)
+        #expect(listed.map(\.id) == [laterCreated.id, earlierCreated.id, earliest.id])
+        // The session bar opens the first one; the Home shows the one `resolve` picks from the same list.
+        let first = try #require(listed.first)
+        #expect(TodayWorkoutState.resolve(activeSessions: listed, hasWorkouts: true)
+            == .inProgress(name: first.workoutNameSnapshot, startedAt: first.startedAt))
+    }
+
+    @Test("Finishing the most recent of two open sessions leaves the other in progress, with all its data intact")
+    func finishNewestOfTwoOpenSessions() throws {
+        let older = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: older), weightKg: 20, reps: 10)
+        try harness.sessions.updateSetValues(older.orderedExercises[0].orderedSetLogs[1], weightKg: 22.5, reps: nil)
+        harness.clock.advance(by: 60)
+        let newer = try insertOpenSession(name: "Livre", startedAt: harness.clock.current, createdAt: harness.clock.current, weightKg: 30)
+        // Every stored value of the older session, its performed exercises and their sets.
+        let olderKeys = ([older.id] + older.exercises.map(\.id) + older.exercises.flatMap(\.setLogs).map(\.id)).map(\.uuidString)
+        let olderBefore = try historySnapshot(harness.context).filter { line in olderKeys.contains { line.contains($0) } }
+        harness.clock.advance(by: 60)
+
+        try harness.sessions.completeSet(firstLog(of: newer), weightKg: 30, reps: 8)
+        try harness.sessions.finishSession(newer)
+
+        #expect(newer.endedAt != nil)
+        #expect(try count(Session.self, in: harness.context) == 2)
+        #expect(try harness.context.fetch(SessionService.activeSessionsDescriptor).map(\.id) == [older.id])
+        #expect(try harness.sessions.activeSession()?.id == older.id)
+        let olderAfter = try historySnapshot(harness.context).filter { line in olderKeys.contains { line.contains($0) } }
+        #expect(olderAfter == olderBefore)
+    }
+
+    @Test("Discarding the most recent of two open sessions deletes only its data and leaves the other in progress, intact")
+    func discardNewestOfTwoOpenSessions() throws {
+        let older = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: older), weightKg: 20, reps: 10)
+        try harness.sessions.updateSetValues(older.orderedExercises[0].orderedSetLogs[1], weightKg: 22.5, reps: nil)
+        harness.clock.advance(by: 60)
+        let newer = try insertOpenSession(name: "Livre", startedAt: harness.clock.current, createdAt: harness.clock.current, weightKg: 30)
+        // Every stored value of the older session, its performed exercises and their sets.
+        let olderKeys = ([older.id] + older.exercises.map(\.id) + older.exercises.flatMap(\.setLogs).map(\.id)).map(\.uuidString)
+        let olderBefore = try historySnapshot(harness.context).filter { line in olderKeys.contains { line.contains($0) } }
+        // Every stored value of the exercises and the planned workout.
+        let planPrefixes = ["Exercise ", "Workout ", "WorkoutExercise ", "PlannedSet "]
+        let planBefore = try historySnapshot(harness.context).filter { line in planPrefixes.contains { line.hasPrefix($0) } }
+        harness.clock.advance(by: 60)
+
+        try harness.sessions.discardSession(newer)
+
+        #expect(try harness.context.fetch(SessionService.activeSessionsDescriptor).map(\.id) == [older.id])
+        #expect(try harness.sessions.activeSession()?.id == older.id)
+        // Only the discarded session and its own exercise and set are gone.
+        #expect(try count(Session.self, in: harness.context) == 1)
+        #expect(try count(SessionExercise.self, in: harness.context) == older.exercises.count)
+        #expect(try count(SetLog.self, in: harness.context) == older.exercises.flatMap(\.setLogs).count)
+        let olderAfter = try historySnapshot(harness.context).filter { line in olderKeys.contains { line.contains($0) } }
+        #expect(olderAfter == olderBefore)
+        let planAfter = try historySnapshot(harness.context).filter { line in planPrefixes.contains { line.hasPrefix($0) } }
+        #expect(planAfter == planBefore)
+    }
 }

@@ -15,7 +15,12 @@ struct SessionService {
         self.now = now
     }
 
-    /// The session in progress, if any. Used to resume after the app was closed.
+    /// The single session in progress, if any.
+    ///
+    /// Throws `SessionError.multipleActiveSessions` when the store holds more than one session in
+    /// progress, a state the app never creates (starting a session requires none in progress); it is
+    /// reported as an inconsistency instead of silently picking one. Screens list the sessions in
+    /// progress with `activeSessionsDescriptor`.
     func activeSession() throws -> Session? {
         var descriptor = FetchDescriptor<Session>(predicate: #Predicate { $0.endedAt == nil })
         descriptor.fetchLimit = 2
