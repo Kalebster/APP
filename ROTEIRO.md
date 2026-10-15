@@ -12,11 +12,9 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Histórico: lista das sessões concluídas.
 - S2 — Detalhe somente leitura de uma sessão concluída (PR #14).
 - S3-A — Sua semana e marcação manual (PR #16).
+- S3-B — Programação semanal (PR #17).
 
 ## Próximas etapas
-
-### S3-B — Programação semanal
-- Programação semanal opcional, sem impedir treinos em outros dias.
 
 ### S4 — Exercícios e Treinos no visual do protótipo
 - Exercícios: lista única com filtros por grupo muscular, botão "+ Novo" para exercício próprio (a lógica já existe no ExerciseService) e equipamento de cada exercício (Barra, Halteres, Máquina, Peso do corpo...).

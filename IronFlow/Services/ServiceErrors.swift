@@ -64,6 +64,12 @@ enum ExternalWorkoutError: Error, Equatable {
     case alreadyMarked
 }
 
+/// A weekly plan operation that the business rules do not allow.
+enum WeeklyPlanError: Error, Equatable {
+    /// A weekday outside 1 (Monday) to 7 (Sunday).
+    case invalidWeekday
+}
+
 /// Saving failed. All unsaved changes of the operation were discarded.
 enum SaveError: Error, Equatable {
     case saveFailed(String)

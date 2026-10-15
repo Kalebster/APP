@@ -14,7 +14,7 @@ import Testing
 /// Recorded from the metadata of the stores written by the models of each version, in CI (Xcode 26.6,
 /// iOS 26.5): version 1 is the seven models unchanged since version 2 was added; version 2 adds the
 /// body data models and keeps the version 1 hashes; version 3 adds the days trained outside the app
-/// and keeps the version 2 hashes.
+/// and keeps the version 2 hashes; version 4 adds the weekly plan and keeps the version 3 hashes.
 enum FrozenSchemaFingerprints {
     static let v1: [String: String] = [
         "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
@@ -51,8 +51,22 @@ enum FrozenSchemaFingerprints {
         "WorkoutExercise": "SP+1dSWCM1Ixum4aJcztrcAI0UG6U5UQc1C4LpAUztw=",
     ]
 
+    static let v4: [String: String] = [
+        "BodyWeightEntry": "kGO75AdAUmfpekEnf0AsZdNSW0wGvtLcYRFbi7oB0nc=",
+        "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
+        "ExternalWorkoutDay": "K9sh48mJ6F+Y/BbOXLaz5n1vJ0en9wZmSRoY+vmsH4o=",
+        "PlannedSet": "VrWeWezPhFsb7B+I4pxQZhr0/1xQZ8s8gsxwY1a3Z7Y=",
+        "Session": "HNYoMs0B88OrlUPyl8IWVpum9Q+nhSawFatu08CW0Qc=",
+        "SessionExercise": "A3XjHUXXqzx8QIAke0/FK5XUb4R/R0xT4w/hqTE8dxc=",
+        "SetLog": "9SaoMXIfW/VowJo92dLQEdzqymBmtwyRabs/slWwvrA=",
+        "UserProfile": "zjds3JCP7cVCga1DEGaf0+f7hmyaNGFc9oPqOpsDg9w=",
+        "WeeklyPlanDay": "PENDENTE-CI",
+        "Workout": "dJaZ5Te6/QwBv2X26ydCT8/LdJDgg62L3rCKFfOAxPo=",
+        "WorkoutExercise": "SP+1dSWCM1Ixum4aJcztrcAI0UG6U5UQc1C4LpAUztw=",
+    ]
+
     /// One fingerprint per version of `IronFlowMigrationPlan.schemas`, in the same order.
-    static let byVersion: [[String: String]] = [v1, v2, v3]
+    static let byVersion: [[String: String]] = [v1, v2, v3, v4]
 }
 
 /// The fingerprint written into the metadata of the store at `url`, by entity name.
@@ -71,7 +85,7 @@ func fingerprintLiteral(_ fingerprint: [String: String]) -> String {
 /// Creates a store of exactly the given schema version at `url`, independent of the current schema.
 ///
 /// The records written into it (`SampleGraph`, `HistoricalRecords`) and the snapshots use the app's
-/// model aliases, which are the version 1 to 3 classes today. When a later version redeclares a
+/// model aliases, which are the version 1 to 4 classes today. When a later version redeclares a
 /// model, these writers must use that version's own classes (`SchemaV1.SetLog`, ...) and the
 /// snapshot of the migrated store must read the new ones.
 @MainActor
@@ -167,6 +181,15 @@ func bodyDataSnapshot(_ context: ModelContext) throws -> [String] {
 func externalWorkoutDaySnapshot(_ context: ModelContext) throws -> [String] {
     try context.fetch(FetchDescriptor<ExternalWorkoutDay>()).map { item in
         "ExternalWorkoutDay \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) day=\(item.day)"
+    }
+    .sorted()
+}
+
+/// Every stored value of the weekly plan, added in version 4, one sorted line per record.
+@MainActor
+func weeklyPlanSnapshot(_ context: ModelContext) throws -> [String] {
+    try context.fetch(FetchDescriptor<WeeklyPlanDay>()).map { item in
+        "WeeklyPlanDay \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) weekday=\(item.weekday) workout=\(item.workoutID)"
     }
     .sorted()
 }
