@@ -32,6 +32,28 @@
     "%lld min" : {
 
     },
+    "%lld repetições" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld repetição"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld repetições"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld reps" : {
       "localizations" : {
         "pt-BR" : {
@@ -172,6 +194,9 @@
     "Carga inválida." : {
 
     },
+    "Carga: %@" : {
+
+    },
     "Conclua ou descarte o treino atual antes de iniciar outro." : {
 
     },
@@ -188,6 +213,9 @@
 
     },
     "Concluir treino?" : {
+
+    },
+    "Concluída" : {
 
     },
     "Continuar" : {
@@ -215,6 +243,9 @@
 
     },
     "Desmarcar série %lld" : {
+
+    },
+    "Duração: %@" : {
 
     },
     "Escolha até %lld indicadores em Personalizar." : {
@@ -316,6 +347,9 @@
     "Meta: %@" : {
 
     },
+    "Meta: %@ · Carga: %@ · Reps: %@" : {
+
+    },
     "Minimizar" : {
 
     },
@@ -329,6 +363,9 @@
 
     },
     "Nenhum exercício em %@" : {
+
+    },
+    "Nenhum exercício registrado." : {
 
     },
     "Nenhum treino ainda" : {
@@ -347,6 +384,9 @@
 
     },
     "Novo treino" : {
+
+    },
+    "Não concluída" : {
 
     },
     "Não foi possível abrir seus dados" : {
@@ -452,6 +492,9 @@
 
     },
     "Sem meta" : {
+
+    },
+    "Sem repetições" : {
 
     },
     "Seus dados não foram apagados. Feche e abra o app novamente. Se o problema continuar, atualize o app." : {

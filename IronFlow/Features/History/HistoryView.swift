@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// The Histórico tab: finished sessions, the most recent first. Read-only.
+/// The Histórico tab: finished sessions, the most recent first. Read-only; a session opens its
+/// detail, built from the session's own records only.
 struct HistoryView: View {
     @Query(
         filter: #Predicate<Session> { $0.endedAt != nil },
@@ -13,7 +14,11 @@ struct HistoryView: View {
         ScrollView {
             LazyVStack(spacing: Theme.Metrics.cardSpacing) {
                 ForEach(sessions) { session in
-                    HistorySessionCard(session: session)
+                    NavigationLink(value: session) {
+                        HistorySessionCard(session: session)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("history.session")
                 }
             }
             .padding(Theme.Metrics.screenPadding)
@@ -30,10 +35,13 @@ struct HistoryView: View {
             }
         }
         .screenBackground()
+        .navigationDestination(for: Session.self) { session in
+            HistorySessionDetailView(detail: HistorySessionDetail(session))
+        }
     }
 }
 
-/// A finished session: name, date and time, and duration with what was completed.
+/// A finished session: name, date and time, duration with what was completed, and a disclosure chevron.
 private struct HistorySessionCard: View {
     let session: Session
 
@@ -41,23 +49,28 @@ private struct HistorySessionCard: View {
         let completedPerExercise = session.exercises.map { performed in
             performed.setLogs.filter(\.isCompleted).count
         }
-        VStack(alignment: .leading, spacing: 4) {
-            Text(SessionFormatting.name(session.workoutNameSnapshot))
-                .font(.headline)
-                .lineLimit(2)
-            Text(SessionFormatting.dateText(session.startedAt))
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(SessionFormatting.name(session.workoutNameSnapshot))
+                    .font(.headline)
+                    .lineLimit(2)
+                Text(SessionFormatting.dateText(session.startedAt))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(SessionFormatting.summaryText(
+                    duration: session.duration,
+                    exercises: completedPerExercise.filter { $0 > 0 }.count,
+                    sets: completedPerExercise.reduce(0, +)
+                ))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text(SessionFormatting.summaryText(
-                duration: session.duration,
-                exercises: completedPerExercise.filter { $0 > 0 }.count,
-                sets: completedPerExercise.reduce(0, +)
-            ))
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
         }
         .cardStyle()
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("history.session")
     }
 }
