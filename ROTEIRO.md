@@ -14,12 +14,12 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - S3-A — Sua semana e marcação manual (PR #16).
 - S3-B — Programação semanal (PR #17).
 - Correções da auditoria: limites nos valores do treino, privacy manifest e tempo limite do CI (PR #18).
+- S4-A — Tela Treinos no visual do protótipo: treinos em grade com menu, Treino livre e Treinos recentes (PR #19).
 
 ## Próximas etapas
 
-### S4 — Exercícios e Treinos no visual do protótipo
+### S4-B — Tela Exercícios
 - Exercícios: lista única com filtros por grupo muscular, botão "+ Novo" para exercício próprio (a lógica já existe no ExerciseService) e equipamento de cada exercício (Barra, Halteres, Máquina, Peso do corpo...).
-- Treinos: treinos em grade com menu, seção Treino Livre e Treinos recentes.
 - Reorganizar o Início para o Resumo rápido não ficar escondido.
 
 ### S5 — Histórico completo
