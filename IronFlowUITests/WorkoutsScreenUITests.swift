@@ -229,6 +229,8 @@ final class WorkoutsScreenUITests: XCTestCase {
         XCTAssertEqual(recents.count, 3, "The recent sessions are not limited to three")
         attachScreenshot(named: "43-workouts-light", of: app)
         scrollToBottom(in: app)
+        // The screenshot shows the list scrolled up: the header is out of the screen.
+        XCTAssertLessThan(app.buttons["workouts.add"].frame.minY, 0, "The list did not scroll")
         attachScreenshot(named: "44-workouts-recent-light", of: app)
 
         // Each one is read as a sentence: name, date, time and duration.
