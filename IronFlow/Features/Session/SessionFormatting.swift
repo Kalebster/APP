@@ -56,6 +56,44 @@ enum SessionFormatting {
         return "\(day), \(time)"
     }
 
+    /// "30 set": the day and the abbreviated month without a period; the year is added for another
+    /// year: "30 set 2025". The day, month and year are those of `calendar`.
+    static func shortDateText(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let day = calendar.component(.day, from: date)
+        let month = monthAbbreviation(calendar.component(.month, from: date))
+        let year = calendar.component(.year, from: date)
+        if year == calendar.component(.year, from: now) {
+            return "\(day) \(month)"
+        }
+        return "\(day) \(month) \(year)"
+    }
+
+    /// The time of day with two digits for the hour and the minute, on a 24-hour clock: "00:42", "19:30".
+    static func timeText(_ date: Date, calendar: Calendar = .current) -> String {
+        let hour = calendar.component(.hour, from: date)
+        let minute = calendar.component(.minute, from: date)
+        return String(format: "%02ld:%02ld", hour, minute)
+    }
+
+    /// A recent session's line: "30 set · 00:42 · 1 min" (date, time it started and duration).
+    /// Without a duration: "30 set · 00:42".
+    static func recentText(startedAt: Date, duration: TimeInterval?, now: Date = .now, calendar: Calendar = .current) -> String {
+        var parts = [shortDateText(startedAt, now: now, calendar: calendar), timeText(startedAt, calendar: calendar)]
+        if let duration {
+            parts.append(durationText(duration))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// What VoiceOver reads for a recent session, as one sentence: "Push, 4 de outubro, 19:30, 45 min".
+    static func recentAccessibilityText(name: String, startedAt: Date, duration: TimeInterval?, now: Date = .now, calendar: Calendar = .current) -> String {
+        var parts = [name, dateText(startedAt, now: now, calendar: calendar)]
+        if let duration {
+            parts.append(durationText(duration))
+        }
+        return parts.joined(separator: ", ")
+    }
+
     /// A finished session's summary: "45 min · 2 exercícios · 6 séries". Only completed sets count,
     /// and an exercise counts when at least one of its sets was completed.
     static func summaryText(duration: TimeInterval?, exercises: Int, sets: Int) -> String {
@@ -103,5 +141,16 @@ enum SessionFormatting {
     /// (the maximum of a range). `nil` when there is neither.
     static func repsForCompletion(typed: Int?, targetMin: Int?, targetMax: Int?) -> Int? {
         typed ?? targetMax ?? targetMin
+    }
+
+    // MARK: - Private
+
+    /// The abbreviated month in lowercase and without the period ("set"), from 1 for January.
+    private static func monthAbbreviation(_ month: Int) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        let symbols = calendar.shortMonthSymbols
+        guard symbols.indices.contains(month - 1) else { return "" }
+        return symbols[month - 1].replacingOccurrences(of: ".", with: "").lowercased(with: locale)
     }
 }

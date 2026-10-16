@@ -345,6 +345,45 @@ struct SessionServiceTests {
         #expect(other.isCompleted == false)
     }
 
+    // MARK: - Recent sessions
+
+    @Test("Recent sessions are the latest three finished ones, the most recently started first; none in progress")
+    func recentSessions() throws {
+        let base = harness.clock.current
+        for offset in 0..<5 {
+            let start = base.addingTimeInterval(Double(offset) * 3_600)
+            let session = Session(startedAt: start, workoutNameSnapshot: "Treino \(offset)")
+            session.endedAt = start.addingTimeInterval(1_800)
+            harness.context.insert(session)
+        }
+        // The most recent of all is still in progress, so it is not a recent session.
+        harness.context.insert(Session(startedAt: base.addingTimeInterval(10 * 3_600), workoutNameSnapshot: "Em andamento"))
+        try harness.context.save()
+
+        let recent = try harness.context.fetch(SessionService.recentSessionsDescriptor)
+
+        #expect(SessionService.recentSessionsLimit == 3)
+        #expect(recent.map(\.workoutNameSnapshot) == ["Treino 4", "Treino 3", "Treino 2"])
+    }
+
+    @Test("Sessions that started at the same moment are ordered by when they were created; none is a no-op")
+    func recentSessionsTieAndEmpty() throws {
+        #expect(try harness.context.fetch(SessionService.recentSessionsDescriptor).isEmpty)
+
+        let start = harness.clock.current
+        for (name, createdOffset) in [("Antiga", 0.0), ("Nova", 60.0)] {
+            let session = Session(startedAt: start, workoutNameSnapshot: name)
+            session.createdAt = start.addingTimeInterval(createdOffset)
+            session.endedAt = start.addingTimeInterval(1_800)
+            harness.context.insert(session)
+        }
+        try harness.context.save()
+
+        let recent = try harness.context.fetch(SessionService.recentSessionsDescriptor)
+
+        #expect(recent.map(\.workoutNameSnapshot) == ["Nova", "Antiga"])
+    }
+
     // MARK: - Finish
 
     @Test("Finishing sets the end time, so the session is no longer active")
