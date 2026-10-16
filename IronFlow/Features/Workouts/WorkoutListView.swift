@@ -52,6 +52,7 @@ struct WorkoutListView: View {
             .padding(Theme.Metrics.screenPadding)
             .padding(.top, 8)
         }
+        .statusBarBackground()
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isCreating, onDismiss: openCreatedWorkout) {

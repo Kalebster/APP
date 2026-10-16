@@ -90,6 +90,7 @@ struct HomeView: View {
             .padding(Theme.Metrics.screenPadding)
             .padding(.top, 8)
         }
+        .statusBarBackground()
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $editingMetric) { metric in
