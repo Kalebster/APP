@@ -38,6 +38,20 @@ struct SessionService {
         )
     }
 
+    /// How many finished sessions "Treinos recentes" shows.
+    nonisolated static var recentSessionsLimit: Int { 3 }
+
+    /// The latest finished sessions (`endedAt != nil`), the most recently started first, at most
+    /// `recentSessionsLimit`. The limit is part of the query, so no more than that is ever read.
+    nonisolated static var recentSessionsDescriptor: FetchDescriptor<Session> {
+        var descriptor = FetchDescriptor<Session>(
+            predicate: #Predicate { $0.endedAt != nil },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = recentSessionsLimit
+        return descriptor
+    }
+
     /// Starts a session from a workout, copying names, muscle groups, order and targets.
     /// Later changes to the workout do not affect the session.
     @discardableResult

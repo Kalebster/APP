@@ -48,4 +48,15 @@ extension View {
             Theme.Colors.screenBackground.ignoresSafeArea()
         }
     }
+
+    /// Gives the status bar area the screen background, so content scrolled up never shows behind the
+    /// clock and the status icons. For screens that hide the navigation bar, which would otherwise be
+    /// the one thing covering that area. It adds no height: the layout does not change.
+    func statusBarBackground() -> some View {
+        safeAreaInset(edge: .top, spacing: 0) {
+            Color.clear
+                .frame(height: 0)
+                .background(Theme.Colors.screenBackground, ignoresSafeAreaEdges: .top)
+        }
+    }
 }

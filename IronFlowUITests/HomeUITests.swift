@@ -159,4 +159,22 @@ final class HomeUITests: XCTestCase {
         enterValue("2300", on: "dailyCalorieGoal", in: app)
         attachScreenshot(named: "24-home-dark", of: app)
     }
+
+    /// Scrolled up, the content never shows behind the clock and the status icons: the screenshot is
+    /// the proof, so the test first checks that the screen did scroll. At the default text size the
+    /// Início scrolls only about 15 points on the iPhone 17 (the content almost fits), so this one runs
+    /// with the largest non-accessibility text size, where it scrolls well past the status bar.
+    @MainActor
+    func testScrolledContentStaysBelowTheStatusBar() throws {
+        continueAfterFailure = false
+        let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"])
+        let header = app.descendants(matching: .any)["home.header"]
+        let before = header.frame.minY
+
+        app.swipeUp()
+        app.swipeUp()
+
+        XCTAssertLessThan(header.frame.minY, before - 40, "The Home did not scroll")
+        attachScreenshot(named: "47-home-scrolled", of: app)
+    }
 }

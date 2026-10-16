@@ -39,6 +39,94 @@ struct SessionFormattingTests {
         #expect(SessionFormatting.dateText(early, now: sameYear, calendar: calendar) == "4 de outubro, 07:05")
     }
 
+    /// A Gregorian calendar in São Paulo, so the day and the time do not depend on where the tests run.
+    private func saoPauloCalendar() throws -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "America/Sao_Paulo"))
+        calendar.locale = Locale(identifier: "pt_BR")
+        return calendar
+    }
+
+    @Test("The short date is the day and the abbreviated month without a period, with the year only for another year")
+    func shortDate() throws {
+        let calendar = try saoPauloCalendar()
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 12, day: 1)))
+        let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: 0, minute: 42)))
+        let singleDigit = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 9)))
+        let lastYear = try #require(calendar.date(from: DateComponents(year: 2025, month: 9, day: 30, hour: 18)))
+
+        #expect(SessionFormatting.shortDateText(date, now: now, calendar: calendar) == "30 set")
+        #expect(SessionFormatting.shortDateText(singleDigit, now: now, calendar: calendar) == "5 out")
+        #expect(SessionFormatting.shortDateText(lastYear, now: now, calendar: calendar) == "30 set 2025")
+        // The year is the one of the calendar: the first minute of the new year is already the new year.
+        let newYear = try #require(calendar.date(from: DateComponents(year: 2027, month: 1, day: 1, hour: 0, minute: 1)))
+        #expect(SessionFormatting.shortDateText(newYear, now: now, calendar: calendar) == "1 jan 2027")
+    }
+
+    @Test("All twelve months are abbreviated in Portuguese, in lowercase and without a period")
+    func monthAbbreviations() throws {
+        let calendar = try saoPauloCalendar()
+        let names = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+        for (index, name) in names.enumerated() {
+            let date = try #require(calendar.date(from: DateComponents(year: 2026, month: index + 1, day: 15, hour: 12)))
+            #expect(SessionFormatting.shortDateText(date, now: date, calendar: calendar) == "15 \(name)")
+        }
+    }
+
+    @Test("The time of day has two digits for the hour and the minute")
+    func timeOfDay() throws {
+        let calendar = try saoPauloCalendar()
+        func time(_ hour: Int, _ minute: Int) throws -> String {
+            let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: hour, minute: minute)))
+            return SessionFormatting.timeText(date, calendar: calendar)
+        }
+        #expect(try time(0, 42) == "00:42")
+        #expect(try time(7, 5) == "07:05")
+        #expect(try time(19, 30) == "19:30")
+        #expect(try time(23, 59) == "23:59")
+    }
+
+    @Test("The day and the time are those of the calendar's time zone")
+    func timeZone() throws {
+        let saoPaulo = try saoPauloCalendar()
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try #require(TimeZone(identifier: "UTC"))
+        // 23:50 on September 30th in São Paulo is 02:50 on October 1st in UTC.
+        let date = try #require(saoPaulo.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: 23, minute: 50)))
+        let now = try #require(saoPaulo.date(from: DateComponents(year: 2026, month: 10, day: 20)))
+
+        #expect(SessionFormatting.shortDateText(date, now: now, calendar: saoPaulo) == "30 set")
+        #expect(SessionFormatting.timeText(date, calendar: saoPaulo) == "23:50")
+        #expect(SessionFormatting.shortDateText(date, now: now, calendar: utc) == "1 out")
+        #expect(SessionFormatting.timeText(date, calendar: utc) == "02:50")
+    }
+
+    @Test("A recent session line: the date, the time it started and the duration")
+    func recentLine() throws {
+        let calendar = try saoPauloCalendar()
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 12, day: 1)))
+        let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: 0, minute: 42)))
+        let lastYear = try #require(calendar.date(from: DateComponents(year: 2025, month: 9, day: 30, hour: 18, minute: 5)))
+
+        #expect(SessionFormatting.recentText(startedAt: date, duration: 60, now: now, calendar: calendar) == "30 set · 00:42 · 1 min")
+        #expect(SessionFormatting.recentText(startedAt: date, duration: 45 * 60, now: now, calendar: calendar) == "30 set · 00:42 · 45 min")
+        #expect(SessionFormatting.recentText(startedAt: lastYear, duration: 65 * 60, now: now, calendar: calendar) == "30 set 2025 · 18:05 · 1 h 05 min")
+        // Without a duration, only the date and the time.
+        #expect(SessionFormatting.recentText(startedAt: date, duration: nil, now: now, calendar: calendar) == "30 set · 00:42")
+    }
+
+    @Test("VoiceOver reads a recent session as one sentence: name, date, time and duration")
+    func recentAccessibility() throws {
+        let calendar = Calendar.current
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 12, day: 1)))
+        let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 4, hour: 19, minute: 30)))
+
+        #expect(SessionFormatting.recentAccessibilityText(name: "Push", startedAt: date, duration: 45 * 60, now: now, calendar: calendar)
+            == "Push, 4 de outubro, 19:30, 45 min")
+        #expect(SessionFormatting.recentAccessibilityText(name: "Treino livre", startedAt: date, duration: nil, now: now, calendar: calendar)
+            == "Treino livre, 4 de outubro, 19:30")
+    }
+
     @Test("Summary counts completed work, with singular forms")
     func summary() {
         #expect(SessionFormatting.summaryText(duration: 45 * 60, exercises: 2, sets: 6) == "45 min · 2 exercícios · 6 séries")

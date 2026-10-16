@@ -110,6 +110,9 @@
     "%lld treinos esta semana" : {
 
     },
+    "%lld treinos no plano" : {
+
+    },
     "%lld/7 dias" : {
 
     },
@@ -125,6 +128,9 @@
     "1 treino esta semana" : {
 
     },
+    "1 treino no plano" : {
+
+    },
     "A carga não pode ser negativa." : {
 
     },
@@ -138,6 +144,9 @@
 
     },
     "Abre as opções de treino deste dia." : {
+
+    },
+    "Abre o detalhe do treino." : {
 
     },
     "Adicionar" : {
@@ -290,6 +299,9 @@
     "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
 
     },
+    "Escolha exercícios na hora e registre suas séries" : {
+
+    },
     "Escolha um dia de segunda a domingo." : {
 
     },
@@ -374,9 +386,6 @@
     "Iniciado às %@" : {
 
     },
-    "Iniciar" : {
-
-    },
     "Iniciar %@" : {
 
     },
@@ -408,6 +417,9 @@
 
     },
     "Meta: %@ · Carga: %@ · Reps: %@" : {
+
+    },
+    "Meus treinos" : {
 
     },
     "Minimizar" : {
@@ -492,6 +504,9 @@
 
     },
     "Opções" : {
+
+    },
+    "Opções de %@" : {
 
     },
     "Ordenar" : {
@@ -624,6 +639,9 @@
 
     },
     "Treinos" : {
+
+    },
+    "Treinos recentes" : {
 
     },
     "Treinou fora do app? Toque no dia para marcar." : {
