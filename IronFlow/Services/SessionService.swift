@@ -161,7 +161,7 @@ struct SessionService {
     /// A completed set must keep a repetition count.
     func updateSetValues(_ log: SetLog, weightKg: Double?, reps: Int?) throws {
         let session = try activeSession(of: log)
-        try Validation.weight(weightKg)
+        try Validation.performedWeight(weightKg)
         if let reps {
             try Validation.performedReps(reps)
         } else if log.isCompleted {
@@ -181,7 +181,7 @@ struct SessionService {
         let session = try activeSession(of: log)
         guard let reps else { throw SessionError.repsRequired }
         try Validation.performedReps(reps)
-        try Validation.weight(weightKg)
+        try Validation.performedWeight(weightKg)
 
         let timestamp = now()
         log.weightKg = weightKg

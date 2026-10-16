@@ -3,9 +3,9 @@ import Foundation
 /// Input rules shared by the services. Pure functions: no store access.
 enum Validation {
     static let maxNameLength = 60
-    /// Highest repetition count of a planned set.
+    /// Highest repetition count of a planned set, and of a set recorded in a session.
     static let maxPlannedReps = 100
-    /// Highest load of a planned set, in kilograms.
+    /// Highest load of a planned set, and of a set recorded in a session, in kilograms.
     static let maxPlannedWeightKg: Double = 1_000
 
     /// Returns the name without leading and trailing whitespace, or throws.
@@ -56,9 +56,19 @@ enum Validation {
         guard dailyCalorieGoalRangeKcal.contains(kcal) else { throw ValidationError.invalidCalorieGoal }
     }
 
-    /// Repetitions actually performed.
+    /// Repetitions actually performed: at least 1 and at most `maxPlannedReps`, like a planned set.
     static func performedReps(_ reps: Int) throws {
         guard reps > 0 else { throw ValidationError.invalidReps }
+        guard reps <= maxPlannedReps else { throw ValidationError.repsTooHigh }
+    }
+
+    /// A load actually lifted: optional, follows the load rules and is at most `maxPlannedWeightKg`,
+    /// like a planned set.
+    static func performedWeight(_ weightKg: Double?) throws {
+        try weight(weightKg)
+        if let weightKg, weightKg > maxPlannedWeightKg {
+            throw ValidationError.weightTooHigh
+        }
     }
 }
 
@@ -81,7 +91,7 @@ struct PlannedSetValues: Equatable, Sendable {
 
     /// Repetitions from 1 to `Validation.maxPlannedReps` with minimum ≤ maximum; an optional
     /// load up to `Validation.maxPlannedWeightKg` that follows the load rules.
-    /// The limits apply only to planned sets; performed sets are checked by `Validation` alone.
+    /// Sets recorded in a session have the same limits (`Validation.performedReps` and `performedWeight`).
     func validate() throws {
         guard repsMin > 0 else { throw ValidationError.invalidRepsMin }
         guard repsMax > 0 else { throw ValidationError.invalidRepsMax }

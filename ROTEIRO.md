@@ -13,12 +13,14 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - S2 — Detalhe somente leitura de uma sessão concluída (PR #14).
 - S3-A — Sua semana e marcação manual (PR #16).
 - S3-B — Programação semanal (PR #17).
+- Correções da auditoria: limites nos valores do treino, privacy manifest e tempo limite do CI (PR #18).
 
 ## Próximas etapas
 
 ### S4 — Exercícios e Treinos no visual do protótipo
 - Exercícios: lista única com filtros por grupo muscular, botão "+ Novo" para exercício próprio (a lógica já existe no ExerciseService) e equipamento de cada exercício (Barra, Halteres, Máquina, Peso do corpo...).
 - Treinos: treinos em grade com menu, seção Treino Livre e Treinos recentes.
+- Reorganizar o Início para o Resumo rápido não ficar escondido.
 
 ### S5 — Histórico completo
 - Filtro por período: 7, 30 e 90 dias, e tudo.
@@ -26,11 +28,14 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Volume e recordes em cada treino da lista.
 - Calendário com os dias treinados.
 - Recordes recentes e gráficos de evolução.
+- Apagar ou corrigir um treino concluído.
 
 ### S6 — Durante o treino
 - Timer de descanso.
 - RPE/RIR e notas.
 - Superséries e bi-sets.
+- Remover série ou exercício durante o treino.
+- Mostrar a carga e as repetições da última vez.
 
 ### S7 — Ajustes
 - Unidades, idioma, tema e notificações.
@@ -45,6 +50,8 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 ### S10 — Revisão final e TestFlight
 - Regressão completa, uso offline, acessibilidade e desempenho.
 - Build Release, tamanho do app e envio ao TestFlight.
+- Ícone do app.
+- Mensagem amigável na tela de erro ao abrir os dados.
 
 ## Decisões
 

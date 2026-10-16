@@ -51,10 +51,18 @@ struct ValidationTests {
         #expect(throws: ValidationError.negativeWeight) { try PlannedSetValues.reps(8, 12, kg: -1).validate() }
     }
 
-    @Test("The planned set limits do not apply to performed values")
-    func performedValuesHaveNoPlannedLimits() throws {
+    @Test("Performed values have the limits of planned ones: 1.000 kg and 100 repetitions")
+    func performedValuesShareThePlannedLimits() throws {
+        try Validation.performedWeight(nil)
+        try Validation.performedWeight(1_000)
+        try Validation.performedReps(100)
+        #expect(throws: ValidationError.weightTooHigh) { try Validation.performedWeight(1_000.01) }
+        #expect(throws: ValidationError.repsTooHigh) { try Validation.performedReps(101) }
+        // The load rules come first.
+        #expect(throws: ValidationError.negativeWeight) { try Validation.performedWeight(-1) }
+        #expect(throws: ValidationError.tooManyDecimals) { try Validation.performedWeight(1_000.005) }
+        // The load check alone has no upper limit.
         try Validation.weight(1_500)
-        try Validation.performedReps(150)
     }
 
     @Test("Body weight is 20–300 kg with at most two decimal places")
