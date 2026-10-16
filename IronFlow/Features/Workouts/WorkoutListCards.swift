@@ -54,7 +54,8 @@ struct WorkoutGridCard: View {
             Image(systemName: "ellipsis")
                 .rotationEffect(.degrees(90))
                 .font(.body.weight(.bold))
-                .foregroundStyle(.secondary)
+                // A fixed gray, so the accent color of the menu does not tint the dots.
+                .foregroundStyle(Color.secondary)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
