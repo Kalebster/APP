@@ -47,7 +47,7 @@ struct HomeView: View {
                 header
 
                 VStack(alignment: .leading, spacing: 16) {
-                    HomeSectionTitle("Treino de hoje")
+                    SectionTitle("Treino de hoje")
                     // A new day or a new planned workout is a new section, so its queries are built
                     // again; a change of the plan reaches it at once, through `weeklyPlan`.
                     TodayWorkoutSection(
@@ -63,7 +63,7 @@ struct HomeView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 16) {
-                    HomeSectionTitle("Sua semana")
+                    SectionTitle("Sua semana")
                     // A new week is a new card, so its queries are built again for the new limits.
                     WeekCard(week: week, now: now, calendar: calendar)
                         .id(week.start)
@@ -71,7 +71,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline) {
-                        HomeSectionTitle("Resumo rápido")
+                        SectionTitle("Resumo rápido")
                         Spacer(minLength: 8)
                         Button("Personalizar") {
                             isCustomizing = true
@@ -188,23 +188,6 @@ struct HomeView: View {
         case .height: try service.setHeight(Int(value))
         case .dailyCalorieGoal: try service.setDailyCalorieGoal(Int(value))
         }
-    }
-}
-
-/// A Home section title: uppercase, heavy and widely spaced.
-private struct HomeSectionTitle: View {
-    let title: LocalizedStringKey
-
-    init(_ title: LocalizedStringKey) {
-        self.title = title
-    }
-
-    var body: some View {
-        Text(title)
-            .font(.headline.weight(.heavy))
-            .tracking(3)
-            .textCase(.uppercase)
-            .accessibilityAddTraits(.isHeader)
     }
 }
 
