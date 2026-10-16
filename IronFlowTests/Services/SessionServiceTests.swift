@@ -255,6 +255,79 @@ struct SessionServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    @Test("Recorded values go up to 1.000 kg and 100 repetitions, when editing and when completing")
+    func recordedValuesAtTheLimit() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let logs = session.orderedExercises[0].orderedSetLogs
+
+        try harness.sessions.updateSetValues(logs[0], weightKg: 1_000, reps: 100)
+        #expect(logs[0].weightKg == 1_000)
+        #expect(logs[0].reps == 100)
+        #expect(logs[0].isCompleted == false)
+
+        try harness.sessions.completeSet(logs[1], weightKg: 1_000, reps: 100)
+        #expect(logs[1].isCompleted)
+        #expect(logs[1].weightKg == 1_000)
+        #expect(logs[1].reps == 100)
+    }
+
+    @Test("Values above 1.000 kg or 100 repetitions are refused when editing and when completing, and nothing is saved")
+    func recordedValuesAboveTheLimit() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let log = firstLog(of: session)
+        let untouchedAt = harness.clock.current
+
+        // Not completed yet.
+        harness.clock.advance(by: 60)
+        #expect(throws: ValidationError.weightTooHigh) { try harness.sessions.updateSetValues(log, weightKg: 1_000.01, reps: 10) }
+        #expect(throws: ValidationError.weightTooHigh) { try harness.sessions.updateSetValues(log, weightKg: 5_000, reps: nil) }
+        #expect(throws: ValidationError.repsTooHigh) { try harness.sessions.updateSetValues(log, weightKg: 20, reps: 101) }
+        #expect(throws: ValidationError.weightTooHigh) { try harness.sessions.completeSet(log, weightKg: 1_000.01, reps: 10) }
+        #expect(throws: ValidationError.repsTooHigh) { try harness.sessions.completeSet(log, weightKg: 20, reps: 101) }
+        #expect(log.weightKg == 20)
+        #expect(log.reps == nil)
+        #expect(log.isCompleted == false)
+        #expect(log.completedAt == nil)
+        #expect(log.updatedAt == untouchedAt)
+        #expect(session.updatedAt == untouchedAt)
+        #expect(harness.context.hasChanges == false)
+
+        // Already completed: the values it has stay.
+        try harness.sessions.completeSet(log, weightKg: 22.5, reps: 9)
+        let completedAt = log.completedAt
+        let updatedAt = log.updatedAt
+        harness.clock.advance(by: 60)
+        #expect(throws: ValidationError.weightTooHigh) { try harness.sessions.updateSetValues(log, weightKg: 1_000.01, reps: 9) }
+        #expect(throws: ValidationError.repsTooHigh) { try harness.sessions.updateSetValues(log, weightKg: 22.5, reps: 101) }
+        #expect(throws: ValidationError.repsTooHigh) { try harness.sessions.completeSet(log, weightKg: 22.5, reps: 1_000_000) }
+        #expect(log.isCompleted)
+        #expect(log.completedAt == completedAt)
+        #expect(log.weightKg == 22.5)
+        #expect(log.reps == 9)
+        #expect(log.updatedAt == updatedAt)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("Values stored before the limits existed are kept: only what is saved from now on is checked")
+    func valuesStoredBeforeTheLimitsAreKept() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let logs = session.orderedExercises[0].orderedSetLogs
+        // Written directly, as an earlier version of the app could have stored it.
+        logs[0].weightKg = 1_500
+        logs[0].reps = 150
+        logs[0].isCompleted = true
+        logs[0].completedAt = harness.clock.current
+        try harness.context.save()
+
+        try harness.sessions.completeSet(logs[1], weightKg: 20, reps: 8)
+        try harness.sessions.finishSession(session)
+
+        #expect(session.isActive == false)
+        #expect(logs[0].weightKg == 1_500)
+        #expect(logs[0].reps == 150)
+        #expect(logs[0].isCompleted)
+    }
+
     @Test("Sets of a finished session cannot be changed")
     func finishedSessionIsReadOnly() throws {
         let session = try harness.sessions.startSession(from: workout)
