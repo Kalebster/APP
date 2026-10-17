@@ -1,21 +1,9 @@
-import UIKit
 import XCTest
 
 /// The Exercises tab shows one card per muscle group; a card opens that group's exercises.
 /// Searching from the groups screen finds exercises in every group.
 /// Runs on an in-memory store where the 71 built-in exercises are installed at launch.
 final class ExerciseListUITests: XCTestCase {
-    @MainActor
-    private func launchOnExercisesTab(extraArguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"] + extraArguments
-        app.launch()
-        let tab = app.tabBars.buttons["Exercícios"]
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "Exercises tab not found")
-        tab.tap()
-        return app
-    }
-
     /// Any element whose accessibility label is exactly `label` (rows combine their texts).
     @MainActor
     private func element(labeled label: String, in app: XCUIApplication) -> XCUIElement {
@@ -35,17 +23,9 @@ final class ExerciseListUITests: XCTestCase {
     }
 
     @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
-    }
-
-    @MainActor
     func testGroupsAreShownFirst() throws {
         continueAfterFailure = false
-        let app = launchOnExercisesTab()
+        let app = launchOnTab("Exercícios")
 
         let chest = groupCard("chest", in: app)
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
@@ -61,7 +41,7 @@ final class ExerciseListUITests: XCTestCase {
     @MainActor
     func testGroupCardOpensItsExercises() throws {
         continueAfterFailure = false
-        let app = launchOnExercisesTab()
+        let app = launchOnTab("Exercícios")
 
         let back = groupCard("back", in: app)
         XCTAssertTrue(back.waitForExistence(timeout: 10), "Back card not found")
@@ -69,21 +49,27 @@ final class ExerciseListUITests: XCTestCase {
 
         XCTAssertTrue(element(labeled: "Barra Fixa", in: app).waitForExistence(timeout: 10))
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
+        assertScreenIsDark(app, "group screen")
         attachScreenshot(named: "7-exercises-group", of: app)
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(groupCard("chest", in: app).waitForExistence(timeout: 10), "Groups not shown after going back")
     }
 
+    /// Few keys are typed and the field's own clear button empties it, so the test does not depend on
+    /// dozens of key presses on a busy simulator. What was typed is checked before the results, so a
+    /// lost key shows as a wrong text and not as a missing screen, and the group cards must be back
+    /// before anything is typed again.
     @MainActor
     func testGlobalSearchFindsMatchesAndShowsNoResults() throws {
         continueAfterFailure = false
-        let app = launchOnExercisesTab()
+        let app = launchOnTab("Exercícios")
         XCTAssertTrue(groupCard("chest", in: app).waitForExistence(timeout: 10), "Chest card not found")
 
         let field = searchField(in: app)
         field.tapAndWaitForKeyboardFocus()
-        field.typeText("agachamento")
+        field.typeText("agach")
+        XCTAssertEqual(field.value as? String, "agach", "The search field does not hold what was typed")
 
         XCTAssertTrue(element(labeled: "Agachamento Livre com Barra", in: app).waitForExistence(timeout: 10))
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
@@ -91,15 +77,21 @@ final class ExerciseListUITests: XCTestCase {
         XCTAssertFalse(groupCard("chest", in: app).exists, "Group cards shown during search")
         attachScreenshot(named: "8-exercises-search", of: app)
 
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "agachamento".count))
+        let clear = field.buttons.firstMatch
+        XCTAssertTrue(clear.waitForExistence(timeout: 10), "The clear button of the search field is not shown")
+        clear.tap()
+        XCTAssertTrue(groupCard("chest", in: app).waitForExistence(timeout: 10), "Group cards not back after clearing the search")
+
+        field.tapAndWaitForKeyboardFocus()
         field.typeText("xyz")
-        XCTAssertTrue(app.descendants(matching: .any)["exercises.empty.search"].waitForExistence(timeout: 10))
+        XCTAssertEqual(field.value as? String, "xyz", "The search field does not hold what was typed")
+        XCTAssertTrue(app.descendants(matching: .any)["exercises.empty.search"].waitForExistence(timeout: 10), "No results message not shown")
     }
 
     @MainActor
     func testSearchInsideGroup() throws {
         continueAfterFailure = false
-        let app = launchOnExercisesTab()
+        let app = launchOnTab("Exercícios")
 
         let chest = groupCard("chest", in: app)
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
@@ -113,35 +105,5 @@ final class ExerciseListUITests: XCTestCase {
         XCTAssertTrue(element(labeled: "Supino Inclinado com Barra", in: app).waitForExistence(timeout: 10))
         XCTAssertTrue(element(labeled: "Supino Inclinado com Halteres", in: app).exists)
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
-    }
-
-    /// Brightness (0...1) of the screen background, sampled at the left margin below the title.
-    @MainActor
-    private func backgroundBrightness(of app: XCUIApplication) -> CGFloat? {
-        guard let image = app.screenshot().image.cgImage else { return nil }
-        var pixel = [UInt8](repeating: 0, count: 4)
-        guard let context = CGContext(
-            data: &pixel, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return nil }
-        let x = 4, y = image.height / 4
-        context.draw(image, in: CGRect(x: -x, y: y - image.height + 1, width: image.width, height: image.height))
-        return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
-    }
-
-    /// Dark appearance, forced with a Debug-only launch argument.
-    @MainActor
-    func testDarkAppearance() throws {
-        continueAfterFailure = false
-        let app = launchOnExercisesTab(extraArguments: ["-ui-dark-appearance"])
-        let chest = groupCard("chest", in: app)
-        XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
-        XCTAssertLessThan(backgroundBrightness(of: app) ?? 1, 0.3, "Groups screen is not dark")
-        attachScreenshot(named: "9-exercises-groups-dark", of: app)
-
-        chest.tap()
-        XCTAssertTrue(element(labeled: "Supino Reto com Barra", in: app).waitForExistence(timeout: 10))
-        XCTAssertLessThan(backgroundBrightness(of: app) ?? 1, 0.3, "Group screen is not dark")
-        attachScreenshot(named: "10-exercises-group-dark", of: app)
     }
 }

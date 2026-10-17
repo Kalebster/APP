@@ -1,7 +1,8 @@
 import XCTest
 
 /// When the data store cannot be opened, the app shows a non-destructive error
-/// screen instead of the main tabs, and "Tentar novamente" keeps it safe.
+/// screen instead of the main tabs, and "Tentar novamente" keeps it safe. The screen is dark like the
+/// rest of the app.
 final class PersistenceErrorUITests: XCTestCase {
     @MainActor
     func testStoreFailureShowsErrorScreen() throws {
@@ -14,11 +15,8 @@ final class PersistenceErrorUITests: XCTestCase {
         let title = app.staticTexts["persistence.error.title"]
         XCTAssertTrue(title.waitForExistence(timeout: 10), "Error screen did not appear")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "Main tabs must not be shown without a store")
-
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = "5-persistence-error"
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
+        assertScreenIsDark(app, "error screen")
+        attachScreenshot(named: "5-persistence-error", of: app)
 
         // Retrying opens the same store again; while it keeps failing, the error screen stays.
         let retry = app.buttons["persistence.error.retry"]
