@@ -36,6 +36,10 @@ struct IronFlowApp: App {
         let result = openStore()
         if case .success(let container) = result {
             seedExerciseLibrary(in: container)
+            #if DEBUG
+            // Test hook: ready-made data for the interface tests (`-ui-testing` and `-ui-seed`).
+            UITestSeed.applyIfRequested(in: container)
+            #endif
         }
         return result
     }
