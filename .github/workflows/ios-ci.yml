@@ -204,8 +204,6 @@ jobs:
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -resultBundlePath "$RESULT_BUNDLE_PATH" \
             -only-testing:IronFlowUITests \
-            -parallel-testing-enabled YES \
-            -parallel-testing-worker-count 2 \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/ui-test.log
 
