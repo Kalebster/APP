@@ -21,12 +21,17 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
 /// The base of every interface test. When a test fails it keeps the text of what was on the app's
 /// screen, which the CI report prints: a failure message says which element was not found, and this
 /// says what was there instead. Xcode attaches only the query that failed, not the screen.
-@MainActor
 class IronFlowUITestCase: XCTestCase {
-    // XCTest's own tearDown is not tied to the main actor, so the override is not either; it hops to the
-    // main actor to read the screen.
-    nonisolated override func tearDown() async throws {
-        await attachScreenHierarchyIfTheTestFailed()
+    /// XCTest runs its asynchronous `tearDown` off the main actor, and a test case is not `Sendable`, so
+    /// it cannot be sent to the main actor as it is. The screen is read there, and nothing else uses the
+    /// test case meanwhile: the test has ended.
+    private struct Handle: @unchecked Sendable {
+        let testCase: IronFlowUITestCase
+    }
+
+    override func tearDown() async throws {
+        let handle = Handle(testCase: self)
+        await MainActor.run { handle.testCase.attachScreenHierarchyIfTheTestFailed() }
         try await super.tearDown()
     }
 }
@@ -229,7 +234,7 @@ extension XCTestCase {
     /// Attaches the hierarchy of the app's screen, as text, when the test that just ended has failed.
     /// The app is only asked for it while it is running, so a crash is not made worse by a second error.
     @MainActor
-    func attachScreenHierarchyIfTheTestFailed() async {
+    func attachScreenHierarchyIfTheTestFailed() {
         guard (testRun?.totalFailureCount ?? 0) > 0 else { return }
         let app = XCUIApplication()
         let attachment = XCTAttachment(string: app.state == .runningForeground
