@@ -12,10 +12,7 @@ final class HistoryUITests: XCTestCase {
         let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa", "session-detail:Push"])
 
         // The planned workout is deleted; the session it came from stays in the history.
-        let workoutCard = app.buttons["workouts.card"].firstMatch
-        XCTAssertTrue(workoutCard.waitForExistence(timeout: 10), "Workout not listed")
-        workoutCard.tap()
-        XCTAssertTrue(app.navigationBars["Push"].waitForExistence(timeout: 10), "Workout editor not opened")
+        openWorkout(named: "Push", in: app)
         deleteWorkoutFromEditor(in: app)
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Workout not deleted")
 

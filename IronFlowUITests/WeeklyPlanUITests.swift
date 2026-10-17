@@ -100,8 +100,7 @@ final class WeeklyPlanUITests: XCTestCase {
         openPlan(in: app)
         chooseForToday("Push", in: app)
         closePlan(in: app)
-        app.buttons["workouts.card"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["Push"].waitForExistence(timeout: 10), "Editor of 'Push' not opened")
+        openWorkout(named: "Push", in: app)
         deleteWorkoutFromEditor(in: app)
         XCTAssertTrue(app.navigationBars["Push"].waitForNonExistence(timeout: 10), "Editor still open after deleting")
 

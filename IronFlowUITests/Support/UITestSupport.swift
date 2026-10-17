@@ -146,6 +146,15 @@ extension XCTestCase {
         XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
     }
 
+    /// Opens the editor of the first workout on the Treinos list, from its card.
+    @MainActor
+    func openWorkout(named name: String, in app: XCUIApplication) {
+        let card = app.buttons["workouts.card"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "Workout card not shown")
+        card.tap()
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
+    }
+
     /// In the workout editor on screen: deletes the workout from its ⋮ menu, confirming the question.
     @MainActor
     func deleteWorkoutFromEditor(in app: XCUIApplication) {
