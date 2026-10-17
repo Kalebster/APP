@@ -3,7 +3,7 @@ import XCTest
 /// The Home "Sua semana" card: marking today as trained outside the app, unmarking it after a
 /// confirmation, and a workout finished in the app. Works on any day of the week: the tests only use
 /// today. Runs on an in-memory store with the built-in library.
-final class HomeWeekUITests: XCTestCase {
+final class HomeWeekUITests: IronFlowUITestCase {
     @MainActor
     private func launchOnWeekCard() -> XCUIApplication {
         let app = launchOnHome()

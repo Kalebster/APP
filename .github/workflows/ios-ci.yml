@@ -768,8 +768,9 @@ jobs:
 
           def failure_attachments():
               # Text attachments of failed interface tests, from the exported results: the debug
-              # descriptions, and the hierarchy of the app's screen at the moment of the failure (what
-              # was on screen, which is what a failure that cannot be reproduced locally needs).
+              # descriptions (only the query that failed) and the hierarchy of the app's screen when
+              # the test ended, which IronFlowUITestCase attaches (what was on screen, which is what a
+              # failure that cannot be reproduced locally needs).
               manifest = read_json("build/screenshots/manifest.json")
               if not isinstance(manifest, list):
                   add(f"{UNAVAILABLE} (nenhum anexo exportado)")
@@ -786,8 +787,8 @@ jobs:
                       exported = attachment.get("exportedFileName") or ""
                       add(f"- `{identifier}`: `{exported}`")
                       listed += 1
-                      if exported.lower().endswith((".txt", ".log", ".json")) and printed < 600:
-                          text = [line[:240] for line in (read_text(os.path.join("build/screenshots", exported)) or "").splitlines()[:80 if hierarchy else 60]]
+                      if exported.lower().endswith((".txt", ".log", ".json")) and printed < 1000:
+                          text = [line[:240] for line in (read_text(os.path.join("build/screenshots", exported)) or "").splitlines()[:150 if hierarchy else 60]]
                           add()
                           add("```")
                           lines.extend(text)

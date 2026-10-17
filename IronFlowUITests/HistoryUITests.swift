@@ -4,7 +4,7 @@ import XCTest
 /// and values after the planned workout is deleted. Runs on an in-memory store with the built-in
 /// library; the workout and its finished session come ready (`-ui-seed`). Finishing a session through
 /// the screens, with typed values, is checked by `SessionUITests`.
-final class HistoryUITests: XCTestCase {
+final class HistoryUITests: IronFlowUITestCase {
     @MainActor
     func testFinishedSessionDetailAfterItsWorkoutIsDeleted() throws {
         continueAfterFailure = false

@@ -3,7 +3,7 @@ import XCTest
 /// The Exercises tab shows one card per muscle group; a card opens that group's exercises.
 /// Searching from the groups screen finds exercises in every group.
 /// Runs on an in-memory store where the 71 built-in exercises are installed at launch.
-final class ExerciseListUITests: XCTestCase {
+final class ExerciseListUITests: IronFlowUITestCase {
     /// Any element whose accessibility label is exactly `label` (rows combine their texts).
     @MainActor
     private func element(labeled label: String, in app: XCUIApplication) -> XCUIElement {

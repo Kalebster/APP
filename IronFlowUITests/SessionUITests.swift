@@ -4,7 +4,7 @@ import XCTest
 /// the "Treino em andamento" bar, finishing (then the history) and discarding.
 /// Runs on an in-memory store with the built-in library; the workout the tests start comes ready
 /// (`-ui-seed`).
-final class SessionUITests: XCTestCase {
+final class SessionUITests: IronFlowUITestCase {
     @MainActor
     private func checks(in app: XCUIApplication) -> XCUIElementQuery {
         app.buttons.matching(identifier: "session.set.check")

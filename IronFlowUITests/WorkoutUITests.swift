@@ -4,7 +4,7 @@ import XCTest
 /// removing and reordering their exercises. Runs on an in-memory store with the built-in library.
 /// The tests that create a workout and add exercises through the screens (the first two and the last)
 /// do the whole flow by hand; the others only need the workout to exist and have it ready (`-ui-seed`).
-final class WorkoutUITests: XCTestCase {
+final class WorkoutUITests: IronFlowUITestCase {
     /// The exercise rows of the open workout, top to bottom.
     @MainActor
     private func exerciseRows(in app: XCUIApplication) -> XCUIElementQuery {

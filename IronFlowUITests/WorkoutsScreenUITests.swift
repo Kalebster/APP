@@ -4,7 +4,7 @@ import XCTest
 /// sessions. Runs on an in-memory store with the built-in library; the workouts and finished sessions
 /// the tests look at come ready (`-ui-seed`). Creating a workout through the screens is checked by
 /// `WorkoutUITests`, and finishing a session through the screens by `SessionUITests`.
-final class WorkoutsScreenUITests: XCTestCase {
+final class WorkoutsScreenUITests: IronFlowUITestCase {
     @MainActor
     func testEmptyStateOffersCreatingAndTheFreeWorkout() throws {
         continueAfterFailure = false

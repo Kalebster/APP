@@ -3,7 +3,7 @@ import XCTest
 /// When the data store cannot be opened, the app shows a non-destructive error
 /// screen instead of the main tabs, and "Tentar novamente" keeps it safe. The screen is dark like the
 /// rest of the app.
-final class PersistenceErrorUITests: XCTestCase {
+final class PersistenceErrorUITests: IronFlowUITestCase {
     @MainActor
     func testStoreFailureShowsErrorScreen() throws {
         continueAfterFailure = false

@@ -3,7 +3,7 @@ import XCTest
 /// The Home "Treino de hoje" actions: starting a free workout, choosing a workout to start, and
 /// continuing the session in progress. Runs on an in-memory store with the built-in library; the
 /// workouts the tests choose from come ready (`-ui-seed`).
-final class HomeSessionUITests: XCTestCase {
+final class HomeSessionUITests: IronFlowUITestCase {
     @MainActor
     func testFreeWorkoutFromHome() throws {
         continueAfterFailure = false

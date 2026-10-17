@@ -2,7 +2,7 @@ import XCTest
 
 /// Smoke test: the app launches and each of the five main tabs opens its screen, dark (the app is dark
 /// only, whatever the simulator's setting). Its screenshots are the picture of each tab.
-final class SmokeUITests: XCTestCase {
+final class SmokeUITests: IronFlowUITestCase {
     @MainActor
     func testLaunchAndOpenEachTab() throws {
         continueAfterFailure = false

@@ -18,6 +18,16 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
     return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
 }
 
+/// The base of every interface test. When a test fails it keeps the text of what was on the app's
+/// screen, which the CI report prints: a failure message says which element was not found, and this
+/// says what was there instead. Xcode attaches only the query that failed, not the screen.
+class IronFlowUITestCase: XCTestCase {
+    override func tearDown() async throws {
+        await attachScreenHierarchyIfTheTestFailed()
+        try await super.tearDown()
+    }
+}
+
 /// What every interface test needs: launching the app (on an in-memory store, with ready-made data
 /// when a test only needs the data to exist), moving between tabs, finding elements, creating a
 /// workout through the interface, running a session, and screenshots and measurements.
@@ -212,6 +222,20 @@ extension XCTestCase {
     }
 
     // MARK: - Screenshots and measurements
+
+    /// Attaches the hierarchy of the app's screen, as text, when the test that just ended has failed.
+    /// The app is only asked for it while it is running, so a crash is not made worse by a second error.
+    @MainActor
+    func attachScreenHierarchyIfTheTestFailed() async {
+        guard (testRun?.totalFailureCount ?? 0) > 0 else { return }
+        let app = XCUIApplication()
+        let attachment = XCTAttachment(string: app.state == .runningForeground
+            ? app.debugDescription
+            : "The app was not on screen when the test ended (state \(app.state.rawValue)).")
+        attachment.name = "App UI hierarchy (failed test)"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 
     @MainActor
     func attachScreenshot(named name: String, of app: XCUIApplication) {

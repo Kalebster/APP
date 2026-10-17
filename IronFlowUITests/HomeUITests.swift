@@ -2,7 +2,7 @@ import XCTest
 
 /// The Início tab: header, today's workout and the quick summary (edit values and choose indicators).
 /// Runs on an in-memory store and empty preferences.
-final class HomeUITests: XCTestCase {
+final class HomeUITests: IronFlowUITestCase {
     @MainActor
     private func card(_ metric: String, in app: XCUIApplication) -> XCUIElement {
         app.buttons["home.metric.\(metric)"]

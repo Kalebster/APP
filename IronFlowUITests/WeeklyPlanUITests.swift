@@ -4,7 +4,7 @@ import XCTest
 /// planned workout that is deleted. Works on any day of the week: the tests only use today's row.
 /// Runs on an in-memory store with the built-in library; the workouts the tests plan come ready
 /// (`-ui-seed`).
-final class WeeklyPlanUITests: XCTestCase {
+final class WeeklyPlanUITests: IronFlowUITestCase {
     /// Opens "Programação semanal" from the Treinos tab.
     @MainActor
     private func openPlan(in app: XCUIApplication) {

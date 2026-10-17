@@ -4,7 +4,7 @@ import XCTest
 /// keyboard too (the screens of every tab are checked by `SmokeUITests`, and the error screen by
 /// `PersistenceErrorUITests`). Each measured brightness is kept with the result as a "Medição", which
 /// the CI report prints even when the test passes.
-final class AppearanceUITests: XCTestCase {
+final class AppearanceUITests: IronFlowUITestCase {
     /// Brightness of the background of the simulator's own Settings app, which follows the device
     /// setting. It proves the device really was in light mode when the app was checked.
     @MainActor
