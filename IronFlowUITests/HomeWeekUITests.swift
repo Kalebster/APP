@@ -3,19 +3,12 @@ import XCTest
 /// The Home "Sua semana" card: marking today as trained outside the app, unmarking it after a
 /// confirmation, and a workout finished in the app. Works on any day of the week: the tests only use
 /// today. Runs on an in-memory store with the built-in library.
-final class HomeWeekUITests: XCTestCase {
+final class HomeWeekUITests: IronFlowUITestCase {
     @MainActor
-    private func launch(extraArguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"] + extraArguments
-        app.launch()
+    private func launchOnWeekCard() -> XCUIApplication {
+        let app = launchOnHome()
         XCTAssertTrue(element("home.week", in: app).waitForExistence(timeout: 10), "Week card not shown")
         return app
-    }
-
-    @MainActor
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)[identifier]
     }
 
     @MainActor
@@ -33,37 +26,9 @@ final class HomeWeekUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForLabel(of element: XCUIElement, toBe label: String) -> Bool {
-        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)
-        return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
-    }
-
-    /// Cancels the confirmation to unmark. Depending on the system layout the dialog has a "Cancelar"
-    /// button or is dismissed by tapping outside it.
-    @MainActor
-    private func cancelUnmarking(in app: XCUIApplication) {
-        XCTAssertTrue(app.buttons["Desmarcar"].waitForExistence(timeout: 10), "Confirmation not shown")
-        let cancel = app.buttons["Cancelar"]
-        if cancel.exists {
-            cancel.tap()
-        } else {
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
-        }
-        XCTAssertTrue(app.buttons["Desmarcar"].waitForNonExistence(timeout: 10), "Confirmation not dismissed")
-    }
-
-    @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
-    }
-
-    @MainActor
     func testMarkAndUnmarkToday() throws {
         continueAfterFailure = false
-        let app = launch()
+        let app = launchOnWeekCard()
 
         // Seven days, today among them, and nothing trained yet.
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "home.week.day").count, 6)
@@ -81,7 +46,7 @@ final class HomeWeekUITests: XCTestCase {
         today(in: app).tap()
         let question = app.staticTexts["Desmarcar este dia?"]
         XCTAssertTrue(question.waitForExistence(timeout: 10), "No confirmation before unmarking")
-        cancelUnmarking(in: app)
+        cancelDialog(confirmLabel: "Desmarcar", in: app)
         expectCounts("1 treino esta semana", "1/7 dias", in: app)
 
         today(in: app).tap()
@@ -94,20 +59,13 @@ final class HomeWeekUITests: XCTestCase {
     @MainActor
     func testWorkoutFinishedInTheAppCountsAndTodayCannotBeMarked() throws {
         continueAfterFailure = false
-        let app = launch()
+        let app = launchOnWeekCard()
 
         // A free workout with one completed set, finished.
         app.buttons["home.startFree"].tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
         app.buttons["session.addExercise"].tap()
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tapAndWaitForKeyboardFocus()
-        search.typeText("Barra Fixa")
-        let row = app.buttons["Barra Fixa"]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise not found in the picker")
-        row.tap()
-        app.buttons["picker.add"].tap()
+        pickExercise("Barra Fixa", in: app)
         let reps = app.textFields.matching(identifier: "session.set.reps").element(boundBy: 0)
         XCTAssertTrue(reps.waitForExistence(timeout: 10), "Added exercise has no set")
         reps.tap()
@@ -125,14 +83,5 @@ final class HomeWeekUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Desmarcar este dia?"].waitForExistence(timeout: 2), "Today offered to unmark")
         expectCounts("1 treino esta semana", "1/7 dias", in: app)
         XCTAssertFalse(today(in: app).label.contains("marcado manualmente"), "Today: \(today(in: app).label)")
-    }
-
-    @MainActor
-    func testDarkAppearance() throws {
-        continueAfterFailure = false
-        let app = launch(extraArguments: ["-ui-dark-appearance"])
-        today(in: app).tap()
-        expectCounts("1 treino esta semana", "1/7 dias", in: app)
-        attachScreenshot(named: "40-home-week-dark", of: app)
     }
 }

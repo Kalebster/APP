@@ -1,104 +1,19 @@
 import XCTest
 
 /// The history detail: a finished session opens a read-only record that keeps its original name
-/// and values after the planned workout is deleted. Runs on an in-memory store with the built-in library.
-final class HistoryUITests: XCTestCase {
-    @MainActor
-    private func launchOnWorkoutsTab() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"]
-        app.launch()
-        openTab("Treinos", in: app)
-        return app
-    }
-
-    @MainActor
-    private func openTab(_ label: String, in app: XCUIApplication) {
-        let tab = app.tabBars.buttons[label]
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "Tab '\(label)' not found")
-        tab.tap()
-    }
-
-    @MainActor
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)[identifier]
-    }
-
-    /// Creates a workout with one exercise (three planned sets of 8–12, no load) and goes back to the list.
-    @MainActor
-    private func createWorkout(named name: String, exercise: String, in app: XCUIApplication) {
-        let add = app.buttons["workouts.add"]
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "Add workout button not found")
-        add.tap()
-        let field = app.textFields["workout.name.field"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Name field not found")
-        field.tap()
-        field.typeText(name)
-        app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
-
-        app.buttons["workout.addExercises"].firstMatch.tap()
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tapAndWaitForKeyboardFocus()
-        search.typeText(exercise)
-        let row = app.buttons[exercise]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(exercise)' not found in the picker")
-        row.tap()
-        app.buttons["picker.add"].tap()
-        XCTAssertTrue(element("workout.exercise", in: app).waitForExistence(timeout: 10), "Exercise not added")
-
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["workouts.start"].waitForExistence(timeout: 10), "Workout list not shown")
-    }
-
-    @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
-    }
-
+/// and values after the planned workout is deleted. Runs on an in-memory store with the built-in
+/// library; the workout and its finished session come ready (`-ui-seed`). Finishing a session through
+/// the screens, with typed values, is checked by `SessionUITests`.
+final class HistoryUITests: IronFlowUITestCase {
     @MainActor
     func testFinishedSessionDetailAfterItsWorkoutIsDeleted() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", exercise: "Barra Fixa", in: app)
-
-        // A session with two sets done and one not done.
-        app.buttons["workouts.start"].firstMatch.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
-        let weights = app.textFields.matching(identifier: "session.set.weight")
-        let reps = app.textFields.matching(identifier: "session.set.reps")
-        let checks = app.buttons.matching(identifier: "session.set.check")
-        XCTAssertEqual(checks.count, 3, "The session should copy the three planned sets")
-        weights.element(boundBy: 0).tap()
-        weights.element(boundBy: 0).typeText("20")
-        reps.element(boundBy: 0).tap()
-        reps.element(boundBy: 0).typeText("10")
-        checks.element(boundBy: 0).tap()
-        XCTAssertTrue(checks.element(boundBy: 0).isSelected, "First set not checked")
-        // Empty repetitions take the target (8–12 → 12).
-        checks.element(boundBy: 1).tap()
-        XCTAssertTrue(checks.element(boundBy: 1).isSelected, "Second set not checked")
-
-        app.buttons["session.finish"].tap()
-        let confirmFinish = app.buttons["Concluir treino"]
-        XCTAssertTrue(confirmFinish.waitForExistence(timeout: 10), "Finish confirmation not shown")
-        confirmFinish.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        // A session with two sets done (20 kg for 10 repetitions; no load for 12) and one not done.
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa", "session-detail:Push"])
 
         // The planned workout is deleted; the session it came from stays in the history.
-        app.buttons["workouts.card"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["Push"].waitForExistence(timeout: 10), "Workout editor not opened")
-        app.buttons["workout.menu"].tap()
-        let delete = app.buttons["Excluir treino"]
-        XCTAssertTrue(delete.waitForExistence(timeout: 10), "Delete option not found")
-        delete.tap()
-        let confirmDelete = app.buttons["Excluir"]
-        XCTAssertTrue(confirmDelete.waitForExistence(timeout: 10), "Delete confirmation not shown")
-        confirmDelete.tap()
+        openWorkout(named: "Push", in: app)
+        deleteWorkoutFromEditor(in: app)
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Workout not deleted")
 
         openTab("Histórico", in: app)

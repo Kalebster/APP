@@ -15,8 +15,12 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - S3-B — Programação semanal (PR #17).
 - Correções da auditoria: limites nos valores do treino, privacy manifest e tempo limite do CI (PR #18).
 - S4-A — Tela Treinos no visual do protótipo: treinos em grade com menu, Treino livre e Treinos recentes (PR #19).
+- Testes de interface mais rápidos e app somente escuro (PR #20).
 
 ## Próximas etapas
+
+### Início e Treinos no modelo final aprovado
+- Levar as telas Início e Treinos ao modelo visual final aprovado pelo dono. Os detalhes do modelo virão em pedido próprio, antes de a etapa começar.
 
 ### S4-B — Tela Exercícios
 - Exercícios: lista única com filtros por grupo muscular, botão "+ Novo" para exercício próprio (a lógica já existe no ExerciseService) e equipamento de cada exercício (Barra, Halteres, Máquina, Peso do corpo...).
@@ -38,7 +42,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Mostrar a carga e as repetições da última vez.
 
 ### S7 — Ajustes
-- Unidades, idioma, tema e notificações.
+- Unidades, idioma e notificações.
 - Preferências de treino.
 
 ### S8 — Conta
@@ -59,4 +63,6 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - O repositório é público para o CI rodar sem custo. Nunca colocar senhas, chaves ou dados pessoais nele.
 - Secret Protection e Push protection estão ligados no GitHub.
 - Identidade visual: preto, branco, cinza e azul-escuro.
+- O app é somente escuro: não há tema claro nem opção de tema nos Ajustes.
+- Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.

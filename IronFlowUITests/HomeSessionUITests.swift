@@ -1,77 +1,13 @@
 import XCTest
 
 /// The Home "Treino de hoje" actions: starting a free workout, choosing a workout to start, and
-/// continuing the session in progress. Runs on an in-memory store with the built-in library.
-final class HomeSessionUITests: XCTestCase {
-    @MainActor
-    private func launch(extraArguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"] + extraArguments
-        app.launch()
-        XCTAssertTrue(element("home.today", in: app).waitForExistence(timeout: 10), "Home not shown")
-        return app
-    }
-
-    @MainActor
-    private func openTab(_ label: String, in app: XCUIApplication) {
-        let tab = app.tabBars.buttons[label]
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "Tab '\(label)' not found")
-        tab.tap()
-    }
-
-    @MainActor
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)[identifier]
-    }
-
-    /// Adds one exercise through the exercise picker (the one of a workout or of a session).
-    @MainActor
-    private func pickExercise(_ name: String, in app: XCUIApplication) {
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tapAndWaitForKeyboardFocus()
-        search.typeText(name)
-        let row = app.buttons[name]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
-        row.tap()
-        app.buttons["picker.add"].tap()
-    }
-
-    /// Creates a workout on the Treinos tab (with one exercise, or none) and goes back to the Home.
-    @MainActor
-    private func createWorkout(named name: String, exercise: String?, in app: XCUIApplication) {
-        openTab("Treinos", in: app)
-        let add = app.buttons["workouts.add"]
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "Add workout button not found")
-        add.tap()
-        let field = app.textFields["workout.name.field"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Name field not found")
-        field.tap()
-        field.typeText(name)
-        app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
-        if let exercise {
-            app.buttons["workout.addExercises"].firstMatch.tap()
-            pickExercise(exercise, in: app)
-            XCTAssertTrue(element("workout.exercise", in: app).waitForExistence(timeout: 10), "Exercise not added")
-        }
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["workouts.start"].firstMatch.waitForExistence(timeout: 10), "Workout list not shown")
-        openTab("Início", in: app)
-    }
-
-    @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
-    }
-
+/// continuing the session in progress. Runs on an in-memory store with the built-in library; the
+/// workouts the tests choose from come ready (`-ui-seed`).
+final class HomeSessionUITests: IronFlowUITestCase {
     @MainActor
     func testFreeWorkoutFromHome() throws {
         continueAfterFailure = false
-        let app = launch()
+        let app = launchOnHome()
 
         // Without workouts there is nothing to choose: only the free workout is offered.
         let startFree = app.buttons["home.startFree"]
@@ -105,8 +41,7 @@ final class HomeSessionUITests: XCTestCase {
     @MainActor
     func testChooseWorkoutThenContinueTheSameSession() throws {
         continueAfterFailure = false
-        let app = launch()
-        createWorkout(named: "Push", exercise: "Barra Fixa", in: app)
+        let app = launchOnHome(seed: ["workout:Push:Barra Fixa"])
 
         let choose = app.buttons["home.chooseWorkout"]
         XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher um treino")
@@ -147,10 +82,11 @@ final class HomeSessionUITests: XCTestCase {
     @MainActor
     func testPickerShowsEmptyWorkoutUnavailableAndCancels() throws {
         continueAfterFailure = false
-        let app = launch()
-        createWorkout(named: "Vazio", exercise: nil, in: app)
+        let app = launchOnHome(seed: ["workout:Vazio"])
 
-        app.buttons["home.chooseWorkout"].tap()
+        let choose = app.buttons["home.chooseWorkout"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher um treino")
+        choose.tap()
         let workout = app.buttons.matching(identifier: "workoutPicker.workout").firstMatch
         XCTAssertTrue(workout.waitForExistence(timeout: 10), "Workout picker not shown")
         XCTAssertFalse(workout.isEnabled, "A workout without exercises can be started")
@@ -159,25 +95,5 @@ final class HomeSessionUITests: XCTestCase {
         XCTAssertTrue(workout.waitForNonExistence(timeout: 10), "Picker not closed")
         XCTAssertFalse(element("session.name", in: app).exists, "A session was started")
         XCTAssertTrue(app.buttons["home.chooseWorkout"].exists, "Home actions changed after cancelling")
-    }
-
-    @MainActor
-    func testDarkAppearance() throws {
-        continueAfterFailure = false
-        let app = launch(extraArguments: ["-ui-dark-appearance"])
-        createWorkout(named: "Push", exercise: "Barra Fixa", in: app)
-        XCTAssertTrue(app.buttons["home.chooseWorkout"].waitForExistence(timeout: 10))
-        attachScreenshot(named: "34-home-actions-dark", of: app)
-
-        app.buttons["home.chooseWorkout"].tap()
-        let workout = app.buttons.matching(identifier: "workoutPicker.workout").firstMatch
-        XCTAssertTrue(workout.waitForExistence(timeout: 10), "Workout picker not shown")
-        attachScreenshot(named: "35-workout-picker-dark", of: app)
-        workout.tap()
-
-        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
-        app.buttons["session.minimize"].tap()
-        XCTAssertTrue(app.buttons["home.continue"].waitForExistence(timeout: 10), "No Continuar")
-        attachScreenshot(named: "36-home-continue-dark", of: app)
     }
 }

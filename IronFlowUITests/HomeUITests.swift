@@ -2,16 +2,7 @@ import XCTest
 
 /// The Início tab: header, today's workout and the quick summary (edit values and choose indicators).
 /// Runs on an in-memory store and empty preferences.
-final class HomeUITests: XCTestCase {
-    @MainActor
-    private func launch(extraArguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"] + extraArguments
-        app.launch()
-        XCTAssertTrue(app.descendants(matching: .any)["home.header"].waitForExistence(timeout: 10), "Home not shown")
-        return app
-    }
-
+final class HomeUITests: IronFlowUITestCase {
     @MainActor
     private func card(_ metric: String, in app: XCUIApplication) -> XCUIElement {
         app.buttons["home.metric.\(metric)"]
@@ -32,17 +23,9 @@ final class HomeUITests: XCTestCase {
     }
 
     @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
-    }
-
-    @MainActor
     func testEmptyHome() throws {
         continueAfterFailure = false
-        let app = launch()
+        let app = launchOnHome()
 
         let today = app.descendants(matching: .any)["home.today"]
         XCTAssertTrue(today.exists, "Today card not shown")
@@ -60,17 +43,9 @@ final class HomeUITests: XCTestCase {
         attachScreenshot(named: "21-home-empty", of: app)
 
         // With a workout, nothing is planned for today yet.
-        app.tabBars.buttons["Treinos"].tap()
-        let add = app.buttons["workouts.add"]
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "Add workout button not found")
-        add.tap()
-        let name = app.textFields["workout.name.field"]
-        XCTAssertTrue(name.waitForExistence(timeout: 10), "Name field not found")
-        name.tap()
-        name.typeText("Push")
-        app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(app.navigationBars["Push"].waitForExistence(timeout: 10), "Workout not created")
-        app.tabBars.buttons["Início"].tap()
+        openTab("Treinos", in: app)
+        createWorkout(named: "Push", in: app)
+        openTab("Início", in: app)
         XCTAssertTrue(today.waitForExistence(timeout: 10))
         XCTAssertTrue(today.label.contains("Nenhum treino planejado para hoje."), "Today card: \(today.label)")
     }
@@ -78,7 +53,7 @@ final class HomeUITests: XCTestCase {
     @MainActor
     func testEditSummaryValues() throws {
         continueAfterFailure = false
-        let app = launch()
+        let app = launchOnHome()
 
         enterValue("80", on: "bodyWeight", in: app)
         XCTAssertTrue(card("bodyWeight", in: app).label.contains("80 kg"), "Weight: \(card("bodyWeight", in: app).label)")
@@ -117,7 +92,7 @@ final class HomeUITests: XCTestCase {
     @MainActor
     func testCustomizeSummary() throws {
         continueAfterFailure = false
-        let app = launch()
+        let app = launchOnHome()
 
         app.buttons["home.customize"].tap()
         let heightOption = app.buttons["customize.height"]
@@ -150,16 +125,6 @@ final class HomeUITests: XCTestCase {
         XCTAssertTrue(hint.waitForExistence(timeout: 10), "Empty summary hint not shown")
     }
 
-    @MainActor
-    func testDarkAppearance() throws {
-        continueAfterFailure = false
-        let app = launch(extraArguments: ["-ui-dark-appearance"])
-        enterValue("80", on: "bodyWeight", in: app)
-        enterValue("180", on: "height", in: app)
-        enterValue("2300", on: "dailyCalorieGoal", in: app)
-        attachScreenshot(named: "24-home-dark", of: app)
-    }
-
     /// Scrolled up, the content never shows behind the clock and the status icons: the screenshot is
     /// the proof, so the test first checks that the screen did scroll. At the default text size the
     /// Início scrolls only about 15 points on the iPhone 17 (the content almost fits), so this one runs
@@ -167,7 +132,7 @@ final class HomeUITests: XCTestCase {
     @MainActor
     func testScrolledContentStaysBelowTheStatusBar() throws {
         continueAfterFailure = false
-        let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"])
+        let app = launchOnHome(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"])
         let header = app.descendants(matching: .any)["home.header"]
         let before = header.frame.minY
 

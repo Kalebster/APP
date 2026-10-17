@@ -2,47 +2,13 @@ import XCTest
 
 /// The Workouts tab: creating, opening, renaming and deleting planned workouts, and adding,
 /// removing and reordering their exercises. Runs on an in-memory store with the built-in library.
-final class WorkoutUITests: XCTestCase {
-    @MainActor
-    private func launchOnWorkoutsTab(extraArguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"] + extraArguments
-        app.launch()
-        let tab = app.tabBars.buttons["Treinos"]
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "Workouts tab not found")
-        tab.tap()
-        return app
-    }
-
-    @MainActor
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)[identifier]
-    }
-
-    /// Any element whose accessibility label starts with `prefix`.
-    @MainActor
-    private func element(labelStartingWith prefix: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
-    }
-
+/// The tests that create a workout and add exercises through the screens (the first two and the last)
+/// do the whole flow by hand; the others only need the workout to exist and have it ready (`-ui-seed`).
+final class WorkoutUITests: IronFlowUITestCase {
     /// The exercise rows of the open workout, top to bottom.
     @MainActor
     private func exerciseRows(in app: XCUIApplication) -> XCUIElementQuery {
         app.descendants(matching: .any).matching(identifier: "workout.exercise")
-    }
-
-    /// Creates a workout from the list and waits for its editor.
-    @MainActor
-    private func createWorkout(named name: String, in app: XCUIApplication) {
-        let add = app.buttons["workouts.add"]
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "Add workout button not found")
-        add.tap()
-        let field = app.textFields["workout.name.field"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Name field not found")
-        field.tap()
-        field.typeText(name)
-        app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
     }
 
     /// Adds exercises through the picker, choosing each one by searching its exact name.
@@ -70,20 +36,6 @@ final class WorkoutUITests: XCTestCase {
         XCTAssertTrue(confirm.isEnabled, "Add button disabled after selecting exercises")
         confirm.tap()
         XCTAssertTrue(exerciseRows(in: app).firstMatch.waitForExistence(timeout: 10), "Exercises not added")
-    }
-
-    /// Cancels the confirmation dialog whose confirm button is `confirmLabel`. Depending on the
-    /// system layout the dialog has a "Cancelar" button or is dismissed by tapping outside it.
-    @MainActor
-    private func cancelDialog(confirmLabel: String, in app: XCUIApplication) {
-        XCTAssertTrue(app.buttons[confirmLabel].waitForExistence(timeout: 10), "Confirmation '\(confirmLabel)' not shown")
-        let cancel = app.buttons["Cancelar"]
-        if cancel.exists {
-            cancel.tap()
-        } else {
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
-        }
-        XCTAssertTrue(app.buttons[confirmLabel].waitForNonExistence(timeout: 10), "Confirmation not dismissed")
     }
 
     /// Opens the planned sets of the exercise at `index` in the open workout.
@@ -153,17 +105,9 @@ final class WorkoutUITests: XCTestCase {
     }
 
     @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
-    }
-
-    @MainActor
     func testEmptyStateAndCreateWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
+        let app = launchOnTab("Treinos")
 
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Empty state not shown")
         attachScreenshot(named: "11-workouts-empty", of: app)
@@ -200,7 +144,7 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testAddExercisesInOrderAndShowInWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
+        let app = launchOnTab("Treinos")
         createWorkout(named: "Push", in: app)
 
         addExercises(["Crossover na Polia", "Barra Fixa"], in: app)
@@ -238,8 +182,8 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testDoubleTapOnAddAddsExercisesOnce() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Push"])
+        openWorkout(named: "Push", in: app)
 
         app.buttons["workout.addExercises"].tap()
         // The first exercises of the library are visible without searching.
@@ -264,10 +208,10 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testRemoveExerciseCancelAndConfirm() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", in: app)
-        addExercises(["Crossover na Polia", "Barra Fixa"], in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia|Barra Fixa"])
+        openWorkout(named: "Push", in: app)
         let rows = exerciseRows(in: app)
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Exercises not shown")
 
         swipeAndTapRemove(rows.element(boundBy: 0), in: app)
         cancelDialog(confirmLabel: "Remover exercício", in: app)
@@ -288,8 +232,8 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testRenameWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Push"])
+        openWorkout(named: "Push", in: app)
 
         app.buttons["workout.menu"].tap()
         let rename = app.buttons["Renomear"]
@@ -314,8 +258,8 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testDeleteWorkoutCancelAndConfirm() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Push"])
+        openWorkout(named: "Push", in: app)
 
         app.buttons["workout.menu"].tap()
         let delete = app.buttons["Excluir treino"]
@@ -340,9 +284,9 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testEditPlannedSet() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", in: app)
-        addExercises(["Crossover na Polia"], in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia"])
+        openWorkout(named: "Push", in: app)
+        XCTAssertTrue(exerciseRows(in: app).firstMatch.waitForExistence(timeout: 10), "Exercise not shown")
         openExercise(at: 0, in: app)
 
         let sets = setRows(in: app)
@@ -384,7 +328,7 @@ final class WorkoutUITests: XCTestCase {
     @MainActor
     func testAddAndRemovePlannedSets() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
+        let app = launchOnTab("Treinos")
         createWorkout(named: "Push", in: app)
         addExercises(["Crossover na Polia"], in: app)
         openExercise(at: 0, in: app)
@@ -424,23 +368,5 @@ final class WorkoutUITests: XCTestCase {
         }
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Workout not shown")
         XCTAssertTrue(row.label.contains("1 série"), "Exercise row: \(row.label)")
-    }
-
-    @MainActor
-    func testDarkAppearance() throws {
-        continueAfterFailure = false
-        let app = launchOnWorkoutsTab(extraArguments: ["-ui-dark-appearance"])
-        createWorkout(named: "Push", in: app)
-        addExercises(["Crossover na Polia", "Barra Fixa"], in: app)
-        attachScreenshot(named: "16-workout-editor-dark", of: app)
-
-        openExercise(at: 0, in: app)
-        attachScreenshot(named: "20-workout-exercise-dark", of: app)
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(exerciseRows(in: app).firstMatch.waitForExistence(timeout: 10), "Workout not shown")
-
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["workouts.card"].waitForExistence(timeout: 10))
-        attachScreenshot(named: "17-workouts-dark", of: app)
     }
 }

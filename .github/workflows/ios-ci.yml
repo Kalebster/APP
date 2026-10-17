@@ -1,13 +1,13 @@
 name: iOS CI
 
+# Every push to any branch runs the CI, so a branch has a result from its first push; only
+# ci-screenshots (images published by this workflow, no code) is left out. There is no pull_request
+# trigger: a pull request shows the result of the push run of its head commit, and main runs again
+# on every merge.
 on:
   push:
-    branches:
-      - "claude/**"
-      - main
-    paths-ignore:
-      - "**.md"
-  pull_request:
+    branches-ignore:
+      - ci-screenshots
     paths-ignore:
       - "**.md"
   workflow_dispatch:
@@ -237,6 +237,77 @@ jobs:
             -showBuildTimingSummary \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/build-release.log
+
+      # The app is dark only, and the Release build must not carry the Debug-only test hooks. Neither is
+      # covered by the tests (they run the Debug build), so the Release app is checked here: its
+      # Info.plist must say Dark, and the text of its executable must not hold what only the hooks
+      # contain. The hook arguments themselves (-ui-testing, -ui-seed) are too short to be found as text
+      # (Swift keeps strings of up to 15 bytes inside the code), so longer text that exists only with
+      # them is searched instead, and the same text must be found in the Debug app, or the search would
+      # prove nothing.
+      - name: Verify Release build
+        id: verify_release
+        if: ${{ !cancelled() && steps.build_release.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          debug_app="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/IronFlow.app"
+          release_app="$DERIVED_DATA_PATH/Build/Products/Release-iphoneos/IronFlow.app"
+          for app in "$debug_app" "$release_app"; do
+            if [ ! -d "$app" ]; then
+              echo "::error::App not found at $app"
+              exit 1
+            fi
+          done
+
+          style="$(plutil -extract UIUserInterfaceStyle raw "$release_app/Info.plist")"
+          echo "UIUserInterfaceStyle in the Release Info.plist: $style"
+          if [ "$style" != "Dark" ]; then
+            echo "::error::Expected UIUserInterfaceStyle Dark in the Release Info.plist, found: $style"
+            exit 1
+          fi
+
+          # All the text of every executable in an app (the Debug app keeps its code in a .dylib too).
+          dump_text() {
+            : > "$2"
+            for file in "$1"/*; do
+              if [ -f "$file" ]; then
+                case "$(file -b "$file")" in
+                  *Mach-O*) strings -a "$file" >> "$2" ;;
+                esac
+              fi
+            done
+          }
+          dump_text "$debug_app" build/diagnostics/debug-app-text.txt
+          dump_text "$release_app" build/diagnostics/release-app-text.txt
+
+          failed=0
+          {
+            echo "## Verificação do Release"
+            echo
+            echo "- UIUserInterfaceStyle no Info.plist do Release: \`$style\`"
+            echo
+            echo "| Texto que só existe com os ganchos de teste | No Debug (controle) | No Release |"
+            echo "|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for marker in "-simulate-persistence-failure" "com.ironflow.app.ui-testing" "UI test seed failed" "UITestSeed"; do
+            in_debug=não
+            in_release=não
+            if grep -qF -- "$marker" build/diagnostics/debug-app-text.txt; then in_debug=sim; fi
+            if grep -qF -- "$marker" build/diagnostics/release-app-text.txt; then in_release=sim; fi
+            echo "| \`$marker\` | $in_debug | $in_release |" >> "$GITHUB_STEP_SUMMARY"
+            echo "$marker: Debug=$in_debug Release=$in_release"
+            if [ "$in_release" = sim ]; then
+              echo "::error::Test hook text '$marker' found in the Release app"
+              failed=1
+            fi
+            if [ "$in_debug" = não ]; then
+              echo "::warning::'$marker' was not found in the Debug app, so its absence from Release proves nothing"
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+          echo "The Release app is dark only and holds none of the test hooks."
 
       # Warnings are reported, not treated as errors: they must be reviewed by hand.
       - name: Summarize build warnings
@@ -594,10 +665,10 @@ jobs:
               launch = first_at(activities, lambda text: text.startswith("Launch "))
               automation = first_at(activities, lambda text: text == "Setting up automation session", launch) if launch is not None else None
               idle = first_at(activities, lambda text: text.startswith("Wait for ") and text.endswith(" to idle"), automation) if automation is not None else None
-              pause, during = None, None
-              for (time, text), (next_time, _) in zip(activities, activities[1:]):
+              pause, during, after = None, None, None
+              for (time, text), (next_time, next_text) in zip(activities, activities[1:]):
                   if pause is None or next_time - time > pause:
-                      pause, during = next_time - time, text
+                      pause, during, after = next_time - time, text, next_text
               return {
                   "setup": first_at(activities, lambda text: text == "Set Up"),
                   "launched": launch is not None,
@@ -605,6 +676,7 @@ jobs:
                   "idle": idle - automation if idle is not None else None,
                   "pause": pause,
                   "during": during,
+                  "after": after,
               }
 
           def launch_text(metrics):
@@ -615,7 +687,7 @@ jobs:
           def pause_text(metrics):
               if metrics["pause"] is None:
                   return UNAVAILABLE
-              return f"{seconds(metrics['pause'])} em “{metrics['during'][:80]}”"
+              return f"{seconds(metrics['pause'])} em “{metrics['during'][:80]}”, antes de “{metrics['after'][:80]}”"
 
           def runner_startup(log):
               # From the start of the step to the first interface test (the test runner starting up).
@@ -695,7 +767,10 @@ jobs:
                   add(f"- … mais {len(found) - 30} linhas.")
 
           def failure_attachments():
-              # Text attachments of failed interface tests (debug descriptions), from the exported results.
+              # Text attachments of failed interface tests, from the exported results: the debug
+              # descriptions (only the query that failed) and the hierarchy of the app's screen when
+              # the test ended, which IronFlowUITestCase attaches (what was on screen, which is what a
+              # failure that cannot be reproduced locally needs).
               manifest = read_json("build/screenshots/manifest.json")
               if not isinstance(manifest, list):
                   add(f"{UNAVAILABLE} (nenhum anexo exportado)")
@@ -705,13 +780,15 @@ jobs:
                   identifier = test.get("testIdentifier") or test.get("testIdentifierURL") or "?"
                   for attachment in test.get("attachments", []):
                       name = attachment.get("suggestedHumanReadableName") or ""
-                      if not (attachment.get("isAssociatedWithFailure") or "debug description" in name.lower()):
+                      lowered = name.lower()
+                      hierarchy = "ui hierarchy" in lowered
+                      if not (attachment.get("isAssociatedWithFailure") or "debug description" in lowered or hierarchy):
                           continue
                       exported = attachment.get("exportedFileName") or ""
                       add(f"- `{identifier}`: `{exported}`")
                       listed += 1
-                      if exported.lower().endswith((".txt", ".log", ".json")) and printed < 300:
-                          text = (read_text(os.path.join("build/screenshots", exported)) or "").splitlines()[:60]
+                      if exported.lower().endswith((".txt", ".log", ".json")) and printed < 1000:
+                          text = [line[:240] for line in (read_text(os.path.join("build/screenshots", exported)) or "").splitlines()[:150 if hierarchy else 60]]
                           add()
                           add("```")
                           lines.extend(text)
@@ -719,6 +796,28 @@ jobs:
                           printed += len(text)
               if listed == 0:
                   add("Nenhum anexo associado a falhas.")
+
+          def measurements():
+              # Values the interface tests measured and kept as attachments named "Medição: ...", printed
+              # even when the test passes (the brightness of each screen, of a sheet and of the keyboard).
+              manifest = read_json("build/screenshots/manifest.json")
+              if not isinstance(manifest, list):
+                  add(f"{UNAVAILABLE} (nenhum anexo exportado)")
+                  return
+              rows = []
+              for test in manifest:
+                  identifier = test.get("testIdentifier") or test.get("testIdentifierURL") or "?"
+                  for attachment in test.get("attachments", []):
+                      name = attachment.get("suggestedHumanReadableName") or ""
+                      if not name.startswith("Medição"):
+                          continue
+                      exported = attachment.get("exportedFileName") or ""
+                      value = (read_text(os.path.join("build/screenshots", exported)) or UNAVAILABLE).strip()
+                      rows.append((identifier, re.sub(r"_\d+_[0-9A-Fa-f-]{36}", "", name), value))
+              if not rows:
+                  add("Nenhuma medição registrada.")
+                  return
+              table(["Teste", "Medição", "Valor"], rows)
 
           def builds():
               # xcodebuild -showBuildTimingSummary: the time spent in each kind of task. Tasks run in
@@ -763,6 +862,7 @@ jobs:
           section("Testes de unidade", unit_tests)
           section("Testes de interface", ui_tests)
           section("Marcas de infraestrutura", infrastructure)
+          section("Medições dos testes", measurements)
           section("Anexos de falhas", failure_attachments)
           section("Limitações", limitations)
 
