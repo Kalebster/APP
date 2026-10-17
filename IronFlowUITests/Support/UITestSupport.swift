@@ -21,8 +21,11 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
 /// The base of every interface test. When a test fails it keeps the text of what was on the app's
 /// screen, which the CI report prints: a failure message says which element was not found, and this
 /// says what was there instead. Xcode attaches only the query that failed, not the screen.
+@MainActor
 class IronFlowUITestCase: XCTestCase {
-    override func tearDown() async throws {
+    // XCTest's own tearDown is not tied to the main actor, so the override is not either; it hops to the
+    // main actor to read the screen.
+    nonisolated override func tearDown() async throws {
         await attachScreenHierarchyIfTheTestFailed()
         try await super.tearDown()
     }
