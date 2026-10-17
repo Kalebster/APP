@@ -665,10 +665,10 @@ jobs:
               launch = first_at(activities, lambda text: text.startswith("Launch "))
               automation = first_at(activities, lambda text: text == "Setting up automation session", launch) if launch is not None else None
               idle = first_at(activities, lambda text: text.startswith("Wait for ") and text.endswith(" to idle"), automation) if automation is not None else None
-              pause, during = None, None
-              for (time, text), (next_time, _) in zip(activities, activities[1:]):
+              pause, during, after = None, None, None
+              for (time, text), (next_time, next_text) in zip(activities, activities[1:]):
                   if pause is None or next_time - time > pause:
-                      pause, during = next_time - time, text
+                      pause, during, after = next_time - time, text, next_text
               return {
                   "setup": first_at(activities, lambda text: text == "Set Up"),
                   "launched": launch is not None,
@@ -676,6 +676,7 @@ jobs:
                   "idle": idle - automation if idle is not None else None,
                   "pause": pause,
                   "during": during,
+                  "after": after,
               }
 
           def launch_text(metrics):
@@ -686,7 +687,7 @@ jobs:
           def pause_text(metrics):
               if metrics["pause"] is None:
                   return UNAVAILABLE
-              return f"{seconds(metrics['pause'])} em “{metrics['during'][:80]}”"
+              return f"{seconds(metrics['pause'])} em “{metrics['during'][:80]}”, antes de “{metrics['after'][:80]}”"
 
           def runner_startup(log):
               # From the start of the step to the first interface test (the test runner starting up).
