@@ -146,6 +146,18 @@ extension XCTestCase {
         XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
     }
 
+    /// In the workout editor on screen: deletes the workout from its ⋮ menu, confirming the question.
+    @MainActor
+    func deleteWorkoutFromEditor(in app: XCUIApplication) {
+        app.buttons["workout.menu"].tap()
+        let delete = app.buttons["Excluir treino"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 10), "Delete option not found")
+        delete.tap()
+        let confirm = app.buttons["Excluir"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Delete confirmation not shown")
+        confirm.tap()
+    }
+
     /// Chooses one exercise in the exercise picker on screen (the one of a workout or of a session),
     /// by searching its exact name, and confirms with "Adicionar".
     @MainActor

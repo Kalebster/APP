@@ -2,64 +2,9 @@ import XCTest
 
 /// The session in progress: starting from a workout, checking sets, minimizing and continuing from
 /// the "Treino em andamento" bar, finishing (then the history) and discarding.
-/// Runs on an in-memory store with the built-in library.
+/// Runs on an in-memory store with the built-in library; the workout the tests start comes ready
+/// (`-ui-seed`).
 final class SessionUITests: XCTestCase {
-    @MainActor
-    private func launchOnWorkoutsTab(extraArguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing"] + extraArguments
-        app.launch()
-        openTab("Treinos", in: app)
-        return app
-    }
-
-    @MainActor
-    private func openTab(_ label: String, in app: XCUIApplication) {
-        let tab = app.tabBars.buttons[label]
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "Tab '\(label)' not found")
-        tab.tap()
-    }
-
-    @MainActor
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)[identifier]
-    }
-
-    /// Creates a workout with one exercise (three planned sets of 8–12, no load) and goes back to the list.
-    @MainActor
-    private func createWorkout(named name: String, exercise: String, in app: XCUIApplication) {
-        let add = app.buttons["workouts.add"]
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "Add workout button not found")
-        add.tap()
-        let field = app.textFields["workout.name.field"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Name field not found")
-        field.tap()
-        field.typeText(name)
-        app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
-
-        app.buttons["workout.addExercises"].firstMatch.tap()
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tapAndWaitForKeyboardFocus()
-        search.typeText(exercise)
-        let row = app.buttons[exercise]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(exercise)' not found in the picker")
-        row.tap()
-        app.buttons["picker.add"].tap()
-        XCTAssertTrue(element("workout.exercise", in: app).waitForExistence(timeout: 10), "Exercise not added")
-
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["workouts.start"].waitForExistence(timeout: 10), "Workout list not shown")
-    }
-
-    /// Starts the first workout of the list and waits for the session screen.
-    @MainActor
-    private func startFirstWorkout(in app: XCUIApplication) {
-        app.buttons["workouts.start"].firstMatch.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
-    }
-
     @MainActor
     private func checks(in app: XCUIApplication) -> XCUIElementQuery {
         app.buttons.matching(identifier: "session.set.check")
@@ -71,19 +16,15 @@ final class SessionUITests: XCTestCase {
     }
 
     @MainActor
-    private func attachScreenshot(named name: String, of app: XCUIApplication) {
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = name
-        screenshot.lifetime = .keepAlways
-        add(screenshot)
+    private func weightFields(in app: XCUIApplication) -> XCUIElementQuery {
+        app.textFields.matching(identifier: "session.set.weight")
     }
 
     @MainActor
     func testStartCheckMinimizeContinueAndFinish() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Push", exercise: "Barra Fixa", in: app)
-        startFirstWorkout(in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa"])
+        startWorkout(named: "Push", in: app)
 
         XCTAssertEqual(element("session.name", in: app).label, "Push")
         XCTAssertEqual(checks(in: app).count, 3, "The session should copy the three planned sets")
@@ -93,7 +34,9 @@ final class SessionUITests: XCTestCase {
         checks(in: app).element(boundBy: 0).tap()
         XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "First set not checked")
 
-        // Typed repetitions are recorded.
+        // Typed load and repetitions are recorded (they are read back in the history, below).
+        weightFields(in: app).element(boundBy: 1).tap()
+        weightFields(in: app).element(boundBy: 1).typeText("20")
         repsFields(in: app).element(boundBy: 1).tap()
         repsFields(in: app).element(boundBy: 1).typeText("10")
         checks(in: app).element(boundBy: 1).tap()
@@ -147,14 +90,19 @@ final class SessionUITests: XCTestCase {
         XCTAssertTrue(finished.label.contains("Push"), "History: \(finished.label)")
         XCTAssertTrue(finished.label.contains("1 exercício · 2 séries"), "History: \(finished.label)")
         attachScreenshot(named: "27-history", of: app)
+
+        // What was typed is in the record: the load and repetitions of the second set.
+        finished.tap()
+        let secondSet = element("history.detail", in: app).descendants(matching: .any).matching(identifier: "history.detail.set").element(boundBy: 1)
+        XCTAssertTrue(secondSet.waitForExistence(timeout: 10), "Session detail not opened")
+        XCTAssertEqual(secondSet.label, "Série 2, Meta: 8–12, Carga: 20 kg, 10 repetições, Concluída")
     }
 
     @MainActor
     func testFinishNeedsACompletedSetAndDiscardKeepsThePlan() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Pull", exercise: "Barra Fixa", in: app)
-        startFirstWorkout(in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa"])
+        startWorkout(named: "Pull", in: app)
 
         app.buttons["session.finish"].tap()
         let alert = app.alerts.firstMatch
@@ -162,11 +110,7 @@ final class SessionUITests: XCTestCase {
         XCTAssertTrue(alert.staticTexts["Conclua pelo menos uma série ou descarte o treino."].exists)
         alert.buttons["OK"].tap()
 
-        app.buttons["session.discard"].tap()
-        let discard = app.buttons["Descartar"]
-        XCTAssertTrue(discard.waitForExistence(timeout: 10), "Discard confirmation not shown")
-        discard.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        discardSession(in: app)
         XCTAssertFalse(app.buttons["session.bar"].exists, "Session bar still shown after discarding")
 
         // The planned workout is kept; nothing reaches the history.
@@ -178,9 +122,8 @@ final class SessionUITests: XCTestCase {
     @MainActor
     func testSecondStartOffersTheCurrentSession() throws {
         continueAfterFailure = false
-        let app = launchOnWorkoutsTab()
-        createWorkout(named: "Legs", exercise: "Barra Fixa", in: app)
-        startFirstWorkout(in: app)
+        let app = launchOnTab("Treinos", seed: ["workout:Legs:Barra Fixa"])
+        startWorkout(named: "Legs", in: app)
         app.buttons["session.minimize"].tap()
         XCTAssertTrue(app.buttons["session.bar"].waitForExistence(timeout: 10), "Session bar not shown")
 
@@ -190,19 +133,5 @@ final class SessionUITests: XCTestCase {
         resume.tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Current session not opened")
         XCTAssertEqual(element("session.name", in: app).label, "Legs")
-    }
-
-    @MainActor
-    func testDarkAppearance() throws {
-        continueAfterFailure = false
-        let app = launchOnWorkoutsTab(extraArguments: ["-ui-dark-appearance"])
-        createWorkout(named: "Push", exercise: "Barra Fixa", in: app)
-        startFirstWorkout(in: app)
-        checks(in: app).element(boundBy: 0).tap()
-        attachScreenshot(named: "28-session-dark", of: app)
-
-        app.buttons["session.minimize"].tap()
-        XCTAssertTrue(app.buttons["session.bar"].waitForExistence(timeout: 10), "Session bar not shown")
-        attachScreenshot(named: "29-session-bar-dark", of: app)
     }
 }
