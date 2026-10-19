@@ -88,6 +88,21 @@ enum WeeklyPlanSummary {
         workoutsByWeekday(plan: plan, workouts: workouts).count
     }
 
+    /// The weekdays with a workout that exists, 1 = Monday to 7 = Sunday.
+    static func plannedWeekdays(plan: [WeeklyPlanDay], workouts: [Workout]) -> Set<Int> {
+        Set(workoutsByWeekday(plan: plan, workouts: workouts).keys)
+    }
+
+    /// "Nenhum dia", "1 dia", "4 dias": the short count of the Treinos row. The singular and the none
+    /// case are chosen here: the Portuguese plural rules treat 0 as singular, which would read "0 dia".
+    static func dayCountText(_ count: Int) -> String {
+        switch count {
+        case 0: String(localized: "Nenhum dia")
+        case 1: String(localized: "1 dia")
+        default: String(localized: "\(count) dias")
+        }
+    }
+
     /// "Nenhum dia programado", "1 dia programado", "3 dias programados". The singular and the none
     /// case are chosen here: the Portuguese plural rules treat 0 as singular, which would read "0 dia".
     static func summaryText(_ count: Int) -> String {

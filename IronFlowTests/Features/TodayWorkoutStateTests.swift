@@ -51,7 +51,7 @@ struct TodayWorkoutStateTests {
             == .scheduled(workoutID: push.id, name: "Push"))
         // Finished today.
         #expect(TodayWorkoutState.resolve(activeSessions: [], hasWorkouts: true, scheduled: push, finishedSessions: [finished], now: now, calendar: calendar)
-            == .scheduledCompleted(name: "Push"))
+            == .scheduledCompleted(name: "Push", duration: 3_600))
         // Nothing planned for today: as before the weekly plan.
         #expect(TodayWorkoutState.resolve(activeSessions: [], hasWorkouts: true, scheduled: nil, finishedSessions: [finished], now: now, calendar: calendar)
             == .nothingPlanned)
@@ -87,7 +87,25 @@ struct TodayWorkoutStateTests {
         try context.save()
         for counted in [midnight, lateNight] {
             #expect(TodayWorkoutState.resolve(activeSessions: [], hasWorkouts: true, scheduled: push, finishedSessions: [otherWorkout, counted], now: now, calendar: calendar)
-                == .scheduledCompleted(name: "Push"))
+                == .scheduledCompleted(name: "Push", duration: 3_600))
+        }
+    }
+
+    @Test("Finished twice today, the block shows the duration of the latest session")
+    func durationOfTheLatestSession() throws {
+        let calendar = try makeCalendar()
+        let container = try ModelContainerFactory.makeInMemory()
+        let context = container.mainContext
+        let push = Workout(name: "Push")
+        context.insert(push)
+        let morning = session(of: push, startedAt: try moment(13, 7, in: calendar), in: context)
+        let evening = session(of: push, startedAt: try moment(13, 17, in: calendar), in: context)
+        evening.endedAt = try moment(13, 17, 55, in: calendar)
+        try context.save()
+
+        for sessions in [[morning, evening], [evening, morning]] {
+            #expect(TodayWorkoutState.resolve(activeSessions: [], hasWorkouts: true, scheduled: push, finishedSessions: sessions, now: try moment(13, 20, in: calendar), calendar: calendar)
+                == .scheduledCompleted(name: "Push", duration: 55 * 60))
         }
     }
 
@@ -155,7 +173,7 @@ struct TodayWorkoutStateTests {
         }
 
         // Tuesday evening: Push was done today.
-        #expect(state(at: try moment(13, 23, 59, in: calendar)) == .scheduledCompleted(name: "Push"))
+        #expect(state(at: try moment(13, 23, 59, in: calendar)) == .scheduledCompleted(name: "Push", duration: 3_600))
         // A minute later it is Wednesday: Push is planned again and not done yet.
         #expect(state(at: try moment(14, 0, in: calendar)) == .scheduled(workoutID: push.id, name: "Push"))
         // Thursday: the plan names Pull.

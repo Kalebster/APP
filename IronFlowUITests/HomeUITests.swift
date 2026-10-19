@@ -29,7 +29,7 @@ final class HomeUITests: IronFlowUITestCase {
 
         let today = app.descendants(matching: .any)["home.today"]
         XCTAssertTrue(today.exists, "Today card not shown")
-        XCTAssertTrue(today.label.contains("Você ainda não tem treinos."), "Today card: \(today.label)")
+        XCTAssertTrue(today.label.contains("Nenhum treino criado"), "Today card: \(today.label)")
 
         let weight = card("bodyWeight", in: app)
         let height = card("height", in: app)
@@ -40,7 +40,7 @@ final class HomeUITests: IronFlowUITestCase {
         }
         XCTAssertLessThan(weight.frame.minX, height.frame.minX)
         XCTAssertLessThan(height.frame.minX, goal.frame.minX)
-        attachScreenshot(named: "21-home-empty", of: app)
+        attachScreenshot(named: "53-home-no-workouts", of: app)
 
         // With a workout, nothing is planned for today yet.
         openTab("Treinos", in: app)

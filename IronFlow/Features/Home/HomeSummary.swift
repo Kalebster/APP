@@ -8,11 +8,21 @@ enum SummaryMetric: String, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
+    /// The full name: in Personalizar and for VoiceOver.
     var title: LocalizedStringResource {
         switch self {
         case .bodyWeight: "Peso corporal"
         case .height: "Altura"
         case .dailyCalorieGoal: "Meta diária"
+        }
+    }
+
+    /// The short name under the value of a summary card.
+    var cardTitle: LocalizedStringResource {
+        switch self {
+        case .bodyWeight: "Peso"
+        case .height: "Altura"
+        case .dailyCalorieGoal: "kcal / dia"
         }
     }
 
@@ -84,6 +94,17 @@ enum HomeSummary {
         "\(kcal.formatted(.number.locale(locale))) kcal"
     }
 
+    /// A value as a summary card shows it: the number large and the unit small beside it ("80" and
+    /// "kg", "180" and "cm"); the calorie goal has no unit there, its card's name says "kcal / dia".
+    static func cardValue(of metric: SummaryMetric, value: Double) -> (number: String, unit: String?) {
+        switch metric {
+        // The number of `weightText`: up to two decimals with a comma.
+        case .bodyWeight: (value.formatted(.number.precision(.fractionLength(0...2)).locale(locale)), "kg")
+        case .height: (Int(value).formatted(.number.locale(locale)), "cm")
+        case .dailyCalorieGoal: (Int(value).formatted(.number.locale(locale)), nil)
+        }
+    }
+
     /// The value as it is typed in the editor ("80,5", "180", "2300"); empty when there is none.
     static func fieldText(_ value: Double?) -> String {
         PlannedSetFormatting.weightFieldText(value)
@@ -131,8 +152,8 @@ enum TodayWorkoutState: Equatable {
     case inProgress(name: String, startedAt: Date)
     /// A workout is planned for today in the weekly plan and was not finished today.
     case scheduled(workoutID: UUID, name: String)
-    /// The workout planned for today was finished today.
-    case scheduledCompleted(name: String)
+    /// The workout planned for today was finished today; `duration` is that of its latest session.
+    case scheduledCompleted(name: String, duration: TimeInterval?)
     /// No planned workout exists yet.
     case noWorkouts
     /// Workouts exist, but none is planned for today.
@@ -159,14 +180,15 @@ enum TodayWorkoutState: Equatable {
         }
         if let scheduled {
             let today = TrainingDay.key(for: now, calendar: calendar)
-            let isCompleted = finishedSessions.contains { session in
+            let finishedToday = finishedSessions.filter { session in
                 session.endedAt != nil
                     && session.workout?.id == scheduled.id
                     && TrainingDay.key(for: session.startedAt, calendar: calendar) == today
             }
-            return isCompleted
-                ? .scheduledCompleted(name: scheduled.name)
-                : .scheduled(workoutID: scheduled.id, name: scheduled.name)
+            guard let latest = finishedToday.max(by: { ($0.startedAt, $0.createdAt) < ($1.startedAt, $1.createdAt) }) else {
+                return .scheduled(workoutID: scheduled.id, name: scheduled.name)
+            }
+            return .scheduledCompleted(name: scheduled.name, duration: latest.duration)
         }
         return hasWorkouts ? .nothingPlanned : .noWorkouts
     }
@@ -185,6 +207,18 @@ enum TodayWorkoutAction: Hashable {
 }
 
 extension TodayWorkoutState {
+    /// The card's main action, a white button; `nil` once the planned workout was finished today,
+    /// when both actions are secondary.
+    var mainAction: TodayWorkoutAction? {
+        if case .scheduledCompleted = self { return nil }
+        return actions.first
+    }
+
+    /// The actions under the main one, as outlined buttons.
+    var secondaryActions: [TodayWorkoutAction] {
+        mainAction == nil ? actions : Array(actions.dropFirst())
+    }
+
     /// The card's actions, the main one first. A session in progress can only be continued; the
     /// workout planned for today is started first, unless it was already finished today; choosing a
     /// workout needs at least one.
@@ -195,6 +229,67 @@ extension TodayWorkoutState {
         case .scheduledCompleted: [.chooseWorkout, .startFreeWorkout]
         case .noWorkouts: [.startFreeWorkout]
         case .nothingPlanned: [.chooseWorkout, .startFreeWorkout]
+        }
+    }
+}
+
+/// What the "Treino de hoje" block says in each state: the badge, the title, the line under it, the
+/// muscle group chips and what VoiceOver reads for all of it.
+struct TodayWorkoutContent: Equatable {
+    /// "Programado", "Em andamento" or "Concluído"; none without a workout for today.
+    let badge: String?
+    let title: String
+    let subtitle: String
+    /// The muscle groups of the planned workout, shown as chips; empty in the other states.
+    let chips: [String]
+    let accessibilityText: String
+
+    /// The content for `state`. `summary` ("4 exercícios · 12 séries") and `muscleGroups` describe the
+    /// workout planned for today.
+    init(
+        state: TodayWorkoutState,
+        summary: String = "",
+        muscleGroups: [String] = [],
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) {
+        switch state {
+        case .inProgress(let name, let startedAt):
+            let title = name.isEmpty ? String(localized: "Treino livre") : name
+            let started = HomeSummary.startedText(startedAt, now: now, calendar: calendar)
+            badge = String(localized: "Em andamento")
+            self.title = title
+            subtitle = started
+            chips = []
+            accessibilityText = [String(localized: "Treino em andamento"), title, started].joined(separator: ", ")
+        case .scheduled(_, let name):
+            badge = String(localized: "Programado")
+            title = name
+            subtitle = summary
+            chips = muscleGroups
+            let groups = muscleGroups.joined(separator: " · ")
+            accessibilityText = ([name, String(localized: "programado para hoje"), summary] + (groups.isEmpty ? [] : [groups]))
+                .joined(separator: ", ")
+        case .scheduledCompleted(let name, let duration):
+            badge = String(localized: "Concluído")
+            title = name
+            subtitle = duration.map { String(localized: "Concluído hoje · \(SessionFormatting.compactDurationText($0))") }
+                ?? String(localized: "Concluído hoje")
+            chips = []
+            let finished = String(localized: "\(name) concluído hoje")
+            accessibilityText = duration.map { "\(finished), \(SessionFormatting.durationText($0))" } ?? finished
+        case .noWorkouts:
+            badge = nil
+            title = String(localized: "Nenhum treino criado")
+            subtitle = String(localized: "Crie um treino na aba Treinos ou comece um treino livre.")
+            chips = []
+            accessibilityText = "\(title). \(subtitle)"
+        case .nothingPlanned:
+            badge = nil
+            title = String(localized: "Nada programado")
+            subtitle = String(localized: "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre.")
+            chips = []
+            accessibilityText = "\(title). \(subtitle)"
         }
     }
 }

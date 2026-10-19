@@ -1,8 +1,9 @@
 import XCTest
 
-/// The Home "Sua semana" card: marking today as trained outside the app, unmarking it after a
-/// confirmation, and a workout finished in the app. Works on any day of the week: the tests only use
-/// today. Runs on an in-memory store with the built-in library.
+/// The Home "Sua semana" card without a weekly plan: marking today as trained outside the app,
+/// unmarking it after a confirmation, and a workout finished in the app. Works on any day of the week:
+/// the tests only use today. Runs on an in-memory store with the built-in library. The ring of a week
+/// with a plan is checked by `HomeScreenUITests`.
 final class HomeWeekUITests: IronFlowUITestCase {
     @MainActor
     private func launchOnWeekCard() -> XCUIApplication {
@@ -16,13 +17,11 @@ final class HomeWeekUITests: IronFlowUITestCase {
         element("home.week.today", in: app)
     }
 
-    /// Waits until the card shows `workouts` ("1 treino esta semana") and `days` ("1/7 dias").
+    /// Waits until the card shows `workouts` ("1 treino esta semana").
     @MainActor
-    private func expectCounts(_ workouts: String, _ days: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+    private func expectCount(_ workouts: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         let count = app.staticTexts["home.week.count"]
-        let trainedDays = app.staticTexts["home.week.days"]
         XCTAssertTrue(waitForLabel(of: count, toBe: workouts), "Workouts: \(count.label)", file: file, line: line)
-        XCTAssertTrue(waitForLabel(of: trainedDays, toBe: days), "Days: \(trainedDays.label)", file: file, line: line)
     }
 
     @MainActor
@@ -34,12 +33,12 @@ final class HomeWeekUITests: IronFlowUITestCase {
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "home.week.day").count, 6)
         XCTAssertTrue(today(in: app).exists, "Today not shown")
         XCTAssertTrue(today(in: app).label.contains("hoje, sem treino"), "Today: \(today(in: app).label)")
-        expectCounts("0 treinos esta semana", "0/7 dias", in: app)
+        expectCount("0 treinos esta semana", in: app)
 
         // Marking today counts one workout on one day.
         today(in: app).tap()
-        expectCounts("1 treino esta semana", "1/7 dias", in: app)
-        XCTAssertTrue(today(in: app).label.contains("hoje, marcado manualmente"), "Today: \(today(in: app).label)")
+        expectCount("1 treino esta semana", in: app)
+        XCTAssertTrue(today(in: app).label.contains("hoje, marcado como feito fora do app"), "Today: \(today(in: app).label)")
         attachScreenshot(named: "38-home-week", of: app)
 
         // Unmarking asks first; cancelling keeps the marking.
@@ -47,12 +46,12 @@ final class HomeWeekUITests: IronFlowUITestCase {
         let question = app.staticTexts["Desmarcar este dia?"]
         XCTAssertTrue(question.waitForExistence(timeout: 10), "No confirmation before unmarking")
         cancelDialog(confirmLabel: "Desmarcar", in: app)
-        expectCounts("1 treino esta semana", "1/7 dias", in: app)
+        expectCount("1 treino esta semana", in: app)
 
         today(in: app).tap()
         XCTAssertTrue(question.waitForExistence(timeout: 10), "No confirmation before unmarking")
         app.buttons["Desmarcar"].tap()
-        expectCounts("0 treinos esta semana", "0/7 dias", in: app)
+        expectCount("0 treinos esta semana", in: app)
         XCTAssertTrue(today(in: app).label.contains("hoje, sem treino"), "Today: \(today(in: app).label)")
     }
 
@@ -74,14 +73,14 @@ final class HomeWeekUITests: IronFlowUITestCase {
         app.buttons["session.finish"].tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
 
-        expectCounts("1 treino esta semana", "1/7 dias", in: app)
-        XCTAssertTrue(today(in: app).label.contains("hoje, treinou no app"), "Today: \(today(in: app).label)")
+        expectCount("1 treino esta semana", in: app)
+        XCTAssertTrue(today(in: app).label.contains("hoje, feito no app"), "Today: \(today(in: app).label)")
         attachScreenshot(named: "39-home-week-app", of: app)
 
         // A day trained in the app is not marked by hand: tapping it does nothing.
         today(in: app).tap()
         XCTAssertFalse(app.staticTexts["Desmarcar este dia?"].waitForExistence(timeout: 2), "Today offered to unmark")
-        expectCounts("1 treino esta semana", "1/7 dias", in: app)
-        XCTAssertFalse(today(in: app).label.contains("marcado manualmente"), "Today: \(today(in: app).label)")
+        expectCount("1 treino esta semana", in: app)
+        XCTAssertFalse(today(in: app).label.contains("marcado como feito fora do app"), "Today: \(today(in: app).label)")
     }
 }

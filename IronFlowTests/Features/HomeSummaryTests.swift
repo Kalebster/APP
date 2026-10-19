@@ -69,6 +69,23 @@ struct HomeSummaryTests {
         #expect(HomeSummary.fieldText(2_300) == "2300")
     }
 
+    @Test("A summary card shows the number large with its unit beside it; the calorie goal's unit is in its name")
+    func cardValues() {
+        let weight = HomeSummary.cardValue(of: .bodyWeight, value: 80)
+        #expect(weight.number == "80")
+        #expect(weight.unit == "kg")
+        #expect(HomeSummary.cardValue(of: .bodyWeight, value: 80.5).number == "80,5")
+        let height = HomeSummary.cardValue(of: .height, value: 180)
+        #expect(height.number == "180")
+        #expect(height.unit == "cm")
+        let goal = HomeSummary.cardValue(of: .dailyCalorieGoal, value: 2_300)
+        #expect(goal.number == "2.300")
+        #expect(goal.unit == nil)
+        // The card shows the short name; Personalizar and VoiceOver keep the full one.
+        #expect(SummaryMetric.allCases.map { String(localized: $0.cardTitle) } == ["Peso", "Altura", "kcal / dia"])
+        #expect(SummaryMetric.allCases.map { String(localized: $0.title) } == ["Peso corporal", "Altura", "Meta diária"])
+    }
+
     @Test("Typed values are read and checked for each indicator; an empty field has no value")
     func typedValues() throws {
         #expect(try HomeSummary.value(for: .bodyWeight, text: "") == nil)
@@ -139,8 +156,72 @@ struct HomeSummaryTests {
         #expect(TodayWorkoutState.inProgress(name: "Push", startedAt: start).actions == [.continueSession])
         #expect(TodayWorkoutState.inProgress(name: "", startedAt: start).actions == [.continueSession])
         #expect(TodayWorkoutState.scheduled(workoutID: UUID(), name: "Push").actions == [.startScheduledWorkout, .chooseWorkout, .startFreeWorkout])
-        #expect(TodayWorkoutState.scheduledCompleted(name: "Push").actions == [.chooseWorkout, .startFreeWorkout])
+        #expect(TodayWorkoutState.scheduledCompleted(name: "Push", duration: 3_300).actions == [.chooseWorkout, .startFreeWorkout])
         #expect(TodayWorkoutState.nothingPlanned.actions == [.chooseWorkout, .startFreeWorkout])
         #expect(TodayWorkoutState.noWorkouts.actions == [.startFreeWorkout])
+    }
+
+    @Test("The block's white button is the first action, except once today's planned workout is finished; the others are outlined")
+    func todayButtons() {
+        let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let inProgress = TodayWorkoutState.inProgress(name: "Push", startedAt: start)
+        #expect(inProgress.mainAction == .continueSession)
+        #expect(inProgress.secondaryActions.isEmpty)
+        let scheduled = TodayWorkoutState.scheduled(workoutID: UUID(), name: "Push")
+        #expect(scheduled.mainAction == .startScheduledWorkout)
+        #expect(scheduled.secondaryActions == [.chooseWorkout, .startFreeWorkout])
+        let completed = TodayWorkoutState.scheduledCompleted(name: "Push", duration: nil)
+        #expect(completed.mainAction == nil)
+        #expect(completed.secondaryActions == [.chooseWorkout, .startFreeWorkout])
+        #expect(TodayWorkoutState.noWorkouts.mainAction == .startFreeWorkout)
+        #expect(TodayWorkoutState.noWorkouts.secondaryActions.isEmpty)
+        #expect(TodayWorkoutState.nothingPlanned.mainAction == .chooseWorkout)
+        #expect(TodayWorkoutState.nothingPlanned.secondaryActions == [.startFreeWorkout])
+    }
+
+    @Test("What the block says in each state: badge, title, the line below, chips and what VoiceOver reads")
+    func todayContent() throws {
+        let calendar = Calendar.current
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 16, hour: 21)))
+        let started = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 16, hour: 19, minute: 30)))
+
+        let scheduled = TodayWorkoutContent(
+            state: .scheduled(workoutID: UUID(), name: "Push"),
+            summary: "4 exercícios · 12 séries",
+            muscleGroups: ["Peito", "Ombros", "Tríceps"]
+        )
+        #expect(scheduled.badge == "Programado")
+        #expect(scheduled.title == "Push")
+        #expect(scheduled.subtitle == "4 exercícios · 12 séries")
+        #expect(scheduled.chips == ["Peito", "Ombros", "Tríceps"])
+        #expect(scheduled.accessibilityText == "Push, programado para hoje, 4 exercícios · 12 séries, Peito · Ombros · Tríceps")
+
+        let inProgress = TodayWorkoutContent(state: .inProgress(name: "", startedAt: started), now: now, calendar: calendar)
+        #expect(inProgress.badge == "Em andamento")
+        #expect(inProgress.title == "Treino livre")
+        #expect(inProgress.subtitle == "Iniciado às 19:30")
+        #expect(inProgress.chips.isEmpty)
+        #expect(inProgress.accessibilityText == "Treino em andamento, Treino livre, Iniciado às 19:30")
+
+        let completed = TodayWorkoutContent(state: .scheduledCompleted(name: "Push", duration: 55 * 60))
+        #expect(completed.badge == "Concluído")
+        #expect(completed.subtitle == "Concluído hoje · 55 min")
+        #expect(completed.accessibilityText == "Push concluído hoje, 55 min")
+        let long = TodayWorkoutContent(state: .scheduledCompleted(name: "Push", duration: 62 * 60))
+        #expect(long.subtitle == "Concluído hoje · 1 h 02")
+        let noDuration = TodayWorkoutContent(state: .scheduledCompleted(name: "Push", duration: nil))
+        #expect(noDuration.subtitle == "Concluído hoje")
+        #expect(noDuration.accessibilityText == "Push concluído hoje")
+
+        let noWorkouts = TodayWorkoutContent(state: .noWorkouts)
+        #expect(noWorkouts.badge == nil)
+        #expect(noWorkouts.title == "Nenhum treino criado")
+        #expect(noWorkouts.subtitle == "Crie um treino na aba Treinos ou comece um treino livre.")
+
+        let nothingPlanned = TodayWorkoutContent(state: .nothingPlanned)
+        #expect(nothingPlanned.badge == nil)
+        #expect(nothingPlanned.title == "Nada programado")
+        #expect(nothingPlanned.subtitle == "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre.")
+        #expect(nothingPlanned.accessibilityText.contains("Nenhum treino planejado para hoje."))
     }
 }

@@ -3,7 +3,8 @@ import SwiftData
 import Testing
 @testable import IronFlow
 
-/// The "Sua semana" card: the week's limits, its counts and the state of each day, in fixed time zones.
+/// The "Sua semana" card: the week's limits, its count and goal, and the state and look of each day, in
+/// fixed time zones.
 @MainActor
 struct WeekSummaryTests {
     /// A Gregorian calendar whose weeks start on Sunday, like pt_BR's, so the card must find Monday itself.
@@ -130,7 +131,10 @@ struct WeekSummaryTests {
         #expect(days.map(\.isMarked) == [false, true, true, false, false, false, false])
         // Three finished sessions and two marked days, on three distinct days.
         #expect(WeekSummary.workoutCount(of: days) == 5)
-        #expect(WeekSummary.trainedDayCount(of: days) == 3)
+        #expect(days.filter(\.isTrained).count == 3)
+        // The goal counts every workout of the week: it can go past the planned days.
+        #expect(WeekSummary.goal(of: days, plannedDays: 4) == WeekSummary.Goal(done: 5, total: 4))
+        #expect(WeekSummary.goal(of: days, plannedDays: 0) == nil)
     }
 
     @Test("Two markings of the same day count as one workout and one day")
@@ -143,7 +147,7 @@ struct WeekSummaryTests {
 
         #expect(days.map(\.isMarked) == [false, true, false, false, false, false, false])
         #expect(WeekSummary.workoutCount(of: days) == 1)
-        #expect(WeekSummary.trainedDayCount(of: days) == 1)
+        #expect(days.filter(\.isTrained).count == 1)
     }
 
     @Test("Each day shows its letter, number and state, and what a tap on it does")
@@ -169,28 +173,103 @@ struct WeekSummaryTests {
         let actions: [WeekSummary.Day.TapAction] = [.unavailable, .confirmUnmark, .confirmUnmark, .unavailable, .unavailable, .unavailable, .unavailable]
         #expect(days.map(\.tapAction) == actions)
         #expect(days.map(\.stateText) == [
-            "treinou no app", "marcado manualmente", "treinou no app e marcado manualmente",
+            "feito no app", "marcado como feito fora do app", "feito no app e marcado fora do app",
             "dia futuro", "dia futuro", "dia futuro", "dia futuro",
         ])
         #expect(days[0].dateText.hasPrefix("segunda-feira"))
         #expect(days[2].dateText.contains("14 de outubro"))
-        #expect(days[2].accessibilityText == "\(days[2].dateText), hoje, treinou no app e marcado manualmente")
-        #expect(days[1].accessibilityText == "\(days[1].dateText), marcado manualmente")
+        #expect(days[2].accessibilityText == "Quarta, 14, hoje, feito no app e marcado fora do app")
+        #expect(days[1].accessibilityText == "Terça, 13, marcado como feito fora do app")
 
         // With nothing recorded, today and the days before it can be marked.
         let empty = WeekSummary.days(of: week, now: now, calendar: calendar, sessions: [], markedDays: [])
         let emptyActions: [WeekSummary.Day.TapAction] = [.mark, .mark, .mark, .unavailable, .unavailable, .unavailable, .unavailable]
         #expect(empty.map(\.tapAction) == emptyActions)
         #expect(empty[0].stateText == "sem treino")
-        #expect(empty[2].accessibilityText == "\(empty[2].dateText), hoje, sem treino")
+        #expect(empty[2].accessibilityText == "Quarta, 14, hoje, sem treino")
+        #expect(empty.map(\.weekdayName) == ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"])
     }
 
-    @Test("The counts read in Portuguese: none, one and more workouts, and days out of seven")
+    @Test("Each day's look: in the app, marked outside the app, missed, today without a workout and future; a dot on planned days still to do")
+    func dayAppearance() throws {
+        let calendar = try makeCalendar()
+        let container = try ModelContainerFactory.makeInMemory()
+        let context = container.mainContext
+        // Thursday the 15th; Monday, Wednesday, Thursday and Saturday are planned.
+        let now = try date(2026, 10, 15, 15, in: calendar)
+        let week = WeekSummary.week(containing: now, calendar: calendar)
+        let sessions = try [finishedSession(startedAt: date(2026, 10, 12, 8, in: calendar), in: context)]
+        try context.save()
+
+        let days = WeekSummary.days(
+            of: week, now: now, calendar: calendar, sessions: sessions,
+            markedDays: ["2026-10-13"], plannedWeekdays: [1, 3, 4, 6]
+        )
+
+        let looks: [WeekSummary.Day.Appearance] = [.trainedInApp, .markedOutside, .missed, .todayWithoutWorkout, .future, .future, .future]
+        #expect(days.map(\.appearance) == looks)
+        #expect(days.map(\.isPlanned) == [true, false, true, true, false, true, false])
+        // Monday is done and Wednesday has passed: only today and Saturday still wait for their workout.
+        #expect(days.map(\.showsPlanDot) == [false, false, false, true, false, true, false])
+        #expect(days.map(\.stateText) == [
+            "feito no app", "marcado como feito fora do app", "sem treino", "treino programado",
+            "dia futuro", "treino programado", "dia futuro",
+        ])
+        #expect(days[3].accessibilityText == "Quinta, 15, hoje, treino programado")
+        #expect(days[5].accessibilityText == "Sábado, 17, treino programado")
+
+        // Trained in the app and marked too: the app's workout decides the look. Today, once trained,
+        // keeps no dot.
+        let both = WeekSummary.days(
+            of: week, now: try date(2026, 10, 12, 20, in: calendar), calendar: calendar, sessions: sessions,
+            markedDays: ["2026-10-12"], plannedWeekdays: [1]
+        )
+        #expect(both[0].appearance == .trainedInApp)
+        #expect(both[0].showsPlanDot == false)
+        #expect(both[0].accessibilityText == "Segunda, 12, hoje, feito no app e marcado fora do app")
+    }
+
+    @Test("The goal: the workouts done out of the planned days, with what is left to close the week")
+    func goal() {
+        let threeOfFour = WeekSummary.Goal(done: 3, total: 4)
+        #expect(threeOfFour.ringText == "3/4")
+        #expect(threeOfFour.ringCaption == "treinos")
+        #expect(threeOfFour.titleText == "3 de 4 treinos")
+        #expect(threeOfFour.remainingText == "Falta 1 para fechar a semana")
+        #expect(threeOfFour.progress == 0.75)
+        #expect(threeOfFour.isComplete == false)
+        #expect(threeOfFour.accessibilityText == "3 de 4 treinos programados feitos")
+
+        let none = WeekSummary.Goal(done: 0, total: 4)
+        #expect(none.remainingText == "Faltam 4 para fechar a semana")
+        #expect(none.progress == 0)
+        #expect(WeekSummary.Goal(done: 2, total: 4).remainingText == "Faltam 2 para fechar a semana")
+
+        let reached = WeekSummary.Goal(done: 4, total: 4)
+        #expect(reached.remainingText == "Semana completa")
+        #expect(reached.progress == 1)
+        #expect(reached.isComplete)
+
+        // Past the goal: the text says so, the ring stops at full.
+        let past = WeekSummary.Goal(done: 5, total: 4)
+        #expect(past.titleText == "5 de 4 treinos")
+        #expect(past.ringText == "5/4")
+        #expect(past.remainingText == "Semana completa")
+        #expect(past.progress == 1)
+        #expect(past.accessibilityText == "5 de 4 treinos programados feitos")
+
+        // A goal of one reads in the singular.
+        let single = WeekSummary.Goal(done: 1, total: 1)
+        #expect(single.titleText == "1 de 1 treino")
+        #expect(single.ringCaption == "treino")
+        #expect(single.accessibilityText == "1 de 1 treino programado feito")
+        #expect(WeekSummary.Goal(done: 0, total: 1).titleText == "0 de 1 treino")
+    }
+
+    @Test("Without a plan the card counts the week's workouts: none, one and more")
     func countTexts() {
         #expect(WeekSummary.workoutsText(0) == "0 treinos esta semana")
         #expect(WeekSummary.workoutsText(1) == "1 treino esta semana")
         #expect(WeekSummary.workoutsText(2) == "2 treinos esta semana")
-        #expect(WeekSummary.trainedDaysText(0) == "0/7 dias")
-        #expect(WeekSummary.trainedDaysText(7) == "7/7 dias")
     }
 }
