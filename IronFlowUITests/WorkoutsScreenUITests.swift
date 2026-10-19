@@ -1,10 +1,18 @@
 import XCTest
 
-/// The Treinos tab: the grid of workouts with ▶ and ⋮, the free workout and the three latest finished
-/// sessions. Runs on an in-memory store with the built-in library; the workouts and finished sessions
-/// the tests look at come ready (`-ui-seed`). Creating a workout through the screens is checked by
+/// The Treinos tab: the grid of workouts with ▶ and ⋮ (today's workout highlighted), the weekly plan
+/// row, the free workout and the three latest finished sessions with "Ver tudo", also with large text.
+/// Runs on an in-memory store with the built-in library; the workouts and finished sessions the tests
+/// look at come ready (`-ui-seed`). Creating a workout through the screens is checked by
 /// `WorkoutUITests`, and finishing a session through the screens by `SessionUITests`.
 final class WorkoutsScreenUITests: IronFlowUITestCase {
+    /// Push, Pull and Pernas with exercises of the built-in library, like the model.
+    private let workouts = [
+        "workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres|Desenvolvimento com Halteres|Tríceps na Polia com Corda",
+        "workout:Pull:Barra Fixa|Rosca Direta com Barra",
+        "workout:Pernas:Agachamento Livre com Barra|Cadeira Extensora|Stiff com Barra|Mesa Flexora|Panturrilha Sentado",
+    ]
+
     @MainActor
     func testEmptyStateOffersCreatingAndTheFreeWorkout() throws {
         continueAfterFailure = false
@@ -17,6 +25,67 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(app.buttons["workouts.free"].exists, "No free workout card")
         XCTAssertFalse(app.buttons["workouts.recent"].exists, "Recent sessions shown without finished sessions")
         XCTAssertFalse(app.buttons["workouts.plan"].exists, "Weekly plan row shown without workouts")
+        attachScreenshot(named: "57-workouts-empty", of: app)
+    }
+
+    @MainActor
+    func testWorkoutsWithPlanAndRecentSessions() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: workouts + [
+            "plan:Push:1|4", "plan:Pull:2|5", "finished:Pernas:1", "finished:Pull:1", "finished:Push:1",
+        ])
+
+        XCTAssertTrue(app.staticTexts["3 treinos no plano"].waitForExistence(timeout: 10), "Subtitle with three workouts")
+        // The plan row reads the planned days; its letters are drawn only.
+        let plan = app.buttons["workouts.plan"]
+        XCTAssertTrue(plan.exists, "No weekly plan row")
+        XCTAssertTrue(plan.label.hasSuffix("4 dias programados"), "Plan row: \(plan.label)")
+
+        // Each card says its exercises, sets and muscle groups, without repeating a group.
+        let cards = app.buttons.matching(identifier: "workouts.card")
+        XCTAssertEqual(cards.count, 3)
+        XCTAssertTrue(cards.element(boundBy: 0).label.hasSuffix("4 exercícios · 12 séries, Peito · Ombros · Tríceps"), "Push: \(cards.element(boundBy: 0).label)")
+        XCTAssertTrue(cards.element(boundBy: 1).label.hasSuffix("2 exercícios · 6 séries, Costas · Bíceps"), "Pull: \(cards.element(boundBy: 1).label)")
+        XCTAssertTrue(cards.element(boundBy: 2).label.hasSuffix("Quadríceps · Posteriores de coxa · Panturrilhas"), "Pernas: \(cards.element(boundBy: 2).label)")
+        // The cards of a row share its height.
+        XCTAssertEqual(cards.element(boundBy: 0).frame.height, cards.element(boundBy: 1).frame.height, accuracy: 1)
+        XCTAssertEqual(app.buttons.matching(identifier: "workouts.recent").count, 3)
+        attachScreenshot(named: "56-workouts", of: app)
+    }
+
+    @MainActor
+    func testTodaysWorkoutIsHighlighted() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: workouts + ["plan-today:Push"])
+
+        let cards = app.buttons.matching(identifier: "workouts.card")
+        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10), "No workout cards")
+        XCTAssertTrue(cards.element(boundBy: 0).label.hasPrefix("Push, programado para hoje, "), "Push: \(cards.element(boundBy: 0).label)")
+        XCTAssertFalse(cards.element(boundBy: 1).label.contains("programado para hoje"), "Pull: \(cards.element(boundBy: 1).label)")
+        XCTAssertTrue(app.buttons["Iniciar Push"].isEnabled, "▶ of today's workout disabled")
+        attachScreenshot(named: "58-workouts-today", of: app)
+    }
+
+    @MainActor
+    func testLargeTextKeepsTheWorkoutsOnScreen() throws {
+        continueAfterFailure = false
+        let seed = workouts + ["plan-today:Push", "finished:Pull:1"]
+
+        for (size, name) in [("UICTContentSizeCategoryXXXL", "60-workouts-xxxl"), ("UICTContentSizeCategoryAccessibilityXXXL", "62-workouts-accessibility")] {
+            let app = launchOnTab("Treinos", seed: seed, extraArguments: ["-UIPreferredContentSizeCategoryName", size])
+            let add = app.buttons["workouts.add"]
+            XCTAssertTrue(add.waitForExistence(timeout: 10), "No Criar treino with \(size)")
+            let screen = app.windows.firstMatch.frame
+            let cards = app.buttons.matching(identifier: "workouts.card")
+            for element in [add, cards.element(boundBy: 0), cards.element(boundBy: 1), app.buttons["Iniciar Push"]] {
+                XCTAssertTrue(
+                    element.frame.minX >= screen.minX && element.frame.maxX <= screen.maxX,
+                    "\(element.label) is not on the screen with \(size): \(element.frame) on \(screen)"
+                )
+            }
+            attachScreenshot(named: name, of: app)
+            app.terminate()
+        }
     }
 
     @MainActor
@@ -132,5 +201,21 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(recents.count, 3)
         scrollToTop(in: app)
         XCTAssertTrue(app.buttons["workouts.add"].waitForExistence(timeout: 10), "Header not shown after scrolling up")
+
+        // "Ver tudo" opens the Histórico, with all four sessions.
+        scrollToBottom(in: app)
+        app.buttons["workouts.recent.all"].tap()
+        let history = app.tabBars.buttons["Histórico"]
+        XCTAssertTrue(waitForSelection(of: history), "Ver tudo did not open the Histórico")
+        let sessions = app.descendants(matching: .any).matching(identifier: "history.session")
+        XCTAssertTrue(sessions.firstMatch.waitForExistence(timeout: 10), "History not shown")
+        XCTAssertEqual(sessions.count, 4)
+    }
+
+    /// Waits until the tab is the selected one.
+    @MainActor
+    private func waitForSelection(of tab: XCUIElement) -> Bool {
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: tab)
+        return XCTWaiter().wait(for: [selected], timeout: 10) == .completed
     }
 }
