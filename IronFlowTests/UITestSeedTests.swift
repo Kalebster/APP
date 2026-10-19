@@ -176,7 +176,8 @@ struct UITestSeedTests {
     func decodesThePercentEncodedList() throws {
         let container = try makeContainer()
         let list = try #require("workout:Push:Tríceps na Polia com Corda|Barra Fixa".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
-        #expect(list.allSatisfy(\.isASCII), "Encoded list: \(list)")
+        let isASCII = list.allSatisfy(\.isASCII)
+        #expect(isASCII, "Encoded list: \(list)")
 
         UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", list])
 
