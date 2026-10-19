@@ -9,6 +9,41 @@ enum Theme {
         static let screenBackground = Color(.screenBackground)
         static let cardBackground = Color(.cardBackground)
         static let cardBorder = Color(.cardBorder)
+
+        // The highlighted block of the Início (today's workout) and the card of today's workout in Treinos.
+        static let highlightBackground = Color(.highlightBackground)
+        static let highlightBorder = Color(.highlightBorder)
+        /// Lines and outlines inside the highlight: chips and secondary buttons.
+        static let highlightLine = Color(.highlightLine)
+        static let highlightText = Color(.highlightText)
+        static let highlightSecondaryText = Color(.highlightSecondaryText)
+        /// The small uppercase label of the highlight ("TREINO DE HOJE").
+        static let highlightLabel = Color(.highlightLabel)
+        /// The capsule badges ("Programado", "HOJE").
+        static let highlightBadge = Color(.highlightBadge)
+
+        /// The square behind an icon, and the light blue of icons and links.
+        static let iconTileBackground = Color(.iconTileBackground)
+        static let lightAccent = Color(.lightAccent)
+
+        // The week: the ring, the days and the letters of the weekly plan.
+        /// The ring's track and the days past without a workout.
+        static let ringTrack = Color(.ringTrack)
+        static let markedDayBackground = Color(.markedDayBackground)
+        static let markedDayNumber = Color(.markedDayNumber)
+        static let plannedDayBackground = Color(.plannedDayBackground)
+        static let plannedDayLetter = Color(.plannedDayLetter)
+        static let unplannedDayBackground = Color(.unplannedDayBackground)
+        static let futureDayText = Color(.futureDayText)
+        /// Today's ring and letter.
+        static let brightText = Color(.brightText)
+
+        /// Faded text, such as the letter of a day without a planned workout.
+        static let dimText = Color(.dimText)
+        /// Text between the primary and the secondary color, such as a duration.
+        static let mediumText = Color(.mediumText)
+        /// The line between the rows of a card.
+        static let rowSeparator = Color(.rowSeparator)
     }
 
     enum Metrics {
@@ -27,6 +62,25 @@ extension View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.Colors.cardBackground, in: shape)
             .overlay(shape.strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
+    }
+
+    /// Content inside a rounded card with a subtle border, with the padding and corners of the
+    /// Início and Treinos models (`cardStyle()` keeps those of the other screens).
+    func cardStyle(padding: EdgeInsets, cornerRadius: CGFloat) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        return self.padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.Colors.cardBackground, in: shape)
+            .overlay(shape.strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
+    }
+
+    /// Content inside the highlight: dark blue with a blue border. For today's workout.
+    func highlightStyle(padding: EdgeInsets, cornerRadius: CGFloat) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        return self.padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.Colors.highlightBackground, in: shape)
+            .overlay(shape.strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1))
     }
 
     /// A `List` row laid out like the card stacks: no separator, transparent row

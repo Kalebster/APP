@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A screen section title: uppercase, heavy and widely spaced. Shared by the Início and Treinos tabs.
+/// A screen section title: small, uppercase, heavy and widely spaced. Shared by the Início and Treinos tabs.
 struct SectionTitle: View {
     let title: LocalizedStringKey
 
@@ -10,8 +10,8 @@ struct SectionTitle: View {
 
     var body: some View {
         Text(title)
-            .font(.headline.weight(.heavy))
-            .tracking(3)
+            .scaledFont(11, weight: .heavy)
+            .tracking(2.1)
             .textCase(.uppercase)
             .accessibilityAddTraits(.isHeader)
     }
