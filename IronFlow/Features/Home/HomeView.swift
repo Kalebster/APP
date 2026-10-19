@@ -171,7 +171,7 @@ struct HomeView: View {
     /// The same weight on a new day is a new measurement; an unchanged height or goal needs no write.
     private func savesUnchangedValue(for metric: SummaryMetric) -> Bool {
         guard metric == .bodyWeight, let latest = latestWeight.first else { return false }
-        return !Calendar.current.isDateInToday(latest.measuredAt)
+        return !TrainingDay.calendar.isDateInToday(latest.measuredAt)
     }
 
     private func valueText(of metric: SummaryMetric) -> String? {

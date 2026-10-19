@@ -115,6 +115,44 @@ struct SessionFormattingTests {
         #expect(SessionFormatting.recentText(startedAt: date, duration: nil, now: now, calendar: calendar) == "30 set · 00:42")
     }
 
+    @Test("The question about a session left open names the day only when the last record was not today")
+    func lastRecordQuestion() throws {
+        let calendar = try saoPauloCalendar()
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 19, hour: 8, minute: 15)))
+        func record(day: Int, hour: Int, minute: Int) throws -> Date {
+            try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute)))
+        }
+
+        // The same day, a few minutes after midnight included.
+        #expect(SessionFormatting.lastRecordQuestion(try record(day: 19, hour: 6, minute: 5), now: now, calendar: calendar)
+            == "Seu último registro foi às 06:05. Usar esse horário como fim?")
+        #expect(SessionFormatting.lastRecordQuestion(try record(day: 19, hour: 0, minute: 1), now: now, calendar: calendar)
+            == "Seu último registro foi às 00:01. Usar esse horário como fim?")
+        // The day before, up to its last minute.
+        #expect(SessionFormatting.lastRecordQuestion(try record(day: 18, hour: 20, minute: 0), now: now, calendar: calendar)
+            == "Seu último registro foi ontem às 20:00. Usar esse horário como fim?")
+        #expect(SessionFormatting.lastRecordQuestion(try record(day: 18, hour: 23, minute: 59), now: now, calendar: calendar)
+            == "Seu último registro foi ontem às 23:59. Usar esse horário como fim?")
+        // Earlier: the date as the short date shows it.
+        #expect(SessionFormatting.lastRecordQuestion(try record(day: 17, hour: 20, minute: 0), now: now, calendar: calendar)
+            == "Seu último registro foi em 17 out às 20:00. Usar esse horário como fim?")
+    }
+
+    @Test("The day of the question is that of the calendar's time zone")
+    func lastRecordQuestionTimeZone() throws {
+        let saoPaulo = try saoPauloCalendar()
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try #require(TimeZone(identifier: "UTC"))
+        // 22:30 on the 18th in São Paulo is 01:30 on the 19th in UTC; now is 08:15 on the 19th in São Paulo.
+        let record = try #require(saoPaulo.date(from: DateComponents(year: 2026, month: 10, day: 18, hour: 22, minute: 30)))
+        let now = try #require(saoPaulo.date(from: DateComponents(year: 2026, month: 10, day: 19, hour: 8, minute: 15)))
+
+        #expect(SessionFormatting.lastRecordQuestion(record, now: now, calendar: saoPaulo)
+            == "Seu último registro foi ontem às 22:30. Usar esse horário como fim?")
+        #expect(SessionFormatting.lastRecordQuestion(record, now: now, calendar: utc)
+            == "Seu último registro foi às 01:30. Usar esse horário como fim?")
+    }
+
     @Test("VoiceOver reads a recent session as one sentence: name, date, time and duration")
     func recentAccessibility() throws {
         let calendar = Calendar.current

@@ -191,6 +191,52 @@ struct ExerciseLibrarySeederTests {
         #expect(exercise.isArchived)
     }
 
+    @Test("A corrected name already used by another active exercise is not applied: the old name stays, the group is still corrected, and it is reported")
+    func correctedNameClash() throws {
+        try seeder.seed([Self.entryA])
+        let exercise = try #require(try exercise(key: "test-a"))
+        let custom = try harness.exercises.createCustomExercise(name: "Teste A Corrigido", muscleGroup: .biceps)
+        harness.clock.advance(by: 60)
+
+        // Only the name is corrected: nothing changes or is saved, and the clash is reported.
+        let nameOnly = try seeder.seed([DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Teste A Corrigido", muscleGroup: .chest)])
+        #expect(nameOnly == ExerciseLibrarySeedResult(keptNameKeys: ["test-a"]))
+        #expect(exercise.name == "Teste A")
+        #expect(harness.context.hasChanges == false)
+
+        // The name and the group are corrected: the group is applied, the name is kept.
+        let both = try seeder.seed([DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Teste A Corrigido", muscleGroup: .shoulders)])
+        #expect(both.updatedKeys == ["test-a"])
+        #expect(both.keptNameKeys == ["test-a"])
+        #expect(exercise.name == "Teste A")
+        #expect(exercise.muscleGroup == .shoulders)
+        #expect(exercise.updatedAt == harness.clock.current)
+        #expect(custom.name == "Teste A Corrigido")
+        #expect(exercise.isArchived == false && custom.isArchived == false)
+    }
+
+    @Test("A corrected name used only by an archived exercise is applied, and an archived built-in exercise takes any corrected name")
+    func correctedNameWithoutActiveClash() throws {
+        try seeder.seed([Self.entryA, Self.entryB])
+        let first = try #require(try exercise(key: "test-a"))
+        let second = try #require(try exercise(key: "test-b"))
+        let archivedCustom = try harness.exercises.createCustomExercise(name: "Nome Livre", muscleGroup: .biceps)
+        try harness.exercises.archive(archivedCustom)
+        try harness.exercises.createCustomExercise(name: "Nome Usado", muscleGroup: .biceps)
+        try harness.exercises.archive(second)
+
+        let result = try seeder.seed([
+            DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Nome Livre", muscleGroup: .chest),
+            DefaultExercise(key: "test-b", id: Self.entryB.id, name: "Nome Usado", muscleGroup: .back),
+        ])
+
+        #expect(result.updatedKeys == ["test-a", "test-b"])
+        #expect(result.keptNameKeys.isEmpty)
+        #expect(first.name == "Nome Livre")
+        #expect(second.name == "Nome Usado")
+        #expect(second.isArchived)
+    }
+
     @Test("A new entry in a later library is inserted and the others are untouched")
     func newEntryInserted() throws {
         try seeder.seed([Self.entryA])

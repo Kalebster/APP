@@ -50,14 +50,14 @@ struct SessionSetRow: View {
             TextField("kg", text: $draft.weight)
                 .keyboardType(.decimalPad)
                 .focused(focusedField, equals: .weight(log.id))
-                .modifier(SetFieldStyle())
+                .modifier(SetFieldStyle { focusedField.wrappedValue = .weight(log.id) })
                 .frame(width: weightWidth)
                 .accessibilityLabel(Text("Carga da série \(number)"))
                 .accessibilityIdentifier("session.set.weight")
             TextField("Reps", text: $draft.reps, prompt: repsHint.map { Text($0.formatted()) } ?? Text("Reps"))
             .keyboardType(.numberPad)
             .focused(focusedField, equals: .reps(log.id))
-            .modifier(SetFieldStyle())
+            .modifier(SetFieldStyle { focusedField.wrappedValue = .reps(log.id) })
             .frame(width: repsWidth)
             .accessibilityLabel(Text("Repetições da série \(number)"))
             .accessibilityIdentifier("session.set.reps")
@@ -79,14 +79,23 @@ struct SessionSetRow: View {
     }
 }
 
-/// A compact, centered field on a light fill.
+/// A compact, centered field on a light fill, at least 44 points tall so it is easy to hit during a
+/// workout. The whole fill responds: a tap beside the text gives the field the focus (`focus`).
 private struct SetFieldStyle: ViewModifier {
+    let focus: @MainActor () -> Void
+
     func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
         content
             .multilineTextAlignment(.center)
             .monospacedDigit()
             .padding(.vertical, 8)
             .padding(.horizontal, 4)
-            .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .frame(minHeight: 44)
+            .background(.fill.tertiary, in: shape)
+            .contentShape(shape)
+            .onTapGesture {
+                focus()
+            }
     }
 }

@@ -19,6 +19,8 @@ struct SessionView: View {
     @State private var isConfirmingFinish = false
     /// Sets not completed when "Concluir" was tapped, for the confirmation message.
     @State private var notCompletedCount = 0
+    /// The end offered when "Concluir" was tapped on a session left open (see `SessionService.suggestedEnd`).
+    @State private var suggestedEnd: Date?
     @State private var isConfirmingDiscard = false
     /// Set once the session is finished or discarded, so the view stops reading it.
     @State private var isClosed = false
@@ -124,14 +126,21 @@ struct SessionView: View {
                 }
             }
             .confirmationDialog("Concluir treino?", isPresented: $isConfirmingFinish, titleVisibility: .visible) {
-                Button("Concluir treino", action: finish)
+                if let suggestedEnd {
+                    Button("Usar \(SessionFormatting.timeText(suggestedEnd, calendar: TrainingDay.calendar))") {
+                        finish(endingAt: .lastCompletedSet)
+                    }
+                    Button("Usar agora") {
+                        finish(endingAt: .now)
+                    }
+                } else {
+                    Button("Concluir treino") {
+                        finish(endingAt: .now)
+                    }
+                }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                if notCompletedCount == 1 {
-                    Text("1 série não foi concluída e ficará registrada como não feita.")
-                } else {
-                    Text("\(notCompletedCount) séries não foram concluídas e ficarão registradas como não feitas.")
-                }
+                Text(verbatim: finishMessage)
             }
             .confirmationDialog("Descartar este treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
                 Button("Descartar", role: .destructive, action: discard)
@@ -261,16 +270,32 @@ struct SessionView: View {
             return
         }
         notCompletedCount = logs.filter { !$0.isCompleted }.count
-        if notCompletedCount > 0 {
+        suggestedEnd = service.suggestedEnd(for: session)
+        if notCompletedCount > 0 || suggestedEnd != nil {
             isConfirmingFinish = true
         } else {
-            finish()
+            finish(endingAt: .now)
         }
     }
 
-    private func finish() {
+    /// The finish confirmation's message: the sets left undone, and the question about the end when
+    /// the session was probably left open. Both are asked in one dialog.
+    private var finishMessage: String {
+        var sentences: [String] = []
+        if notCompletedCount == 1 {
+            sentences.append(String(localized: "1 série não foi concluída e ficará registrada como não feita."))
+        } else if notCompletedCount > 1 {
+            sentences.append(String(localized: "\(notCompletedCount) séries não foram concluídas e ficarão registradas como não feitas."))
+        }
+        if let suggestedEnd {
+            sentences.append(SessionFormatting.lastRecordQuestion(suggestedEnd, calendar: TrainingDay.calendar))
+        }
+        return sentences.joined(separator: " ")
+    }
+
+    private func finish(endingAt end: SessionEnd) {
         do {
-            try service.finishSession(session)
+            try service.finishSession(session, endingAt: end)
             isClosed = true
             onClose()
         } catch {

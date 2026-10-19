@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Iron Flow's visual base, shared by every screen: black, white, gray and dark blue.
 ///
-/// Colors live in the asset catalog with light and dark variants, so the system switches
-/// them with the device appearance. The accent (dark blue) is the catalog's `AccentColor`.
+/// Colors live in the asset catalog with a single value each: the app is dark only, whatever the
+/// device appearance. The accent (dark blue) is the catalog's `AccentColor`.
 enum Theme {
     enum Colors {
         static let screenBackground = Color(.screenBackground)

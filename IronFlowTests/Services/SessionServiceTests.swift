@@ -434,6 +434,109 @@ struct SessionServiceTests {
         #expect(session.isActive)
     }
 
+    // MARK: - Session left open
+
+    @Test("Up to an hour after the last completed set, finishing offers no other end")
+    func noSuggestedEndWithinAnHour() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+
+        harness.clock.advance(by: 59 * 60)
+        #expect(harness.sessions.suggestedEnd(for: session) == nil)
+        // Exactly one hour is not more than one hour.
+        harness.clock.advance(by: 60)
+        #expect(harness.sessions.suggestedEnd(for: session) == nil)
+    }
+
+    @Test("More than an hour after the last completed set, finishing offers the time of that set")
+    func suggestedEndAfterAnHour() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        let completion = harness.clock.current
+
+        harness.clock.advance(by: 61 * 60)
+
+        #expect(SessionService.forgottenSessionThreshold == 3_600)
+        #expect(harness.sessions.suggestedEnd(for: session) == completion)
+        // Asking changes nothing: the session is still in progress.
+        #expect(session.isActive)
+    }
+
+    @Test("Ending at the last record gives the session the duration up to that set, in the history and the recent sessions too")
+    func finishAtTheLastRecord() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        harness.clock.advance(by: 2_700)
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        let completion = harness.clock.current
+        harness.clock.advance(by: 61 * 60)
+
+        try harness.sessions.finishSession(session, endingAt: .lastCompletedSet)
+
+        #expect(session.endedAt == completion)
+        #expect(session.duration == 2_700)
+        #expect(session.isActive == false)
+        #expect(session.updatedAt == harness.clock.current)
+        #expect(HistorySessionDetail(session).duration == 2_700)
+        #expect(try harness.context.fetch(SessionService.recentSessionsDescriptor).first?.duration == 2_700)
+    }
+
+    @Test("Ending now records the moment it is finished, even for a session left open")
+    func finishNowAfterAnHour() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let start = harness.clock.current
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        harness.clock.advance(by: 61 * 60)
+
+        try harness.sessions.finishSession(session, endingAt: .now)
+
+        #expect(session.endedAt == harness.clock.current)
+        #expect(session.duration == harness.clock.current.timeIntervalSince(start))
+    }
+
+    @Test("The last record is the latest completed set, wherever it is; an unchecked set does not count")
+    func lastRecordIsTheLatestCompletedSet() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let logs = session.orderedExercises.flatMap(\.orderedSetLogs)
+        // The set of the second exercise is done before the second set of the first exercise.
+        harness.clock.advance(by: 600)
+        try harness.sessions.completeSet(logs[2], weightKg: nil, reps: 12)
+        harness.clock.advance(by: 600)
+        try harness.sessions.completeSet(logs[1], weightKg: 22, reps: 6)
+        let latest = harness.clock.current
+        // The first set is done later and then unchecked.
+        harness.clock.advance(by: 600)
+        try harness.sessions.completeSet(logs[0], weightKg: 20, reps: 10)
+        try harness.sessions.uncompleteSet(logs[0])
+        harness.clock.advance(by: 2 * 3_600)
+
+        #expect(harness.sessions.suggestedEnd(for: session) == latest)
+        try harness.sessions.finishSession(session, endingAt: .lastCompletedSet)
+        #expect(session.endedAt == latest)
+    }
+
+    @Test("The end stays between the start and now, even with the device clock set back")
+    func endStaysBetweenStartAndNow() throws {
+        // The clock goes back to between the start and the last record: the session ends now.
+        let first = try harness.sessions.startSession(from: workout)
+        let firstStart = harness.clock.current
+        harness.clock.advance(by: 600)
+        try harness.sessions.completeSet(firstLog(of: first), weightKg: 20, reps: 10)
+        harness.clock.advance(by: -300)
+        #expect(harness.sessions.suggestedEnd(for: first) == nil)
+        try harness.sessions.finishSession(first, endingAt: .lastCompletedSet)
+        #expect(first.endedAt == firstStart.addingTimeInterval(300))
+
+        // The clock goes back to before the start: the session ends when it started.
+        let second = try harness.sessions.startSession(from: workout)
+        harness.clock.advance(by: 600)
+        try harness.sessions.completeSet(firstLog(of: second), weightKg: 20, reps: 10)
+        harness.clock.advance(by: -2 * 3_600)
+        #expect(harness.sessions.suggestedEnd(for: second) == nil)
+        try harness.sessions.finishSession(second, endingAt: .lastCompletedSet)
+        #expect(second.endedAt == second.startedAt)
+        #expect(second.duration == 0)
+    }
+
     // MARK: - Discard
 
     @Test("Discarding deletes only the active session's data")

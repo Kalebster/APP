@@ -14,7 +14,9 @@ import SwiftData
 /// - `finished:<workout>:<count>`: that many finished sessions of the workout, each with its first set
 ///   done, started 2 hours apart (the latest 2 hours ago) and lasting 40 minutes;
 /// - `session-detail:<workout>`: one finished session of the workout with two sets done (20 kg for 10
-///   repetitions; no load for 12) and the third not done.
+///   repetitions; no load for 12) and the third not done;
+/// - `open-session:<workout>`: a session of the workout left open: started 3 hours ago, its first set
+///   done 2 hours ago (10 repetitions) and not finished.
 @MainActor
 enum UITestSeed {
     enum Item: Equatable {
@@ -22,6 +24,7 @@ enum UITestSeed {
         case planToday(workout: String)
         case finishedSessions(workout: String, count: Int)
         case sessionDetail(workout: String)
+        case openSession(workout: String)
     }
 
     enum SeedError: Error, CustomStringConvertible {
@@ -67,6 +70,8 @@ enum UITestSeed {
                 return .finishedSessions(workout: parts[1], count: count)
             case ("session-detail", 2):
                 return .sessionDetail(workout: parts[1])
+            case ("open-session", 2):
+                return .openSession(workout: parts[1])
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -101,6 +106,15 @@ enum UITestSeed {
                     try service.completeSet(logs[0], weightKg: 20, reps: 10)
                     try service.completeSet(logs[1], weightKg: nil, reps: 12)
                 }
+            case .openSession(let name):
+                let workout = try findWorkout(named: name, in: context)
+                let start = Date.now.addingTimeInterval(-10_800)
+                let clock = SeedClock(start)
+                let service = SessionService(context: context, now: { clock.current })
+                let session = try service.startSession(from: workout)
+                clock.current = start.addingTimeInterval(3_600)
+                // Starting needs exercises with planned sets, so the first set exists.
+                try service.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: nil, reps: 10)
             }
         }
     }
