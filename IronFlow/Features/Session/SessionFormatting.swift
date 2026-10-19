@@ -117,16 +117,6 @@ enum SessionFormatting {
         return String(localized: "Seu último registro foi em \(day) às \(time). Usar esse horário como fim?")
     }
 
-    /// A recent session's line: "30 set · 00:42 · 1 min" (date, time it started and duration).
-    /// Without a duration: "30 set · 00:42".
-    static func recentText(startedAt: Date, duration: TimeInterval?, now: Date = .now, calendar: Calendar = .current) -> String {
-        var parts = [shortDateText(startedAt, now: now, calendar: calendar), timeText(startedAt, calendar: calendar)]
-        if let duration {
-            parts.append(durationText(duration))
-        }
-        return parts.joined(separator: " · ")
-    }
-
     /// What VoiceOver reads for a recent session, as one sentence: "Push, 4 de outubro, 19:30, 45 min".
     static func recentAccessibilityText(name: String, startedAt: Date, duration: TimeInterval?, now: Date = .now, calendar: Calendar = .current) -> String {
         var parts = [name, dateText(startedAt, now: now, calendar: calendar)]

@@ -335,7 +335,7 @@
     "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
 
     },
-    "Escolha exercícios na hora e registre suas séries" : {
+    "Escolha os exercícios na hora e registre suas séries" : {
 
     },
     "Escolha um dia de segunda a domingo." : {
@@ -408,6 +408,9 @@
 
     },
     "hoje" : {
+
+    },
+    "HOJE" : {
 
     },
     "Há mais de um treino em andamento. Conclua ou descarte o atual." : {
@@ -777,6 +780,9 @@
 
     },
     "Valor" : {
+
+    },
+    "Ver tudo" : {
 
     },
     "Você já tem um treino em andamento." : {

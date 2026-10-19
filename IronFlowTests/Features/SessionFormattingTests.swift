@@ -101,20 +101,6 @@ struct SessionFormattingTests {
         #expect(SessionFormatting.timeText(date, calendar: utc) == "02:50")
     }
 
-    @Test("A recent session line: the date, the time it started and the duration")
-    func recentLine() throws {
-        let calendar = try saoPauloCalendar()
-        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 12, day: 1)))
-        let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: 0, minute: 42)))
-        let lastYear = try #require(calendar.date(from: DateComponents(year: 2025, month: 9, day: 30, hour: 18, minute: 5)))
-
-        #expect(SessionFormatting.recentText(startedAt: date, duration: 60, now: now, calendar: calendar) == "30 set · 00:42 · 1 min")
-        #expect(SessionFormatting.recentText(startedAt: date, duration: 45 * 60, now: now, calendar: calendar) == "30 set · 00:42 · 45 min")
-        #expect(SessionFormatting.recentText(startedAt: lastYear, duration: 65 * 60, now: now, calendar: calendar) == "30 set 2025 · 18:05 · 1 h 05 min")
-        // Without a duration, only the date and the time.
-        #expect(SessionFormatting.recentText(startedAt: date, duration: nil, now: now, calendar: calendar) == "30 set · 00:42")
-    }
-
     @Test("A recent session's day: the abbreviated weekday with a capital letter, the day and the month; the year only for another year")
     func weekdayDate() throws {
         let calendar = try saoPauloCalendar()
