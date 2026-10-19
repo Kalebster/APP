@@ -7,7 +7,8 @@ import SwiftData
 /// when the app was launched with `-ui-testing` (an in-memory store) and `-ui-seed <items>`.
 ///
 /// The data is created with the app's own services, the same code a person's taps reach. `<items>` is a
-/// comma-separated list; each item is:
+/// comma-separated list, percent-encoded by the tests so accented names ("Tríceps") arrive as written;
+/// each item is:
 /// - `workout:<name>` or `workout:<name>:<exercise>|<exercise>`: a workout with those exercises of the
 ///   built-in library, with the default planned sets;
 /// - `plan-today:<workout>`: that workout planned for today's weekday;
@@ -53,7 +54,10 @@ enum UITestSeed {
         guard arguments.contains("-ui-testing"),
               let flag = arguments.firstIndex(of: "-ui-seed"),
               arguments.indices.contains(flag + 1) else { return }
-        let list = arguments[flag + 1]
+        let argument = arguments[flag + 1]
+        guard let list = argument.removingPercentEncoding else {
+            fatalError("UI test seed failed (-ui-seed \(argument)): invalid percent-encoding")
+        }
         do {
             try apply(parse(list), in: container.mainContext)
         } catch {

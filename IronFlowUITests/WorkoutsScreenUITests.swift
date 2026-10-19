@@ -179,8 +179,12 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(recents.count, 3, "The recent sessions are not limited to three")
         attachScreenshot(named: "43-workouts", of: app)
         scrollToBottom(in: app)
-        // The screenshot shows the list scrolled up: the header is out of the screen.
-        XCTAssertLessThan(app.buttons["workouts.add"].frame.minY, 0, "The list did not scroll")
+        // The screenshot shows the end of the list: the last recent session above the tab bar.
+        XCTAssertLessThanOrEqual(
+            recents.element(boundBy: 2).frame.maxY,
+            app.tabBars.firstMatch.frame.minY,
+            "The last recent session is under the tab bar"
+        )
         attachScreenshot(named: "44-workouts-recent", of: app)
 
         // Each one is read as a sentence: name, date, time and duration.

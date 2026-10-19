@@ -171,5 +171,17 @@ struct UITestSeedTests {
         UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", "workout:Push"])
         #expect(try context.fetch(FetchDescriptor<Workout>()).map(\.name) == ["Push"])
     }
+
+    @Test("The list arrives percent-encoded, so an accented exercise name is found as written")
+    func decodesThePercentEncodedList() throws {
+        let container = try makeContainer()
+        let list = try #require("workout:Push:Tríceps na Polia com Corda|Barra Fixa".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
+        #expect(list.allSatisfy(\.isASCII), "Encoded list: \(list)")
+
+        UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", list])
+
+        let push = try #require(try container.mainContext.fetch(FetchDescriptor<Workout>()).first)
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Tríceps na Polia com Corda", "Barra Fixa"])
+    }
 }
 #endif

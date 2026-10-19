@@ -55,7 +55,9 @@ extension XCTestCase {
         let app = XCUIApplication()
         var arguments = ["-ui-testing"]
         if !seed.isEmpty {
-            arguments += ["-ui-seed", seed.joined(separator: ",")]
+            // Percent-encoded (ASCII only), so accented names reach the app as written; `UITestSeed` decodes it.
+            let list = seed.joined(separator: ",")
+            arguments += ["-ui-seed", list.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? list]
         }
         app.launchArguments = arguments + extraArguments
         app.launch()
