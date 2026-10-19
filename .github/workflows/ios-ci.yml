@@ -36,10 +36,10 @@ jobs:
   build-and-test:
     name: Build and test (Xcode 26.6, iPhone 17, iOS 26.5)
     runs-on: macos-26
-    # The interface tests take most of the run, and green runs already last 32 to 38 minutes. A run
-    # that fails also spends up to 5 more minutes collecting the simulator log, and with a 45-minute
-    # limit that pushed it over (the first run of S3-B was cancelled that way, before its artifacts
-    # were uploaded). 60 minutes leaves room for both as screens are added.
+    # The interface tests take most of the run, and green runs last about 40 minutes (42 on main after
+    # PR #20). A run that fails also spends up to 5 more minutes collecting the simulator log, and with
+    # a 45-minute limit that pushed it over (the first run of S3-B was cancelled that way, before its
+    # artifacts were uploaded). 60 minutes leaves room for both as screens are added.
     timeout-minutes: 60
 
     steps:

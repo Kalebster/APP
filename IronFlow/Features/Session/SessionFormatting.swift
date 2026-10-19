@@ -75,6 +75,20 @@ enum SessionFormatting {
         return String(format: "%02ld:%02ld", hour, minute)
     }
 
+    /// The question asked when a session left open is finished, with the time of its last record
+    /// and, when that was not today, the day: "ontem" or the date as `shortDateText` shows it.
+    static func lastRecordQuestion(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let time = timeText(date, calendar: calendar)
+        if calendar.isDate(date, inSameDayAs: now) {
+            return String(localized: "Seu último registro foi às \(time). Usar esse horário como fim?")
+        }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+            return String(localized: "Seu último registro foi ontem às \(time). Usar esse horário como fim?")
+        }
+        let day = shortDateText(date, now: now, calendar: calendar)
+        return String(localized: "Seu último registro foi em \(day) às \(time). Usar esse horário como fim?")
+    }
+
     /// A recent session's line: "30 set · 00:42 · 1 min" (date, time it started and duration).
     /// Without a duration: "30 set · 00:42".
     static func recentText(startedAt: Date, duration: TimeInterval?, now: Date = .now, calendar: Calendar = .current) -> String {
@@ -145,12 +159,17 @@ enum SessionFormatting {
 
     // MARK: - Private
 
-    /// The abbreviated month in lowercase and without the period ("set"), from 1 for January.
-    private static func monthAbbreviation(_ month: Int) -> String {
+    /// The abbreviated months in lowercase and without the period ("set"), January first. Read once:
+    /// the names depend only on the fixed locale, never on the time zone, which comes from the
+    /// calendar each caller passes.
+    private static let monthAbbreviations: [String] = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = locale
-        let symbols = calendar.shortMonthSymbols
-        guard symbols.indices.contains(month - 1) else { return "" }
-        return symbols[month - 1].replacingOccurrences(of: ".", with: "").lowercased(with: locale)
+        return calendar.shortMonthSymbols.map { $0.replacingOccurrences(of: ".", with: "").lowercased(with: locale) }
+    }()
+
+    /// The abbreviated month ("set"), from 1 for January.
+    private static func monthAbbreviation(_ month: Int) -> String {
+        monthAbbreviations.indices.contains(month - 1) ? monthAbbreviations[month - 1] : ""
     }
 }

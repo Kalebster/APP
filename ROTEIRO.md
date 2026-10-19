@@ -16,6 +16,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Correções da auditoria: limites nos valores do treino, privacy manifest e tempo limite do CI (PR #18).
 - S4-A — Tela Treinos no visual do protótipo: treinos em grade com menu, Treino livre e Treinos recentes (PR #19).
 - Testes de interface mais rápidos e app somente escuro (PR #20).
+- Correções da vistoria: teste do teclado escuro medindo as teclas, pergunta sobre o horário de fim ao concluir um treino esquecido aberto, campos do treino com 44 pt e linha de série para texto grande, e pequenos ajustes de testes e comentários (PR #21).
 
 ## Próximas etapas
 
@@ -57,6 +58,14 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Ícone do app.
 - Mensagem amigável na tela de erro ao abrir os dados.
 
+## Pendências da vistoria
+
+- Medir com dados reais o custo da busca do Histórico durante um treino (a lista pode buscar de novo todas as sessões concluídas a cada série salva).
+- Nomes de treino repetidos ficam ambíguos no VoiceOver ("Opções de Push") e no menu de iniciar.
+- Quem digita "12,500" querendo 12,5 kg recebe a mensagem sobre mil quilos; rever a mensagem.
+- O banco é aberto de forma síncrona ao iniciar o app; uma migração num banco grande atrasaria a abertura.
+- Após uma falha ao salvar, o rollback() do SwiftData não restaura os valores alterados nos objetos em memória. O banco fica correto e o erro é mostrado, mas a tela pode exibir o valor não salvo até o objeto ser lido de novo. Raro (ex.: disco cheio). Prioridade baixa: resolver antes da S10. Coberto por teste com withKnownIssue.
+
 ## Decisões
 
 - Sem recursos sociais no início: "Privacidade e social" fica fora até nova decisão.
@@ -66,3 +75,4 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - O app é somente escuro: não há tema claro nem opção de tema nos Ajustes.
 - Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.
+- Os 6 commits iniciais com e-mail pessoal ficam como estão; commits novos usam o e-mail noreply do GitHub.

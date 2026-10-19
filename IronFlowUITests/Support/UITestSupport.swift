@@ -5,6 +5,12 @@ import XCTest
 /// The dark background is about 0.05 and a light one is above 0.9, so there is a wide margin.
 let darkBrightnessLimit: CGFloat = 0.3
 
+/// Highest brightness (0...1) the space bar may have for the keyboard to count as dark. The keys of the
+/// dark keyboard are gray, not black, so the background limit does not fit them: in CI the space bar
+/// measured 0.25 on the app's keyboard and 1.00 on the light keyboard of the simulator's Settings app
+/// (white keys). The limit lies between the two, with a wide margin on both sides.
+let darkKeyBrightnessLimit: CGFloat = 0.6
+
 /// Brightness (0...1) of the pixel at (`x`, `y`) of `image`, counted in pixels from its top left corner.
 func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
     let x = min(max(x, 0), image.width - 1)
@@ -132,6 +138,26 @@ extension XCTestCase {
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
         }
         XCTAssertTrue(app.buttons[confirmLabel].waitForNonExistence(timeout: 10), "Confirmation not dismissed")
+    }
+
+    /// Closes the keyboard's one-time introduction to typing by sliding over the letters ("Speed up your
+    /// typing…"), which covers the keys the first time a simulator shows the keyboard, by tapping its
+    /// button. Does nothing when it is not shown; once closed, the simulator does not show it again.
+    @MainActor
+    func dismissKeyboardIntroductionIfShown(in app: XCUIApplication) {
+        let button = app.buttons.matching(NSPredicate(format: "label IN %@", ["Continue", "Continuar"])).firstMatch
+        guard button.waitForExistence(timeout: 2) else { return }
+        button.tap()
+        XCTAssertTrue(button.waitForNonExistence(timeout: 10), "The keyboard introduction did not close")
+    }
+
+    /// Taps 15 points above the vertical center of a field, beside its text but inside a box 44 points
+    /// tall, and waits until the field has keyboard focus: the whole box must respond, not only the text.
+    @MainActor
+    func tapAboveTheTextAndWaitForFocus(of field: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).withOffset(CGVector(dx: 0, dy: -15)).tap()
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        XCTAssertTrue(XCTWaiter().wait(for: [focused], timeout: 10) == .completed, "A tap beside the text did not focus the field", file: file, line: line)
     }
 
     @MainActor

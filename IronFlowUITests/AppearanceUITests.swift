@@ -16,6 +16,33 @@ final class AppearanceUITests: IronFlowUITestCase {
         return pixelBrightness(of: image, x: 4, y: image.height / 4)
     }
 
+    /// Brightness of the space bar of the keyboard on screen, at a point of the key's surface away from
+    /// its label: 15% of its width from its left edge, halfway down. The letter keys are not used:
+    /// their letter is in the middle, and their frames take in part of the gaps between the keys.
+    /// The keyboard's one-time introduction, which covers the keys, is closed first.
+    @MainActor
+    private func spaceBarBrightness(in app: XCUIApplication) throws -> CGFloat {
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.waitForExistence(timeout: 10), "Keyboard not shown")
+        dismissKeyboardIntroductionIfShown(in: app)
+        let space = try XCTUnwrap(spaceBar(of: keyboard), "No space bar on the keyboard")
+        XCTAssertTrue(space.isHittable, "The space bar is covered")
+        return try XCTUnwrap(
+            brightness(of: app, atX: space.frame.minX + space.frame.width * 0.15, y: space.frame.midY),
+            "Could not measure the space bar"
+        )
+    }
+
+    /// The space bar, found by its name in English or Portuguese, or else as the widest key.
+    @MainActor
+    private func spaceBar(of keyboard: XCUIElement) -> XCUIElement? {
+        let named = keyboard.keys.matching(NSPredicate(format: "label ==[c] 'space' OR label ==[c] 'espaço' OR identifier ==[c] 'space'")).firstMatch
+        if named.waitForExistence(timeout: 5) {
+            return named
+        }
+        return keyboard.keys.allElementsBoundByIndex.max { $0.frame.width < $1.frame.width }
+    }
+
     @MainActor
     func testSheetAndKeyboardAreDarkWithTheDeviceInLightMode() throws {
         continueAfterFailure = false
@@ -40,15 +67,11 @@ final class AppearanceUITests: IronFlowUITestCase {
         recordMeasurement("Medição: brilho da folha", String(format: "%.3f (limite %.2f)", sheet, darkBrightnessLimit))
         XCTAssertLessThan(sheet, darkBrightnessLimit, "The sheet is not dark: brightness \(sheet)")
 
-        // The keyboard: the margin at the left edge of its frame, halfway down.
-        let keyboard = app.keyboards.firstMatch
-        XCTAssertTrue(keyboard.waitForExistence(timeout: 10), "Keyboard not shown")
-        let keys = try XCTUnwrap(
-            brightness(of: app, atX: keyboard.frame.minX + 2, y: keyboard.frame.midY),
-            "Could not measure the keyboard"
-        )
-        recordMeasurement("Medição: brilho do teclado", String(format: "%.3f (limite %.2f)", keys, darkBrightnessLimit))
-        XCTAssertLessThan(keys, darkBrightnessLimit, "The keyboard is not dark: brightness \(keys)")
+        // The keyboard: a point of the space bar. The dark keys are gray, not black, so they have their
+        // own limit, below the white keys of a light keyboard.
+        let key = try spaceBarBrightness(in: app)
+        recordMeasurement("Medição: brilho da barra de espaço (teclado do app)", String(format: "%.3f (limite %.2f)", key, darkKeyBrightnessLimit))
+        XCTAssertLessThan(key, darkKeyBrightnessLimit, "The keyboard is not dark: brightness \(key)")
         attachScreenshot(named: "48-sheet-keyboard", of: app)
     }
 }

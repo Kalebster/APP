@@ -17,7 +17,7 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push")
 
         #expect(items == [
             .workout(name: "Push", exercises: ["Crossover na Polia", "Barra Fixa"]),
@@ -25,12 +25,13 @@ struct UITestSeedTests {
             .planToday(workout: "Push"),
             .finishedSessions(workout: "Push", count: 4),
             .sessionDetail(workout: "Push"),
+            .openSession(workout: "Push"),
         ])
     }
 
     @Test("An item it does not know, or one without what it needs, is refused")
     func refusesUnknownItems() {
-        for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today"] {
+        for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session"] {
             #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
         }
     }
@@ -91,6 +92,29 @@ struct UITestSeedTests {
         #expect(logs.map(\.isCompleted) == [true, true, false])
         #expect(logs.map(\.weightKg) == [20, nil, nil])
         #expect(logs.map(\.reps) == [10, 12, nil])
+    }
+
+    @Test("The session left open started 3 hours ago, has its first set done 2 hours ago and is not finished")
+    func leavesASessionOpen() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let before = Date.now
+
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa,open-session:Push"), in: context)
+
+        let after = Date.now
+        let service = SessionService(context: context)
+        let session = try #require(try service.activeSession())
+        #expect(session.workout?.name == "Push")
+        // Dated from the moment the seed ran.
+        #expect(session.startedAt >= before.addingTimeInterval(-10_800))
+        #expect(session.startedAt <= after.addingTimeInterval(-10_800))
+        let logs = session.orderedExercises.flatMap(\.orderedSetLogs)
+        #expect(logs.map(\.isCompleted) == [true, false, false])
+        #expect(logs.first?.reps == 10)
+        #expect(logs.first?.completedAt == session.startedAt.addingTimeInterval(3_600))
+        // Finishing it now offers the time of that set as the end.
+        #expect(service.suggestedEnd(for: session) == logs.first?.completedAt)
     }
 
     @Test("A workout or an exercise that does not exist is an error, and nothing else is created")

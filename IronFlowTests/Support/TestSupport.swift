@@ -178,6 +178,10 @@ func storeCounts(in context: ModelContext) throws -> [String: Int] {
         "Session": try count(Session.self, in: context),
         "SessionExercise": try count(SessionExercise.self, in: context),
         "SetLog": try count(SetLog.self, in: context),
+        "WeeklyPlanDay": try count(WeeklyPlanDay.self, in: context),
+        "ExternalWorkoutDay": try count(ExternalWorkoutDay.self, in: context),
+        "UserProfile": try count(UserProfile.self, in: context),
+        "BodyWeightEntry": try count(BodyWeightEntry.self, in: context),
     ]
 }
 

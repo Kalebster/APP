@@ -599,6 +599,15 @@
     "sem treino" : {
 
     },
+    "Seu último registro foi em %@ às %@. Usar esse horário como fim?" : {
+
+    },
+    "Seu último registro foi ontem às %@. Usar esse horário como fim?" : {
+
+    },
+    "Seu último registro foi às %@. Usar esse horário como fim?" : {
+
+    },
     "Seus dados não foram apagados. Feche e abra o app novamente. Se o problema continuar, atualize o app." : {
 
     },
@@ -663,6 +672,12 @@
 
     },
     "Um exercício deste treino não existe mais." : {
+
+    },
+    "Usar %@" : {
+
+    },
+    "Usar agora" : {
 
     },
     "Valor" : {

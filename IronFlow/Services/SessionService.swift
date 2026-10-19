@@ -1,6 +1,14 @@
 import Foundation
 import SwiftData
 
+/// When a session being finished ends.
+enum SessionEnd: Equatable, Sendable {
+    /// The moment it is finished.
+    case now
+    /// The moment its last set was completed, for a session left open after the workout.
+    case lastCompletedSet
+}
+
 /// Business rules for performed workouts (sessions) and their sets.
 ///
 /// At most one session is active (`endedAt == nil`). Only the active session can be
@@ -40,6 +48,10 @@ struct SessionService {
 
     /// How many finished sessions "Treinos recentes" shows.
     nonisolated static var recentSessionsLimit: Int { 3 }
+
+    /// How long after its last completed set a session counts as left open after the workout:
+    /// finishing it then offers the time of that set as its end.
+    nonisolated static var forgottenSessionThreshold: TimeInterval { 3_600 }
 
     /// The latest finished sessions (`endedAt != nil`), the most recently started first, at most
     /// `recentSessionsLimit`. The limit is part of the query, so no more than that is ever read.
@@ -222,9 +234,20 @@ struct SessionService {
         try context.saveOrRollback()
     }
 
-    /// Ends the session. Sets that were not completed stay recorded as not done.
+    /// The end offered when the session is finished: the time its last set was completed, when that
+    /// was more than `forgottenSessionThreshold` ago (the session was probably left open after the
+    /// workout). `nil` otherwise. It is the time `finishSession(_:endingAt: .lastCompletedSet)` records.
+    func suggestedEnd(for session: Session) -> Date? {
+        guard session.isActive, let completion = lastCompletionTime(of: session) else { return nil }
+        let timestamp = now()
+        guard timestamp.timeIntervalSince(completion) > Self.forgottenSessionThreshold else { return nil }
+        return endTime(of: session, at: completion, now: timestamp)
+    }
+
+    /// Ends the session, now or when its last set was completed. The end is never before the start
+    /// nor after now. Sets that were not completed stay recorded as not done.
     /// A session without any completed set cannot be finished (it must be discarded instead).
-    func finishSession(_ session: Session) throws {
+    func finishSession(_ session: Session, endingAt end: SessionEnd = .now) throws {
         guard session.isActive else { throw SessionError.sessionNotActive }
         let hasCompletedSet = session.exercises.contains { performed in
             performed.setLogs.contains(where: \.isCompleted)
@@ -232,7 +255,12 @@ struct SessionService {
         guard hasCompletedSet else { throw SessionError.noCompletedSets }
 
         let timestamp = now()
-        session.endedAt = max(timestamp, session.startedAt)
+        // A completed set always has its completion time; should one ever lack it, the session ends now.
+        let requested = switch end {
+        case .now: timestamp
+        case .lastCompletedSet: lastCompletionTime(of: session) ?? timestamp
+        }
+        session.endedAt = endTime(of: session, at: requested, now: timestamp)
         session.updatedAt = timestamp
         try context.saveOrRollback()
     }
@@ -268,6 +296,16 @@ struct SessionService {
         log.updatedAt = timestamp
         context.insert(log)
         return log
+    }
+
+    /// When the most recently completed set of the session was completed; `nil` without one.
+    private func lastCompletionTime(of session: Session) -> Date? {
+        session.exercises.flatMap(\.setLogs).compactMap { $0.isCompleted ? $0.completedAt : nil }.max()
+    }
+
+    /// `date` kept between the start of the session and now; the start when the clock is behind it.
+    private func endTime(of session: Session, at date: Date, now timestamp: Date) -> Date {
+        min(max(date, session.startedAt), max(timestamp, session.startedAt))
     }
 
     private func activeSession(of log: SetLog) throws -> Session {

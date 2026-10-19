@@ -11,6 +11,7 @@ struct SessionExerciseCard: View {
     @ScaledMetric(relativeTo: .body) private var weightWidth = SetRowMetrics.weightWidth
     @ScaledMetric(relativeTo: .body) private var repsWidth = SetRowMetrics.repsWidth
     @ScaledMetric(relativeTo: .body) private var checkWidth = SetRowMetrics.checkWidth
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -22,17 +23,29 @@ struct SessionExerciseCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 8) {
-                Text("Série")
-                    .frame(minWidth: SetRowMetrics.numberWidth, alignment: .leading)
-                Text("Meta")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(verbatim: "kg")
-                    .frame(width: weightWidth)
-                Text("Reps")
-                    .frame(width: repsWidth)
-                Color.clear
-                    .frame(width: checkWidth, height: 1)
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    // Over the second line of each set (`SessionSetRow`), where the load and the repetitions are.
+                    HStack(spacing: 8) {
+                        Text(verbatim: "kg")
+                            .frame(maxWidth: .infinity)
+                        Text("Reps")
+                            .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    HStack(spacing: 8) {
+                        Text("Série")
+                            .frame(minWidth: SetRowMetrics.numberWidth, alignment: .leading)
+                        Text("Meta")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(verbatim: "kg")
+                            .frame(width: weightWidth)
+                        Text("Reps")
+                            .frame(width: repsWidth)
+                        Color.clear
+                            .frame(width: checkWidth, height: 1)
+                    }
+                }
             }
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)

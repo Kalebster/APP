@@ -53,6 +53,11 @@ struct IronFlowApp: App {
             if !result.skippedKeys.isEmpty {
                 persistenceLogger.error("Library entries skipped because their id is in use: \(result.skippedKeys.joined(separator: ", "), privacy: .public)")
             }
+            // Only the library's own keys are logged, never an exercise name: the clashing exercise
+            // may be one the user created.
+            if !result.keptNameKeys.isEmpty {
+                persistenceLogger.error("Library names not applied because another active exercise uses them: \(result.keptNameKeys.joined(separator: ", "), privacy: .public)")
+            }
         } catch {
             persistenceLogger.error("Could not seed the exercise library: \(String(describing: error), privacy: .private)")
         }

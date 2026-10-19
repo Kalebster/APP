@@ -16,13 +16,17 @@ struct ExerciseLibrarySeedResult: Equatable {
     var updatedKeys: [String] = []
     /// Entries not inserted because their fixed id is already used by another record.
     var skippedKeys: [String] = []
+    /// Entries whose corrected name is already used by another active exercise: the exercise keeps
+    /// its current name (a corrected muscle group is still applied).
+    var keptNameKeys: [String] = []
 }
 
 /// Installs and updates the built-in exercises in the store.
 ///
 /// Idempotent: an entry is found by its `libraryKey`. Existing records are never deleted,
 /// never replaced, and their `isArchived`, ids and relationships are never touched; only the
-/// name and muscle group of built-in exercises follow the library. Custom exercises are never changed.
+/// name and muscle group of built-in exercises follow the library, except a corrected name already
+/// used by another active exercise. Custom exercises are never changed.
 @MainActor
 struct ExerciseLibrarySeeder {
     let context: ModelContext
@@ -55,8 +59,9 @@ struct ExerciseLibrarySeeder {
         let timestamp = now()
         var result = ExerciseLibrarySeedResult()
 
-        // Corrections are applied after the inserts, so that name clashes are always checked
-        // against the names stored before this run.
+        // Corrections are applied after the inserts, so that a new entry is checked against the names
+        // stored before this run. A corrected name is then checked against the active names of that
+        // moment, the new entries included.
         var corrections: [(exercise: Exercise, entry: DefaultExercise)] = []
 
         for (entry, id) in library {
@@ -92,10 +97,38 @@ struct ExerciseLibrarySeeder {
         }
 
         for (existing, entry) in corrections {
-            existing.name = entry.name
-            existing.muscleGroup = entry.muscleGroup
-            existing.updatedAt = timestamp
-            result.updatedKeys.append(entry.key)
+            var changed = false
+            if existing.name != entry.name {
+                // Active exercise names stay unique: an active exercise keeps its name when the
+                // corrected one is already used by another active exercise. An archived one can
+                // take it, as unarchiving checks the name again.
+                let currentKey = Validation.comparisonKey(forName: existing.name)
+                let newKey = Validation.comparisonKey(forName: entry.name)
+                if existing.isArchived || newKey == currentKey {
+                    existing.name = entry.name
+                    changed = true
+                } else {
+                    if activeNames == nil {
+                        activeNames = Set(stored.filter { !$0.isArchived }.map { Validation.comparisonKey(forName: $0.name) })
+                    }
+                    if activeNames?.contains(newKey) == true {
+                        result.keptNameKeys.append(entry.key)
+                    } else {
+                        existing.name = entry.name
+                        activeNames?.remove(currentKey)
+                        activeNames?.insert(newKey)
+                        changed = true
+                    }
+                }
+            }
+            if existing.muscleGroup != entry.muscleGroup {
+                existing.muscleGroup = entry.muscleGroup
+                changed = true
+            }
+            if changed {
+                existing.updatedAt = timestamp
+                result.updatedKeys.append(entry.key)
+            }
         }
 
         if !result.insertedKeys.isEmpty || !result.updatedKeys.isEmpty {
