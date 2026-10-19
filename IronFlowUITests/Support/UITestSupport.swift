@@ -6,8 +6,9 @@ import XCTest
 let darkBrightnessLimit: CGFloat = 0.3
 
 /// Highest brightness (0...1) the space bar may have for the keyboard to count as dark. The keys of the
-/// dark keyboard are gray, not black, so the background limit does not fit them; the keys of the light
-/// keyboard are white, about 1. The limit lies between the two (`AppearanceUITests` measures both).
+/// dark keyboard are gray, not black, so the background limit does not fit them: in CI the space bar
+/// measured 0.25 on the app's keyboard and 1.00 on the light keyboard of the simulator's Settings app
+/// (white keys). The limit lies between the two, with a wide margin on both sides.
 let darkKeyBrightnessLimit: CGFloat = 0.6
 
 /// Brightness (0...1) of the pixel at (`x`, `y`) of `image`, counted in pixels from its top left corner.

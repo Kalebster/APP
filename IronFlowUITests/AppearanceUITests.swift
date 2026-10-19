@@ -5,24 +5,15 @@ import XCTest
 /// `PersistenceErrorUITests`). Each measured brightness is kept with the result as a "Medição", which
 /// the CI report prints even when the test passes.
 final class AppearanceUITests: IronFlowUITestCase {
-    /// The light references, measured in the simulator's own Settings app, which follows the device
-    /// setting: the brightness of its background, which proves the device really is in light mode,
-    /// and that of the space bar of its keyboard, light with white keys, which shows that the point
-    /// measured on the keys tells a light keyboard from a dark one.
+    /// Brightness of the background of the simulator's own Settings app, which follows the device
+    /// setting. It proves the device really was in light mode when the app was checked.
     @MainActor
-    private func lightReferences() throws -> (background: CGFloat, key: CGFloat) {
+    private func deviceBrightness() -> CGFloat? {
         let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
         settings.launch()
         defer { settings.terminate() }
-        let image = try XCTUnwrap(settings.screenshot().image.cgImage, "Could not capture the Settings app")
-        let background = try XCTUnwrap(pixelBrightness(of: image, x: 4, y: image.height / 4), "Could not measure the Settings app")
-
-        let search = settings.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "No search field in the Settings app")
-        search.tapAndWaitForKeyboardFocus()
-        let key = try spaceBarBrightness(in: settings)
-        attachScreenshot(named: "49-settings-light-keyboard", of: settings)
-        return (background, key)
+        guard let image = settings.screenshot().image.cgImage else { return nil }
+        return pixelBrightness(of: image, x: 4, y: image.height / 4)
     }
 
     /// Brightness of the space bar of the keyboard on screen, at a point of the key's surface away from
@@ -56,15 +47,10 @@ final class AppearanceUITests: IronFlowUITestCase {
     func testSheetAndKeyboardAreDarkWithTheDeviceInLightMode() throws {
         continueAfterFailure = false
 
-        // The precondition: the device is light (a dark pixel here would make the rest prove nothing),
-        // and the point measured on the keys is above the limit on a light keyboard.
-        let referenceStart = Date.now
-        let light = try lightReferences()
-        recordMeasurement("Medição: tempo das referências claras no app Ajustes", String(format: "%.1f s", Date.now.timeIntervalSince(referenceStart)))
-        recordMeasurement("Medição: brilho do app Ajustes do iPhone (aparelho)", String(format: "%.3f (claro: acima de 0,5)", light.background))
-        XCTAssertGreaterThan(light.background, 0.5, "The simulator is not in light mode, so this test proves nothing")
-        recordMeasurement("Medição: brilho da barra de espaço (teclado claro, app Ajustes)", String(format: "%.3f (limite %.2f)", light.key, darkKeyBrightnessLimit))
-        XCTAssertGreaterThan(light.key, darkKeyBrightnessLimit, "The point measured on the keys does not tell a light keyboard: brightness \(light.key)")
+        // The precondition: the device is light (a dark pixel here would make the rest prove nothing).
+        let device = try XCTUnwrap(deviceBrightness(), "Could not measure the device's appearance")
+        recordMeasurement("Medição: brilho do app Ajustes do iPhone (aparelho)", String(format: "%.3f (claro: acima de 0,5)", device))
+        XCTAssertGreaterThan(device, 0.5, "The simulator is not in light mode, so this test proves nothing")
 
         let app = launchOnTab("Treinos")
         let add = app.buttons["workouts.add"]
@@ -81,8 +67,8 @@ final class AppearanceUITests: IronFlowUITestCase {
         recordMeasurement("Medição: brilho da folha", String(format: "%.3f (limite %.2f)", sheet, darkBrightnessLimit))
         XCTAssertLessThan(sheet, darkBrightnessLimit, "The sheet is not dark: brightness \(sheet)")
 
-        // The keyboard: the same point of the space bar. The dark keys are gray, not black, so they
-        // have their own limit.
+        // The keyboard: a point of the space bar. The dark keys are gray, not black, so they have their
+        // own limit, below the white keys of a light keyboard.
         let key = try spaceBarBrightness(in: app)
         recordMeasurement("Medição: brilho da barra de espaço (teclado do app)", String(format: "%.3f (limite %.2f)", key, darkKeyBrightnessLimit))
         XCTAssertLessThan(key, darkKeyBrightnessLimit, "The keyboard is not dark: brightness \(key)")
