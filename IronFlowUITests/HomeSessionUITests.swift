@@ -68,7 +68,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
         XCTAssertFalse(app.buttons["home.chooseWorkout"].exists, "Escolher um treino shown during a session")
         XCTAssertFalse(app.buttons["home.startFree"].exists, "Iniciar treino livre shown during a session")
         XCTAssertFalse(app.buttons["session.bar"].exists, "Session bar shown on the Home")
-        attachScreenshot(named: "33-home-continue", of: app)
+        attachScreenshot(named: "51-home-in-progress", of: app)
         openTab("Treinos", in: app)
         XCTAssertTrue(app.buttons["session.bar"].waitForExistence(timeout: 10), "Session bar not shown on Treinos")
         openTab("Início", in: app)

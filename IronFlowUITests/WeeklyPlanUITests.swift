@@ -52,7 +52,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         XCTAssertEqual(start.label, "Iniciar Push")
         let card = element("home.today", in: app)
         XCTAssertTrue(card.label.contains("Push"), "Card: \(card.label)")
-        XCTAssertTrue(card.label.contains("Programado para hoje"), "Card: \(card.label)")
+        XCTAssertTrue(card.label.contains("programado para hoje"), "Card: \(card.label)")
         XCTAssertEqual(app.buttons["home.chooseWorkout"].label, "Escolher outro treino")
         XCTAssertTrue(app.buttons["home.startFree"].exists, "No Iniciar treino livre")
         attachScreenshot(named: "42-home-planned", of: app)

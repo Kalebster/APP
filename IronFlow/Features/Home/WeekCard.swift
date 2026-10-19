@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// The Home "Sua semana" card: the week's workouts and trained days, and its seven days. Tapping a
-/// day marks it as trained outside the app; a marked day is unmarked after a confirmation.
+/// The Home "Sua semana" card: the week's goal (a ring with the workouts done against the days of the
+/// weekly plan) or, without a plan, the week's count, and its seven days. Tapping a day marks it as
+/// trained outside the app; a marked day is unmarked after a confirmation.
 ///
 /// The card reads only `week`: its queries are built from the week's limits when the card is
 /// created. `HomeView` gives the card the week's start as its identity, so a new week creates a new
@@ -11,6 +12,12 @@ struct WeekCard: View {
     let week: WeekSummary.Week
     let now: Date
     let calendar: Calendar
+    /// The weekdays of the weekly plan with a workout, 1 = Monday to 7 = Sunday.
+    let plannedWeekdays: Set<Int>
+    /// Without workouts there is nothing to plan, so the card does not offer it.
+    let hasWorkouts: Bool
+    /// Opens the weekly plan.
+    let onPlan: @MainActor () -> Void
 
     /// Finished sessions started in the week.
     @Query private var sessions: [Session]
@@ -22,10 +29,20 @@ struct WeekCard: View {
     @State private var dayToUnmark: WeekSummary.Day?
     @State private var errorMessage: String?
 
-    init(week: WeekSummary.Week, now: Date, calendar: Calendar) {
+    init(
+        week: WeekSummary.Week,
+        now: Date,
+        calendar: Calendar,
+        plannedWeekdays: Set<Int>,
+        hasWorkouts: Bool,
+        onPlan: @escaping @MainActor () -> Void
+    ) {
         self.week = week
         self.now = now
         self.calendar = calendar
+        self.plannedWeekdays = plannedWeekdays
+        self.hasWorkouts = hasWorkouts
+        self.onPlan = onPlan
         let start = week.start
         let end = week.end
         _sessions = Query(filter: #Predicate<Session> { session in
@@ -38,12 +55,23 @@ struct WeekCard: View {
     }
 
     var body: some View {
-        let days = WeekSummary.days(of: week, now: now, calendar: calendar, sessions: sessions, markedDays: markings.map(\.day))
+        let days = WeekSummary.days(
+            of: week,
+            now: now,
+            calendar: calendar,
+            sessions: sessions,
+            markedDays: markings.map(\.day),
+            plannedWeekdays: plannedWeekdays
+        )
 
-        VStack(alignment: .leading, spacing: 16) {
-            counts(workouts: WeekSummary.workoutCount(of: days), trainedDays: WeekSummary.trainedDayCount(of: days))
+        VStack(alignment: .leading, spacing: 15) {
+            if let goal = WeekSummary.goal(of: days, plannedDays: plannedWeekdays.count) {
+                goalSummary(goal)
+            } else {
+                countSummary(WeekSummary.workoutCount(of: days))
+            }
 
-            HStack(spacing: 0) {
+            HStack(spacing: 3) {
                 ForEach(days) { day in
                     WeekDayCell(day: day) {
                         tap(day)
@@ -54,10 +82,10 @@ struct WeekCard: View {
             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
 
             Text("Treinou fora do app? Toque no dia para marcar.")
-                .font(.footnote)
+                .scaledFont(11)
                 .foregroundStyle(.secondary)
         }
-        .cardStyle()
+        .cardStyle(padding: EdgeInsets(top: 15, leading: 12, bottom: 14, trailing: 12), cornerRadius: 17)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("home.week")
         .confirmationDialog(
@@ -79,26 +107,59 @@ struct WeekCard: View {
         .errorAlert($errorMessage)
     }
 
-    /// "N treinos esta semana" and "D/7 dias", side by side or, with the largest text sizes, stacked.
+    /// The ring and, beside it (below it with the accessibility text sizes), "3 de 4 treinos" and what
+    /// is left to close the week.
     @ViewBuilder
-    private func counts(workouts: Int, trainedDays: Int) -> some View {
-        let workoutsText = Text(WeekSummary.workoutsText(workouts))
-            .font(.headline)
-            .accessibilityIdentifier("home.week.count")
-        let daysText = Text(WeekSummary.trainedDaysText(trainedDays))
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .accessibilityIdentifier("home.week.days")
+    private func goalSummary(_ goal: WeekSummary.Goal) -> some View {
+        let texts = VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: goal.titleText)
+                .scaledFont(19, weight: .heavy)
+                .accessibilityIdentifier("home.week.count")
+            Text(verbatim: goal.remainingText)
+                .scaledFont(12)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("home.week.remaining")
+        }
         if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 4) {
-                workoutsText
-                daysText
+            VStack(alignment: .leading, spacing: 12) {
+                WeekGoalRing(goal: goal)
+                texts
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                workoutsText
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                daysText
+            HStack(alignment: .center, spacing: 16) {
+                WeekGoalRing(goal: goal)
+                texts
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    /// Without a weekly plan: the week's count and an invitation to plan the week, which opens the plan
+    /// when there are workouts to plan.
+    private func countSummary(_ count: Int) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: WeekSummary.workoutsText(count))
+                .scaledFont(19, weight: .heavy)
+                .accessibilityIdentifier("home.week.count")
+            if hasWorkouts {
+                Text("Programe a semana para acompanhar sua meta.")
+                    .scaledFont(12)
+                    .foregroundStyle(.secondary)
+                Button(action: onPlan) {
+                    Text("Programar semana")
+                        .scaledFont(13, weight: .semibold)
+                        .foregroundStyle(Theme.Colors.lightAccent)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                // The touch area stays 44 points tall while the link takes less room.
+                .padding(.vertical, -8)
+                .accessibilityIdentifier("home.week.plan")
+            } else {
+                Text("Crie um treino para programar a semana.")
+                    .scaledFont(12)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -127,16 +188,55 @@ struct WeekCard: View {
     }
 }
 
-/// One day: its letter, its number in a circle, and a check below when it was marked by hand.
+/// The week's goal as a ring: the accent line fills the share of the goal done (full once it is reached
+/// or passed), with "3/4" and "treinos" in the middle.
+private struct WeekGoalRing: View {
+    let goal: WeekSummary.Goal
+
+    @ScaledMetric(relativeTo: .title2) private var size: CGFloat = 79
+
+    var body: some View {
+        let side = min(size, 120)
+        let lineWidth: CGFloat = 8
+
+        ZStack {
+            Circle()
+                .inset(by: lineWidth / 2)
+                .stroke(Theme.Colors.ringTrack, lineWidth: lineWidth)
+            Circle()
+                .inset(by: lineWidth / 2)
+                .trim(from: 0, to: goal.progress)
+                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 0) {
+                Text(verbatim: goal.ringText)
+                    .scaledFont(22, weight: .heavy)
+                    .monospacedDigit()
+                Text(verbatim: goal.ringCaption)
+                    .scaledFont(10)
+                    .foregroundStyle(.secondary)
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .padding(lineWidth + 4)
+        }
+        .frame(width: side, height: side)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: goal.accessibilityText))
+        .accessibilityIdentifier("home.week.goal")
+    }
+}
+
+/// One day: its letter, its number in a circle and, for a planned day still to do, a dot below.
 ///
 /// Blue always means trained: a solid circle for a workout in the app, a dashed one for a day marked
-/// by hand (with the check). Today has a ring in the text color. A future day is faded. Only a day
-/// with an action is a button.
+/// outside the app. A day past without a workout is gray; today has a light ring; a future day shows
+/// its number only. Only a day with an action is a button.
 private struct WeekDayCell: View {
     let day: WeekSummary.Day
     let onTap: @MainActor () -> Void
 
-    @ScaledMetric(relativeTo: .subheadline) private var circleSize: CGFloat = 32
+    @ScaledMetric(relativeTo: .footnote) private var circleSize: CGFloat = 31
 
     var body: some View {
         if day.tapAction == .unavailable {
@@ -167,54 +267,69 @@ private struct WeekDayCell: View {
 
         return VStack(spacing: 6) {
             Text(verbatim: day.letter)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(day.isToday ? Color.primary : Color.secondary)
+                .scaledFont(10, weight: day.isToday ? .bold : .semibold)
+                .foregroundStyle(day.isToday ? Theme.Colors.brightText : Color.secondary)
 
             Text(day.number.formatted())
-                .font(.subheadline.weight(day.isToday || day.isTrained ? .bold : .regular))
+                .scaledFont(13, weight: numberWeight)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .foregroundStyle(numberColor)
                 .frame(width: size, height: size)
                 .background { circle }
-                .padding(3)
                 .overlay {
                     if day.isToday {
-                        Circle().strokeBorder(Color.primary, lineWidth: 2)
+                        Circle().strokeBorder(Theme.Colors.brightText, lineWidth: 2)
                     }
                 }
 
-            // Decorative: the day's label already says it was marked.
-            Image(systemName: "checkmark")
-                .font(.caption2.weight(.heavy))
-                .foregroundStyle(Color.accentColor)
-                .opacity(day.isMarked ? 1 : 0)
+            // Decorative: the day's label already says it is planned.
+            Circle()
+                .fill(Color.accentColor)
+                .frame(width: 4, height: 4)
+                .opacity(day.showsPlanDot ? 1 : 0)
                 .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
+        // The whole column responds, at least 44 points tall.
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         .accessibilityShowsLargeContentViewer()
     }
 
     @ViewBuilder
     private var circle: some View {
-        if day.appWorkouts > 0 {
+        switch day.appearance {
+        case .trainedInApp:
             Circle().fill(Color.accentColor)
-        } else if day.isMarked {
+        case .markedOutside:
             Circle()
-                .fill(Color.accentColor.opacity(0.15))
+                .fill(Theme.Colors.markedDayBackground)
                 .overlay {
                     Circle().strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2]))
                 }
-        } else if !day.isFuture {
-            Circle().fill(.fill.tertiary)
+        case .missed:
+            Circle().fill(Theme.Colors.ringTrack)
+        case .todayWithoutWorkout, .future:
+            EmptyView()
+        }
+    }
+
+    private var numberWeight: Font.Weight {
+        switch day.appearance {
+        case .trainedInApp, .markedOutside, .todayWithoutWorkout: .bold
+        case .missed, .future: .regular
         }
     }
 
     private var numberColor: Color {
-        if day.appWorkouts > 0 { return .white }
-        if day.isMarked { return .accentColor }
-        return day.isFuture ? Color(uiColor: .tertiaryLabel) : .primary
+        switch day.appearance {
+        case .trainedInApp: .white
+        case .markedOutside: Theme.Colors.markedDayNumber
+        case .missed: Theme.Colors.mediumText
+        case .todayWithoutWorkout: Theme.Colors.brightText
+        case .future: Theme.Colors.futureDayText
+        }
     }
 }

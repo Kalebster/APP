@@ -7,8 +7,14 @@ import SwiftUI
 /// (except Início, whose "Treino de hoje" card offers "Continuar"), and the session screen opens
 /// over the tabs. Sessions are started only here, through `SessionActions`.
 struct RootView: View {
+    /// The tabs, so a screen can open another one ("Ver tudo" in Treinos opens the Histórico).
+    private enum AppTab: Hashable {
+        case home, workouts, exercises, history, settings
+    }
+
     @Query(SessionService.activeSessionsDescriptor) private var activeSessions: [Session]
     @Environment(\.modelContext) private var context
+    @State private var selectedTab = AppTab.home
     /// The session shown over the tabs; `nil` while it is minimized or when none is in progress.
     @State private var openedSession: Session?
     @State private var isSessionInProgress = false
@@ -18,8 +24,8 @@ struct RootView: View {
         // Normally at most one; should there be more, the most recent is shown first.
         let currentSession = activeSessions.first
 
-        TabView {
-            Tab("Início", systemImage: "house") {
+        TabView(selection: $selectedTab) {
+            Tab("Início", systemImage: "house", value: AppTab.home) {
                 // No bar here: the "Treino de hoje" card offers "Continuar" instead.
                 NavigationStack {
                     HomeView(sessionActions: sessionActions)
@@ -29,9 +35,11 @@ struct RootView: View {
                 }
             }
 
-            Tab("Treinos", systemImage: "list.bullet.rectangle") {
+            Tab("Treinos", systemImage: "list.bullet.rectangle", value: AppTab.workouts) {
                 NavigationStack {
-                    WorkoutListView(sessionActions: sessionActions)
+                    WorkoutListView(sessionActions: sessionActions) {
+                        selectedTab = .history
+                    }
                         .accessibilityElement(children: .contain)
                         .accessibilityIdentifier("tab.workouts.root")
                         .navigationTitle("Treinos")
@@ -39,7 +47,7 @@ struct RootView: View {
                 .activeSessionBar(currentSession) { openSession() }
             }
 
-            Tab("Exercícios", systemImage: "dumbbell") {
+            Tab("Exercícios", systemImage: "dumbbell", value: AppTab.exercises) {
                 NavigationStack {
                     ExerciseListView()
                         .accessibilityElement(children: .contain)
@@ -49,7 +57,7 @@ struct RootView: View {
                 .activeSessionBar(currentSession) { openSession() }
             }
 
-            Tab("Histórico", systemImage: "clock.arrow.circlepath") {
+            Tab("Histórico", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
                 NavigationStack {
                     HistoryView()
                         .accessibilityElement(children: .contain)
@@ -59,7 +67,7 @@ struct RootView: View {
                 .activeSessionBar(currentSession) { openSession() }
             }
 
-            Tab("Ajustes", systemImage: "gearshape") {
+            Tab("Ajustes", systemImage: "gearshape", value: AppTab.settings) {
                 NavigationStack {
                     SettingsView()
                         .accessibilityElement(children: .contain)

@@ -138,6 +138,27 @@ struct WeeklyPlanSummaryTests {
         let plan = [dayRecord(1, push.id), dayRecord(3, push.id), dayRecord(5, push.id)]
         #expect(WeeklyPlanSummary.workoutsByWeekday(plan: plan, workouts: [push]).keys.sorted() == [1, 3, 5])
         #expect(WeeklyPlanSummary.plannedDayCount(plan: plan, workouts: [push]) == 3)
+        #expect(WeeklyPlanSummary.plannedWeekdays(plan: plan, workouts: [push]) == [1, 3, 5])
+    }
+
+    @Test("The planned weekdays leave out a day whose workout no longer exists")
+    func plannedWeekdays() throws {
+        let container = try ModelContainerFactory.makeInMemory()
+        let context = container.mainContext
+        let push = Workout(name: "Push")
+        context.insert(push)
+        let plan = [dayRecord(1, push.id), dayRecord(4, UUID()), dayRecord(7, push.id)]
+
+        #expect(WeeklyPlanSummary.plannedWeekdays(plan: plan, workouts: [push]) == [1, 7])
+        #expect(WeeklyPlanSummary.plannedWeekdays(plan: [], workouts: [push]).isEmpty)
+    }
+
+    @Test("The short count of the Treinos row: none, one and several days")
+    func dayCountText() {
+        #expect(WeeklyPlanSummary.dayCountText(0) == "Nenhum dia")
+        #expect(WeeklyPlanSummary.dayCountText(1) == "1 dia")
+        #expect(WeeklyPlanSummary.dayCountText(4) == "4 dias")
+        #expect(WeeklyPlanSummary.dayCountText(7) == "7 dias")
     }
 
     @Test("The summary of the plan: none, one and several planned days")

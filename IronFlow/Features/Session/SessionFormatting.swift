@@ -47,6 +47,19 @@ enum SessionFormatting {
         return String(localized: "\(hours) h \(String(format: "%02ld", rest)) min")
     }
 
+    /// A duration in the short form of the Treinos recent rows and today's finished workout: "55 min",
+    /// "1 h", "1 h 02". Rounded to minutes and at least one, like `durationText`.
+    static func compactDurationText(_ duration: TimeInterval) -> String {
+        let minutes = max(1, Int((max(0, duration) / 60).rounded()))
+        guard minutes >= 60 else { return String(localized: "\(minutes) min") }
+        let hours = minutes / 60
+        let rest = minutes % 60
+        if rest == 0 {
+            return String(localized: "\(hours) h")
+        }
+        return String(localized: "\(hours) h \(String(format: "%02ld", rest))")
+    }
+
     /// "7 de outubro, 19:30"; the year is added for another year: "7 de outubro de 2025, 19:30".
     static func dateText(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
         let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
@@ -68,6 +81,21 @@ enum SessionFormatting {
         return "\(day) \(month) \(year)"
     }
 
+    /// "Qui, 15 out": the abbreviated weekday, the day and the abbreviated month; the year is added for
+    /// another year: "Qui, 15 out 2025". The day, month and year are those of `calendar`.
+    static func weekdayDateText(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let weekday = calendar.component(.weekday, from: date)
+        let name = weekdayAbbreviations.indices.contains(weekday - 1) ? weekdayAbbreviations[weekday - 1] : ""
+        return "\(name), \(shortDateText(date, now: now, calendar: calendar))"
+    }
+
+    /// "sexta-feira, 16 de outubro", in the time zone of `calendar`: what VoiceOver reads for a date.
+    static func longDateText(_ date: Date, calendar: Calendar = .current) -> String {
+        var style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide).locale(locale)
+        style.timeZone = calendar.timeZone
+        return date.formatted(style)
+    }
+
     /// The time of day with two digits for the hour and the minute, on a 24-hour clock: "00:42", "19:30".
     static func timeText(_ date: Date, calendar: Calendar = .current) -> String {
         let hour = calendar.component(.hour, from: date)
@@ -87,16 +115,6 @@ enum SessionFormatting {
         }
         let day = shortDateText(date, now: now, calendar: calendar)
         return String(localized: "Seu último registro foi em \(day) às \(time). Usar esse horário como fim?")
-    }
-
-    /// A recent session's line: "30 set · 00:42 · 1 min" (date, time it started and duration).
-    /// Without a duration: "30 set · 00:42".
-    static func recentText(startedAt: Date, duration: TimeInterval?, now: Date = .now, calendar: Calendar = .current) -> String {
-        var parts = [shortDateText(startedAt, now: now, calendar: calendar), timeText(startedAt, calendar: calendar)]
-        if let duration {
-            parts.append(durationText(duration))
-        }
-        return parts.joined(separator: " · ")
     }
 
     /// What VoiceOver reads for a recent session, as one sentence: "Push, 4 de outubro, 19:30, 45 min".
@@ -166,6 +184,17 @@ enum SessionFormatting {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = locale
         return calendar.shortMonthSymbols.map { $0.replacingOccurrences(of: ".", with: "").lowercased(with: locale) }
+    }()
+
+    /// The abbreviated weekdays with a capital letter and without the period ("Qui"), Sunday first, as
+    /// `Calendar` numbers them. Read once, like the months.
+    private static let weekdayAbbreviations: [String] = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        return calendar.shortWeekdaySymbols.map { symbol in
+            let name = symbol.replacingOccurrences(of: ".", with: "")
+            return name.prefix(1).uppercased(with: locale) + name.dropFirst()
+        }
     }()
 
     /// The abbreviated month ("set"), from 1 for January.

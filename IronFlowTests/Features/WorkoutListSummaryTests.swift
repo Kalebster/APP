@@ -38,4 +38,28 @@ struct WorkoutListSummaryTests {
         #expect(WorkoutListSummary.cardSummary(for: single) == "1 exercício · 1 série")
         #expect(WorkoutListSummary.cardSummary(for: push) == "2 exercícios · 5 séries")
     }
+
+    @Test("The muscle groups of a workout follow the order of its exercises, each once")
+    func muscleGroups() throws {
+        let harness = try ServiceTestHarness()
+        let bench = try harness.insertSystemExercise(name: "Supino Reto", muscleGroup: .chest, libraryKey: "bench-press")
+        let incline = try harness.insertSystemExercise(name: "Supino Inclinado", muscleGroup: .chest, libraryKey: "incline-bench-press")
+        let press = try harness.exercises.createCustomExercise(name: "Desenvolvimento", muscleGroup: .shoulders)
+        let pushdown = try harness.exercises.createCustomExercise(name: "Tríceps Corda", muscleGroup: .triceps)
+        let curl = try harness.exercises.createCustomExercise(name: "Stiff", muscleGroup: .hamstrings)
+
+        let push = try harness.makeWorkout(name: "Push", items: [
+            (bench, [.reps(8, 10)]), (press, [.reps(8, 10)]), (incline, [.reps(8, 10)]), (pushdown, [.reps(10, 12)]),
+        ])
+        let legs = try harness.makeWorkout(name: "Pernas", items: [(curl, [.reps(8, 10)])])
+        let empty = try harness.workouts.createWorkout(name: "Vazio")
+
+        // The second chest exercise does not repeat the group.
+        #expect(WorkoutListSummary.muscleGroups(of: push) == [.chest, .shoulders, .triceps])
+        #expect(WorkoutListSummary.muscleGroupsText(WorkoutListSummary.muscleGroups(of: push)) == "Peito · Ombros · Tríceps")
+        // The full name of the group, never shortened.
+        #expect(WorkoutListSummary.muscleGroupsText(WorkoutListSummary.muscleGroups(of: legs)) == "Posteriores de coxa")
+        #expect(WorkoutListSummary.muscleGroups(of: empty).isEmpty)
+        #expect(WorkoutListSummary.muscleGroupsText([]) == "")
+    }
 }

@@ -4,6 +4,21 @@
     "%@ concluído hoje" : {
 
     },
+    "%lld de %lld treinos" : {
+
+    },
+    "%lld de %lld treinos programados feitos" : {
+
+    },
+    "%lld de 1 treino" : {
+
+    },
+    "%lld de 1 treino programado feito" : {
+
+    },
+    "%lld dias" : {
+
+    },
     "%lld dias programados" : {
 
     },
@@ -30,6 +45,9 @@
       }
     },
     "%lld h" : {
+
+    },
+    "%lld h %@" : {
 
     },
     "%lld h %@ min" : {
@@ -113,10 +131,10 @@
     "%lld treinos no plano" : {
 
     },
-    "%lld/7 dias" : {
+    "%lld–%lld reps" : {
 
     },
-    "%lld–%lld reps" : {
+    "1 dia" : {
 
     },
     "1 dia programado" : {
@@ -248,6 +266,15 @@
     "Concluída" : {
 
     },
+    "Concluído" : {
+
+    },
+    "Concluído hoje" : {
+
+    },
+    "Concluído hoje · %@" : {
+
+    },
     "Continuar" : {
 
     },
@@ -261,6 +288,12 @@
 
     },
     "Criar treino" : {
+
+    },
+    "Crie um treino na aba Treinos ou comece um treino livre." : {
+
+    },
+    "Crie um treino para programar a semana." : {
 
     },
     "Descanso" : {
@@ -293,19 +326,25 @@
     "Duração: %@" : {
 
     },
+    "Em andamento" : {
+
+    },
     "Escolha até %lld indicadores em Personalizar." : {
 
     },
     "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
 
     },
-    "Escolha exercícios na hora e registre suas séries" : {
+    "Escolha os exercícios na hora e registre suas séries" : {
 
     },
     "Escolha um dia de segunda a domingo." : {
 
     },
     "Escolha um treino para cada dia. A programação não impede treinos em outros dias." : {
+
+    },
+    "Escolher outro" : {
 
     },
     "Escolher outro treino" : {
@@ -350,6 +389,18 @@
     "Exercícios padrão não podem ser excluídos, apenas arquivados." : {
 
     },
+    "Falta 1 para fechar a semana" : {
+
+    },
+    "Faltam %lld para fechar a semana" : {
+
+    },
+    "feito no app" : {
+
+    },
+    "feito no app e marcado fora do app" : {
+
+    },
     "Glúteos" : {
 
     },
@@ -357,6 +408,9 @@
 
     },
     "hoje" : {
+
+    },
+    "HOJE" : {
 
     },
     "Há mais de um treino em andamento. Conclua ou descarte o atual." : {
@@ -398,13 +452,16 @@
     "Já existe um exercício com esse nome." : {
 
     },
+    "kcal / dia" : {
+
+    },
     "kg" : {
 
     },
     "Marca o dia como treino feito fora do app." : {
 
     },
-    "marcado manualmente" : {
+    "marcado como feito fora do app" : {
 
     },
     "Meta" : {
@@ -431,6 +488,12 @@
     "Mínimo" : {
 
     },
+    "Nada programado" : {
+
+    },
+    "Nenhum dia" : {
+
+    },
     "Nenhum dia programado" : {
 
     },
@@ -446,7 +509,10 @@
     "Nenhum treino ainda" : {
 
     },
-    "Nenhum treino planejado para hoje." : {
+    "Nenhum treino criado" : {
+
+    },
+    "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre." : {
 
     },
     "Nenhum treino realizado" : {
@@ -533,22 +599,40 @@
     "Personalizar" : {
 
     },
+    "Peso" : {
+
+    },
     "Peso corporal" : {
 
     },
     "Posteriores de coxa" : {
 
     },
-    "Programado para hoje" : {
+    "Programado" : {
+
+    },
+    "programado para hoje" : {
+
+    },
+    "Programar semana" : {
 
     },
     "Programação semanal" : {
 
     },
+    "Programe a semana para acompanhar sua meta." : {
+
+    },
     "Quadríceps" : {
 
     },
+    "Quarta" : {
+
+    },
     "Quarta-feira" : {
+
+    },
+    "Quinta" : {
 
     },
     "Quinta-feira" : {
@@ -584,6 +668,9 @@
     "Salvar" : {
 
     },
+    "Segunda" : {
+
+    },
     "Segunda-feira" : {
 
     },
@@ -597,6 +684,9 @@
 
     },
     "sem treino" : {
+
+    },
+    "Semana completa" : {
 
     },
     "Seu último registro foi em %@ às %@. Usar esse horário como fim?" : {
@@ -617,6 +707,9 @@
     "Seus treinos concluídos aparecerão aqui." : {
 
     },
+    "Sexta" : {
+
+    },
     "Sexta-feira" : {
 
     },
@@ -635,7 +728,13 @@
     "Tentar novamente" : {
 
     },
+    "Terça" : {
+
+    },
     "Terça-feira" : {
+
+    },
+    "treino" : {
 
     },
     "Treino de hoje" : {
@@ -647,19 +746,19 @@
     "Treino livre" : {
 
     },
+    "treino programado" : {
+
+    },
     "Treinos" : {
+
+    },
+    "treinos" : {
 
     },
     "Treinos recentes" : {
 
     },
     "Treinou fora do app? Toque no dia para marcar." : {
-
-    },
-    "treinou no app" : {
-
-    },
-    "treinou no app e marcado manualmente" : {
 
     },
     "Tríceps" : {
@@ -683,7 +782,7 @@
     "Valor" : {
 
     },
-    "Você ainda não tem treinos." : {
+    "Ver tudo" : {
 
     },
     "Você já tem um treino em andamento." : {

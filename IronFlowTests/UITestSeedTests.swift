@@ -17,7 +17,7 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push")
 
         #expect(items == [
             .workout(name: "Push", exercises: ["Crossover na Polia", "Barra Fixa"]),
@@ -26,12 +26,15 @@ struct UITestSeedTests {
             .finishedSessions(workout: "Push", count: 4),
             .sessionDetail(workout: "Push"),
             .openSession(workout: "Push"),
+            .plan(workout: "Push", weekdays: [1, 3, 7]),
+            .finishedToday(workout: "Push"),
         ])
     }
 
     @Test("An item it does not know, or one without what it needs, is refused")
     func refusesUnknownItems() {
-        for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session"] {
+        for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session",
+                     "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today"] {
             #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
         }
     }
@@ -94,6 +97,29 @@ struct UITestSeedTests {
         #expect(logs.map(\.reps) == [10, 12, nil])
     }
 
+    @Test("A workout is planned for the given weekdays, and a session of it is finished today")
+    func plansWeekdaysAndFinishesToday() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let before = Date.now
+
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa,plan:Push:1|3|7,finished-today:Push"), in: context)
+
+        let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
+        let plan = try context.fetch(FetchDescriptor<WeeklyPlanDay>())
+        #expect(Set(plan.map(\.weekday)) == [1, 3, 7])
+        #expect(plan.allSatisfy { $0.workoutID == push.id })
+
+        let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
+        let calendar = TrainingDay.calendar
+        #expect(session.workout?.id == push.id)
+        #expect(session.endedAt != nil)
+        #expect(calendar.isDate(session.startedAt, inSameDayAs: before))
+        // 55 minutes, or less just after midnight.
+        #expect((session.duration ?? 0) <= 3_300 + 1)
+        #expect(session.orderedExercises[0].orderedSetLogs[0].isCompleted)
+    }
+
     @Test("The session left open started 3 hours ago, has its first set done 2 hours ago and is not finished")
     func leavesASessionOpen() throws {
         let container = try makeContainer()
@@ -144,6 +170,19 @@ struct UITestSeedTests {
 
         UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", "workout:Push"])
         #expect(try context.fetch(FetchDescriptor<Workout>()).map(\.name) == ["Push"])
+    }
+
+    @Test("The list arrives percent-encoded, so an accented exercise name is found as written")
+    func decodesThePercentEncodedList() throws {
+        let container = try makeContainer()
+        let list = try #require("workout:Push:Tríceps na Polia com Corda|Barra Fixa".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
+        let isASCII = list.allSatisfy(\.isASCII)
+        #expect(isASCII, "Encoded list: \(list)")
+
+        UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", list])
+
+        let push = try #require(try container.mainContext.fetch(FetchDescriptor<Workout>()).first)
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Tríceps na Polia com Corda", "Barra Fixa"])
     }
 }
 #endif

@@ -101,18 +101,37 @@ struct SessionFormattingTests {
         #expect(SessionFormatting.timeText(date, calendar: utc) == "02:50")
     }
 
-    @Test("A recent session line: the date, the time it started and the duration")
-    func recentLine() throws {
+    @Test("A recent session's day: the abbreviated weekday with a capital letter, the day and the month; the year only for another year")
+    func weekdayDate() throws {
         let calendar = try saoPauloCalendar()
-        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 12, day: 1)))
-        let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: 0, minute: 42)))
-        let lastYear = try #require(calendar.date(from: DateComponents(year: 2025, month: 9, day: 30, hour: 18, minute: 5)))
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 19)))
+        // Monday the 12th to Sunday the 18th of October 2026.
+        let names = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+        for (offset, name) in names.enumerated() {
+            let date = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 12 + offset, hour: 19, minute: 30)))
+            #expect(SessionFormatting.weekdayDateText(date, now: now, calendar: calendar) == "\(name), \(12 + offset) out")
+        }
+        let lastYear = try #require(calendar.date(from: DateComponents(year: 2025, month: 10, day: 15, hour: 8)))
+        #expect(SessionFormatting.weekdayDateText(lastYear, now: now, calendar: calendar) == "Qua, 15 out 2025")
+        // The day is the one of the calendar's time zone: 23:50 in São Paulo is already Friday in UTC.
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try #require(TimeZone(identifier: "UTC"))
+        let late = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 15, hour: 23, minute: 50)))
+        #expect(SessionFormatting.weekdayDateText(late, now: now, calendar: calendar) == "Qui, 15 out")
+        #expect(SessionFormatting.weekdayDateText(late, now: now, calendar: utc) == "Sex, 16 out")
+        #expect(SessionFormatting.longDateText(late, calendar: calendar) == "quinta-feira, 15 de outubro")
+    }
 
-        #expect(SessionFormatting.recentText(startedAt: date, duration: 60, now: now, calendar: calendar) == "30 set · 00:42 · 1 min")
-        #expect(SessionFormatting.recentText(startedAt: date, duration: 45 * 60, now: now, calendar: calendar) == "30 set · 00:42 · 45 min")
-        #expect(SessionFormatting.recentText(startedAt: lastYear, duration: 65 * 60, now: now, calendar: calendar) == "30 set 2025 · 18:05 · 1 h 05 min")
-        // Without a duration, only the date and the time.
-        #expect(SessionFormatting.recentText(startedAt: date, duration: nil, now: now, calendar: calendar) == "30 set · 00:42")
+    @Test("The short duration: minutes, then hours with two-digit minutes and no unit after them")
+    func compactDuration() {
+        #expect(SessionFormatting.compactDurationText(0) == "1 min")
+        #expect(SessionFormatting.compactDurationText(55 * 60) == "55 min")
+        #expect(SessionFormatting.compactDurationText(59 * 60 + 40) == "1 h")
+        #expect(SessionFormatting.compactDurationText(60 * 60) == "1 h")
+        #expect(SessionFormatting.compactDurationText(62 * 60) == "1 h 02")
+        #expect(SessionFormatting.compactDurationText(135 * 60) == "2 h 15")
+        // The long form, in the history, keeps the unit.
+        #expect(SessionFormatting.durationText(62 * 60) == "1 h 02 min")
     }
 
     @Test("The question about a session left open names the day only when the last record was not today")
