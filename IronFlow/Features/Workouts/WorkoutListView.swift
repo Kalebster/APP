@@ -265,43 +265,92 @@ struct WorkoutListView: View {
 private struct WeeklyPlanRow: View {
     let plannedWeekdays: Set<Int>
 
-    /// The letters of the days, Monday to Sunday.
-    private static let letters = ["S", "T", "Q", "Q", "S", "S", "D"]
-
-    @ScaledMetric(relativeTo: .caption2) private var dayTile: CGFloat = 19
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(spacing: 12) {
-            IconTile(systemImage: "calendar", side: 36, cornerRadius: 10)
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Programação semanal")
-                    .scaledFont(14, weight: .bold)
-                HStack(spacing: 4) {
-                    ForEach(Array(Self.letters.enumerated()), id: \.offset) { index, letter in
-                        let isPlanned = plannedWeekdays.contains(index + 1)
-                        Text(verbatim: letter)
-                            .scaledFont(10, weight: .bold)
-                            .foregroundStyle(isPlanned ? Theme.Colors.plannedDayLetter : Theme.Colors.dimText)
-                            .frame(width: dayTile, height: dayTile)
-                            .background(
-                                isPlanned ? Theme.Colors.plannedDayBackground : Theme.Colors.unplannedDayBackground,
-                                in: RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            )
+        Group {
+            // With the accessibility text sizes the row does not fit side by side: the icon and the
+            // chevron go on top, and the name, the days and the count below them, with the whole width.
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        icon
+                        Spacer(minLength: 8)
+                        chevron
                     }
+                    title
+                    days
+                    dayCount
                 }
-                // Seven tiles in a row never fit the largest text sizes.
-                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+            } else {
+                HStack(spacing: 12) {
+                    icon
+                    VStack(alignment: .leading, spacing: 6) {
+                        title
+                        days
+                    }
+                    Spacer(minLength: 8)
+                    dayCount
+                    chevron
+                }
             }
-            Spacer(minLength: 8)
-            Text(WeeklyPlanSummary.dayCountText(plannedWeekdays.count))
-                .scaledFont(11)
-                .foregroundStyle(.secondary)
-            Image(systemName: "chevron.right")
-                .scaledFont(12, weight: .semibold)
-                .foregroundStyle(.tertiary)
         }
         .cardStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 14), cornerRadius: 17)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: "Programação semanal")), \(WeeklyPlanSummary.summaryText(plannedWeekdays.count))"))
+    }
+
+    private var icon: some View {
+        IconTile(systemImage: "calendar", side: 36, cornerRadius: 10)
+    }
+
+    private var title: some View {
+        Text("Programação semanal")
+            .scaledFont(14, weight: .bold)
+    }
+
+    private var days: some View {
+        WeekdayTiles(plannedWeekdays: plannedWeekdays)
+            // Seven tiles in a row never fit the largest text sizes.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+    }
+
+    private var dayCount: some View {
+        Text(WeeklyPlanSummary.dayCountText(plannedWeekdays.count))
+            .scaledFont(11)
+            .foregroundStyle(.secondary)
+    }
+
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .scaledFont(12, weight: .semibold)
+            .foregroundStyle(.tertiary)
+    }
+}
+
+/// The seven days of the weekly plan row, Monday to Sunday, with the planned ones in blue. A view of
+/// its own, so the size of its tiles follows the text size limit set on it, like its letters.
+private struct WeekdayTiles: View {
+    let plannedWeekdays: Set<Int>
+
+    /// The letters of the days, Monday to Sunday.
+    private static let letters = ["S", "T", "Q", "Q", "S", "S", "D"]
+
+    @ScaledMetric(relativeTo: .caption2) private var side: CGFloat = 19
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(Self.letters.enumerated()), id: \.offset) { index, letter in
+                let isPlanned = plannedWeekdays.contains(index + 1)
+                Text(verbatim: letter)
+                    .scaledFont(10, weight: .bold)
+                    .foregroundStyle(isPlanned ? Theme.Colors.plannedDayLetter : Theme.Colors.dimText)
+                    .frame(width: side, height: side)
+                    .background(
+                        isPlanned ? Theme.Colors.plannedDayBackground : Theme.Colors.unplannedDayBackground,
+                        in: RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    )
+            }
+        }
     }
 }
