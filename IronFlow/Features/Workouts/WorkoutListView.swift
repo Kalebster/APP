@@ -265,34 +265,31 @@ struct WorkoutListView: View {
 private struct WeeklyPlanRow: View {
     let plannedWeekdays: Set<Int>
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
-        Group {
-            // With the accessibility text sizes the row does not fit side by side: the icon and the
-            // chevron go on top, and the name, the days and the count below them, with the whole width.
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        icon
-                        Spacer(minLength: 8)
-                        chevron
-                    }
+        // Side by side when it fits. With large text it does not: the icon and the chevron go on top,
+        // and the name, the days and the count below them, with the whole width.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                icon
+                VStack(alignment: .leading, spacing: 6) {
                     title
                     days
-                    dayCount
                 }
-            } else {
-                HStack(spacing: 12) {
+                // The name gets its width first, so it is not wrapped while the row has room.
+                .layoutPriority(1)
+                Spacer(minLength: 8)
+                dayCount
+                chevron
+            }
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
                     icon
-                    VStack(alignment: .leading, spacing: 6) {
-                        title
-                        days
-                    }
                     Spacer(minLength: 8)
-                    dayCount
                     chevron
                 }
+                title
+                days
+                dayCount
             }
         }
         .cardStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 14), cornerRadius: 17)

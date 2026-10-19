@@ -125,31 +125,40 @@ struct HomeView: View {
 
     /// The app's mark and name, and today's date.
     private func header(calendar: Calendar) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: logoSide * 0.47, weight: .semibold))
-                    .rotationEffect(.degrees(45))
-                    .foregroundStyle(.white)
-                    .frame(width: logoSide, height: logoSide)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                Text(verbatim: "IRON FLOW")
-                    .scaledFont(17, weight: .heavy)
-                    .tracking(0.5)
+        let brand = HStack(spacing: 12) {
+            Image(systemName: "dumbbell.fill")
+                .font(.system(size: logoSide * 0.47, weight: .semibold))
+                .rotationEffect(.degrees(45))
+                .foregroundStyle(.white)
+                .frame(width: logoSide, height: logoSide)
+                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            Text(verbatim: "IRON FLOW")
+                .scaledFont(17, weight: .heavy)
+                .tracking(0.5)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "Iron Flow"))
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityIdentifier("home.header")
+
+        let date = Text(verbatim: SessionFormatting.weekdayDateText(now, now: now, calendar: calendar))
+            .scaledFont(12)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel(Text(verbatim: SessionFormatting.longDateText(now, calendar: calendar)))
+            .accessibilityIdentifier("home.date")
+
+        // Side by side when they fit; with the largest text sizes the date goes below the name, so
+        // no word is broken.
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 12) {
+                brand
+                Spacer(minLength: 8)
+                date
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(verbatim: "Iron Flow"))
-            .accessibilityAddTraits(.isHeader)
-            .accessibilityIdentifier("home.header")
-
-            Spacer(minLength: 8)
-
-            Text(verbatim: SessionFormatting.weekdayDateText(now, now: now, calendar: calendar))
-                .scaledFont(12)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.trailing)
-                .accessibilityLabel(Text(verbatim: SessionFormatting.longDateText(now, calendar: calendar)))
-                .accessibilityIdentifier("home.date")
+            VStack(alignment: .leading, spacing: 8) {
+                brand
+                date
+            }
         }
     }
 
@@ -302,18 +311,17 @@ private struct TodayWorkoutCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
-            HStack(alignment: .center, spacing: 8) {
-                Text("Treino de hoje")
-                    .scaledFont(10, weight: .bold)
-                    .tracking(1.7)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Theme.Colors.highlightLabel)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 8)
-                if let badge = content.badge {
-                    // VoiceOver reads the state with the text below.
-                    CapsuleBadge(text: badge, weight: .semibold, tracking: 0, padding: EdgeInsets(top: 4, leading: 9, bottom: 4, trailing: 9))
-                        .accessibilityHidden(true)
+            // Side by side when they fit; with the largest text sizes the badge goes below the
+            // label, so it is never cut.
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 8) {
+                    sectionLabel
+                    Spacer(minLength: 8)
+                    stateBadge
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    sectionLabel
+                    stateBadge
                 }
             }
 
@@ -351,6 +359,24 @@ private struct TodayWorkoutCard: View {
             secondaryButtons
         }
         .highlightStyle(padding: EdgeInsets(top: 15, leading: 15, bottom: 14, trailing: 15), cornerRadius: 20)
+    }
+
+    private var sectionLabel: some View {
+        Text("Treino de hoje")
+            .scaledFont(10, weight: .bold)
+            .tracking(1.7)
+            .textCase(.uppercase)
+            .foregroundStyle(Theme.Colors.highlightLabel)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    @ViewBuilder
+    private var stateBadge: some View {
+        if let badge = content.badge {
+            // VoiceOver reads the state with the text below.
+            CapsuleBadge(text: badge, weight: .semibold, tracking: 0, padding: EdgeInsets(top: 4, leading: 9, bottom: 4, trailing: 9))
+                .accessibilityHidden(true)
+        }
     }
 
     /// Side by side; stacked with the accessibility text sizes. Each keeps a 44-point touch area,
