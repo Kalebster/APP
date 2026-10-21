@@ -18,6 +18,9 @@ struct RootView: View {
     /// The session shown over the tabs; `nil` while it is minimized or when none is in progress.
     @State private var openedSession: Session?
     @State private var isSessionInProgress = false
+    /// The rest between sets of the session in progress. Kept here, so it goes on while the session
+    /// screen is minimized; never stored.
+    @State private var restTimer = RestTimer()
     @State private var errorMessage: String?
 
     var body: some View {
@@ -78,14 +81,17 @@ struct RootView: View {
             }
         }
         .fullScreenCover(item: $openedSession) { session in
-            SessionView(session: session) {
+            SessionView(session: session, restTimer: $restTimer) {
                 openedSession = nil
             }
         }
-        // A session finished or discarded elsewhere is never left on screen.
+        // A session finished or discarded elsewhere is never left on screen, and its rest ends.
         .onChange(of: activeSessions.map(\.id)) { _, activeIDs in
             if let openedSession, !activeIDs.contains(openedSession.id) {
                 self.openedSession = nil
+            }
+            if let restSessionID = restTimer.sessionID, !activeIDs.contains(restSessionID) {
+                restTimer.stop()
             }
         }
         .alert("Você já tem um treino em andamento.", isPresented: $isSessionInProgress) {
