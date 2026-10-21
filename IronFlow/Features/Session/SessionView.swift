@@ -74,23 +74,11 @@ struct SessionView: View {
                 }
 
                 ForEach(Array(exercises.enumerated()), id: \.element.id) { index, performed in
-                    let sets = setsByExercise[index]
-                    let isFinished = SessionProgress.isFinished(sets)
-                    SessionExerciseCard(
-                        performed: performed,
-                        sets: sets,
-                        previousSets: performed.exercise.flatMap { lastPerformances[$0.id] } ?? [],
+                    exerciseCard(
+                        performed,
+                        sets: setsByExercise[index],
                         isCurrent: progress.currentExerciseIndex == index,
-                        currentSetID: progress.currentSetID,
-                        isFinished: isFinished,
-                        isClosed: isFinished && !openedFinished.contains(performed.id),
-                        focusedField: $focusedField,
-                        draft: draftBinding,
-                        onToggle: { log, suggestion in toggle(log, of: performed, suggestion: suggestion) },
-                        onAddSet: { addSet(to: performed) },
-                        onRemoveSet: { log in requestRemoval(of: log) },
-                        onRemoveExercise: { requestRemoval(of: performed) },
-                        onOpenOrClose: { openOrClose(performed) }
+                        currentSetID: progress.currentSetID
                     )
                 }
 
@@ -206,6 +194,30 @@ struct SessionView: View {
             }
             .errorAlert($errorMessage)
         }
+    }
+
+    /// The card of one exercise, with its "Última vez" and the screen's actions. Built here rather than
+    /// in the list, so the compiler checks the call on its own.
+    private func exerciseCard(_ performed: SessionExercise, sets: [SetLog], isCurrent: Bool, currentSetID: UUID?) -> SessionExerciseCard {
+        let isFinished = SessionProgress.isFinished(sets)
+        let previousSets: [PreviousSet] = performed.exercise.flatMap { lastPerformances[$0.id] } ?? []
+        let isClosed = isFinished && !openedFinished.contains(performed.id)
+        return SessionExerciseCard(
+            performed: performed,
+            sets: sets,
+            previousSets: previousSets,
+            isCurrent: isCurrent,
+            currentSetID: currentSetID,
+            isFinished: isFinished,
+            isClosed: isClosed,
+            focusedField: $focusedField,
+            draft: { (log: SetLog) -> Binding<SetDraft> in draftBinding(for: log) },
+            onToggle: { (log: SetLog, suggestion: SetSuggestion) in toggle(log, of: performed, suggestion: suggestion) },
+            onAddSet: { addSet(to: performed) },
+            onRemoveSet: { (log: SetLog) in requestRemoval(of: log) },
+            onRemoveExercise: { requestRemoval(of: performed) },
+            onOpenOrClose: { openOrClose(performed) }
+        )
     }
 
     /// "+ Adicionar exercício", a dashed outline after the last card.
