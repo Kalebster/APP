@@ -230,4 +230,48 @@ struct SessionFormattingTests {
         #expect(SessionFormatting.repsForCompletion(typed: nil, targetMin: 8, targetMax: nil) == 8)
         #expect(SessionFormatting.repsForCompletion(typed: nil, targetMin: nil, targetMax: nil) == nil)
     }
+
+    @Test("Checking a set with an empty field records the suggestion in gray; what is typed wins")
+    func completionWithSuggestion() {
+        let suggestion = SetSuggestion(weightKg: 22, reps: 10)
+        // Nothing typed: both suggested values.
+        #expect(SessionFormatting.completionValues(typed: SetValues(weightKg: nil, reps: nil), suggestion: suggestion)
+            == SetValues(weightKg: 22, reps: 10))
+        // Only the load typed: the typed load and the suggested repetitions.
+        #expect(SessionFormatting.completionValues(typed: SetValues(weightKg: 25, reps: nil), suggestion: suggestion)
+            == SetValues(weightKg: 25, reps: 10))
+        // Only the repetitions typed.
+        #expect(SessionFormatting.completionValues(typed: SetValues(weightKg: nil, reps: 8), suggestion: suggestion)
+            == SetValues(weightKg: 22, reps: 8))
+        // Without a suggestion, as before: no load, and no repetitions (the set cannot be checked).
+        #expect(SessionFormatting.completionValues(typed: SetValues(weightKg: nil, reps: nil), suggestion: .empty)
+            == SetValues(weightKg: nil, reps: nil))
+    }
+
+    @Test("The suggestion comes from the same set the last time, or else from the plan")
+    func suggestion() {
+        let previous = PreviousSet(weightKg: 22, reps: 10)
+        #expect(LastPerformance.suggestion(previous: previous, targetWeightKg: 20, targetRepsMin: 8, targetRepsMax: 12)
+            == SetSuggestion(weightKg: 22, reps: 10))
+        // Done without a load the last time: no load is suggested, even with a planned one.
+        #expect(LastPerformance.suggestion(previous: PreviousSet(weightKg: nil, reps: 12), targetWeightKg: 20, targetRepsMin: 8, targetRepsMax: 12)
+            == SetSuggestion(weightKg: nil, reps: 12))
+        // No last time for that set: the planned load and the maximum of the targets (or the minimum).
+        #expect(LastPerformance.suggestion(previous: nil, targetWeightKg: 20, targetRepsMin: 8, targetRepsMax: 12)
+            == SetSuggestion(weightKg: 20, reps: 12))
+        #expect(LastPerformance.suggestion(previous: nil, targetWeightKg: nil, targetRepsMin: 8, targetRepsMax: nil)
+            == SetSuggestion(weightKg: nil, reps: 8))
+        #expect(LastPerformance.suggestion(previous: nil, targetWeightKg: nil, targetRepsMin: nil, targetRepsMax: nil) == .empty)
+    }
+
+    @Test("The \"ÚLTIMA\" column: load × repetitions, only the repetitions without a load, a dash without data")
+    func previousSetText() {
+        #expect(LastPerformance.text(of: PreviousSet(weightKg: 22, reps: 10)) == "22 × 10")
+        #expect(LastPerformance.text(of: PreviousSet(weightKg: 22.5, reps: 8)) == "22,5 × 8")
+        #expect(LastPerformance.text(of: PreviousSet(weightKg: nil, reps: 12)) == "12")
+        #expect(LastPerformance.text(of: nil) == "—")
+        #expect(LastPerformance.accessibilityText(of: PreviousSet(weightKg: 22.5, reps: 8)) == "Última vez: 22,5 kg, 8 repetições")
+        #expect(LastPerformance.accessibilityText(of: PreviousSet(weightKg: nil, reps: 1)) == "Última vez: 1 repetição")
+        #expect(LastPerformance.accessibilityText(of: nil) == "Sem registro da última vez")
+    }
 }

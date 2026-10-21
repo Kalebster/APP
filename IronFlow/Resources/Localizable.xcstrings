@@ -4,10 +4,19 @@
     "%@ concluído hoje" : {
 
     },
+    "%@ kg levantados" : {
+
+    },
+    "%lld de %lld séries" : {
+
+    },
     "%lld de %lld treinos" : {
 
     },
     "%lld de %lld treinos programados feitos" : {
+
+    },
+    "%lld de 1 série" : {
 
     },
     "%lld de 1 treino" : {
@@ -377,6 +386,9 @@
     "Excluir “%@”?" : {
 
     },
+    "Exercício %lld de %lld" : {
+
+    },
     "Exercício removido" : {
 
     },
@@ -465,6 +477,31 @@
 
     },
     "Meta" : {
+
+    },
+    "meta %lld reps" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "meta %lld rep"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "meta %lld reps"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "meta %lld–%lld reps" : {
 
     },
     "Meta diária" : {
@@ -680,6 +717,9 @@
     "Sem meta" : {
 
     },
+    "Sem registro da última vez" : {
+
+    },
     "Sem repetições" : {
 
     },
@@ -786,6 +826,12 @@
 
     },
     "Você já tem um treino em andamento." : {
+
+    },
+    "Última vez: %@" : {
+
+    },
+    "Última vez: %@, %@" : {
 
     }
   },

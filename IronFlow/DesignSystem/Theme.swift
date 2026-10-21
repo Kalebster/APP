@@ -44,6 +44,20 @@ enum Theme {
         static let mediumText = Color(.mediumText)
         /// The line between the rows of a card.
         static let rowSeparator = Color(.rowSeparator)
+
+        // The session in progress.
+        /// The fill of a set's load and repetition fields.
+        static let setFieldBackground = Color(.setFieldBackground)
+        /// The value offered in an empty field (the last time, or the plan).
+        static let suggestionText = Color(.suggestionText)
+        /// The outline of a set's completion mark and of the rest bar.
+        static let controlBorder = Color(.controlBorder)
+        /// The row of the current set, its fields and their suggestion.
+        static let currentSetBackground = Color(.currentSetBackground)
+        static let currentFieldBackground = Color(.currentFieldBackground)
+        static let currentSuggestionText = Color(.currentSuggestionText)
+        /// The floating rest bar.
+        static let restBarBackground = Color(.restBarBackground)
     }
 
     enum Metrics {

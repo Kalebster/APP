@@ -175,6 +175,25 @@ enum SessionFormatting {
         typed ?? targetMax ?? targetMin
     }
 
+    /// The values recorded when a set is checked: what is typed (or already stored), and the
+    /// suggestion for a field left empty. The repetitions stay `nil` when there is neither, and the set
+    /// cannot be checked.
+    static func completionValues(typed: SetValues, suggestion: SetSuggestion) -> SetValues {
+        SetValues(weightKg: typed.weightKg ?? suggestion.weightKg, reps: typed.reps ?? suggestion.reps)
+    }
+
+    /// The load lifted in the session, rounded to the kilogram: "2.440 kg levantados".
+    static func volumeText(_ volumeKg: Double) -> String {
+        let kilograms = Int(max(0, volumeKg).rounded()).formatted(.number.grouping(.automatic).locale(locale))
+        return String(localized: "\(kilograms) kg levantados")
+    }
+
+    /// The rest time left, rounded up to the second: "1:30", "0:05", "0:00".
+    static func restText(_ remaining: TimeInterval) -> String {
+        let seconds = Int(max(0, remaining).rounded(.up))
+        return String(format: "%ld:%02ld", seconds / 60, seconds % 60)
+    }
+
     // MARK: - Private
 
     /// The abbreviated months in lowercase and without the period ("set"), January first. Read once:

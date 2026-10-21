@@ -2,7 +2,7 @@ import Testing
 import UIKit
 
 /// The app is dark only, so each color of the asset catalog has a single value: the dark one the app
-/// has always shown, or the one of the approved Início and Treinos models.
+/// has always shown, or the one of the approved Início, Treinos and session models.
 @MainActor
 struct AppearanceTests {
     /// The red, green and blue of a catalog color as 0...255 integers, as the given device style shows it.
@@ -48,6 +48,14 @@ struct AppearanceTests {
             ("MediumText", [0xC9, 0xCB, 0xD1]),
             ("RowSeparator", [0x24, 0x26, 0x2C]),
             ("BrightText", [0xF2, 0xF3, 0xF5]),
+            // The session in progress model.
+            ("SetFieldBackground", [0x1E, 0x1F, 0x24]),
+            ("SuggestionText", [0x54, 0x57, 0x5E]),
+            ("ControlBorder", [0x34, 0x36, 0x3C]),
+            ("CurrentSetBackground", [0x16, 0x22, 0x41]),
+            ("CurrentFieldBackground", [0x20, 0x30, 0x5A]),
+            ("CurrentSuggestionText", [0x7F, 0x92, 0xC2]),
+            ("RestBarBackground", [0x1C, 0x1D, 0x22]),
         ]
         for (name, rgb) in expected {
             let dark = try components(of: name, style: .dark)
