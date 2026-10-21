@@ -38,6 +38,26 @@ final class SessionScreenUITests: IronFlowUITestCase {
         return minutes * 60 + seconds
     }
 
+    /// Drags the list up by what is visible between the header and the keyboard (with its OK bar) or the
+    /// bottom of the screen: a drag of the list itself, which a swipe over the whole app may not be.
+    @MainActor
+    private func dragListUp(in app: XCUIApplication) {
+        let top = element("session.progress", in: app).frame.maxY + 30
+        var bottom = app.windows.firstMatch.frame.maxY - 60
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            bottom = min(bottom, keyboard.frame.minY - 30)
+        }
+        let ok = app.buttons["OK"]
+        if ok.exists {
+            bottom = min(bottom, ok.frame.minY - 30)
+        }
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let x = app.windows.firstMatch.frame.midX
+        origin.withOffset(CGVector(dx: x, dy: bottom))
+            .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: x, dy: top)))
+    }
+
     /// Waits until the query finds `count` elements.
     @MainActor
     private func waitForCount(_ query: XCUIElementQuery, _ count: Int, timeout: TimeInterval = 10) -> Bool {
@@ -67,6 +87,10 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(element("session.volume", in: app).label, "0 kg levantados")
         XCTAssertEqual(element("session.progress", in: app).label, "0 de 12 séries, Exercício 1 de 4")
         XCTAssertTrue(app.staticTexts["Série 1, atual"].exists, "The first set is not the current one")
+        recordMeasurement(
+            "Medição: marcas de séries não feitas, antes de tocar",
+            "série 1 selecionada: \(checks(in: app).element(boundBy: 0).isSelected), série 2: \(checks(in: app).element(boundBy: 1).isSelected)"
+        )
         attachScreenshot(named: "65-session-current-set", of: app)
 
         // ✓ without typing records the values in gray, and starts the rest.
@@ -185,15 +209,28 @@ final class SessionScreenUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos", seed: [push])
         startWorkout(named: "Push", in: app)
 
-        // A load typed in the first set, which then scrolls out of sight.
+        // A load typed in the first set, which then scrolls out of sight with the keyboard still up:
+        // its row is gone, or under the header.
         let weight = weightFields(in: app).element(boundBy: 0)
         XCTAssertTrue(weight.waitForExistence(timeout: 10), "No load field")
         weight.tap()
         weight.typeText("42")
-        app.swipeUp()
-        app.swipeUp()
+        recordMeasurement(
+            "Medição: marca da série 1 não feita, com o campo de carga em foco",
+            "selecionada: \(checks(in: app).element(boundBy: 0).isSelected)"
+        )
         let firstSet = app.staticTexts["Série 1, atual"]
-        XCTAssertFalse(firstSet.exists && firstSet.isHittable, "The first set did not leave the screen")
+        let headerBottom = element("session.progress", in: app).frame.maxY
+        var positions: [String] = []
+        while firstSet.exists, firstSet.frame.maxY > headerBottom, positions.count < 5 {
+            dragListUp(in: app)
+            positions.append(firstSet.exists ? "\(Int(firstSet.frame.minY))" : "fora")
+        }
+        recordMeasurement(
+            "Medição: série 1 ao rolar com o teclado",
+            "cabeçalho até \(Int(headerBottom)); série 1 depois de cada arrasto: \(positions.joined(separator: ", "))"
+        )
+        XCTAssertFalse(firstSet.exists && firstSet.frame.maxY > headerBottom, "The first set did not leave the screen: \(positions)")
 
         // Minimized and opened again, the screen is built anew from what was saved.
         app.buttons["session.minimize"].tap()
@@ -205,7 +242,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
 
         // A field near the end of the list stays above the keyboard while typing.
         for _ in 0..<4 {
-            app.swipeUp()
+            dragListUp(in: app)
         }
         let lastReps = repsFields(in: app).allElementsBoundByIndex.last
         let field = try XCTUnwrap(lastReps, "No repetition field at the end of the list")
@@ -234,12 +271,26 @@ final class SessionScreenUITests: IronFlowUITestCase {
             let bar = app.buttons["session.bar"]
             XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown with \(size)")
             bar.tap()
+            XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened with \(size)")
+            // With the largest sizes a set takes two lines: the second one may be just below the screen.
             let second = checks(in: app).element(boundBy: 1)
-            XCTAssertTrue(second.waitForExistence(timeout: 10), "Session not opened with \(size)")
+            if !second.waitForExistence(timeout: 3) {
+                dragListUp(in: app)
+            }
+            XCTAssertTrue(second.waitForExistence(timeout: 10), "No second set with \(size)")
             second.tap()
+            let rest = element("session.rest", in: app)
             XCTAssertTrue(app.buttons["session.rest.skip"].waitForExistence(timeout: 10), "No rest bar with \(size)")
 
+            // The header and the rest bar, which stay in place, leave the sets at least a third of the screen.
             let screen = app.windows.firstMatch.frame
+            let headerBottom = element("session.progress", in: app).frame.maxY
+            let room = rest.frame.minY - headerBottom
+            recordMeasurement(
+                "Medição: espaço das séries com \(size)",
+                "cabeçalho até \(Int(headerBottom)), barra de descanso de \(Int(rest.frame.minY)) a \(Int(rest.frame.maxY)), espaço \(Int(room)) de \(Int(screen.height)) pt"
+            )
+            XCTAssertGreaterThanOrEqual(room, screen.height / 3, "The header and the rest bar leave the sets \(room) pt with \(size)")
             let elements = [
                 ("finish", app.buttons["session.finish"]),
                 ("minimize", app.buttons["session.minimize"]),

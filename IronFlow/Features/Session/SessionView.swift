@@ -88,6 +88,8 @@ struct SessionView: View {
             .scrollContentBackground(.hidden)
             .environment(\.defaultMinListRowHeight, 0)
             .scrollDismissesKeyboard(.interactively)
+            // The header and the rest bar stay in place, so, like the system's bars, they stop growing at
+            // the first accessibility text size: with the largest ones they would leave the sets no room.
             .safeAreaInset(edge: .top, spacing: 0) {
                 SessionHeader(
                     name: SessionFormatting.name(session.workoutNameSnapshot),
@@ -101,6 +103,7 @@ struct SessionView: View {
                     },
                     onFinish: requestFinish
                 )
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             }
             // The list ends above the rest bar, so the bar never covers its last rows. It steps aside
             // while a value is typed, leaving the keyboard's room to the field; the rest goes on.
@@ -111,6 +114,7 @@ struct SessionView: View {
                         onAdd: { seconds in restTimer.add(seconds, at: .now) },
                         onSkip: { restTimer.stop() }
                     )
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("session.rest")
                 }

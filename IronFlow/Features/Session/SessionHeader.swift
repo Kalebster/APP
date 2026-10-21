@@ -3,6 +3,9 @@ import SwiftUI
 /// The top of the session screen, kept in place while the sets scroll: minimize, the workout's name
 /// with its clock and the load lifted, the ⋯ menu (with "Descartar treino") and "Concluir"; then the
 /// progress bar with the sets done and the current exercise.
+///
+/// Like the system's bars, the session screen keeps it from growing past the first accessibility text
+/// size; a long press on a button shows it larger (Large Content Viewer).
 struct SessionHeader: View {
     let name: String
     let startedAt: Date
@@ -122,6 +125,7 @@ struct SessionHeader: View {
         }
         .buttonStyle(.plain)
         .padding(-touchExtra)
+        .accessibilityShowsLargeContentViewer()
         .accessibilityLabel(Text("Minimizar"))
         .accessibilityIdentifier("session.minimize")
     }
@@ -134,6 +138,7 @@ struct SessionHeader: View {
             roundButton("ellipsis")
         }
         .padding(-touchExtra)
+        .accessibilityShowsLargeContentViewer()
         .accessibilityLabel(Text("Mais opções do treino"))
         .accessibilityIdentifier("session.more")
     }
@@ -153,6 +158,7 @@ struct SessionHeader: View {
         .buttonStyle(.plain)
         .padding(.vertical, -touchExtra)
         .fixedSize()
+        .accessibilityShowsLargeContentViewer()
         .accessibilityIdentifier("session.finish")
     }
 }

@@ -3,7 +3,8 @@ import SwiftUI
 /// The floating rest bar, above the bottom of the session screen while a rest runs: a ring with the
 /// time left, "−15", "+15" and "Pular". Its clock ticks once a second only while the bar is on screen.
 /// Ending the rest when it reaches zero is the session screen's job, so it happens on time even when
-/// the bar is hidden.
+/// the bar is hidden. Like the session header, the screen keeps it from growing past the first
+/// accessibility text size; a long press on a button shows it larger (Large Content Viewer).
 struct RestTimerBar: View {
     let timer: RestTimer
     let onAdd: @MainActor (TimeInterval) -> Void
@@ -100,6 +101,7 @@ struct RestTimerBar: View {
             }
             .buttonStyle(.plain)
             .padding(.vertical, -touchExtra)
+            .accessibilityShowsLargeContentViewer()
             .accessibilityLabel(Text("Pular descanso"))
             .accessibilityIdentifier("session.rest.skip")
         }
@@ -124,6 +126,7 @@ struct RestTimerBar: View {
         }
         .buttonStyle(.plain)
         .padding(.vertical, -touchExtra)
+        .accessibilityShowsLargeContentViewer()
         .accessibilityLabel(label)
         .accessibilityIdentifier(identifier)
     }
