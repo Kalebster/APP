@@ -77,7 +77,8 @@ struct HistorySessionDetailTests {
         let sets = try #require(after.exercises.first?.sets)
         #expect(sets.map(\.targetRepsMin) == [10, 8])
         #expect(sets.map(\.targetRepsMax) == [12, 10])
-        #expect(sets.map(\.weightKg) == [12.5, 15])
+        // The second set was not done: its planned load stays a target only.
+        #expect(sets.map(\.weightKg) == [12.5, nil])
         #expect(sets.map(\.reps) == [11, nil])
         #expect(sets.map(\.isCompleted) == [true, false])
     }
