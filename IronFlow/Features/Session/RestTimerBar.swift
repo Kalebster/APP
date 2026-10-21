@@ -68,9 +68,9 @@ struct RestTimerBar: View {
                 Text(verbatim: SessionFormatting.restText(remaining))
                     .scaledFont(16, weight: .heavy)
                     .monospacedDigit()
-                    .accessibilityIdentifier("session.rest.time")
             }
             .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("session.rest.time")
         }
     }
 
