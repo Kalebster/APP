@@ -214,11 +214,15 @@ struct SessionSetRow: View {
             .frame(width: checkSide, height: checkSide)
             .frame(width: checkWidth + 12, height: rowHeight)
             .contentShape(Rectangle())
+            // The checkmark symbol reads as "selected" on its own, even on a set not done: the button says
+            // what it does, and is selected only once the set is done.
+            .accessibilityHidden(true)
         }
         .buttonStyle(.plain)
         .padding(.horizontal, -6)
         .accessibilityLabel(isDone ? Text("Desmarcar série \(number)") : Text("Concluir série \(number)"))
         .accessibilityAddTraits(isDone ? .isSelected : [])
+        .accessibilityRemoveTraits(isDone ? [] : .isSelected)
         .accessibilityIdentifier("session.set.check")
     }
 }

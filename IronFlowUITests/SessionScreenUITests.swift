@@ -87,15 +87,15 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(element("session.volume", in: app).label, "0 kg levantados")
         XCTAssertEqual(element("session.progress", in: app).label, "0 de 12 séries, Exercício 1 de 4")
         XCTAssertTrue(app.staticTexts["Série 1, atual"].exists, "The first set is not the current one")
-        recordMeasurement(
-            "Medição: marcas de séries não feitas, antes de tocar",
-            "série 1 selecionada: \(checks(in: app).element(boundBy: 0).isSelected), série 2: \(checks(in: app).element(boundBy: 1).isSelected)"
-        )
+        // VoiceOver says "selected" only for a set done.
+        XCTAssertFalse(checks(in: app).element(boundBy: 0).isSelected, "Set 1, not done, reads as selected")
+        XCTAssertFalse(checks(in: app).element(boundBy: 1).isSelected, "Set 2, not done, reads as selected")
         attachScreenshot(named: "65-session-current-set", of: app)
 
         // ✓ without typing records the values in gray, and starts the rest.
         checks(in: app).element(boundBy: 0).tap()
         XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "First set not checked")
+        XCTAssertFalse(checks(in: app).element(boundBy: 1).isSelected, "Set 2, not done, reads as selected")
         XCTAssertTrue(waitForLabel(of: element("session.volume", in: app), containing: "600 kg levantados"), "The suggestion was not recorded")
         XCTAssertEqual(element("session.progress", in: app).label, "1 de 12 séries, Exercício 1 de 4")
         XCTAssertTrue(app.staticTexts["Série 2, atual"].exists, "The second set is not the current one")
@@ -136,6 +136,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         let done = app.buttons["session.exercise.done"]
         XCTAssertTrue(done.waitForExistence(timeout: 10), "The finished exercise did not close")
         XCTAssertEqual(done.label, "Supino Reto com Barra, concluído: 3 de 3 séries, 60 kg × 10 · 10 · 9")
+        XCTAssertFalse(done.isSelected, "The finished exercise reads as selected")
         XCTAssertEqual(element("session.progress", in: app).label, "3 de 12 séries, Exercício 2 de 4")
         XCTAssertTrue(app.staticTexts["Série 1, atual"].exists, "The next exercise's first set is not the current one")
         attachScreenshot(named: "64-session-exercise-done", of: app)
@@ -148,6 +149,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(third.isSelected, "Opened with a set not done")
         third.tap()
         XCTAssertTrue(close.waitForNonExistence(timeout: 10), "Still finished after unchecking a set")
+        XCTAssertFalse(checks(in: app).element(boundBy: 2).isSelected, "The set unchecked still reads as selected")
         XCTAssertFalse(done.exists, "Closed with a set not done")
         checks(in: app).element(boundBy: 2).tap()
         XCTAssertTrue(done.waitForExistence(timeout: 10), "Did not close again once finished")
@@ -215,10 +217,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(weight.waitForExistence(timeout: 10), "No load field")
         weight.tap()
         weight.typeText("42")
-        recordMeasurement(
-            "Medição: marca da série 1 não feita, com o campo de carga em foco",
-            "selecionada: \(checks(in: app).element(boundBy: 0).isSelected)"
-        )
+        XCTAssertFalse(checks(in: app).element(boundBy: 0).isSelected, "Set 1, not done, reads as selected")
         let firstSet = app.staticTexts["Série 1, atual"]
         let headerBottom = element("session.progress", in: app).frame.maxY
         var positions: [String] = []
@@ -245,16 +244,23 @@ final class SessionScreenUITests: IronFlowUITestCase {
             dragListUp(in: app)
         }
         let lastReps = repsFields(in: app).allElementsBoundByIndex.last
-        let field = try XCTUnwrap(lastReps, "No repetition field at the end of the list")
-        field.tap()
+        let target = try XCTUnwrap(lastReps, "No repetition field at the end of the list")
+        let before = target.frame
+        target.tap()
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: 10), "No keyboard")
+        // The list moves to keep the field in sight, which changes the order of its rows: the field is
+        // found again by its focus, not by its place in the list.
+        let field = app.textFields.matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "No field with the focus")
+        XCTAssertEqual(field.identifier, "session.set.reps")
+        XCTAssertEqual(field.label, "Repetições da série 3")
         field.typeText("8")
         let ok = app.buttons["OK"]
         let covered = min(keyboard.frame.minY, ok.exists ? ok.frame.minY : keyboard.frame.minY)
         recordMeasurement(
             "Medição: campo perto do fim com o teclado",
-            "campo \(Int(field.frame.minY))–\(Int(field.frame.maxY)), teclado a partir de \(Int(covered))"
+            "campo em \(Int(before.minY))–\(Int(before.maxY)) antes do teclado, \(Int(field.frame.minY))–\(Int(field.frame.maxY)) depois; teclado a partir de \(Int(covered))"
         )
         XCTAssertLessThanOrEqual(field.frame.maxY, covered, "The keyboard hides the field: \(field.frame), keyboard from \(covered)")
         XCTAssertEqual(field.value as? String, "8")
