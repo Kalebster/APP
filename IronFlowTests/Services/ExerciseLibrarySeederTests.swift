@@ -90,7 +90,7 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.libraryKey == nil)
         #expect(custom.updatedAt == custom.createdAt)
         #expect(workout.orderedExercises.first?.exercise?.id == custom.id)
-        #expect(try count(Exercise.self, in: harness.context) == 72)
+        #expect(try count(Exercise.self, in: harness.context) == 158)
     }
 
     @Test("A built-in exercise named like an active custom one is created archived")

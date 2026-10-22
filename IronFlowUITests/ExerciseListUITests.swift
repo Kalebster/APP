@@ -26,6 +26,24 @@ final class ExerciseListUITests: IronFlowUITestCase {
         return field
     }
 
+    /// Taps a chip of a row that scrolls sideways, first dragging the row until the chip is on the
+    /// screen: the test does not scroll a SwiftUI row by itself.
+    @MainActor
+    private func tapChip(_ chip: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(chip.waitForExistence(timeout: 10), "Chip not found: \(chip)")
+        let screen = app.windows.firstMatch.frame
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        var drags = 0
+        while drags < 8, chip.frame.maxX > screen.maxX - 8 || chip.frame.minX < screen.minX + 8 {
+            // Content moves left to bring a chip on the right, right to bring one on the left.
+            let distance: CGFloat = chip.frame.maxX > screen.maxX - 8 ? -200 : 200
+            let start = origin.withOffset(CGVector(dx: screen.midX, dy: chip.frame.midY))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: distance, dy: 0)))
+            drags += 1
+        }
+        chip.tap()
+    }
+
     /// Types in the search and waits until the field holds it, so a lost key shows as a wrong text.
     @MainActor
     private func search(_ text: String, in app: XCUIApplication) {
@@ -91,15 +109,15 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertFalse(dumbbell.isSelected, "Halteres still selected")
 
         // Elástico exists only in Glúteos; choosing Peito unselects it, and it stays unselected.
-        groupChip("glutes", in: app).tap()
+        tapChip(groupChip("glutes", in: app), in: app)
         let band = equipmentChip("band", in: app)
         XCTAssertTrue(band.waitForExistence(timeout: 10), "No Elástico for Glúteos")
-        band.tap()
+        tapChip(band, in: app)
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "2 exercícios"), "Glúteos + Elástico count")
-        groupChip("chest", in: app).tap()
+        tapChip(groupChip("chest", in: app), in: app)
         XCTAssertTrue(band.waitForNonExistence(timeout: 10), "Elástico offered for Peito")
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "21 exercícios"), "The equipment kept filtering Peito")
-        groupChip("glutes", in: app).tap()
+        tapChip(groupChip("glutes", in: app), in: app)
         XCTAssertTrue(band.waitForExistence(timeout: 10), "No Elástico for Glúteos")
         XCTAssertFalse(band.isSelected, "Elástico selected again")
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "13 exercícios"), "Glúteos count")
