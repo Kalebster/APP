@@ -108,7 +108,13 @@ struct SessionView: View {
             // The list ends above the rest bar, so the bar never covers its last rows. It steps aside
             // while a value is typed, leaving the keyboard's room to the field; the rest goes on.
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if restTimer.isRunning(for: session.id) && focusedField == nil {
+                if focusedField != nil {
+                    // While typing, a margin above the keyboard: the list brings the field just above
+                    // the keyboard, where the OK of the keyboard's bar would touch its lower edge.
+                    Color.clear
+                        .frame(height: 16)
+                        .allowsHitTesting(false)
+                } else if restTimer.isRunning(for: session.id) {
                     RestTimerBar(
                         timer: restTimer,
                         onAdd: { seconds in restTimer.add(seconds, at: .now) },

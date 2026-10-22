@@ -256,11 +256,13 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(field.identifier, "session.set.reps")
         XCTAssertEqual(field.label, "Repetições da série 3")
         field.typeText("8")
+        // Nothing of the keyboard, not even the OK of its bar, reaches the field.
         let ok = app.buttons["OK"]
         let covered = min(keyboard.frame.minY, ok.exists ? ok.frame.minY : keyboard.frame.minY)
+        let okText = ok.exists ? "\(ok.frame)" : "nenhum"
         recordMeasurement(
             "Medição: campo perto do fim com o teclado",
-            "campo em \(Int(before.minY))–\(Int(before.maxY)) antes do teclado, \(Int(field.frame.minY))–\(Int(field.frame.maxY)) depois; teclado a partir de \(Int(covered))"
+            "campo em \(Int(before.minY))–\(Int(before.maxY)) antes do teclado, \(Int(field.frame.minY))–\(Int(field.frame.maxY)) depois; teclado a partir de \(Int(keyboard.frame.minY)), OK em \(okText)"
         )
         XCTAssertLessThanOrEqual(field.frame.maxY, covered, "The keyboard hides the field: \(field.frame), keyboard from \(covered)")
         XCTAssertEqual(field.value as? String, "8")
