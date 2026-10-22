@@ -34,11 +34,12 @@ struct RestTimerBar: View {
                 Spacer(minLength: 6)
                 buttons
             }
-            // With the largest text sizes, the buttons go below the time.
+            // With the largest text sizes, the buttons go below the time; the bar keeps the full width.
             VStack(alignment: .leading, spacing: 8) {
                 clock(remaining: remaining, at: now)
                 buttons
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(EdgeInsets(top: 7, leading: 10, bottom: 7, trailing: 7))
         .background(Theme.Colors.restBarBackground, in: shape)

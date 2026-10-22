@@ -38,12 +38,17 @@ final class SessionScreenUITests: IronFlowUITestCase {
         return minutes * 60 + seconds
     }
 
-    /// Drags the list up by what is visible between the header and the keyboard (with its OK bar) or the
-    /// bottom of the screen: a drag of the list itself, which a swipe over the whole app may not be.
+    /// Drags the list up by what is visible between the header and the keyboard (with its OK bar), the
+    /// rest bar or the bottom of the screen: a drag of the list itself, which a swipe over the whole app
+    /// may not be.
     @MainActor
     private func dragListUp(in app: XCUIApplication) {
         let top = element("session.progress", in: app).frame.maxY + 30
         var bottom = app.windows.firstMatch.frame.maxY - 60
+        let rest = element("session.rest", in: app)
+        if rest.exists {
+            bottom = min(bottom, rest.frame.minY - 30)
+        }
         let keyboard = app.keyboards.firstMatch
         if keyboard.exists {
             bottom = min(bottom, keyboard.frame.minY - 30)
@@ -159,6 +164,26 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(close.waitForExistence(timeout: 10), "The finished exercise did not open again")
         close.tap()
         XCTAssertTrue(done.waitForExistence(timeout: 10), "The chevron did not close it")
+
+        // With the rest bar on screen, the end of the list stays above it: neither the last set nor
+        // "+ Adicionar exercício" is covered.
+        let rest = element("session.rest", in: app)
+        XCTAssertTrue(rest.exists, "No rest bar")
+        for _ in 0..<5 {
+            dragListUp(in: app)
+        }
+        let addExercise = app.buttons["session.addExercise"]
+        XCTAssertTrue(addExercise.waitForExistence(timeout: 10), "No + Adicionar exercício at the end of the list")
+        let lastCheck = try XCTUnwrap(checks(in: app).allElementsBoundByIndex.last, "No set at the end of the list")
+        let lastSet = lastCheck.frame
+        let restTop = rest.frame.minY
+        recordMeasurement(
+            "Medição: fim da lista com o descanso",
+            "última série \(Int(lastSet.minY))–\(Int(lastSet.maxY)), Adicionar exercício \(Int(addExercise.frame.minY))–\(Int(addExercise.frame.maxY)), barra de descanso a partir de \(Int(restTop))"
+        )
+        XCTAssertLessThanOrEqual(lastSet.maxY, restTop, "The rest bar covers the last set")
+        XCTAssertLessThanOrEqual(addExercise.frame.maxY, restTop, "The rest bar covers + Adicionar exercício")
+        attachScreenshot(named: "68-session-end-of-list-rest", of: app)
     }
 
     @MainActor
