@@ -2,7 +2,8 @@ import XCTest
 
 /// The session screen in the approved model: "Última vez" and the values it suggests, checking a set
 /// without typing, the rest timer, a finished exercise closing and opening, removing sets and
-/// exercises, typed values kept when their row leaves the screen, the keyboard, and large text.
+/// exercises, typed values kept when their row leaves the screen, the keyboard, a set done without a
+/// load, and large text.
 /// The flows already covered elsewhere (finishing, minimizing, discarding from the ⋯ menu) are in
 /// `SessionUITests`.
 final class SessionScreenUITests: IronFlowUITestCase {
@@ -291,6 +292,43 @@ final class SessionScreenUITests: IronFlowUITestCase {
         )
         XCTAssertLessThanOrEqual(field.frame.maxY, covered, "The keyboard hides the field: \(field.frame), keyboard from \(covered)")
         XCTAssertEqual(field.value as? String, "8")
+    }
+
+    @MainActor
+    func testSetDoneWithoutALoadShowsADashAndTakesOne() throws {
+        continueAfterFailure = false
+        // The session left open has its first set done with 10 repetitions and no load; the last time
+        // suggests 60 kg for the sets still to do.
+        let app = launchOnTab("Treinos", seed: [push, "last-time:Push", "open-session:Push"])
+        let bar = app.buttons["session.bar"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        bar.tap()
+        let weight = weightFields(in: app).element(boundBy: 0)
+        XCTAssertTrue(weight.waitForExistence(timeout: 10), "Session not opened from the bar")
+        XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "Set 1 is not done")
+
+        // Done without a load: "—" on screen and "Sem carga" for VoiceOver, never the suggestion.
+        XCTAssertEqual(weight.placeholderValue, "—")
+        XCTAssertEqual(weight.value as? String, "Sem carga")
+        XCTAssertEqual(weightFields(in: app).element(boundBy: 1).placeholderValue, "60", "A set to do lost its suggestion")
+        XCTAssertEqual(element("session.volume", in: app).label, "0 kg levantados")
+        attachScreenshot(named: "69-session-done-without-load", of: app)
+
+        // A load typed in it is recorded and counted, and the set stays done.
+        weight.tap()
+        weight.typeText("50")
+        app.buttons["OK"].tap()
+        XCTAssertTrue(waitForLabel(of: element("session.volume", in: app), toBe: "500 kg levantados"), "Volume: \(element("session.volume", in: app).label)")
+        XCTAssertEqual(weight.value as? String, "50")
+        XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "Set 1 is no longer done")
+
+        // Minimized and opened again, the screen shows what was saved.
+        app.buttons["session.minimize"].tap()
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        bar.tap()
+        XCTAssertTrue(weightFields(in: app).element(boundBy: 0).waitForExistence(timeout: 10), "Session not opened again")
+        XCTAssertEqual(weightFields(in: app).element(boundBy: 0).value as? String, "50", "The load typed was lost")
+        XCTAssertEqual(element("session.volume", in: app).label, "500 kg levantados")
     }
 
     @MainActor

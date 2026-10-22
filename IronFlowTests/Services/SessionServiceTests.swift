@@ -254,6 +254,24 @@ struct SessionServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    @Test("A set done without a load counts nothing in the load lifted; a load typed later is recorded, counted, and the set stays done")
+    func loadTypedOnASetDoneWithoutOne() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let log = firstLog(of: session)
+
+        try harness.sessions.completeSet(log, weightKg: nil, reps: 10)
+        let before = SessionProgress.volumeKg(of: session.orderedExercises.flatMap(\.orderedSetLogs))
+        #expect(log.weightKg == nil)
+        #expect(before == 0)
+
+        try harness.sessions.updateSetValues(log, weightKg: 50, reps: 10)
+        let after = SessionProgress.volumeKg(of: session.orderedExercises.flatMap(\.orderedSetLogs))
+        #expect(log.isCompleted)
+        #expect(log.weightKg == 50)
+        #expect(log.reps == 10)
+        #expect(after == 500)
+    }
+
     @Test("Recorded values go up to 1.000 kg and 100 repetitions, when editing and when completing")
     func recordedValuesAtTheLimit() throws {
         let session = try harness.sessions.startSession(from: workout)

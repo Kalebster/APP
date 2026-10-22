@@ -163,13 +163,22 @@ struct SessionSetRow: View {
     }
 
     private var weightField: some View {
-        let hint = suggestion.weightKg.map { PlannedSetFormatting.weightFieldText($0) }
-        return TextField("kg", text: $draft.weight, prompt: prompt(hint ?? "kg"))
+        TextField("kg", text: $draft.weight, prompt: prompt(weightPrompt))
             .keyboardType(.decimalPad)
             .focused(focusedField, equals: .weight(log.id))
             .modifier(fieldStyle { focusedField.wrappedValue = .weight(log.id) })
             .accessibilityLabel(Text("Carga da série \(number)"))
+            .modifier(DoneSetLoadValue(isDone: isDone, text: draft.weight))
             .accessibilityIdentifier("session.set.weight")
+    }
+
+    /// The gray text of an empty load field: the suggestion while the set is still to do. Once the set
+    /// is done, an empty field means no load was recorded: "—", never a value it did not lift.
+    private var weightPrompt: String {
+        if isDone {
+            return "—"
+        }
+        return suggestion.weightKg.map { PlannedSetFormatting.weightFieldText($0) } ?? "kg"
     }
 
     private var repsField: some View {
@@ -224,6 +233,22 @@ struct SessionSetRow: View {
         .accessibilityAddTraits(isDone ? .isSelected : [])
         .accessibilityRemoveTraits(isDone ? [] : .isSelected)
         .accessibilityIdentifier("session.set.check")
+    }
+}
+
+/// What VoiceOver reads as the load of a set done: the load, or "Sem carga" when none was recorded,
+/// instead of the "—" on screen. A set still to do keeps the field's own reading (its suggestion when
+/// empty). Changing between the two happens only when the set is checked or unchecked.
+private struct DoneSetLoadValue: ViewModifier {
+    let isDone: Bool
+    let text: String
+
+    func body(content: Content) -> some View {
+        if isDone {
+            content.accessibilityValue(text.isEmpty ? Text("Sem carga") : Text(verbatim: text))
+        } else {
+            content
+        }
     }
 }
 
