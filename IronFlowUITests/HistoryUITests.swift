@@ -9,7 +9,7 @@ final class HistoryUITests: IronFlowUITestCase {
     func testFinishedSessionDetailAfterItsWorkoutIsDeleted() throws {
         continueAfterFailure = false
         // A session with two sets done (20 kg for 10 repetitions; no load for 12) and one not done.
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa", "session-detail:Push"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "session-detail:Push"])
 
         // The planned workout is deleted; the session it came from stays in the history.
         openWorkout(named: "Push", in: app)
@@ -29,7 +29,7 @@ final class HistoryUITests: IronFlowUITestCase {
         XCTAssertTrue(app.navigationBars["Push"].exists, "The detail does not show the session's name")
         let exercises = detail.descendants(matching: .any).matching(identifier: "history.detail.exercise")
         XCTAssertEqual(exercises.count, 1)
-        XCTAssertTrue(exercises.element(boundBy: 0).staticTexts["Barra Fixa"].exists, "Exercise name not shown")
+        XCTAssertTrue(exercises.element(boundBy: 0).staticTexts["Barra Fixa Pronada"].exists, "Exercise name not shown")
         let sets = detail.descendants(matching: .any).matching(identifier: "history.detail.set")
         XCTAssertEqual(sets.count, 3)
         XCTAssertEqual(sets.element(boundBy: 0).label, "Série 1, Meta: 8–12, Carga: 20 kg, 10 repetições, Concluída")

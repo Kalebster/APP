@@ -2,7 +2,7 @@ import XCTest
 
 /// The Exercises tab shows one card per muscle group; a card opens that group's exercises.
 /// Searching from the groups screen finds exercises in every group.
-/// Runs on an in-memory store where the 71 built-in exercises are installed at launch.
+/// Runs on an in-memory store where the 157 built-in exercises are installed at launch.
 final class ExerciseListUITests: IronFlowUITestCase {
     /// Any element whose accessibility label is exactly `label` (rows combine their texts).
     @MainActor
@@ -29,10 +29,10 @@ final class ExerciseListUITests: IronFlowUITestCase {
 
         let chest = groupCard("chest", in: app)
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest card not found")
-        XCTAssertTrue(chest.label.contains("9 exercícios"), "Unexpected chest card label: \(chest.label)")
+        XCTAssertTrue(chest.label.contains("21 exercícios"), "Unexpected chest card label: \(chest.label)")
         let back = groupCard("back", in: app)
         XCTAssertTrue(back.exists, "Back card not found")
-        XCTAssertTrue(back.label.contains("7 exercícios"), "Unexpected back card label: \(back.label)")
+        XCTAssertTrue(back.label.contains("22 exercícios"), "Unexpected back card label: \(back.label)")
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
 
         attachScreenshot(named: "6-exercises-groups", of: app)
@@ -47,7 +47,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertTrue(back.waitForExistence(timeout: 10), "Back card not found")
         back.tap()
 
-        XCTAssertTrue(element(labeled: "Barra Fixa", in: app).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(labeled: "Barra Fixa Pronada", in: app).waitForExistence(timeout: 10))
         XCTAssertFalse(element(labeled: "Supino Reto com Barra", in: app).exists)
         assertScreenIsDark(app, "group screen")
         attachScreenshot(named: "7-exercises-group", of: app)

@@ -17,10 +17,10 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push")
 
         #expect(items == [
-            .workout(name: "Push", exercises: ["Crossover na Polia", "Barra Fixa"]),
+            .workout(name: "Push", exercises: ["Crossover na Polia Alta", "Barra Fixa Pronada"]),
             .workout(name: "Vazio", exercises: []),
             .planToday(workout: "Push"),
             .finishedSessions(workout: "Push", count: 4),
@@ -45,12 +45,12 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio"), in: context)
 
         let workouts = try context.fetch(FetchDescriptor<Workout>())
         #expect(workouts.count == 2)
         let push = try #require(workouts.first { $0.name == "Push" })
-        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Crossover na Polia", "Barra Fixa"])
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Crossover na Polia Alta", "Barra Fixa Pronada"])
         #expect(push.orderedExercises.map { $0.plannedSets.count } == [3, 3])
         let empty = try #require(workouts.first { $0.name == "Vazio" })
         #expect(empty.exercises.isEmpty)
@@ -61,7 +61,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa,plan-today:Push,finished:Push:4"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,plan-today:Push,finished:Push:4"), in: context)
 
         let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
         let plan = try context.fetch(FetchDescriptor<WeeklyPlanDay>())
@@ -87,7 +87,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa,session-detail:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,session-detail:Push"), in: context)
 
         let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
         #expect(session.endedAt != nil)
@@ -104,7 +104,7 @@ struct UITestSeedTests {
         let context = container.mainContext
         let before = Date.now
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa,plan:Push:1|3|7,finished-today:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,plan:Push:1|3|7,finished-today:Push"), in: context)
 
         let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
         let plan = try context.fetch(FetchDescriptor<WeeklyPlanDay>())
@@ -127,7 +127,7 @@ struct UITestSeedTests {
         let context = container.mainContext
         let before = Date.now
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa,open-session:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,open-session:Push"), in: context)
 
         let after = Date.now
         let service = SessionService(context: context)
@@ -163,7 +163,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,last-time:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,last-time:Push"), in: context)
 
         let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
         let ended = try #require(session.endedAt)
@@ -204,14 +204,14 @@ struct UITestSeedTests {
     @Test("The list arrives percent-encoded, so an accented exercise name is found as written")
     func decodesThePercentEncodedList() throws {
         let container = try makeContainer()
-        let list = try #require("workout:Push:Tríceps na Polia com Corda|Barra Fixa".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
+        let list = try #require("workout:Push:Tríceps na Polia com Corda|Barra Fixa Pronada".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
         let isASCII = list.allSatisfy(\.isASCII)
         #expect(isASCII, "Encoded list: \(list)")
 
         UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", list])
 
         let push = try #require(try container.mainContext.fetch(FetchDescriptor<Workout>()).first)
-        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Tríceps na Polia com Corda", "Barra Fixa"])
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Tríceps na Polia com Corda", "Barra Fixa Pronada"])
     }
 }
 #endif

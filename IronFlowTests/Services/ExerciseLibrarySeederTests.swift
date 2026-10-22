@@ -31,10 +31,10 @@ struct ExerciseLibrarySeederTests {
     func freshInstall() throws {
         let result = try seeder.seed()
 
-        #expect(result.insertedKeys.count == 71)
+        #expect(result.insertedKeys.count == 157)
         #expect(result.updatedKeys.isEmpty && result.skippedKeys.isEmpty)
         let stored = try systemExercises()
-        #expect(stored.count == 71)
+        #expect(stored.count == 157)
         let byKey = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
         for entry in library {
             let exercise = try #require(byKey[entry.key])
@@ -59,7 +59,7 @@ struct ExerciseLibrarySeederTests {
             #expect(try seeder.seed() == ExerciseLibrarySeedResult())
             #expect(harness.context.hasChanges == false)
         }
-        #expect(try count(Exercise.self, in: harness.context) == 71)
+        #expect(try count(Exercise.self, in: harness.context) == 157)
         #expect(try systemExercises().map(\.updatedAt) == updatedAt)
     }
 
@@ -70,7 +70,7 @@ struct ExerciseLibrarySeederTests {
         } read: { context in
             #expect(try ExerciseLibrarySeeder(context: context).seed() == ExerciseLibrarySeedResult())
             let stored = try context.fetch(FetchDescriptor<Exercise>())
-            #expect(stored.count == 71)
+            #expect(stored.count == 157)
             #expect(Set(stored.map(\.id.uuidString)) == Set(library.map(\.id)))
         }
     }
@@ -160,6 +160,75 @@ struct ExerciseLibrarySeederTests {
     }
 
     // MARK: - Library updates
+
+    @Test("A store with the first library (71) gets the 157: 20 names and 3 groups corrected with the same ids, workouts and history linked as before, custom exercises untouched; seeding again changes nothing")
+    func upgradeFromTheFirstLibrary() throws {
+        try seeder.seed(LibraryV1Fixture.entries)
+        let idsBefore = Dictionary(uniqueKeysWithValues: try systemExercises().map { ($0.libraryKey ?? "", $0.id) })
+        #expect(idsBefore.count == 71)
+        // A renamed exercise and a regrouped one in a workout with a custom one, and a session of it.
+        let pullUp = try #require(try exercise(key: "pull-up"))
+        let deadlift = try #require(try exercise(key: "deadlift"))
+        let custom = try harness.exercises.createCustomExercise(name: "Meu Terra", muscleGroup: .hamstrings)
+        let customUpdatedAt = custom.updatedAt
+        let workout = try harness.makeWorkout(name: "Costas", items: [
+            (pullUp, [.reps(6, 8)]), (deadlift, [.reps(5, 5, kg: 100)]), (custom, [.reps(8, 10)]),
+        ])
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: nil, reps: 8)
+        try harness.sessions.finishSession(session)
+        harness.clock.advance(by: 3_600)
+
+        let result = try seeder.seed()
+
+        let oldKeys = Set(LibraryV1Fixture.entries.map(\.key))
+        let newKeys = Set(library.map(\.key)).subtracting(oldKeys)
+        #expect(newKeys.count == 86)
+        #expect(Set(result.insertedKeys) == newKeys)
+        let corrected = LibraryV1Fixture.entries.filter { old in
+            let entry = DefaultExerciseLibrary.byKey[old.key]
+            return entry?.name != old.name || entry?.muscleGroup != old.muscleGroup
+        }
+        #expect(corrected.count == 23)
+        #expect(Set(result.updatedKeys) == Set(corrected.map(\.key)))
+        #expect(result.skippedKeys.isEmpty && result.keptNameKeys.isEmpty)
+
+        // Every built-in exercise follows the library, active, and the first 71 keep their ids.
+        let stored = try systemExercises()
+        #expect(stored.count == 157)
+        let byKey = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
+        for entry in library {
+            let exercise = try #require(byKey[entry.key])
+            #expect(exercise.id.uuidString == entry.id)
+            #expect(exercise.name == entry.name)
+            #expect(exercise.muscleGroup == entry.muscleGroup)
+            #expect(exercise.isArchived == false)
+        }
+        for (key, id) in idsBefore {
+            #expect(byKey[key]?.id == id)
+        }
+
+        // The workout uses the same records, now with the corrected name and group.
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [pullUp.id, deadlift.id, custom.id])
+        #expect(pullUp.name == "Barra Fixa Pronada")
+        #expect(deadlift.muscleGroup == .back)
+        // The history keeps what was recorded then, linked to the same records.
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Barra Fixa", "Levantamento Terra", "Meu Terra"])
+        #expect(session.orderedExercises.map(\.muscleGroupSnapshot) == [.back, .hamstrings, .hamstrings])
+        #expect(session.orderedExercises.map { $0.exercise?.id } == [pullUp.id, deadlift.id, custom.id])
+        #expect(session.orderedExercises[0].orderedSetLogs[0].reps == 8)
+        // The custom exercise is untouched.
+        #expect(custom.name == "Meu Terra")
+        #expect(custom.muscleGroup == .hamstrings)
+        #expect(custom.isCustom && custom.libraryKey == nil && !custom.isArchived)
+        #expect(custom.updatedAt == customUpdatedAt)
+
+        harness.clock.advance(by: 3_600)
+        #expect(try seeder.seed() == ExerciseLibrarySeedResult())
+        #expect(harness.context.hasChanges == false)
+        #expect(try count(Exercise.self, in: harness.context) == 158)
+    }
+
 
     @Test("A corrected name or group in a later library updates the built-in exercise, not the history")
     func libraryCorrection() throws {
@@ -346,6 +415,6 @@ struct ExerciseLibrarySeederTests {
         let session = try harness.sessions.startSession(from: workout)
         #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Supino Reto com Barra", "Rosca Direta com Barra"])
         #expect(session.orderedExercises.map(\.muscleGroupSnapshot) == [.chest, .biceps])
-        #expect(try count(Exercise.self, in: harness.context) == 71)
+        #expect(try count(Exercise.self, in: harness.context) == 157)
     }
 }

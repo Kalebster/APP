@@ -107,9 +107,10 @@ struct ExerciseListFilterTests {
 
         let sections = ExerciseListFilter.sections(from: library, search: "", group: nil)
 
-        #expect(sections.map(\.group) == MuscleGroup.allCases)
-        let counts = Dictionary(uniqueKeysWithValues: sections.map { ($0.group, $0.exercises.count) })
         let expected = Dictionary(grouping: DefaultExerciseLibrary.all, by: \.muscleGroup).mapValues(\.count)
+        // In the group order; a group without exercises (Outro) has no section.
+        #expect(sections.map(\.group) == MuscleGroup.allCases.filter { expected[$0] != nil })
+        let counts = Dictionary(uniqueKeysWithValues: sections.map { ($0.group, $0.exercises.count) })
         #expect(counts == expected)
     }
 

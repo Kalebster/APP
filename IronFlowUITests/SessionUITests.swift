@@ -24,7 +24,7 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testStartCheckMinimizeContinueAndFinish() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
         startWorkout(named: "Push", in: app)
 
         XCTAssertEqual(element("session.name", in: app).label, "Push")
@@ -103,7 +103,7 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testFinishNeedsACompletedSetAndDiscardKeepsThePlan() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa"])
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada"])
         startWorkout(named: "Pull", in: app)
 
         app.buttons["session.finish"].tap()
@@ -124,7 +124,7 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testSecondStartOffersTheCurrentSession() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Legs:Barra Fixa"])
+        let app = launchOnTab("Treinos", seed: ["workout:Legs:Barra Fixa Pronada"])
         startWorkout(named: "Legs", in: app)
         app.buttons["session.minimize"].tap()
         XCTAssertTrue(app.buttons["session.bar"].waitForExistence(timeout: 10), "Session bar not shown")
@@ -141,7 +141,7 @@ final class SessionUITests: IronFlowUITestCase {
     func testSessionLeftOpenOffersTheLastRecordAsTheEnd() throws {
         continueAfterFailure = false
         // Started 3 hours ago, its first set done 2 hours ago (by the seed's own clock), still open.
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa", "open-session:Push"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "open-session:Push"])
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
         bar.tap()
@@ -188,7 +188,7 @@ final class SessionUITests: IronFlowUITestCase {
         continueAfterFailure = false
         let app = launchOnTab(
             "Treinos",
-            seed: ["workout:Push:Barra Fixa", "open-session:Push"],
+            seed: ["workout:Push:Barra Fixa Pronada", "open-session:Push"],
             extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         )
         let bar = app.buttons["session.bar"]
