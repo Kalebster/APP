@@ -17,7 +17,7 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest")
 
         #expect(items == [
             .workout(name: "Push", exercises: ["Crossover na Polia Alta", "Barra Fixa Pronada"]),
@@ -29,13 +29,15 @@ struct UITestSeedTests {
             .plan(workout: "Push", weekdays: [1, 3, 7]),
             .finishedToday(workout: "Push"),
             .lastTime(workout: "Push"),
+            .customExercise(name: "Meu Supino", group: .chest),
         ])
     }
 
     @Test("An item it does not know, or one without what it needs, is refused")
     func refusesUnknownItems() {
         for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session",
-                     "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today", "last-time"] {
+                     "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today", "last-time",
+                     "custom-exercise:Meu Supino", "custom-exercise:Meu Supino:peito"] {
             #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
         }
     }
@@ -184,6 +186,24 @@ struct UITestSeedTests {
             PreviousSet(weightKg: 60, reps: 10),
             PreviousSet(weightKg: 60, reps: 9),
         ])
+    }
+
+    @Test("A custom exercise is created active, in its group, by the exercise service")
+    func createsACustomExercise() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        try UITestSeed.apply(try UITestSeed.parse("custom-exercise:Meu Supino:chest"), in: context)
+
+        let custom = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.isCustom }))
+        #expect(custom.map(\.name) == ["Meu Supino"])
+        #expect(custom.first?.muscleGroup == .chest)
+        #expect(custom.first?.isArchived == false)
+        #expect(custom.first?.libraryKey == nil)
+        // A name already used by an exercise of the library is refused, as in the app.
+        #expect(throws: ValidationError.duplicateExerciseName) {
+            try UITestSeed.apply(try UITestSeed.parse("custom-exercise:Supino Reto com Barra:chest"), in: context)
+        }
     }
 
     @Test("The hook acts only with -ui-testing and -ui-seed together")

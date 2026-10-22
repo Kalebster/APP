@@ -24,7 +24,9 @@ import SwiftData
 ///   ago (or at midnight, when that is earlier), with its first set done, finished now;
 /// - `last-time:<workout>`: one finished session of the workout that started yesterday at this time,
 ///   with every set done: exercise 1 with 60 kg, 2 with 22, 3 with 18, 4 with 25 (and so on again),
-///   10, 10, 9 and 8 repetitions for sets 1 to 4 (8 after that); it lasted 45 minutes.
+///   10, 10, 9 and 8 repetitions for sets 1 to 4 (8 after that); it lasted 45 minutes;
+/// - `custom-exercise:<name>:<group>`: an exercise of the user's own, in the muscle group with that
+///   storage key ("chest", "back"...).
 @MainActor
 enum UITestSeed {
     enum Item: Equatable {
@@ -36,6 +38,7 @@ enum UITestSeed {
         case openSession(workout: String)
         case finishedToday(workout: String)
         case lastTime(workout: String)
+        case customExercise(name: String, group: MuscleGroup)
     }
 
     /// The loads of `last-time`, by exercise, and its repetitions, by set.
@@ -100,6 +103,9 @@ enum UITestSeed {
                 return .finishedToday(workout: parts[1])
             case ("last-time", 2):
                 return .lastTime(workout: parts[1])
+            case ("custom-exercise", 3):
+                guard let group = MuscleGroup(rawValue: parts[2]) else { throw SeedError.unknownItem(String(token)) }
+                return .customExercise(name: parts[1], group: group)
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -174,6 +180,8 @@ enum UITestSeed {
                 }
                 clock.current = start.addingTimeInterval(2_700)
                 try service.finishSession(session)
+            case .customExercise(let name, let group):
+                try ExerciseService(context: context).createCustomExercise(name: name, muscleGroup: group)
             }
         }
     }
