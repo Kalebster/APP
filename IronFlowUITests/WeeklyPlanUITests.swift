@@ -36,7 +36,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
     @MainActor
     func testPlanTodayStartAndComplete() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
 
         // Planned for today: the row says the day, today and the workout.
         openPlan(in: app)
@@ -73,7 +73,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
     @MainActor
     func testRestDayAndDeletedWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa", "workout:Pull:Barra Fixa"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "workout:Pull:Barra Fixa Pronada"])
 
         // Planned for today: the Home shows it at once, without reopening the app.
         openPlan(in: app)

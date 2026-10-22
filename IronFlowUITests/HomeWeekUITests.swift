@@ -64,7 +64,7 @@ final class HomeWeekUITests: IronFlowUITestCase {
         app.buttons["home.startFree"].tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
         app.buttons["session.addExercise"].tap()
-        pickExercise("Barra Fixa", in: app)
+        pickExercise("Barra Fixa Pronada", in: app)
         let reps = app.textFields.matching(identifier: "session.set.reps").element(boundBy: 0)
         XCTAssertTrue(reps.waitForExistence(timeout: 10), "Added exercise has no set")
         reps.tap()

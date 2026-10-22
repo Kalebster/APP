@@ -56,6 +56,8 @@ struct AppearanceTests {
             ("CurrentFieldBackground", [0x20, 0x30, 0x5A]),
             ("CurrentSuggestionText", [0x7F, 0x92, 0xC2]),
             ("RestBarBackground", [0x1C, 0x1D, 0x22]),
+            // The Exercícios model.
+            ("SecondaryText", [0x9A, 0x9C, 0xA3]),
         ]
         for (name, rgb) in expected {
             let dark = try components(of: name, style: .dark)

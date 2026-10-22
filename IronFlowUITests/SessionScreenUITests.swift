@@ -190,7 +190,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRemovingSetsAndExercises() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa|Rosca Direta com Barra"])
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra"])
         startWorkout(named: "Pull", in: app)
         XCTAssertTrue(waitForCount(checks(in: app), 6), "The session should have 6 sets")
 
@@ -213,11 +213,11 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForCount(checks(in: app), 4), "Set done not removed")
 
         // An exercise without sets done goes at once.
-        app.buttons["Opções de Barra Fixa"].tap()
+        app.buttons["Opções de Barra Fixa Pronada"].tap()
         let removeExercise = app.buttons["Remover exercício"]
         XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover exercício in the ⋯ menu")
         removeExercise.tap()
-        XCTAssertTrue(app.buttons["Opções de Barra Fixa"].waitForNonExistence(timeout: 10), "Exercise not removed")
+        XCTAssertTrue(app.buttons["Opções de Barra Fixa Pronada"].waitForNonExistence(timeout: 10), "Exercise not removed")
         XCTAssertTrue(waitForCount(checks(in: app), 3), "The other exercise lost sets")
 
         // One with a set done asks first.

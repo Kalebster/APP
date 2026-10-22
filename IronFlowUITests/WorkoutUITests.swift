@@ -147,17 +147,17 @@ final class WorkoutUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos")
         createWorkout(named: "Push", in: app)
 
-        addExercises(["Crossover na Polia", "Barra Fixa"], in: app)
+        addExercises(["Crossover na Polia Alta", "Barra Fixa Pronada"], in: app)
 
         let rows = exerciseRows(in: app)
         XCTAssertEqual(rows.count, 2)
-        XCTAssertTrue(rows.element(boundBy: 0).label.contains("Crossover na Polia"), "First row: \(rows.element(boundBy: 0).label)")
-        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Barra Fixa"), "Second row: \(rows.element(boundBy: 1).label)")
+        XCTAssertTrue(rows.element(boundBy: 0).label.contains("Crossover na Polia Alta"), "First row: \(rows.element(boundBy: 0).label)")
+        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Barra Fixa Pronada"), "Second row: \(rows.element(boundBy: 1).label)")
         XCTAssertTrue(rows.element(boundBy: 0).label.contains("3 séries"), "Default sets missing: \(rows.element(boundBy: 0).label)")
         attachScreenshot(named: "13-workout-editor", of: app)
 
         app.buttons["workout.addExercises"].tap()
-        let inWorkout = element(labelStartingWith: "Crossover na Polia", in: app)
+        let inWorkout = element(labelStartingWith: "Crossover na Polia Alta", in: app)
         XCTAssertTrue(inWorkout.waitForExistence(timeout: 10), "Exercise not found in the picker")
         XCTAssertTrue(inWorkout.label.contains("No treino"), "Missing 'No treino': \(inWorkout.label)")
         XCTAssertFalse(inWorkout.isEnabled, "An exercise already in the workout can be selected")
@@ -187,7 +187,7 @@ final class WorkoutUITests: IronFlowUITestCase {
 
         app.buttons["workout.addExercises"].tap()
         // The first exercises of the library are visible without searching.
-        for name in ["Crossover na Polia", "Crucifixo com Halteres"] {
+        for name in ["Crossover na Polia Alta", "Crossover na Polia Baixa"] {
             let row = app.buttons[name]
             XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
             row.tap()
@@ -201,14 +201,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         let rows = exerciseRows(in: app)
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
         XCTAssertEqual(rows.count, 2, "Exercises added more than once")
-        XCTAssertTrue(rows.element(boundBy: 0).label.contains("Crossover na Polia"), "First row: \(rows.element(boundBy: 0).label)")
-        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Crucifixo com Halteres"), "Second row: \(rows.element(boundBy: 1).label)")
+        XCTAssertTrue(rows.element(boundBy: 0).label.contains("Crossover na Polia Alta"), "First row: \(rows.element(boundBy: 0).label)")
+        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Crossover na Polia Baixa"), "Second row: \(rows.element(boundBy: 1).label)")
     }
 
     @MainActor
     func testRemoveExerciseCancelAndConfirm() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia|Barra Fixa"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia Alta|Barra Fixa Pronada"])
         openWorkout(named: "Push", in: app)
         let rows = exerciseRows(in: app)
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Exercises not shown")
@@ -225,7 +225,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let remaining = rows.element(boundBy: 0)
         XCTAssertTrue(remaining.waitForExistence(timeout: 10))
         XCTAssertEqual(rows.count, 1)
-        XCTAssertTrue(remaining.label.contains("Barra Fixa"), "Wrong exercise removed: \(remaining.label)")
+        XCTAssertTrue(remaining.label.contains("Barra Fixa Pronada"), "Wrong exercise removed: \(remaining.label)")
         XCTAssertTrue(remaining.label.hasPrefix("1"), "Remaining exercise not renumbered: \(remaining.label)")
     }
 
@@ -284,7 +284,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testEditPlannedSet() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia Alta"])
         openWorkout(named: "Push", in: app)
         XCTAssertTrue(exerciseRows(in: app).firstMatch.waitForExistence(timeout: 10), "Exercise not shown")
         openExercise(at: 0, in: app)
@@ -330,7 +330,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         continueAfterFailure = false
         let app = launchOnTab("Treinos")
         createWorkout(named: "Push", in: app)
-        addExercises(["Crossover na Polia"], in: app)
+        addExercises(["Crossover na Polia Alta"], in: app)
         openExercise(at: 0, in: app)
         let sets = setRows(in: app)
 

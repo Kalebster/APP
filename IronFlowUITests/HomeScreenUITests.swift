@@ -9,7 +9,7 @@ final class HomeScreenUITests: IronFlowUITestCase {
     /// Push, Pull and Pernas with exercises of the built-in library, like the model.
     private let workouts = [
         "workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres|Desenvolvimento com Halteres|Tríceps na Polia com Corda",
-        "workout:Pull:Barra Fixa|Rosca Direta com Barra",
+        "workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra",
         "workout:Pernas:Agachamento Livre com Barra|Cadeira Extensora|Stiff com Barra|Mesa Flexora|Panturrilha Sentado",
     ]
 

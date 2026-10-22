@@ -58,6 +58,11 @@ enum Theme {
         static let currentSuggestionText = Color(.currentSuggestionText)
         /// The floating rest bar.
         static let restBarBackground = Color(.restBarBackground)
+
+        // The Exercícios model.
+        /// Secondary text between `mediumText` and `dimText`: the counts, the search icon and the muscle
+        /// group of an exercise.
+        static let secondaryText = Color(.secondaryText)
     }
 
     enum Metrics {
