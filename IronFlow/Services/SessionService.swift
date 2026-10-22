@@ -46,6 +46,14 @@ struct SessionService {
         )
     }
 
+    /// Every finished session, the most recently started first.
+    nonisolated static var finishedSessionsDescriptor: FetchDescriptor<Session> {
+        FetchDescriptor<Session>(
+            predicate: #Predicate { $0.endedAt != nil },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
+        )
+    }
+
     /// How many finished sessions "Treinos recentes" shows.
     nonisolated static var recentSessionsLimit: Int { 3 }
 
@@ -66,6 +74,9 @@ struct SessionService {
 
     /// Starts a session from a workout, copying names, muscle groups, order and targets.
     /// Later changes to the workout do not affect the session.
+    ///
+    /// The sets start empty: the planned load is kept as the set's target and offered in its empty
+    /// field, with the values of the last time (see `LastPerformance`), and checking the set records it.
     @discardableResult
     func startSession(from workout: Workout) throws -> Session {
         try ensureNoActiveSession()
@@ -102,7 +113,7 @@ struct SessionService {
             for (setIndex, planned) in entry.sets.enumerated() {
                 let log = SetLog(
                     sortIndex: setIndex,
-                    weightKg: planned.weightKg,
+                    weightKg: nil,
                     reps: nil,
                     targetWeightKg: planned.weightKg,
                     targetRepsMin: planned.repsMin,
@@ -181,6 +192,43 @@ struct SessionService {
         session.updatedAt = timestamp
         try context.saveOrRollback()
         return log
+    }
+
+    /// Removes a set of the active session; the sets after it move up. A performed exercise may be left
+    /// without sets. Changes only the session, never the planned workout or the history.
+    func removeSet(_ log: SetLog) throws {
+        let session = try activeSession(of: log)
+
+        let timestamp = now()
+        if let performed = log.sessionExercise {
+            SortIndexing.renumber(performed.orderedSetLogs.filter { $0.id != log.id }, at: timestamp)
+            performed.updatedAt = timestamp
+        }
+        session.updatedAt = timestamp
+        context.delete(log)
+        try context.saveOrRollback()
+    }
+
+    /// Removes a performed exercise and its sets from the active session; the exercises after it move
+    /// up. Changes only the session, never the planned workout or the history.
+    func removeExercise(_ performed: SessionExercise) throws {
+        guard let session = performed.session, session.isActive else { throw SessionError.sessionNotActive }
+
+        let timestamp = now()
+        SortIndexing.renumber(session.orderedExercises.filter { $0.id != performed.id }, at: timestamp)
+        session.updatedAt = timestamp
+        context.delete(performed)
+        try context.saveOrRollback()
+    }
+
+    /// "Última vez" for the exercises of `session`: the sets done the last time each one was performed,
+    /// by exercise id (see `LastPerformance.previousSets`). One query of the finished sessions, the most
+    /// recently started first; older ones are read only while an exercise is still missing.
+    func lastPerformances(for session: Session) throws -> [UUID: [PreviousSet]] {
+        let exerciseIDs = Set(session.exercises.compactMap { $0.exercise?.id })
+        guard !exerciseIDs.isEmpty else { return [:] }
+        let finished = try context.fetch(Self.finishedSessionsDescriptor)
+        return LastPerformance.previousSets(for: exerciseIDs, in: finished, excluding: session.id)
     }
 
     /// Edits the values of a set without changing whether it is completed.

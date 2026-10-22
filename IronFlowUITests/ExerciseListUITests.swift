@@ -69,6 +69,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         let field = searchField(in: app)
         field.tapAndWaitForKeyboardFocus()
         field.typeText("agach")
+        field.waitForValue("agach")
         XCTAssertEqual(field.value as? String, "agach", "The search field does not hold what was typed")
 
         XCTAssertTrue(element(labeled: "Agachamento Livre com Barra", in: app).waitForExistence(timeout: 10))
@@ -84,6 +85,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
 
         field.tapAndWaitForKeyboardFocus()
         field.typeText("xyz")
+        field.waitForValue("xyz")
         XCTAssertEqual(field.value as? String, "xyz", "The search field does not hold what was typed")
         XCTAssertTrue(app.descendants(matching: .any)["exercises.empty.search"].waitForExistence(timeout: 10), "No results message not shown")
     }

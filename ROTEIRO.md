@@ -18,6 +18,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Testes de interface mais rápidos e app somente escuro (PR #20).
 - Correções da vistoria: teste do teclado escuro medindo as teclas, pergunta sobre o horário de fim ao concluir um treino esquecido aberto, campos do treino com 44 pt e linha de série para texto grande, e pequenos ajustes de testes e comentários (PR #21).
 - Início e Treinos no modelo final aprovado: bloco "Treino de hoje" em destaque, semana com anel da meta, resumo em cartões, grade de treinos com o treino de hoje destacado e treinos recentes com "Ver tudo" (PR #22).
+- Treino em andamento no modelo final aprovado: cabeçalho fixo com cronômetro e kg levantados, barra de progresso, cartões com a série atual destacada, coluna ÚLTIMA e sugestões em cinza gravadas pelo ✓, exercício terminado recolhido, timer de descanso e remoção de série ou exercício (PR #23).
 
 ## Próximas etapas
 
@@ -34,11 +35,11 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Apagar ou corrigir um treino concluído.
 
 ### S6 — Durante o treino
-- Timer de descanso.
+- Timer de descanso (feito no PR #23).
 - RPE/RIR e notas.
 - Superséries e bi-sets.
-- Remover série ou exercício durante o treino.
-- Mostrar a carga e as repetições da última vez.
+- Remover série ou exercício durante o treino (feito no PR #23).
+- Mostrar a carga e as repetições da última vez (feito no PR #23).
 
 ### S7 — Ajustes
 - Unidades, idioma e notificações.
@@ -63,6 +64,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Quem digita "12,500" querendo 12,5 kg recebe a mensagem sobre mil quilos; rever a mensagem.
 - O banco é aberto de forma síncrona ao iniciar o app; uma migração num banco grande atrasaria a abertura.
 - Após uma falha ao salvar, o rollback() do SwiftData não restaura os valores alterados nos objetos em memória. O banco fica correto e o erro é mostrado, mas a tela pode exibir o valor não salvo até o objeto ser lido de novo. Raro (ex.: disco cheio). Prioridade baixa: resolver antes da S10. Coberto por teste com withKnownIssue.
+- Com o maior tamanho de texto (acessibilidade), a barra "Treino em andamento", mostrada com o treino minimizado, chega a 438 pt de altura e quebra "Treino em andamento" numa coluna estreita (89 pt). Rever o layout dela numa etapa futura (visto no PR #23).
 
 ## Decisões
 

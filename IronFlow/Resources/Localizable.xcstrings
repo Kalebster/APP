@@ -4,10 +4,22 @@
     "%@ concluído hoje" : {
 
     },
+    "%@ kg levantados" : {
+
+    },
+    "%@, concluído: %@, %@" : {
+
+    },
+    "%lld de %lld séries" : {
+
+    },
     "%lld de %lld treinos" : {
 
     },
     "%lld de %lld treinos programados feitos" : {
+
+    },
+    "%lld de 1 série" : {
 
     },
     "%lld de 1 treino" : {
@@ -158,6 +170,9 @@
     "A carga pode ter no máximo duas casas decimais." : {
 
     },
+    "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
+
+    },
     "Abdômen" : {
 
     },
@@ -216,6 +231,9 @@
 
     },
     "As repetições podem ser no máximo %lld." : {
+
+    },
+    "As séries já feitas dele serão apagadas deste treino; o treino planejado não muda." : {
 
     },
     "As séries planejadas deste exercício também serão removidas." : {
@@ -377,6 +395,9 @@
     "Excluir “%@”?" : {
 
     },
+    "Exercício %lld de %lld" : {
+
+    },
     "Exercício removido" : {
 
     },
@@ -393,6 +414,9 @@
 
     },
     "Faltam %lld para fechar a semana" : {
+
+    },
+    "Fechar %@" : {
 
     },
     "feito no app" : {
@@ -458,13 +482,44 @@
     "kg" : {
 
     },
+    "Mais 15 segundos" : {
+
+    },
+    "Mais opções do treino" : {
+
+    },
     "Marca o dia como treino feito fora do app." : {
 
     },
     "marcado como feito fora do app" : {
 
     },
-    "Meta" : {
+    "Menos 15 segundos" : {
+
+    },
+    "meta %lld reps" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "meta %lld rep"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "meta %lld reps"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "meta %lld–%lld reps" : {
 
     },
     "Meta diária" : {
@@ -480,6 +535,9 @@
 
     },
     "Minimizar" : {
+
+    },
+    "Mostra as séries." : {
 
     },
     "Máximo" : {
@@ -623,6 +681,12 @@
     "Programe a semana para acompanhar sua meta." : {
 
     },
+    "Pular" : {
+
+    },
+    "Pular descanso" : {
+
+    },
     "Quadríceps" : {
 
     },
@@ -641,10 +705,16 @@
     "Remover" : {
 
     },
+    "Remover esta série?" : {
+
+    },
     "Remover este exercício?" : {
 
     },
     "Remover exercício" : {
+
+    },
+    "Remover série" : {
 
     },
     "Renomear" : {
@@ -678,6 +748,9 @@
 
     },
     "Sem meta" : {
+
+    },
+    "Sem registro da última vez" : {
 
     },
     "Sem repetições" : {
@@ -719,10 +792,10 @@
     "Sábado" : {
 
     },
-    "Série" : {
+    "Série %lld" : {
 
     },
-    "Série %lld" : {
+    "Série %lld, atual" : {
 
     },
     "Tentar novamente" : {
@@ -786,6 +859,15 @@
 
     },
     "Você já tem um treino em andamento." : {
+
+    },
+    "Última" : {
+
+    },
+    "Última vez: %@" : {
+
+    },
+    "Última vez: %@, %@" : {
 
     }
   },

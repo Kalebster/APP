@@ -9,6 +9,8 @@ protocol SortIndexed: AnyObject {
 
 extension WorkoutExercise: SortIndexed {}
 extension PlannedSet: SortIndexed {}
+extension SessionExercise: SortIndexed {}
+extension SetLog: SortIndexed {}
 
 enum SortIndexing {
     /// Sets `sortIndex` to 0...n-1 following the order of `items`.

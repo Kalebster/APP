@@ -56,7 +56,7 @@ struct SessionServiceTests {
         #expect(performed.map { $0.exercise?.id } == [bench.id, curl.id])
     }
 
-    @Test("Starting copies targets in order, pre-fills the load and leaves reps empty")
+    @Test("Starting copies targets in order and leaves the load and reps empty: the planned load is a target, offered as a suggestion")
     func startCopiesTargets() throws {
         let session = try harness.sessions.startSession(from: workout)
 
@@ -65,12 +65,11 @@ struct SessionServiceTests {
         #expect(benchLogs.map(\.targetWeightKg) == [20, 22.25])
         #expect(benchLogs.map(\.targetRepsMin) == [8, 6])
         #expect(benchLogs.map(\.targetRepsMax) == [10, 8])
-        #expect(benchLogs.map(\.weightKg) == [20, 22.25])
+        #expect(benchLogs.map(\.weightKg) == [nil, nil])
 
         let allLogs = session.orderedExercises.flatMap(\.orderedSetLogs)
         #expect(allLogs.count == 3)
-        #expect(allLogs.allSatisfy { $0.reps == nil && !$0.isCompleted && $0.completedAt == nil })
-        #expect(session.orderedExercises[1].orderedSetLogs[0].weightKg == nil)
+        #expect(allLogs.allSatisfy { $0.weightKg == nil && $0.reps == nil && !$0.isCompleted && $0.completedAt == nil })
     }
 
     @Test("An archived exercise in the workout is included in the session")
@@ -200,7 +199,7 @@ struct SessionServiceTests {
         #expect(log.isCompleted == false)
         #expect(log.completedAt == nil)
         #expect(log.reps == nil)
-        #expect(log.weightKg == 20)
+        #expect(log.weightKg == nil)
         #expect(harness.context.hasChanges == false)
     }
 
@@ -255,6 +254,24 @@ struct SessionServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    @Test("A set done without a load counts nothing in the load lifted; a load typed later is recorded, counted, and the set stays done")
+    func loadTypedOnASetDoneWithoutOne() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let log = firstLog(of: session)
+
+        try harness.sessions.completeSet(log, weightKg: nil, reps: 10)
+        let before = SessionProgress.volumeKg(of: session.orderedExercises.flatMap(\.orderedSetLogs))
+        #expect(log.weightKg == nil)
+        #expect(before == 0)
+
+        try harness.sessions.updateSetValues(log, weightKg: 50, reps: 10)
+        let after = SessionProgress.volumeKg(of: session.orderedExercises.flatMap(\.orderedSetLogs))
+        #expect(log.isCompleted)
+        #expect(log.weightKg == 50)
+        #expect(log.reps == 10)
+        #expect(after == 500)
+    }
+
     @Test("Recorded values go up to 1.000 kg and 100 repetitions, when editing and when completing")
     func recordedValuesAtTheLimit() throws {
         let session = try harness.sessions.startSession(from: workout)
@@ -284,7 +301,7 @@ struct SessionServiceTests {
         #expect(throws: ValidationError.repsTooHigh) { try harness.sessions.updateSetValues(log, weightKg: 20, reps: 101) }
         #expect(throws: ValidationError.weightTooHigh) { try harness.sessions.completeSet(log, weightKg: 1_000.01, reps: 10) }
         #expect(throws: ValidationError.repsTooHigh) { try harness.sessions.completeSet(log, weightKg: 20, reps: 101) }
-        #expect(log.weightKg == 20)
+        #expect(log.weightKg == nil)
         #expect(log.reps == nil)
         #expect(log.isCompleted == false)
         #expect(log.completedAt == nil)
@@ -723,6 +740,179 @@ struct SessionServiceTests {
             #expect(logs.map(\.weightKg) == [40, 40])
             #expect(logs.map(\.reps) == [10, nil])
         }
+    }
+
+    // MARK: - Removing sets and exercises
+
+    @Test("Removing a set moves the next ones up and changes only the session")
+    func removeSet() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let performed = session.orderedExercises[0]
+        try harness.sessions.addSetCopyingLast(to: performed)
+        let logs = performed.orderedSetLogs
+        let plan = try planCounts()
+        harness.clock.advance(by: 30)
+
+        try harness.sessions.removeSet(logs[0])
+
+        let remaining = performed.orderedSetLogs
+        #expect(remaining.map(\.id) == [logs[1].id, logs[2].id])
+        #expect(remaining.map(\.sortIndex) == [0, 1])
+        #expect(session.updatedAt == harness.clock.current)
+        #expect(try count(SetLog.self, in: harness.context) == 3)
+        #expect(try planCounts() == plan)
+        #expect(workout.orderedExercises[0].orderedPlannedSets.count == 2)
+    }
+
+    @Test("A set already done can be removed, and so can the last set of an exercise, which stays without sets")
+    func removeDoneAndLastSet() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let curlSet = session.orderedExercises[1].orderedSetLogs[0]
+        try harness.sessions.completeSet(curlSet, weightKg: nil, reps: 12)
+
+        try harness.sessions.removeSet(curlSet)
+
+        #expect(session.orderedExercises.count == 2)
+        #expect(session.orderedExercises[1].setLogs.isEmpty)
+        // A set can be added to it again.
+        try harness.sessions.addSetCopyingLast(to: session.orderedExercises[1])
+        #expect(session.orderedExercises[1].setLogs.count == 1)
+    }
+
+    @Test("Removing an exercise removes its sets, done or not, moves the next exercises up and changes only the session")
+    func removeExercise() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let performed = session.orderedExercises[0]
+        try harness.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 20, reps: 10)
+        let plan = try planCounts()
+
+        try harness.sessions.removeExercise(performed)
+
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Rosca Direta"])
+        #expect(session.orderedExercises.map(\.sortIndex) == [0])
+        #expect(try count(SessionExercise.self, in: harness.context) == 1)
+        #expect(try count(SetLog.self, in: harness.context) == 1)
+        #expect(try planCounts() == plan)
+        #expect(workout.orderedExercises.count == 2)
+        // The exercise can be added to the session again.
+        try harness.sessions.addExercises([bench], to: session)
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Rosca Direta", "Supino Reto"])
+    }
+
+    @Test("Sets and exercises of a finished session cannot be removed")
+    func removeNeedsAnActiveSession() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let performed = session.orderedExercises[0]
+        try harness.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 20, reps: 10)
+        try harness.sessions.finishSession(session)
+
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeSet(performed.orderedSetLogs[1]) }
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeExercise(performed) }
+        #expect(performed.setLogs.count == 2)
+        #expect(session.exercises.count == 2)
+        #expect(harness.context.hasChanges == false)
+    }
+
+    // MARK: - Última vez
+
+    /// Starts a session of `workout`, lets `complete` do its sets, and finishes it 10 minutes later; the
+    /// next session starts an hour after that.
+    @discardableResult
+    private func finishedSession(_ complete: ([SetLog], [SetLog]) throws -> Void) throws -> Session {
+        let session = try harness.sessions.startSession(from: workout)
+        try complete(session.orderedExercises[0].orderedSetLogs, session.orderedExercises[1].orderedSetLogs)
+        harness.clock.advance(by: 600)
+        try harness.sessions.finishSession(session)
+        harness.clock.advance(by: 3_600)
+        return session
+    }
+
+    @Test("The last time is the latest finished session with the exercise done, set by set in the order of the sets done")
+    func lastTime() throws {
+        try finishedSession { bench, _ in
+            try harness.sessions.completeSet(bench[0], weightKg: 20, reps: 10)
+            try harness.sessions.completeSet(bench[1], weightKg: 22.5, reps: 8)
+        }
+        // More recent: only the second set done, so it goes with set 1.
+        try finishedSession { bench, _ in
+            try harness.sessions.completeSet(bench[1], weightKg: 25, reps: 7)
+        }
+        // The most recent has no set of the bench press done: it is skipped for that exercise.
+        try finishedSession { _, curl in
+            try harness.sessions.completeSet(curl[0], weightKg: nil, reps: 12)
+        }
+        let current = try harness.sessions.startSession(from: workout)
+
+        let last = try harness.sessions.lastPerformances(for: current)
+
+        #expect(last[bench.id] == [PreviousSet(weightKg: 25, reps: 7)])
+        #expect(last[curl.id] == [PreviousSet(weightKg: nil, reps: 12)], "Without a load, only the repetitions")
+    }
+
+    @Test("The last time may have fewer sets than now; an exercise never done has none")
+    func lastTimeWithFewerSets() throws {
+        try finishedSession { bench, _ in
+            try harness.sessions.completeSet(bench[0], weightKg: 20, reps: 10)
+        }
+        let current = try harness.sessions.startSession(from: workout)
+
+        let last = try harness.sessions.lastPerformances(for: current)
+
+        #expect(last[bench.id] == [PreviousSet(weightKg: 20, reps: 10)])
+        #expect(last[curl.id] == nil)
+        // The second set has nothing to show ("—") and suggests the plan.
+        let secondSet = current.orderedExercises[0].orderedSetLogs[1]
+        let previous = last[bench.id]?.dropFirst().first
+        #expect(previous == nil)
+        #expect(LastPerformance.suggestion(
+            previous: previous,
+            targetWeightKg: secondSet.targetWeightKg,
+            targetRepsMin: secondSet.targetRepsMin,
+            targetRepsMax: secondSet.targetRepsMax
+        ) == SetSuggestion(weightKg: 22.25, reps: 8))
+    }
+
+    @Test("The exercise is matched by its relationship: a deleted exercise's sets are never offered, even under its name")
+    func lastTimeOfADeletedExercise() throws {
+        try finishedSession { _, curlSets in
+            try harness.sessions.completeSet(curlSets[0], weightKg: 10, reps: 12)
+        }
+        harness.context.delete(curl)
+        try harness.context.save()
+        let sameName = try harness.exercises.createCustomExercise(name: "Rosca Direta", muscleGroup: .biceps)
+        let current = try harness.sessions.startFreeSession()
+        try harness.sessions.addExercises([sameName], to: current)
+
+        #expect(try harness.sessions.lastPerformances(for: current).isEmpty)
+    }
+
+    @Test("The current session and the sessions not finished are never the last time")
+    func lastTimeIgnoresSessionsNotFinished() throws {
+        let finished = try finishedSession { bench, _ in
+            try harness.sessions.completeSet(bench[0], weightKg: 20, reps: 10)
+        }
+        // Started after it: a session left open and the current one, both with the bench press done.
+        let open = try insertOpenSession(name: "Antigo", startedAt: harness.clock.current, createdAt: harness.clock.current, weightKg: 30)
+        let openSet = open.orderedExercises[0].orderedSetLogs[0]
+        openSet.reps = 10
+        openSet.isCompleted = true
+        harness.clock.advance(by: 600)
+        let current = Session(startedAt: harness.clock.current, workoutNameSnapshot: "Push")
+        harness.context.insert(current)
+        let performed = SessionExercise(sortIndex: 0, exerciseNameSnapshot: "Supino Reto", muscleGroupSnapshot: .chest)
+        harness.context.insert(performed)
+        performed.session = current
+        performed.exercise = bench
+        let currentSet = SetLog(sortIndex: 0, weightKg: 40, reps: 8)
+        currentSet.isCompleted = true
+        harness.context.insert(currentSet)
+        currentSet.sessionExercise = performed
+        try harness.context.save()
+
+        #expect(try harness.sessions.lastPerformances(for: current)[bench.id] == [PreviousSet(weightKg: 20, reps: 10)])
+        // A finished session is skipped when it is the one excluded (the current one, once finished).
+        #expect(LastPerformance.previousSets(for: [bench.id], in: [finished], excluding: finished.id).isEmpty)
+        #expect(LastPerformance.previousSets(for: [bench.id], in: [finished], excluding: nil)[bench.id] == [PreviousSet(weightKg: 20, reps: 10)])
     }
 
     // MARK: - Two sessions left open

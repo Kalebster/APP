@@ -1,12 +1,20 @@
+import OSLog
 import SwiftData
 import SwiftUI
 
-/// The session in progress: its exercises and sets, adding exercises and sets, finishing and
-/// discarding. Every change is saved right away; a typed value is saved when its field loses
-/// focus, when the set is checked, or when the screen is minimized or the app leaves the foreground.
-/// Changes here touch only the session, never the planned workout.
+private let sessionLogger = Logger(subsystem: "com.ironflow.app", category: "session")
+
+/// The session in progress: its exercises and sets, adding and removing exercises and sets, the rest
+/// between sets, finishing and discarding. Every change is saved right away; a typed value is saved
+/// when its field loses focus, when the set is checked, or when the screen is minimized or the app
+/// leaves the foreground. Changes here touch only the session, never the planned workout.
+///
+/// The sets are rows of a list, which creates and reuses rows as they scroll: typed values are kept
+/// here (`drafts`), never in a row, so one that scrolls out of sight is still saved.
 struct SessionView: View {
     let session: Session
+    /// The rest between sets. Kept by the root view, so it goes on while the session is minimized.
+    @Binding var restTimer: RestTimer
     /// Closes the screen (minimized, finished or discarded).
     let onClose: @MainActor () -> Void
 
@@ -15,6 +23,13 @@ struct SessionView: View {
     /// Typed values not saved yet, by set id.
     @State private var drafts: [UUID: SetDraft] = [:]
     @FocusState private var focusedField: SetField?
+    /// "Última vez": the sets done the last time each exercise was performed, by exercise id. Read once
+    /// when the screen opens and again when its exercises change.
+    @State private var lastPerformances: [UUID: [PreviousSet]] = [:]
+    /// Finished exercises opened again, by performed exercise id; the others stay closed.
+    @State private var openedFinished: Set<UUID> = []
+    /// Rests that reached zero on screen, for the vibration.
+    @State private var restsEnded = 0
     @State private var isPickingExercises = false
     @State private var isConfirmingFinish = false
     /// Sets not completed when "Concluir" was tapped, for the confirmation message.
@@ -22,6 +37,10 @@ struct SessionView: View {
     /// The end offered when "Concluir" was tapped on a session left open (see `SessionService.suggestedEnd`).
     @State private var suggestedEnd: Date?
     @State private var isConfirmingDiscard = false
+    /// A set already done that is about to be removed, waiting for the confirmation.
+    @State private var setPendingRemoval: SetLog?
+    /// An exercise with sets done that is about to be removed, waiting for the confirmation.
+    @State private var exercisePendingRemoval: SessionExercise?
     /// Set once the session is finished or discarded, so the view stops reading it.
     @State private var isClosed = false
     @State private var errorMessage: String?
@@ -40,74 +59,75 @@ struct SessionView: View {
 
     private var content: some View {
         let exercises = session.orderedExercises
+        let setsByExercise = exercises.map(\.orderedSetLogs)
+        let progress = SessionProgress(sets: setsByExercise)
 
         return NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Theme.Metrics.cardSpacing) {
-                    header
-                        .padding(.bottom, 4)
+            List {
+                if exercises.isEmpty {
+                    Text("Adicione exercícios para começar.")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                        .accessibilityIdentifier("session.empty")
+                        .cardListRow()
+                }
 
-                    if exercises.isEmpty {
-                        Text("Adicione exercícios para começar.")
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
-                            .accessibilityIdentifier("session.empty")
-                    }
+                ForEach(Array(exercises.enumerated()), id: \.element.id) { index, performed in
+                    exerciseCard(
+                        performed,
+                        sets: setsByExercise[index],
+                        isCurrent: progress.currentExerciseIndex == index,
+                        currentSetID: progress.currentSetID
+                    )
+                }
 
-                    ForEach(exercises) { performed in
-                        SessionExerciseCard(
-                            performed: performed,
-                            focusedField: $focusedField,
-                            draft: draftBinding,
-                            onToggle: toggle
-                        ) {
-                            addSet(to: performed)
-                        }
-                    }
-
-                    Button {
-                        isPickingExercises = true
-                    } label: {
-                        Label("Adicionar exercício", systemImage: "plus")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(Color.accentColor)
-                            .frame(maxWidth: .infinity)
-                            .cardStyle()
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("session.addExercise")
-
-                    Button(role: .destructive) {
+                addExerciseButton
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .environment(\.defaultMinListRowHeight, 0)
+            .scrollDismissesKeyboard(.interactively)
+            // The header and the rest bar stay in place, so, like the system's bars, they stop growing at
+            // the first accessibility text size: with the largest ones they would leave the sets no room.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                SessionHeader(
+                    name: SessionFormatting.name(session.workoutNameSnapshot),
+                    startedAt: session.startedAt,
+                    volumeKg: SessionProgress.volumeKg(of: setsByExercise.flatMap { $0 }),
+                    progress: progress,
+                    onMinimize: minimize,
+                    onDiscard: {
                         focusedField = nil
                         isConfirmingDiscard = true
-                    } label: {
-                        Text("Descartar treino")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 8)
-                    .accessibilityIdentifier("session.discard")
-                }
-                .padding(Theme.Metrics.screenPadding)
+                    },
+                    onFinish: requestFinish
+                )
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             }
-            .scrollDismissesKeyboard(.interactively)
+            // The list ends above the rest bar, so the bar never covers its last rows. It steps aside
+            // while a value is typed, leaving the keyboard's room to the field; the rest goes on.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if focusedField != nil {
+                    // While typing, a margin above the keyboard: the list brings the field just above
+                    // the keyboard, where the OK of the keyboard's bar would touch its lower edge.
+                    Color.clear
+                        .frame(height: 16)
+                        .allowsHitTesting(false)
+                } else if restTimer.isRunning(for: session.id) {
+                    RestTimerBar(
+                        timer: restTimer,
+                        onAdd: { seconds in restTimer.add(seconds, at: .now) },
+                        onSkip: { restTimer.stop() }
+                    )
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("session.rest")
+                }
+            }
             .screenBackground()
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(action: minimize) {
-                        Label("Minimizar", systemImage: "chevron.down")
-                    }
-                    .accessibilityIdentifier("session.minimize")
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Concluir", action: requestFinish)
-                        .accessibilityIdentifier("session.finish")
-                }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("OK") {
@@ -125,6 +145,13 @@ struct SessionView: View {
                     commitAll()
                 }
             }
+            .task(id: exerciseIDs) {
+                loadLastPerformances()
+            }
+            .task(id: restTimer.endsAt) {
+                await endRestWhenOver()
+            }
+            .sensoryFeedback(.success, trigger: restsEnded)
             .confirmationDialog("Concluir treino?", isPresented: $isConfirmingFinish, titleVisibility: .visible) {
                 if let suggestedEnd {
                     Button("Usar \(SessionFormatting.timeText(suggestedEnd, calendar: TrainingDay.calendar))") {
@@ -148,6 +175,28 @@ struct SessionView: View {
             } message: {
                 Text("Tudo o que foi registrado neste treino será apagado. O treino planejado não muda.")
             }
+            .confirmationDialog("Remover esta série?", isPresented: isConfirmingSetRemoval, titleVisibility: .visible) {
+                Button("Remover série", role: .destructive) {
+                    if let log = setPendingRemoval {
+                        setPendingRemoval = nil
+                        remove(log)
+                    }
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("A série já foi feita. Ela será apagada deste treino; o treino planejado não muda.")
+            }
+            .confirmationDialog("Remover este exercício?", isPresented: isConfirmingExerciseRemoval, titleVisibility: .visible) {
+                Button("Remover exercício", role: .destructive) {
+                    if let performed = exercisePendingRemoval {
+                        exercisePendingRemoval = nil
+                        remove(performed)
+                    }
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("As séries já feitas dele serão apagadas deste treino; o treino planejado não muda.")
+            }
             .sheet(isPresented: $isPickingExercises) {
                 ExercisePickerView(workoutExerciseIDs: Set(session.exercises.compactMap { $0.exercise?.id })) { exercises in
                     try service.addExercises(exercises, to: session)
@@ -157,19 +206,72 @@ struct SessionView: View {
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(SessionFormatting.name(session.workoutNameSnapshot))
-                .font(.title2.weight(.heavy))
-                .accessibilityAddTraits(.isHeader)
-                .accessibilityIdentifier("session.name")
-            TimelineView(.periodic(from: session.startedAt, by: 1)) { timeline in
-                Label(SessionFormatting.elapsedText(from: session.startedAt, to: timeline.date), systemImage: "timer")
-                    .font(.headline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            .accessibilityIdentifier("session.elapsed")
+    /// The card of one exercise, with its "Última vez" and the screen's actions. Built here rather than
+    /// in the list, so the compiler checks the call on its own.
+    private func exerciseCard(_ performed: SessionExercise, sets: [SetLog], isCurrent: Bool, currentSetID: UUID?) -> SessionExerciseCard {
+        let isFinished = SessionProgress.isFinished(sets)
+        let previousSets: [PreviousSet] = performed.exercise.flatMap { lastPerformances[$0.id] } ?? []
+        let isClosed = isFinished && !openedFinished.contains(performed.id)
+        return SessionExerciseCard(
+            performed: performed,
+            sets: sets,
+            previousSets: previousSets,
+            isCurrent: isCurrent,
+            currentSetID: currentSetID,
+            isFinished: isFinished,
+            isClosed: isClosed,
+            focusedField: $focusedField,
+            draft: { (log: SetLog) -> Binding<SetDraft> in draftBinding(for: log) },
+            onToggle: { (log: SetLog, suggestion: SetSuggestion) in toggle(log, of: performed, suggestion: suggestion) },
+            onAddSet: { addSet(to: performed) },
+            onRemoveSet: { (log: SetLog) in requestRemoval(of: log) },
+            onRemoveExercise: { requestRemoval(of: performed) },
+            onOpenOrClose: { openOrClose(performed) }
+        )
+    }
+
+    /// "+ Adicionar exercício", a dashed outline after the last card.
+    private var addExerciseButton: some View {
+        let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
+        return Button {
+            isPickingExercises = true
+        } label: {
+            Label("Adicionar exercício", systemImage: "plus")
+                .scaledFont(14, weight: .semibold)
+                .foregroundStyle(Theme.Colors.lightAccent)
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .overlay(shape.strokeBorder(Theme.Colors.controlBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+                .contentShape(shape)
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("session.addExercise")
+        .listRowInsets(EdgeInsets(
+            top: 0,
+            leading: Theme.Metrics.screenPadding,
+            bottom: Theme.Metrics.screenPadding,
+            trailing: Theme.Metrics.screenPadding
+        ))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    /// The exercises of the session, for reading "Última vez" again when they change.
+    private var exerciseIDs: [UUID] {
+        session.exercises.compactMap { $0.exercise?.id }.sorted()
+    }
+
+    private var isConfirmingSetRemoval: Binding<Bool> {
+        Binding(
+            get: { setPendingRemoval != nil },
+            set: { if !$0 { setPendingRemoval = nil } }
+        )
+    }
+
+    private var isConfirmingExerciseRemoval: Binding<Bool> {
+        Binding(
+            get: { exercisePendingRemoval != nil },
+            set: { if !$0 { exercisePendingRemoval = nil } }
+        )
     }
 
     // MARK: - Typed values
@@ -219,22 +321,57 @@ struct SessionView: View {
         return succeeded
     }
 
+    // MARK: - Última vez
+
+    /// Reads "Última vez" for the exercises of the session. Should the history fail to be read, the
+    /// sets show "—" and suggest the plan; the session itself is not affected.
+    private func loadLastPerformances() {
+        do {
+            lastPerformances = try service.lastPerformances(for: session)
+        } catch {
+            lastPerformances = [:]
+            sessionLogger.error("Última vez could not be read: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    // MARK: - Rest
+
+    /// Ends the rest when it reaches zero, with a vibration. A rest that ended while the app was away
+    /// (or the session minimized) just goes, without one.
+    private func endRestWhenOver() async {
+        guard restTimer.isRunning(for: session.id), let endsAt = restTimer.endsAt else { return }
+        let wait = endsAt.timeIntervalSinceNow
+        if wait > 0 {
+            do {
+                try await Task.sleep(for: .seconds(wait))
+            } catch {
+                // Cancelled: the rest changed, or the screen closed.
+                return
+            }
+        }
+        guard restTimer.endsAt == endsAt else { return }
+        if endsAt.timeIntervalSinceNow > -2 {
+            restsEnded += 1
+        }
+        restTimer.stop()
+    }
+
     // MARK: - Actions
 
-    /// Checks a set with the typed values (empty repetitions take the target), or unchecks it.
-    private func toggle(_ log: SetLog) {
+    /// Checks a set or unchecks it. Checking records what is typed, and the suggestion for a field left
+    /// empty (the values in gray), and starts the rest.
+    private func toggle(_ log: SetLog, of performed: SessionExercise, suggestion: SetSuggestion) {
         do {
             if log.isCompleted {
                 try service.uncompleteSet(log)
+                // Once finished again, the exercise closes again.
+                openedFinished.remove(performed.id)
                 return
             }
             let draft = drafts[log.id] ?? SessionFormatting.draft(weightKg: log.weightKg, reps: log.reps)
-            let values = try SessionFormatting.values(of: draft)
-            guard let reps = SessionFormatting.repsForCompletion(
-                typed: values.reps,
-                targetMin: log.targetRepsMin,
-                targetMax: log.targetRepsMax
-            ) else {
+            let typed = try SessionFormatting.values(of: draft)
+            let values = SessionFormatting.completionValues(typed: typed, suggestion: suggestion)
+            guard let reps = values.reps else {
                 throw SessionError.repsRequired
             }
             try service.completeSet(log, weightKg: values.weightKg, reps: reps)
@@ -242,6 +379,7 @@ struct SessionView: View {
             if focusedField?.logID == log.id {
                 focusedField = nil
             }
+            restTimer.start(for: session.id, at: .now)
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -250,6 +388,61 @@ struct SessionView: View {
     private func addSet(to performed: SessionExercise) {
         do {
             try service.addSetCopyingLast(to: performed)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// Opens a finished exercise, or closes it again.
+    private func openOrClose(_ performed: SessionExercise) {
+        withAnimation(.snappy) {
+            if openedFinished.contains(performed.id) {
+                openedFinished.remove(performed.id)
+            } else {
+                openedFinished.insert(performed.id)
+            }
+        }
+    }
+
+    /// Removes a set; one already done is removed only after a confirmation.
+    private func requestRemoval(of log: SetLog) {
+        if log.isCompleted {
+            setPendingRemoval = log
+        } else {
+            remove(log)
+        }
+    }
+
+    private func remove(_ log: SetLog) {
+        drafts[log.id] = nil
+        if focusedField?.logID == log.id {
+            focusedField = nil
+        }
+        do {
+            try service.removeSet(log)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// Removes an exercise; one with sets done is removed only after a confirmation.
+    private func requestRemoval(of performed: SessionExercise) {
+        if performed.setLogs.contains(where: \.isCompleted) {
+            exercisePendingRemoval = performed
+        } else {
+            remove(performed)
+        }
+    }
+
+    private func remove(_ performed: SessionExercise) {
+        let logIDs = Set(performed.setLogs.map(\.id))
+        drafts = drafts.filter { !logIDs.contains($0.key) }
+        if let field = focusedField, logIDs.contains(field.logID) {
+            focusedField = nil
+        }
+        openedFinished.remove(performed.id)
+        do {
+            try service.removeExercise(performed)
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -297,6 +490,7 @@ struct SessionView: View {
         do {
             try service.finishSession(session, endingAt: end)
             isClosed = true
+            restTimer.stop()
             onClose()
         } catch {
             errorMessage = UserFacingError.message(for: error)
@@ -308,6 +502,7 @@ struct SessionView: View {
         do {
             try service.discardSession(session)
             drafts = [:]
+            restTimer.stop()
             onClose()
         } catch {
             isClosed = false

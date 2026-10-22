@@ -21,7 +21,10 @@ import SwiftData
 /// - `open-session:<workout>`: a session of the workout left open: started 3 hours ago, its first set
 ///   done 2 hours ago (10 repetitions) and not finished;
 /// - `finished-today:<workout>`: one finished session of the workout that started today, 55 minutes
-///   ago (or at midnight, when that is earlier), with its first set done, finished now.
+///   ago (or at midnight, when that is earlier), with its first set done, finished now;
+/// - `last-time:<workout>`: one finished session of the workout that started yesterday at this time,
+///   with every set done: exercise 1 with 60 kg, 2 with 22, 3 with 18, 4 with 25 (and so on again),
+///   10, 10, 9 and 8 repetitions for sets 1 to 4 (8 after that); it lasted 45 minutes.
 @MainActor
 enum UITestSeed {
     enum Item: Equatable {
@@ -32,7 +35,12 @@ enum UITestSeed {
         case sessionDetail(workout: String)
         case openSession(workout: String)
         case finishedToday(workout: String)
+        case lastTime(workout: String)
     }
+
+    /// The loads of `last-time`, by exercise, and its repetitions, by set.
+    static let lastTimeLoads: [Double] = [60, 22, 18, 25]
+    static let lastTimeReps = [10, 10, 9, 8]
 
     enum SeedError: Error, CustomStringConvertible {
         case unknownItem(String)
@@ -90,6 +98,8 @@ enum UITestSeed {
                 return .openSession(workout: parts[1])
             case ("finished-today", 2):
                 return .finishedToday(workout: parts[1])
+            case ("last-time", 2):
+                return .lastTime(workout: parts[1])
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -147,6 +157,22 @@ enum UITestSeed {
                 let session = try service.startSession(from: workout)
                 try service.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: nil, reps: 10)
                 clock.current = now
+                try service.finishSession(session)
+            case .lastTime(let name):
+                let workout = try findWorkout(named: name, in: context)
+                let start = Date.now.addingTimeInterval(-86_400)
+                let clock = SeedClock(start)
+                let service = SessionService(context: context, now: { clock.current })
+                let session = try service.startSession(from: workout)
+                for (exerciseIndex, performed) in session.orderedExercises.enumerated() {
+                    let load = lastTimeLoads[exerciseIndex % lastTimeLoads.count]
+                    for (setIndex, log) in performed.orderedSetLogs.enumerated() {
+                        clock.current = clock.current.addingTimeInterval(120)
+                        let reps = lastTimeReps[min(setIndex, lastTimeReps.count - 1)]
+                        try service.completeSet(log, weightKg: load, reps: reps)
+                    }
+                }
+                clock.current = start.addingTimeInterval(2_700)
                 try service.finishSession(session)
             }
         }

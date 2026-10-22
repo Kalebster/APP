@@ -17,7 +17,7 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push")
 
         #expect(items == [
             .workout(name: "Push", exercises: ["Crossover na Polia", "Barra Fixa"]),
@@ -28,13 +28,14 @@ struct UITestSeedTests {
             .openSession(workout: "Push"),
             .plan(workout: "Push", weekdays: [1, 3, 7]),
             .finishedToday(workout: "Push"),
+            .lastTime(workout: "Push"),
         ])
     }
 
     @Test("An item it does not know, or one without what it needs, is refused")
     func refusesUnknownItems() {
         for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session",
-                     "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today"] {
+                     "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today", "last-time"] {
             #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
         }
     }
@@ -155,6 +156,34 @@ struct UITestSeedTests {
             try UITestSeed.apply(try UITestSeed.parse("workout:Push:Exercício que não existe"), in: context)
         }
         #expect(try context.fetch(FetchDescriptor<WeeklyPlanDay>()).isEmpty)
+    }
+
+    @Test("The last time is a session finished yesterday with every set done, the loads by exercise and the repetitions by set")
+    func createsTheLastTime() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia|Barra Fixa,last-time:Push"), in: context)
+
+        let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
+        let ended = try #require(session.endedAt)
+        #expect(session.startedAt < Date.now.addingTimeInterval(-86_000))
+        // 45 minutes, within the rounding of the date arithmetic.
+        #expect(abs(ended.timeIntervalSince(session.startedAt) - 2_700) < 0.001)
+        let exercises = session.orderedExercises
+        #expect(exercises.map { $0.orderedSetLogs.map(\.weightKg) } == [[60, 60, 60], [22, 22, 22]])
+        #expect(exercises.map { $0.orderedSetLogs.map(\.reps) } == [[10, 10, 9], [10, 10, 9]])
+        #expect(exercises.allSatisfy { $0.setLogs.allSatisfy(\.isCompleted) })
+        // It is what "Última vez" shows for a new session of the workout.
+        let workout = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
+        let current = try SessionService(context: context).startSession(from: workout)
+        let last = try SessionService(context: context).lastPerformances(for: current)
+        let firstExercise = try #require(exercises[0].exercise)
+        #expect(last[firstExercise.id] == [
+            PreviousSet(weightKg: 60, reps: 10),
+            PreviousSet(weightKg: 60, reps: 10),
+            PreviousSet(weightKg: 60, reps: 9),
+        ])
     }
 
     @Test("The hook acts only with -ui-testing and -ui-seed together")
