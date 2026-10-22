@@ -187,7 +187,7 @@ final class WorkoutUITests: IronFlowUITestCase {
 
         app.buttons["workout.addExercises"].tap()
         // The first exercises of the library are visible without searching.
-        for name in ["Crossover na Polia Alta", "Crucifixo Reto com Halteres"] {
+        for name in ["Crossover na Polia Alta", "Crossover na Polia Baixa"] {
             let row = app.buttons[name]
             XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
             row.tap()
@@ -202,7 +202,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
         XCTAssertEqual(rows.count, 2, "Exercises added more than once")
         XCTAssertTrue(rows.element(boundBy: 0).label.contains("Crossover na Polia Alta"), "First row: \(rows.element(boundBy: 0).label)")
-        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Crucifixo Reto com Halteres"), "Second row: \(rows.element(boundBy: 1).label)")
+        XCTAssertTrue(rows.element(boundBy: 1).label.contains("Crossover na Polia Baixa"), "Second row: \(rows.element(boundBy: 1).label)")
     }
 
     @MainActor

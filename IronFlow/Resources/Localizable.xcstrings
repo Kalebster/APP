@@ -497,6 +497,12 @@
     "kg" : {
 
     },
+    "Limpar busca" : {
+
+    },
+    "Limpar filtros" : {
+
+    },
     "Mais 15 segundos" : {
 
     },
@@ -546,6 +552,15 @@
     "Meta: %@ · Carga: %@ · Reps: %@" : {
 
     },
+    "MEU" : {
+
+    },
+    "Meu exercício" : {
+
+    },
+    "Meus" : {
+
+    },
     "Meus treinos" : {
 
     },
@@ -576,7 +591,7 @@
     "Nenhum exercício" : {
 
     },
-    "Nenhum exercício em %@" : {
+    "Nenhum exercício encontrado" : {
 
     },
     "Nenhum exercício registrado." : {
@@ -667,9 +682,6 @@
 
     },
     "Peito" : {
-
-    },
-    "Personalizado" : {
 
     },
     "Personalizar" : {
@@ -828,10 +840,16 @@
     "Tentar novamente" : {
 
     },
+    "Tente outro nome ou outro filtro." : {
+
+    },
     "Terça" : {
 
     },
     "Terça-feira" : {
+
+    },
+    "Todos" : {
 
     },
     "treino" : {
