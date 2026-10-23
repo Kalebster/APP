@@ -92,7 +92,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(repsFields(in: app).element(boundBy: 2).placeholderValue, "9")
         XCTAssertEqual(element("session.volume", in: app).label, "0 kg levantados")
         XCTAssertEqual(element("session.progress", in: app).label, "0 de 12 séries, Exercício 1 de 4")
-        XCTAssertTrue(app.staticTexts["Série 1, atual"].exists, "The first set is not the current one")
+        XCTAssertTrue(app.buttons["Série 1, atual"].exists, "The first set is not the current one")
         // VoiceOver says "selected" only for a set done.
         XCTAssertFalse(checks(in: app).element(boundBy: 0).isSelected, "Set 1, not done, reads as selected")
         XCTAssertFalse(checks(in: app).element(boundBy: 1).isSelected, "Set 2, not done, reads as selected")
@@ -104,7 +104,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertFalse(checks(in: app).element(boundBy: 1).isSelected, "Set 2, not done, reads as selected")
         XCTAssertTrue(waitForLabel(of: element("session.volume", in: app), containing: "600 kg levantados"), "The suggestion was not recorded")
         XCTAssertEqual(element("session.progress", in: app).label, "1 de 12 séries, Exercício 1 de 4")
-        XCTAssertTrue(app.staticTexts["Série 2, atual"].exists, "The second set is not the current one")
+        XCTAssertTrue(app.buttons["Série 2, atual"].exists, "The second set is not the current one")
 
         let rest = element("session.rest.time", in: app)
         XCTAssertTrue(rest.waitForExistence(timeout: 10), "No rest after checking a set")
@@ -144,7 +144,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(done.label, "Supino Reto com Barra, concluído: 3 de 3 séries, 60 kg × 10 · 10 · 9")
         XCTAssertFalse(done.isSelected, "The finished exercise reads as selected")
         XCTAssertEqual(element("session.progress", in: app).label, "3 de 12 séries, Exercício 2 de 4")
-        XCTAssertTrue(app.staticTexts["Série 1, atual"].exists, "The next exercise's first set is not the current one")
+        XCTAssertTrue(app.buttons["Série 1, atual"].exists, "The next exercise's first set is not the current one")
         attachScreenshot(named: "64-session-exercise-done", of: app)
 
         // Tapping opens it; a set unchecked keeps it open, and checking it again closes it.
@@ -244,7 +244,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         weight.tap()
         weight.typeText("42")
         XCTAssertFalse(checks(in: app).element(boundBy: 0).isSelected, "Set 1, not done, reads as selected")
-        let firstSet = app.staticTexts["Série 1, atual"]
+        let firstSet = app.buttons["Série 1, atual"]
         let headerBottom = element("session.progress", in: app).frame.maxY
         var positions: [String] = []
         while firstSet.exists, firstSet.frame.maxY > headerBottom, positions.count < 5 {

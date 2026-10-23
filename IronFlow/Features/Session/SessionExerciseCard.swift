@@ -18,6 +18,8 @@ struct SessionExerciseCard: View {
     let onToggle: @MainActor (SetLog, SetSuggestion) -> Void
     let onAddSet: @MainActor () -> Void
     let onRemoveSet: @MainActor (SetLog) -> Void
+    /// Opens the set type sheet of a set, with its number.
+    let onChooseType: @MainActor (SetLog, Int) -> Void
     let onRemoveExercise: @MainActor () -> Void
     let onOpenOrClose: @MainActor () -> Void
 
@@ -54,10 +56,10 @@ struct SessionExerciseCard: View {
                         suggestion: suggestion,
                         isCurrent: log.id == currentSetID,
                         draft: draft(log),
-                        focusedField: focusedField
-                    ) {
-                        onToggle(log, suggestion)
-                    }
+                        focusedField: focusedField,
+                        onToggle: { onToggle(log, suggestion) },
+                        onChooseType: { onChooseType(log, index + 1) }
+                    )
                     .padding(.vertical, 2)
                     .sessionCardRow(.middle, isCurrent: isCurrent)
                     // Removing takes a second tap, on the button the swipe shows.
