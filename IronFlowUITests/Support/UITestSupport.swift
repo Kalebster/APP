@@ -189,7 +189,7 @@ extension XCTestCase {
         field.tap()
         field.typeText(name)
         app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
+        waitForEditor(of: name, in: app)
     }
 
     /// Opens the editor of the first workout on the Treinos list, from its card.
@@ -198,7 +198,24 @@ extension XCTestCase {
         let card = app.buttons["workouts.card"].firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), "Workout card not shown")
         card.tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "Editor of '\(name)' did not open")
+        waitForEditor(of: name, in: app)
+    }
+
+    /// Waits for the editor of the workout `name`, from its title.
+    @MainActor
+    func waitForEditor(of name: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let title = element("workout.title", in: app)
+        XCTAssertTrue(title.waitForExistence(timeout: 10), "Editor of '\(name)' did not open", file: file, line: line)
+        XCTAssertTrue(waitForLabel(of: title, toBe: name), "Editor title: \(title.label)", file: file, line: line)
+    }
+
+    /// In the workout editor on screen: goes back to the Treinos list with "‹ Treinos".
+    @MainActor
+    func goBackFromEditor(in app: XCUIApplication) {
+        let back = app.buttons["workout.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 10), "Back button not found")
+        back.tap()
+        XCTAssertTrue(app.buttons["workouts.add"].waitForExistence(timeout: 10), "Treinos list not shown")
     }
 
     /// In the workout editor on screen: deletes the workout from its ⋮ menu, confirming the question.

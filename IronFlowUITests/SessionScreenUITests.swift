@@ -130,6 +130,58 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(rest.waitForNonExistence(timeout: 10), "The rest did not end at zero")
     }
 
+    /// The sets start with the types of the plan, shown on their numbers; a warm-up or feeder set done
+    /// counts nothing in the load lifted, a working set does; a type changed during the session counts
+    /// from then on.
+    @MainActor
+    func testSetTypesFromThePlanAndDuringTheSession() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: [push, "set-types:Push"])
+        startWorkout(named: "Push", in: app)
+
+        let types = app.buttons.matching(identifier: "session.set.type")
+        XCTAssertTrue(types.firstMatch.waitForExistence(timeout: 10), "Set numbers not shown")
+        XCTAssertEqual((0..<5).map { types.element(boundBy: $0).label }, [
+            "Série 1, Aquecimento, atual", "Série 2, Preparatória", "Série 3", "Série 4", "Série 5, Falha",
+        ])
+        let volume = element("session.volume", in: app)
+        XCTAssertEqual(element("session.progress", in: app).label, "0 de 14 séries, Exercício 1 de 4")
+
+        // The warm-up (40 × 15) and the feeder (50 × 6) done: still nothing lifted, but two sets done.
+        checks(in: app).element(boundBy: 0).tap()
+        XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "First set not checked")
+        checks(in: app).element(boundBy: 1).tap()
+        XCTAssertTrue(checks(in: app).element(boundBy: 1).isSelected, "Second set not checked")
+        XCTAssertEqual(volume.label, "0 kg levantados")
+        XCTAssertTrue(waitForLabel(of: element("session.progress", in: app), containing: "2 de 14 séries"), "Progress: \(element("session.progress", in: app).label)")
+        XCTAssertEqual(types.element(boundBy: 2).label, "Série 3, atual")
+        let rest = element("session.rest.time", in: app)
+        if rest.waitForExistence(timeout: 5) {
+            app.buttons["session.rest.skip"].tap()
+        }
+        attachScreenshot(named: "80-session-set-types", of: app)
+
+        // The working set (60 × 10) counts.
+        checks(in: app).element(boundBy: 2).tap()
+        XCTAssertTrue(waitForLabel(of: volume, toBe: "600 kg levantados"), "Volume: \(volume.label)")
+
+        // Made a warm-up during the session, it stops counting; the warm-up made a working set counts.
+        types.element(boundBy: 2).tap()
+        let warmup = app.buttons["setType.warmup"]
+        XCTAssertTrue(warmup.waitForExistence(timeout: 10), "Set type sheet not shown")
+        XCTAssertTrue(app.buttons["setType.working"].isSelected, "The set's type is not the chosen one")
+        warmup.tap()
+        XCTAssertTrue(waitForLabel(of: types.element(boundBy: 2), toBe: "Série 3, Aquecimento"), "Type not changed: \(types.element(boundBy: 2).label)")
+        XCTAssertTrue(waitForLabel(of: volume, toBe: "0 kg levantados"), "Volume: \(volume.label)")
+
+        types.element(boundBy: 0).tap()
+        let working = app.buttons["setType.working"]
+        XCTAssertTrue(working.waitForExistence(timeout: 10), "Set type sheet not shown")
+        working.tap()
+        XCTAssertTrue(waitForLabel(of: types.element(boundBy: 0), toBe: "Série 1"), "Type not changed: \(types.element(boundBy: 0).label)")
+        XCTAssertTrue(waitForLabel(of: volume, toBe: "600 kg levantados"), "Volume: \(volume.label)")
+    }
+
     @MainActor
     func testFinishedExerciseClosesAndOpens() throws {
         continueAfterFailure = false

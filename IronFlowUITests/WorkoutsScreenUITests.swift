@@ -142,7 +142,15 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         let card = app.buttons["workouts.card"]
         XCTAssertTrue(waitForLabel(of: card, containing: "Pull"), "Card not renamed: \(card.label)")
         XCTAssertTrue(app.buttons["Iniciar Pull"].exists, "▶ not renamed")
-        XCTAssertFalse(app.navigationBars["Pull"].exists, "Renaming opened the editor")
+        XCTAssertFalse(element("workout.title", in: app).exists, "Renaming opened the editor")
+
+        // "Editar treino" opens the editor.
+        app.buttons["Opções de Pull"].tap()
+        let edit = app.buttons["Editar treino"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 10), "Edit option not found")
+        edit.tap()
+        XCTAssertTrue(waitForLabel(of: element("workout.title", in: app), toBe: "Pull"), "Editor not opened from the menu")
+        goBackFromEditor(in: app)
 
         // Delete: cancelling keeps the workout.
         app.buttons["Opções de Pull"].tap()
