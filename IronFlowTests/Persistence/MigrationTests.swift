@@ -46,6 +46,8 @@ struct MigrationTests {
             try markTrainedOutsideTheApp(in: context)
             plannedWorkoutID = try planWorkoutOnWednesday(in: context)
             try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
@@ -102,6 +104,8 @@ struct MigrationTests {
             try markTrainedOutsideTheApp(in: context)
             plannedWorkoutID = try planWorkoutOnWednesday(in: context)
             try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
@@ -156,6 +160,8 @@ struct MigrationTests {
             // The table added by version 4 and the set type of version 5 work in the migrated store.
             plannedWorkoutID = try planWorkoutOnWednesday(in: context)
             try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
@@ -214,6 +220,8 @@ struct MigrationTests {
 
             // The set type of version 5 works in the migrated store.
             try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
