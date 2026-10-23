@@ -1,7 +1,7 @@
 import Foundation
 
-/// The exercises chosen in the picker, in the order they were chosen.
-/// Exercises already in the workout and archived exercises cannot be chosen.
+/// The exercises chosen in the picker, by id, in the order they were chosen.
+/// Exercises already in the workout cannot be chosen, and archived exercises are never returned.
 /// Pure logic: no UI and no store access.
 struct ExerciseSelection {
     /// Library exercises already in the workout.
@@ -10,27 +10,27 @@ struct ExerciseSelection {
 
     var count: Int { selectedIDs.count }
 
-    func isInWorkout(_ exercise: Exercise) -> Bool {
-        workoutExerciseIDs.contains(exercise.id)
+    func isInWorkout(_ id: UUID) -> Bool {
+        workoutExerciseIDs.contains(id)
     }
 
-    func isSelected(_ exercise: Exercise) -> Bool {
-        selectedIDs.contains(exercise.id)
+    func isSelected(_ id: UUID) -> Bool {
+        selectedIDs.contains(id)
     }
 
     /// Selects the exercise, or deselects it when it is already selected.
-    mutating func toggle(_ exercise: Exercise) {
-        guard !isInWorkout(exercise), !exercise.isArchived else { return }
-        if let index = selectedIDs.firstIndex(of: exercise.id) {
+    mutating func toggle(_ id: UUID) {
+        guard !isInWorkout(id) else { return }
+        if let index = selectedIDs.firstIndex(of: id) {
             selectedIDs.remove(at: index)
         } else {
-            selectedIDs.append(exercise.id)
+            selectedIDs.append(id)
         }
     }
 
-    /// The selected exercises found in `exercises`, in selection order.
+    /// The selected exercises found in `exercises`, in selection order, without the archived ones.
     func selectedExercises(from exercises: [Exercise]) -> [Exercise] {
         let exercisesByID = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        return selectedIDs.compactMap { exercisesByID[$0] }
+        return selectedIDs.compactMap { exercisesByID[$0] }.filter { !$0.isArchived }
     }
 }

@@ -58,6 +58,8 @@ struct AppearanceTests {
             ("RestBarBackground", [0x1C, 0x1D, 0x22]),
             // The Exercícios model.
             ("SecondaryText", [0x9A, 0x9C, 0xA3]),
+            // The workout editor model.
+            ("SelectedCardBackground", [0x14, 0x1B, 0x2C]),
         ]
         for (name, rgb) in expected {
             let dark = try components(of: name, style: .dark)

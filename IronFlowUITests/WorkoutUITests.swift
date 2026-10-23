@@ -17,20 +17,11 @@ final class WorkoutUITests: IronFlowUITestCase {
         let add = app.buttons["workout.addExercises"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Add exercises button not found")
         add.tap()
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
         for name in names {
-            // The search field's clear button (shown while editing) empties it wherever the tap
-            // left the cursor.
-            search.tapAndWaitForKeyboardFocus()
-            let clear = search.buttons.firstMatch
-            if clear.exists {
-                clear.tap()
-            }
-            search.typeText(name)
-            let row = app.buttons[name]
-            XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
-            row.tap()
+            searchPicker(for: name, in: app)
+            let card = pickerCard(name, in: app)
+            XCTAssertTrue(card.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
+            card.tap()
         }
         let confirm = app.buttons["picker.add"]
         XCTAssertTrue(confirm.isEnabled, "Add button disabled after selecting exercises")
@@ -157,9 +148,10 @@ final class WorkoutUITests: IronFlowUITestCase {
         attachScreenshot(named: "13-workout-editor", of: app)
 
         app.buttons["workout.addExercises"].tap()
-        let inWorkout = element(labelStartingWith: "Crossover na Polia Alta", in: app)
+        searchPicker(for: "Crossover na Polia Alta", in: app)
+        let inWorkout = pickerCard("Crossover na Polia Alta", in: app)
         XCTAssertTrue(inWorkout.waitForExistence(timeout: 10), "Exercise not found in the picker")
-        XCTAssertTrue(inWorkout.label.contains("No treino"), "Missing 'No treino': \(inWorkout.label)")
+        XCTAssertTrue(inWorkout.label.hasSuffix("Já está no treino"), "Missing 'NO TREINO': \(inWorkout.label)")
         XCTAssertFalse(inWorkout.isEnabled, "An exercise already in the workout can be selected")
         XCTAssertFalse(app.buttons["picker.add"].isEnabled, "Add button enabled without a selection")
         attachScreenshot(named: "14-exercise-picker", of: app)
@@ -186,9 +178,9 @@ final class WorkoutUITests: IronFlowUITestCase {
         openWorkout(named: "Push", in: app)
 
         app.buttons["workout.addExercises"].tap()
-        // The first exercises of the library are visible without searching.
         for name in ["Crossover na Polia Alta", "Crossover na Polia Baixa"] {
-            let row = app.buttons[name]
+            searchPicker(for: name, in: app)
+            let row = pickerCard(name, in: app)
             XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
             row.tap()
         }

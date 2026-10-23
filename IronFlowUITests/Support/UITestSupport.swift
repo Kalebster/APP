@@ -217,14 +217,33 @@ extension XCTestCase {
     /// by searching its exact name, and confirms with "Adicionar".
     @MainActor
     func pickExercise(_ name: String, in app: XCUIApplication) {
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
-        search.tapAndWaitForKeyboardFocus()
-        search.typeText(name)
-        let row = app.buttons[name]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
-        row.tap()
+        searchPicker(for: name, in: app)
+        let card = pickerCard(name, in: app)
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
+        card.tap()
         app.buttons["picker.add"].tap()
+    }
+
+    /// Types `text` in the search of the exercise picker on screen, replacing what it held.
+    @MainActor
+    func searchPicker(for text: String, in app: XCUIApplication) {
+        let search = app.textFields["picker.search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 10), "Picker search field not found")
+        let clear = app.buttons["picker.search.clear"]
+        if clear.exists {
+            clear.tap()
+        }
+        search.tapAndWaitForKeyboardFocus()
+        search.typeText(text)
+    }
+
+    /// The card of the exercise `name` in the exercise picker on screen. Its label starts with the name,
+    /// followed by the group, the focus and the equipment.
+    @MainActor
+    func pickerCard(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons
+            .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "picker.card", "\(name), "))
+            .firstMatch
     }
 
     /// Starts a workout from its ▶ button on the Treinos tab and waits for the session screen.

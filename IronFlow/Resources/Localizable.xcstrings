@@ -497,6 +497,9 @@
     "Início" : {
 
     },
+    "Já está no treino" : {
+
+    },
     "Já existe um exercício com esse nome." : {
 
     },
@@ -627,7 +630,7 @@
     "Nenhum treino realizado" : {
 
     },
-    "No treino" : {
+    "NO TREINO" : {
 
     },
     "Nome do treino" : {

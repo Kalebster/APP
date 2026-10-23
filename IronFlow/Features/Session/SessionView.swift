@@ -197,7 +197,7 @@ struct SessionView: View {
             } message: {
                 Text("As séries já feitas dele serão apagadas deste treino; o treino planejado não muda.")
             }
-            .sheet(isPresented: $isPickingExercises) {
+            .fullScreenCover(isPresented: $isPickingExercises) {
                 ExercisePickerView(workoutExerciseIDs: Set(session.exercises.compactMap { $0.exercise?.id })) { exercises in
                     try service.addExercises(exercises, to: session)
                 }

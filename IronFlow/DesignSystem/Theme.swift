@@ -63,6 +63,10 @@ enum Theme {
         /// Secondary text between `mediumText` and `dimText`: the counts, the search icon and the muscle
         /// group of an exercise.
         static let secondaryText = Color(.secondaryText)
+
+        // The workout editor model.
+        /// The fill of an exercise chosen in the exercise picker, outlined in the accent color.
+        static let selectedCardBackground = Color(.selectedCardBackground)
     }
 
     enum Metrics {

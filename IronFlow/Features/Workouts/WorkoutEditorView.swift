@@ -151,7 +151,7 @@ struct WorkoutEditorView: View {
         .navigationDestination(item: $openedItem) { item in
             WorkoutExerciseView(item: item)
         }
-        .sheet(isPresented: $isPickingExercises) {
+        .fullScreenCover(isPresented: $isPickingExercises) {
             ExercisePickerView(workoutExerciseIDs: Set(workout.exercises.compactMap { $0.exercise?.id })) { exercises in
                 try service.addExercises(exercises, to: workout)
             }
