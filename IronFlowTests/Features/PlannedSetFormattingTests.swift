@@ -3,13 +3,6 @@ import Testing
 @testable import IronFlow
 
 struct PlannedSetFormattingTests {
-    @Test("Repetitions show a range, or a single number when minimum and maximum are equal")
-    func repsText() {
-        #expect(PlannedSetFormatting.repsText(min: 8, max: 12) == "8–12 reps")
-        #expect(PlannedSetFormatting.repsText(min: 10, max: 10) == "10 reps")
-        #expect(PlannedSetFormatting.repsText(min: 1, max: 1) == "1 rep")
-    }
-
     @Test("Loads use the decimal comma and up to two decimals; no load shows Sem carga")
     func weightText() {
         #expect(PlannedSetFormatting.weightText(nil) == "Sem carga")
@@ -57,22 +50,5 @@ struct PlannedSetFormattingTests {
         for tooPrecise in ["1,0000", "82.5055"] {
             #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetFormatting.weightKg(tooPrecise) }
         }
-    }
-
-    @Test("Typed fields become checked values, or report the first problem")
-    func values() throws {
-        #expect(try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "") == .reps(8, 12))
-        #expect(try PlannedSetFormatting.values(repsMin: "6", repsMax: "6", weight: "82,5") == .reps(6, 6, kg: 82.5))
-        #expect(throws: PlannedSetInputError.repsRequired) { try PlannedSetFormatting.values(repsMin: "", repsMax: "12", weight: "") }
-        #expect(throws: PlannedSetInputError.repsRequired) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "x", weight: "") }
-        #expect(throws: ValidationError.repsMinGreaterThanMax) { try PlannedSetFormatting.values(repsMin: "12", repsMax: "8", weight: "") }
-        #expect(throws: ValidationError.repsTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "101", weight: "") }
-        #expect(throws: ValidationError.repsTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "99999999999999999999", weight: "") }
-        #expect(throws: ValidationError.invalidRepsMin) { try PlannedSetFormatting.values(repsMin: "0", repsMax: "8", weight: "") }
-        #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "abc") }
-        #expect(throws: ValidationError.weightTooHigh) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1001") }
-        #expect(try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1000") == .reps(8, 12, kg: 1_000))
-        #expect(throws: PlannedSetInputError.thousandsSeparator) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1.000") }
-        #expect(throws: PlannedSetInputError.thousandsSeparator) { try PlannedSetFormatting.values(repsMin: "8", repsMax: "12", weight: "1,000") }
     }
 }

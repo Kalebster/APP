@@ -41,9 +41,20 @@ struct SessionView: View {
     @State private var setPendingRemoval: SetLog?
     /// An exercise with sets done that is about to be removed, waiting for the confirmation.
     @State private var exercisePendingRemoval: SessionExercise?
+    /// The set whose type sheet is open.
+    @State private var typeSheet: TypeSheetTarget?
+    /// The set "Remover série" of the type sheet asked to remove, removed once the sheet has closed (a
+    /// set done asks for a confirmation first, which cannot show while the sheet closes).
+    @State private var removalAfterTypeSheet: UUID?
     /// Set once the session is finished or discarded, so the view stops reading it.
     @State private var isClosed = false
     @State private var errorMessage: String?
+
+    private struct TypeSheetTarget: Identifiable {
+        let id: UUID
+        let number: Int
+        let type: SetType
+    }
 
     private var service: SessionService {
         SessionService(context: context)
@@ -197,7 +208,16 @@ struct SessionView: View {
             } message: {
                 Text("As séries já feitas dele serão apagadas deste treino; o treino planejado não muda.")
             }
-            .sheet(isPresented: $isPickingExercises) {
+            .sheet(item: $typeSheet, onDismiss: removeAfterTypeSheet) { target in
+                SetTypeSheet(
+                    number: target.number,
+                    selected: target.type,
+                    removalUnavailableReason: nil,
+                    onChoose: { (type: SetType) in setType(type, ofSetWithID: target.id) },
+                    onRemove: { removalAfterTypeSheet = target.id }
+                )
+            }
+            .fullScreenCover(isPresented: $isPickingExercises) {
                 ExercisePickerView(workoutExerciseIDs: Set(session.exercises.compactMap { $0.exercise?.id })) { exercises in
                     try service.addExercises(exercises, to: session)
                 }
@@ -225,6 +245,7 @@ struct SessionView: View {
             onToggle: { (log: SetLog, suggestion: SetSuggestion) in toggle(log, of: performed, suggestion: suggestion) },
             onAddSet: { addSet(to: performed) },
             onRemoveSet: { (log: SetLog) in requestRemoval(of: log) },
+            onChooseType: { (log: SetLog, number: Int) in openTypeSheet(for: log, number: number) },
             onRemoveExercise: { requestRemoval(of: performed) },
             onOpenOrClose: { openOrClose(performed) }
         )
@@ -390,6 +411,32 @@ struct SessionView: View {
             try service.addSetCopyingLast(to: performed)
         } catch {
             errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// Opens the set type sheet of a set; what is typed is saved first.
+    private func openTypeSheet(for log: SetLog, number: Int) {
+        focusedField = nil
+        commit(log.id)
+        typeSheet = TypeSheetTarget(id: log.id, number: number, type: log.setType)
+    }
+
+    private func setType(_ type: SetType, ofSetWithID id: UUID) {
+        guard let log = setLog(id: id) else { return }
+        do {
+            try service.setType(type, of: log)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// Removes the set "Remover série" of the type sheet asked for, as a swipe does: a set done is
+    /// removed only after a confirmation.
+    private func removeAfterTypeSheet() {
+        guard let id = removalAfterTypeSheet else { return }
+        removalAfterTypeSheet = nil
+        if let log = setLog(id: id) {
+            requestRemoval(of: log)
         }
     }
 

@@ -17,7 +17,7 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push")
 
         #expect(items == [
             .workout(name: "Push", exercises: ["Crossover na Polia Alta", "Barra Fixa Pronada"]),
@@ -30,6 +30,7 @@ struct UITestSeedTests {
             .finishedToday(workout: "Push"),
             .lastTime(workout: "Push"),
             .customExercise(name: "Meu Supino", group: .chest),
+            .setTypes(workout: "Push"),
         ])
     }
 
@@ -37,7 +38,7 @@ struct UITestSeedTests {
     func refusesUnknownItems() {
         for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session",
                      "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today", "last-time",
-                     "custom-exercise:Meu Supino", "custom-exercise:Meu Supino:peito"] {
+                     "custom-exercise:Meu Supino", "custom-exercise:Meu Supino:peito", "set-types", "set-types:Push:1"] {
             #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
         }
     }
@@ -203,6 +204,27 @@ struct UITestSeedTests {
         // A name already used by an exercise of the library is refused, as in the app.
         #expect(throws: ValidationError.duplicateExerciseName) {
             try UITestSeed.apply(try UITestSeed.parse("custom-exercise:Supino Reto com Barra:chest"), in: context)
+        }
+    }
+
+    @Test("The first exercise gets the sets of the editor's model, with their types; the others keep the default ones")
+    func setsTheSetTypes() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres,set-types:Push"), in: context)
+
+        let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
+        let first = push.orderedExercises[0].orderedPlannedSets
+        #expect(first.map(\.setType) == [.warmup, .feeder, .working, .working, .failure])
+        #expect(first.map(\.weightKg) == [40, 50, 60, 60, 55])
+        #expect(first.map(\.repsMin) == [12, 5, 8, 8, 8])
+        #expect(first.map(\.repsMax) == [15, 6, 10, 10, 12])
+        #expect(push.orderedExercises[1].orderedPlannedSets.map(\.setType) == [.working, .working, .working])
+
+        // A workout without exercises has no sets to change.
+        #expect(throws: UITestSeed.SeedError.self) {
+            try UITestSeed.apply(try UITestSeed.parse("workout:Vazio,set-types:Vazio"), in: context)
         }
     }
 

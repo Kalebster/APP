@@ -26,7 +26,10 @@ import SwiftData
 ///   with every set done: exercise 1 with 60 kg, 2 with 22, 3 with 18, 4 with 25 (and so on again),
 ///   10, 10, 9 and 8 repetitions for sets 1 to 4 (8 after that); it lasted 45 minutes;
 /// - `custom-exercise:<name>:<group>`: an exercise of the user's own, in the muscle group with that
-///   storage key ("chest", "back"...).
+///   storage key ("chest", "back"...);
+/// - `set-types:<workout>`: the planned sets of the workout's first exercise become those of the workout
+///   editor's model: a warm-up of 40 kg for 12–15, a feeder of 50 kg for 5–6, two working sets of 60 kg
+///   for 8–10 and a failure set of 55 kg for 8–12.
 @MainActor
 enum UITestSeed {
     enum Item: Equatable {
@@ -39,7 +42,17 @@ enum UITestSeed {
         case finishedToday(workout: String)
         case lastTime(workout: String)
         case customExercise(name: String, group: MuscleGroup)
+        case setTypes(workout: String)
     }
+
+    /// The planned sets of `set-types`, in order.
+    static let setTypesSets: [(type: SetType, values: PlannedSetValues)] = [
+        (.warmup, PlannedSetValues(weightKg: 40, repsMin: 12, repsMax: 15)),
+        (.feeder, PlannedSetValues(weightKg: 50, repsMin: 5, repsMax: 6)),
+        (.working, PlannedSetValues(weightKg: 60, repsMin: 8, repsMax: 10)),
+        (.working, PlannedSetValues(weightKg: 60, repsMin: 8, repsMax: 10)),
+        (.failure, PlannedSetValues(weightKg: 55, repsMin: 8, repsMax: 12)),
+    ]
 
     /// The loads of `last-time`, by exercise, and its repetitions, by set.
     static let lastTimeLoads: [Double] = [60, 22, 18, 25]
@@ -49,12 +62,14 @@ enum UITestSeed {
         case unknownItem(String)
         case workoutNotFound(String)
         case exerciseNotFound(String)
+        case workoutHasNoExercises(String)
 
         var description: String {
             switch self {
             case .unknownItem(let item): "unknown item '\(item)'"
             case .workoutNotFound(let name): "no workout named '\(name)'"
             case .exerciseNotFound(let name): "no exercise named '\(name)' in the library"
+            case .workoutHasNoExercises(let name): "the workout '\(name)' has no exercises"
             }
         }
     }
@@ -106,6 +121,8 @@ enum UITestSeed {
             case ("custom-exercise", 3):
                 guard let group = MuscleGroup(rawValue: parts[2]) else { throw SeedError.unknownItem(String(token)) }
                 return .customExercise(name: parts[1], group: group)
+            case ("set-types", 2):
+                return .setTypes(workout: parts[1])
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -182,6 +199,21 @@ enum UITestSeed {
                 try service.finishSession(session)
             case .customExercise(let name, let group):
                 try ExerciseService(context: context).createCustomExercise(name: name, muscleGroup: group)
+            case .setTypes(let name):
+                let workout = try findWorkout(named: name, in: context)
+                guard let item = workout.orderedExercises.first else { throw SeedError.workoutHasNoExercises(name) }
+                let service = WorkoutService(context: context)
+                let existing = item.orderedPlannedSets
+                for (index, planned) in setTypesSets.enumerated() {
+                    let plannedSet = try index < existing.count
+                        ? existing[index]
+                        : service.addPlannedSet(to: item, values: planned.values)
+                    try service.updatePlannedSet(plannedSet, values: planned.values)
+                    try service.setType(planned.type, of: plannedSet)
+                }
+                for extra in existing.dropFirst(setTypesSets.count) {
+                    try service.removePlannedSet(extra)
+                }
             }
         }
     }

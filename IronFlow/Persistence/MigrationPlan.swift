@@ -4,7 +4,7 @@ import SwiftData
 /// each with the stage that migrates from the previous version.
 enum IronFlowMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self]
     }
 
     static var stages: [MigrationStage] {
@@ -15,6 +15,9 @@ enum IronFlowMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
             // V4 only adds the weekly plan table; every V3 record is kept as it is.
             .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self),
+            // V5 only adds the set type to planned and performed sets. The new attribute has a default,
+            // so every set already stored becomes a working set; every other V4 record is kept as it is.
+            .lightweight(fromVersion: SchemaV4.self, toVersion: SchemaV5.self),
         ]
     }
 }

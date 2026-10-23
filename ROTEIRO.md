@@ -20,11 +20,15 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Início e Treinos no modelo final aprovado: bloco "Treino de hoje" em destaque, semana com anel da meta, resumo em cartões, grade de treinos com o treino de hoje destacado e treinos recentes com "Ver tudo" (PR #22).
 - Treino em andamento no modelo final aprovado: cabeçalho fixo com cronômetro e kg levantados, barra de progresso, cartões com a série atual destacada, coluna ÚLTIMA e sugestões em cinza gravadas pelo ✓, exercício terminado recolhido, timer de descanso e remoção de série ou exercício (PR #23).
 - S4-B — Tela Exercícios no modelo final aprovado: lista única em ordem alfabética com busca, filtros de grupo ("Todos", "Meus" e os grupos) e de equipamento, e biblioteca nova com 157 exercícios, cada um com equipamento e foco (PR #24).
+- S4-D — Criar e editar treino no modelo novo e tipos de série: uma tela só com todos os exercícios e as séries editáveis ali mesmo, ordenar, renomear, excluir e iniciar pelo editor; tipo de cada série (aquecimento, preparatória, válida e falha) no plano e no treino em andamento, com kg levantados só das séries válidas e de falha; seletor de exercícios em tela cheia com a busca e os filtros da tela Exercícios; SchemaV5 com migração das séries já gravadas como válidas (PR #25).
 
 ## Próximas etapas
 
 ### S4-C — Exercícios próprios
 - Exercícios próprios: + Novo, detalhe do exercício, editar e arquivar, e equipamento dos exercícios próprios (precisa de modelo aprovado).
+
+### S4-E — Acabamento do Início e Treinos
+- Acabamento do Início e Treinos: Escolher outro, Personalizar resumo, editar peso/altura/kcal e Programação semanal (precisa de modelo aprovado).
 
 ### S5 — Histórico completo
 - Filtro por período: 7, 30 e 90 dias, e tudo.
@@ -65,6 +69,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - O banco é aberto de forma síncrona ao iniciar o app; uma migração num banco grande atrasaria a abertura.
 - Após uma falha ao salvar, o rollback() do SwiftData não restaura os valores alterados nos objetos em memória. O banco fica correto e o erro é mostrado, mas a tela pode exibir o valor não salvo até o objeto ser lido de novo. Raro (ex.: disco cheio). Prioridade baixa: resolver antes da S10. Coberto por teste com withKnownIssue.
 - Com o maior tamanho de texto (acessibilidade), a barra "Treino em andamento", mostrada com o treino minimizado, chega a 438 pt de altura e quebra "Treino em andamento" numa coluna estreita (89 pt). Rever o layout dela numa etapa futura (visto no PR #23).
+- HomeUITests.testEditSummaryValues falhou uma vez por um toque perdido durante animação (run 39884902708); investigar se falhar de novo.
 
 ## Decisões
 

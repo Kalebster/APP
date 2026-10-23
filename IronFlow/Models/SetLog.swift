@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias SetLog = SchemaV1.SetLog
+typealias SetLog = SchemaV5.SetLog
 
-extension SchemaV1 {
+extension SchemaV5 {
     /// One set of a performed exercise. A set that was not done stays recorded with
     /// `isCompleted == false` and `completedAt == nil`.
     @Model
@@ -23,6 +23,9 @@ extension SchemaV1 {
         var targetWeightKg: Double?
         var targetRepsMin: Int?
         var targetRepsMax: Int?
+        /// Stable storage key of the set type; read and write it through `setType`. Added in version 5;
+        /// the sets of older stores are migrated as working sets.
+        var setTypeRaw: String = SetType.working.rawValue
 
         var sessionExercise: SessionExercise?
 
@@ -32,7 +35,8 @@ extension SchemaV1 {
             reps: Int? = nil,
             targetWeightKg: Double? = nil,
             targetRepsMin: Int? = nil,
-            targetRepsMax: Int? = nil
+            targetRepsMax: Int? = nil,
+            setType: SetType = .working
         ) {
             let now = Date.now
             self.createdAt = now
@@ -43,6 +47,12 @@ extension SchemaV1 {
             self.targetWeightKg = targetWeightKg
             self.targetRepsMin = targetRepsMin
             self.targetRepsMax = targetRepsMax
+            self.setTypeRaw = setType.rawValue
+        }
+
+        var setType: SetType {
+            get { SetType(storageKey: setTypeRaw) }
+            set { setTypeRaw = newValue.rawValue }
         }
     }
 }

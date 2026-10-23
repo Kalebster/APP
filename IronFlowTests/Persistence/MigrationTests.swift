@@ -6,46 +6,50 @@ import Testing
 /// Stores written by every released schema version open with the current app and keep every value
 /// and relationship. The stores are written by the models of their own version, whose fingerprints
 /// are checked against the frozen ones first, so they are the stores those versions really wrote.
+/// Every set they hold becomes a working set: the type added by version 5.
 @MainActor
 struct MigrationTests {
-    @Test("A version 1 store migrates to version 4 and keeps every value and relationship")
+    @Test("A version 1 store migrates to version 5, keeps every value and relationship, and its sets become working sets")
     func v1StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
         let storeURL = directory.appending(path: "IronFlow.store")
         var history: [String] = []
-        var sessionID = UUID()
+        var ids: LegacyRecords.IDs?
         var plannedWorkoutID = UUID()
 
         do {
             let container = try makeStore(of: SchemaV1.self, at: storeURL)
             let context = container.mainContext
-            let graph = SampleGraph.insert(into: context)
-            HistoricalRecords.insert(into: context, workout: graph.workout, exercise: graph.benchPress)
+            ids = LegacyRecords.insert(into: context)
             try context.save()
-            history = try historySnapshot(context)
-            sessionID = graph.session.id
+            history = try legacyHistorySnapshot(context)
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v1, "Not a version 1 store")
+        let sessionID = try #require(ids?.session)
 
         do {
             let migrated = try ModelContainerFactory.makePersistent(at: storeURL)
             let context = migrated.mainContext
 
             #expect(try historySnapshot(context) == history)
+            try expectEverySetIsAWorkingSet(in: context)
             #expect(try bodyDataSnapshot(context).isEmpty)
             #expect(try externalWorkoutDaySnapshot(context).isEmpty)
             #expect(try weeklyPlanSnapshot(context).isEmpty)
             try expectHistoricalMeaning(in: context, sessionID: sessionID)
 
-            // The tables added by versions 2, 3 and 4 work in the migrated store.
+            // The tables added by versions 2, 3 and 4 and the set type of version 5 work in the migrated store.
             let profile = ProfileService(context: context)
             try profile.recordWeight(80.5)
             try profile.setHeight(180)
             try markTrainedOutsideTheApp(in: context)
             plannedWorkoutID = try planWorkoutOnWednesday(in: context)
+            try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v4, "Store not migrated to version 4")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -54,39 +58,40 @@ struct MigrationTests {
         #expect(try ProfileService(context: reopened.mainContext).profile()?.heightCm == 180)
         #expect(try reopened.mainContext.fetch(FetchDescriptor<ExternalWorkoutDay>()).map(\.day) == [Self.markedDay])
         try expectWednesdayPlan(in: reopened.mainContext, workoutID: plannedWorkoutID)
+        try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
     }
 
-    @Test("A version 2 store, with body data, migrates to version 4 and keeps every value")
+    @Test("A version 2 store, with body data, migrates to version 5, keeps every value, and its sets become working sets")
     func v2StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
         let storeURL = directory.appending(path: "IronFlow.store")
         var history: [String] = []
         var bodyData: [String] = []
-        var sessionID = UUID()
+        var ids: LegacyRecords.IDs?
         var plannedWorkoutID = UUID()
 
         do {
             let container = try makeStore(of: SchemaV2.self, at: storeURL)
             let context = container.mainContext
-            let graph = SampleGraph.insert(into: context)
-            HistoricalRecords.insert(into: context, workout: graph.workout, exercise: graph.benchPress)
+            ids = LegacyRecords.insert(into: context)
             context.insert(BodyWeightEntry(weightKg: 81.25, measuredAt: SampleGraph.sessionStart))
             context.insert(BodyWeightEntry(weightKg: 80.5, measuredAt: SampleGraph.sessionEnd))
             let profile = UserProfile()
             profile.heightCm = 180
             context.insert(profile)
             try context.save()
-            history = try historySnapshot(context)
+            history = try legacyHistorySnapshot(context)
             bodyData = try bodyDataSnapshot(context)
-            sessionID = graph.session.id
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v2, "Not a version 2 store")
+        let sessionID = try #require(ids?.session)
 
         do {
             let migrated = try ModelContainerFactory.makePersistent(at: storeURL)
             let context = migrated.mainContext
             #expect(try historySnapshot(context) == history)
+            try expectEverySetIsAWorkingSet(in: context)
             #expect(try bodyDataSnapshot(context) == bodyData)
             #expect(try externalWorkoutDaySnapshot(context).isEmpty)
             #expect(try weeklyPlanSnapshot(context).isEmpty)
@@ -95,11 +100,14 @@ struct MigrationTests {
             #expect(try ProfileService(context: context).profile()?.heightCm == 180)
             #expect(try ProfileService(context: context).profile()?.dailyCalorieGoalKcal == nil)
 
-            // The tables added by versions 3 and 4 work in the migrated store.
+            // The tables added by versions 3 and 4 and the set type of version 5 work in the migrated store.
             try markTrainedOutsideTheApp(in: context)
             plannedWorkoutID = try planWorkoutOnWednesday(in: context)
+            try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v4, "Store not migrated to version 4")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -107,9 +115,10 @@ struct MigrationTests {
         #expect(try bodyDataSnapshot(reopened.mainContext) == bodyData)
         #expect(try reopened.mainContext.fetch(FetchDescriptor<ExternalWorkoutDay>()).map(\.day) == [Self.markedDay])
         try expectWednesdayPlan(in: reopened.mainContext, workoutID: plannedWorkoutID)
+        try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
     }
 
-    @Test("A version 3 store, with body data and a day trained outside the app, migrates to version 4 and keeps every value")
+    @Test("A version 3 store, with body data and a day trained outside the app, migrates to version 5, keeps every value, and its sets become working sets")
     func v3StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -117,41 +126,44 @@ struct MigrationTests {
         var history: [String] = []
         var bodyData: [String] = []
         var markedDays: [String] = []
-        var sessionID = UUID()
+        var ids: LegacyRecords.IDs?
         var plannedWorkoutID = UUID()
 
         do {
             let container = try makeStore(of: SchemaV3.self, at: storeURL)
             let context = container.mainContext
-            let graph = SampleGraph.insert(into: context)
-            HistoricalRecords.insert(into: context, workout: graph.workout, exercise: graph.benchPress)
+            ids = LegacyRecords.insert(into: context)
             context.insert(BodyWeightEntry(weightKg: 80.5, measuredAt: SampleGraph.sessionEnd))
             let profile = UserProfile()
             profile.heightCm = 180
             context.insert(profile)
             context.insert(ExternalWorkoutDay(day: Self.markedDay))
             try context.save()
-            history = try historySnapshot(context)
+            history = try legacyHistorySnapshot(context)
             bodyData = try bodyDataSnapshot(context)
             markedDays = try externalWorkoutDaySnapshot(context)
-            sessionID = graph.session.id
         }
         #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v3, "Not a version 3 store")
+        let sessionID = try #require(ids?.session)
 
         do {
             let migrated = try ModelContainerFactory.makePersistent(at: storeURL)
             let context = migrated.mainContext
             #expect(try historySnapshot(context) == history)
+            try expectEverySetIsAWorkingSet(in: context)
             #expect(try bodyDataSnapshot(context) == bodyData)
             #expect(try externalWorkoutDaySnapshot(context) == markedDays)
             #expect(try weeklyPlanSnapshot(context).isEmpty)
             try expectHistoricalMeaning(in: context, sessionID: sessionID)
             #expect(try ProfileService(context: context).profile()?.heightCm == 180)
 
-            // The table added by version 4 works in the migrated store.
+            // The table added by version 4 and the set type of version 5 work in the migrated store.
             plannedWorkoutID = try planWorkoutOnWednesday(in: context)
+            try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v4, "Store not migrated to version 4")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -159,6 +171,88 @@ struct MigrationTests {
         #expect(try bodyDataSnapshot(reopened.mainContext) == bodyData)
         #expect(try externalWorkoutDaySnapshot(reopened.mainContext) == markedDays)
         try expectWednesdayPlan(in: reopened.mainContext, workoutID: plannedWorkoutID)
+        try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
+    }
+
+    @Test("A version 4 store, with body data, a day trained outside the app and a weekly plan, migrates to version 5, keeps every value, and its sets become working sets")
+    func v4StoreMigrates() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { removeTemporaryDirectory(directory) }
+        let storeURL = directory.appending(path: "IronFlow.store")
+        var history: [String] = []
+        var bodyData: [String] = []
+        var markedDays: [String] = []
+        var plan: [String] = []
+        var ids: LegacyRecords.IDs?
+
+        do {
+            let container = try makeStore(of: SchemaV4.self, at: storeURL)
+            let context = container.mainContext
+            let written = LegacyRecords.insert(into: context)
+            ids = written
+            context.insert(BodyWeightEntry(weightKg: 80.5, measuredAt: SampleGraph.sessionEnd))
+            let profile = UserProfile()
+            profile.heightCm = 180
+            profile.dailyCalorieGoalKcal = 2_300
+            context.insert(profile)
+            context.insert(ExternalWorkoutDay(day: Self.markedDay))
+            context.insert(WeeklyPlanDay(weekday: 3, workoutID: written.workout))
+            try context.save()
+            history = try legacyHistorySnapshot(context)
+            bodyData = try bodyDataSnapshot(context)
+            markedDays = try externalWorkoutDaySnapshot(context)
+            plan = try weeklyPlanSnapshot(context)
+        }
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v4, "Not a version 4 store")
+        let written = try #require(ids)
+
+        do {
+            let migrated = try ModelContainerFactory.makePersistent(at: storeURL)
+            let context = migrated.mainContext
+            #expect(try historySnapshot(context) == history)
+            try expectEverySetIsAWorkingSet(in: context)
+            #expect(try bodyDataSnapshot(context) == bodyData)
+            #expect(try externalWorkoutDaySnapshot(context) == markedDays)
+            #expect(try weeklyPlanSnapshot(context) == plan)
+            try expectHistoricalMeaning(in: context, sessionID: written.session)
+            try expectWednesdayPlan(in: context, workoutID: written.workout)
+            #expect(try ProfileService(context: context).profile()?.dailyCalorieGoalKcal == 2_300)
+
+            // The set type of version 5 works in the migrated store.
+            try makeFirstPlannedSetAWarmUp(in: context)
+            // The new type also updated the set and its workout: the store reopened must keep that too.
+            history = try historySnapshot(context)
+        }
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v5, "Store not migrated to version 5")
+
+        // Closed and opened again: nothing was lost and the new data stays.
+        let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
+        #expect(try historySnapshot(reopened.mainContext) == history)
+        #expect(try bodyDataSnapshot(reopened.mainContext) == bodyData)
+        #expect(try externalWorkoutDaySnapshot(reopened.mainContext) == markedDays)
+        #expect(try weeklyPlanSnapshot(reopened.mainContext) == plan)
+        try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
+    }
+
+    /// Every planned and performed set of `LegacyRecords` is stored as a working set: the migration wrote
+    /// the type's default into each of them.
+    private func expectEverySetIsAWorkingSet(in context: ModelContext) throws {
+        let keys = try storedSetTypeKeys(context)
+        #expect(keys.planned == Array(repeating: "working", count: LegacyRecords.plannedSetCount))
+        #expect(keys.performed == Array(repeating: "working", count: LegacyRecords.setLogCount))
+    }
+
+    /// Makes the first planned set of the sample workout a warm-up through the service, as the editor does.
+    private func makeFirstPlannedSetAWarmUp(in context: ModelContext) throws {
+        let workout = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
+        let first = try #require(workout.orderedExercises.first?.orderedPlannedSets.first)
+        try WorkoutService(context: context).setType(.warmup, of: first)
+    }
+
+    /// The first planned set of the sample workout is a warm-up and the others are still working sets.
+    private func expectFirstPlannedSetIsAWarmUp(in context: ModelContext) throws {
+        let workout = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
+        #expect(workout.orderedExercises.map { $0.orderedPlannedSets.map(\.setType) } == [[.warmup, .working], [.working]])
     }
 
     /// Plans the sample workout for Wednesday through the service, as the Workouts tab does. Returns
@@ -208,7 +302,7 @@ struct MigrationTests {
         #expect(logs.map(\.targetWeightKg) == [20, 22.25])
 
         // A finished session whose workout and exercise were deleted stays readable.
-        let orphan = try #require(try context.fetch(FetchDescriptor<Session>()).first { $0.startedAt == HistoricalRecords.oldSessionStart })
+        let orphan = try #require(try context.fetch(FetchDescriptor<Session>()).first { $0.startedAt == LegacyRecords.oldSessionStart })
         #expect(orphan.workout == nil)
         #expect(orphan.workoutNameSnapshot == "Treino Antigo")
         #expect(orphan.orderedExercises.map { $0.exercise == nil } == [true])

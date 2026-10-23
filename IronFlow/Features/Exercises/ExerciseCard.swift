@@ -1,14 +1,28 @@
 import SwiftUI
 
-/// An exercise of the Exercícios tab: the icon of its equipment (or the initial of a custom exercise,
-/// which has none), the name, "Grupo · Foco" and the "MEU" badge of a custom exercise. VoiceOver reads it
-/// as one item. It opens nothing for now.
+/// An exercise of the Exercícios tab and of the exercise picker: the icon of its equipment (or the
+/// initial of a custom exercise, which has none), the name, "Grupo · Foco" and the "MEU" badge of a custom
+/// exercise. VoiceOver reads it as one item. In the Exercícios tab it opens nothing for now; in the picker
+/// it shows whether it is chosen, or "NO TREINO" when the workout already has it.
 struct ExerciseCard: View {
+    /// What the card shows about choosing it.
+    enum Selection: Equatable {
+        /// Nothing: the Exercícios tab.
+        case none
+        /// The selection circle of the picker; a chosen card is outlined in blue on a blue fill.
+        case selectable(isSelected: Bool)
+        /// Already in the workout: "NO TREINO", at half opacity.
+        case inWorkout
+    }
+
     let item: ExerciseCatalog.Item
+    var selection: Selection = .none
+    var identifier = "exercises.card"
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var tileSide: CGFloat = 36
     @ScaledMetric(relativeTo: .body) private var iconSide: CGFloat = 19
+    @ScaledMetric(relativeTo: .body) private var circleSide: CGFloat = 24
 
     var body: some View {
         HStack(spacing: 12) {
@@ -25,20 +39,63 @@ struct ExerciseCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if item.isCustom {
-                CapsuleBadge(
-                    text: String(localized: "MEU"),
-                    weight: .bold,
-                    tracking: 0.8,
-                    padding: EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
-                )
+                badge(String(localized: "MEU"))
+            }
+            switch selection {
+            case .none:
+                EmptyView()
+            case .selectable(let isSelected):
+                selectionCircle(isSelected: isSelected)
+            case .inWorkout:
+                badge(String(localized: "NO TREINO"))
             }
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
-        .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(isSelected ? Theme.Colors.selectedCardBackground : Theme.Colors.cardBackground, in: shape)
+        .overlay {
+            if isSelected {
+                shape.strokeBorder(Color.accentColor, lineWidth: 1)
+            }
+        }
+        .opacity(selection == .inWorkout ? 0.5 : 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilityText))
-        .accessibilityIdentifier("exercises.card")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier(identifier)
+    }
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 15, style: .continuous)
+    }
+
+    private var isSelected: Bool {
+        selection == .selectable(isSelected: true)
+    }
+
+    private func badge(_ text: String) -> some View {
+        CapsuleBadge(
+            text: text,
+            weight: .bold,
+            tracking: 0.8,
+            padding: EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
+        )
+    }
+
+    /// The 24-point circle of the picker: outlined, or blue with a check once chosen.
+    private func selectionCircle(isSelected: Bool) -> some View {
+        ZStack {
+            if isSelected {
+                Circle().fill(Color.accentColor)
+                Image(systemName: "checkmark")
+                    .font(.system(size: circleSide * 0.46, weight: .bold))
+                    .foregroundStyle(.white)
+            } else {
+                Circle().strokeBorder(Theme.Colors.controlBorder, lineWidth: 1.5)
+            }
+        }
+        .frame(width: circleSide, height: circleSide)
+        .accessibilityHidden(true)
     }
 
     /// The equipment icon in light blue on the dark blue square, or the initial of the name.
@@ -86,12 +143,17 @@ struct ExerciseCard: View {
         if item.isCustom {
             parts.append(String(localized: "Meu exercício"))
         }
+        if selection == .inWorkout {
+            parts.append(String(localized: "Já está no treino"))
+        }
         return parts.joined(separator: ", ")
     }
 }
 
 /// The card shown when nothing matches the search and the filters.
 struct ExerciseEmptyCard: View {
+    var identifier = "exercises.empty"
+
     var body: some View {
         VStack(spacing: 6) {
             Text("Nenhum exercício encontrado")
@@ -106,6 +168,6 @@ struct ExerciseEmptyCard: View {
         .padding(.horizontal, 14)
         .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("exercises.empty")
+        .accessibilityIdentifier(identifier)
     }
 }

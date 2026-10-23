@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias WorkoutExercise = SchemaV1.WorkoutExercise
+typealias WorkoutExercise = SchemaV5.WorkoutExercise
 
-extension SchemaV1 {
+extension SchemaV5 {
     /// An exercise inside a planned workout, with its planned sets.
     @Model
     final class WorkoutExercise {

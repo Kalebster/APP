@@ -142,7 +142,15 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         let card = app.buttons["workouts.card"]
         XCTAssertTrue(waitForLabel(of: card, containing: "Pull"), "Card not renamed: \(card.label)")
         XCTAssertTrue(app.buttons["Iniciar Pull"].exists, "▶ not renamed")
-        XCTAssertFalse(app.navigationBars["Pull"].exists, "Renaming opened the editor")
+        XCTAssertFalse(element("workout.title", in: app).exists, "Renaming opened the editor")
+
+        // "Editar treino" opens the editor.
+        app.buttons["Opções de Pull"].tap()
+        let edit = app.buttons["Editar treino"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 10), "Edit option not found")
+        edit.tap()
+        XCTAssertTrue(waitForLabel(of: element("workout.title", in: app), toBe: "Pull"), "Editor not opened from the menu")
+        goBackFromEditor(in: app)
 
         // Delete: cancelling keeps the workout.
         app.buttons["Opções de Pull"].tap()
@@ -155,12 +163,17 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(app.staticTexts["1 treino no plano"].exists, "Subtitle after cancelling")
 
         // Delete: confirming removes it and shows the empty card.
+        let menuFrame = app.buttons["Opções de Pull"].frame
         app.buttons["Opções de Pull"].tap()
         XCTAssertTrue(app.buttons["Excluir"].waitForExistence(timeout: 10), "Delete option not found")
         app.buttons["Excluir"].tap()
         XCTAssertTrue(element(labelStartingWith: "Excluir “Pull”", in: app).waitForExistence(timeout: 10), "Delete confirmation not shown")
         let confirm = app.buttons["Excluir"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Confirm button not shown")
+        // The confirmation points to the card's ⋮ it came from: it opens right below it.
+        XCTAssertGreaterThan(confirm.frame.minY, menuFrame.maxY, "Confirmation not below the ⋮ \(menuFrame): \(confirm.frame)")
+        XCTAssertLessThan(confirm.frame.minY, menuFrame.maxY + 300, "Confirmation far from the ⋮ \(menuFrame): \(confirm.frame)")
+        attachScreenshot(named: "82-workouts-delete-confirmation", of: app)
         confirm.tap()
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Empty card not shown after deleting")
         XCTAssertFalse(app.buttons["workouts.card"].exists, "Deleted workout still listed")

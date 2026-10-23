@@ -40,6 +40,7 @@ struct EquipmentFilterChip: View {
     let isSelected: Bool
     let height: CGFloat
     let iconSide: CGFloat
+    let identifier: String
     let action: @MainActor () -> Void
 
     var body: some View {
@@ -63,7 +64,7 @@ struct EquipmentFilterChip: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityIdentifier("exercises.equipment.\(equipment.rawValue)")
+        .accessibilityIdentifier(identifier)
     }
 }
 

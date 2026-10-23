@@ -1,17 +1,23 @@
 import SwiftUI
 
 /// A workout in the "Meus treinos" grid: name, what it holds and its muscle groups, a start button (▶)
-/// and an options menu (⋮). The workout planned for today is highlighted, with "HOJE". The card opens
+/// and an options menu (⋮) with "Editar treino", "Renomear" and "Excluir". The workout planned for today is highlighted, with "HOJE". The card opens
 /// the workout's editor; the other two controls sit over it, not inside its button, so each one is its
 /// own accessibility element. The card fills the height it is given, so the cards of a row match.
 struct WorkoutGridCard: View {
     let workout: Workout
     /// Planned for today in the weekly plan.
     let isToday: Bool
+    /// The workout's name while its deletion waits for confirmation, shown on the ⋮ menu; `nil` otherwise.
+    @Binding var deletionName: String?
     let onOpen: @MainActor () -> Void
+    let onEdit: @MainActor () -> Void
     let onStart: @MainActor () -> Void
     let onRename: @MainActor () -> Void
+    /// "Excluir" in the menu: asks for the confirmation.
     let onDelete: @MainActor () -> Void
+    /// "Excluir" in the confirmation: deletes the workout.
+    let onConfirmDelete: @MainActor () -> Void
 
     /// The card's minimum height, 128 points at the default text size, without its padding.
     @ScaledMetric(relativeTo: .body) private var minContentHeight: CGFloat = 106
@@ -86,9 +92,11 @@ struct WorkoutGridCard: View {
         return parts.joined(separator: ", ")
     }
 
-    /// The ⋮ menu: rename and delete. 27 points of dots in a 44-point touch area.
+    /// The ⋮ menu: edit, rename and delete, with the delete confirmation. 27 points of dots in a 44-point
+    /// touch area.
     private var optionsMenu: some View {
         Menu {
+            Button("Editar treino", systemImage: "slider.horizontal.3", action: onEdit)
             Button("Renomear", systemImage: "pencil", action: onRename)
             Button("Excluir", systemImage: "trash", role: .destructive, action: onDelete)
         } label: {
@@ -104,6 +112,20 @@ struct WorkoutGridCard: View {
         .padding(.top, 2)
         .accessibilityLabel(Text("Opções de \(workout.name)"))
         .accessibilityIdentifier("workouts.menu")
+        // On the ⋮ itself, so the confirmation points to the button it came from.
+        .confirmationDialog(
+            Text("Excluir “\(deletionName ?? "")”?"),
+            isPresented: Binding(
+                get: { deletionName != nil },
+                set: { if !$0 { deletionName = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Excluir", role: .destructive, action: onConfirmDelete)
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
+        }
     }
 
     /// The ▶ button: starts a session of the workout. Unavailable while the workout has no exercises.
