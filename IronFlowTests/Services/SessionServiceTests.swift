@@ -362,6 +362,69 @@ struct SessionServiceTests {
         #expect(other.isCompleted == false)
     }
 
+    // MARK: - Set types
+
+    @Test("Starting copies the type of every planned set")
+    func startCopiesSetTypes() throws {
+        let planned = workout.orderedExercises[0].orderedPlannedSets
+        try harness.workouts.setType(.warmup, of: planned[0])
+        try harness.workouts.setType(.failure, of: planned[1])
+        try harness.workouts.setType(.feeder, of: workout.orderedExercises[1].orderedPlannedSets[0])
+
+        let session = try harness.sessions.startSession(from: workout)
+
+        #expect(session.orderedExercises.map { $0.orderedSetLogs.map(\.setType) } == [[.warmup, .failure], [.feeder]])
+        // Changing the plan afterwards does not change the session.
+        try harness.workouts.setType(.working, of: planned[0])
+        #expect(firstLog(of: session).setType == .warmup)
+    }
+
+    @Test("Sets added during the session are working sets, whatever the type of the set before")
+    func addedSetsAreWorkingSets() throws {
+        try harness.workouts.setType(.warmup, of: workout.orderedExercises[0].orderedPlannedSets[1])
+        let session = try harness.sessions.startSession(from: workout)
+        let performed = session.orderedExercises[0]
+
+        let added = try harness.sessions.addSetCopyingLast(to: performed)
+        #expect(performed.orderedSetLogs.map(\.setType) == [.working, .warmup, .working])
+        #expect(added.targetWeightKg == 22.25)
+
+        let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
+        let newExercise = try #require(try harness.sessions.addExercises([row], to: session).first)
+        #expect(newExercise.orderedSetLogs.map(\.setType) == [.working])
+    }
+
+    @Test("The type of a set changes during the session, done or not, and only in the session")
+    func changeSetTypeDuringTheSession() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let log = firstLog(of: session)
+        try harness.sessions.completeSet(log, weightKg: 40, reps: 15)
+        harness.clock.advance(by: 20)
+
+        try harness.sessions.setType(.warmup, of: log)
+
+        #expect(log.setType == .warmup)
+        #expect(log.isCompleted)
+        #expect(log.updatedAt == harness.clock.current)
+        #expect(session.updatedAt == harness.clock.current)
+        #expect(harness.context.hasChanges == false)
+        #expect(workout.orderedExercises[0].orderedPlannedSets[0].setType == .working)
+        // A warm-up done no longer counts in the load lifted.
+        #expect(SessionProgress.volumeKg(of: session.orderedExercises.flatMap(\.orderedSetLogs)) == 0)
+    }
+
+    @Test("The type of a set of a finished session cannot be changed")
+    func finishedSessionKeepsSetTypes() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        let log = firstLog(of: session)
+        try harness.sessions.completeSet(log, weightKg: 20, reps: 10)
+        try harness.sessions.finishSession(session)
+
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.setType(.failure, of: log) }
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.setType(.working, of: log) }
+        #expect(log.setType == .working)
+    }
+
     // MARK: - Recent sessions
 
     @Test("Recent sessions are the latest three finished ones, the most recently started first; none in progress")

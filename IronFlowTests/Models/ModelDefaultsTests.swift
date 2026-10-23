@@ -60,6 +60,34 @@ struct ModelDefaultsTests {
         #expect(log.targetRepsMax == nil)
     }
 
+    @Test("Planned and performed sets are working sets unless created with another type")
+    func setTypeDefaults() {
+        let planned = PlannedSet(sortIndex: 0, weightKg: nil, repsMin: 8, repsMax: 12)
+        let log = SetLog(sortIndex: 0)
+        #expect(planned.setType == .working)
+        #expect(planned.setTypeRaw == "working")
+        #expect(log.setType == .working)
+        #expect(log.setTypeRaw == "working")
+
+        #expect(PlannedSet(sortIndex: 0, weightKg: 40, repsMin: 12, repsMax: 15, setType: .warmup).setTypeRaw == "warmup")
+        #expect(SetLog(sortIndex: 0, setType: .failure).setTypeRaw == "failure")
+    }
+
+    @Test("Set type is read and written through its storage key")
+    func setTypeStorage() {
+        let planned = PlannedSet(sortIndex: 0, weightKg: nil, repsMin: 8, repsMax: 12)
+        planned.setType = .feeder
+        #expect(planned.setTypeRaw == "feeder")
+        planned.setTypeRaw = "unknown-future-type"
+        #expect(planned.setType == .working)
+
+        let log = SetLog(sortIndex: 0)
+        log.setType = .warmup
+        #expect(log.setTypeRaw == "warmup")
+        log.setTypeRaw = "unknown-future-type"
+        #expect(log.setType == .working)
+    }
+
     @Test("Session is active until it has an end, then its duration is end minus start")
     func sessionActiveAndDuration() {
         let start = Date(timeIntervalSinceReferenceDate: 800_000_000)

@@ -373,6 +373,61 @@ struct WorkoutServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    // MARK: - Set types
+
+    @Test("Exercises added to a workout start with working sets")
+    func addedExercisesStartWithWorkingSets() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        let items = try harness.workouts.addExercises([bench, row], to: workout)
+        for item in items {
+            #expect(item.orderedPlannedSets.map(\.setType) == [.working, .working, .working])
+        }
+    }
+
+    @Test("Adding a set copies the type of a working or failure set; the copy of a warm-up or feeder set is a working set")
+    func addPlannedSetCopyingLastType() throws {
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(12, 15, kg: 40)])])
+        let item = workout.orderedExercises[0]
+        let first = try #require(item.orderedPlannedSets.first)
+
+        for (type, expected) in [(SetType.warmup, SetType.working), (.feeder, .working), (.working, .working), (.failure, .failure)] {
+            let last = try #require(item.orderedPlannedSets.last)
+            try harness.workouts.setType(type, of: last)
+            let added = try harness.workouts.addPlannedSetCopyingLast(to: item)
+            #expect(added.setType == expected, "Copy of \(type)")
+            // The values are copied whatever the type.
+            #expect(added.weightKg == 40)
+            #expect(added.repsMin == 12)
+            #expect(added.repsMax == 15)
+        }
+        #expect(first.setType == .warmup)
+        #expect(item.orderedPlannedSets.map(\.setType) == [.warmup, .feeder, .working, .failure, .failure])
+        #expect(harness.context.hasChanges == false)
+    }
+
+    @Test("Changing a planned set's type saves it and updates the set and the workout; started sessions keep their type")
+    func changePlannedSetType() throws {
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10, kg: 20), .reps(8, 10, kg: 30)])])
+        let plannedSet = workout.orderedExercises[0].orderedPlannedSets[0]
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: 20, reps: 10)
+        try harness.sessions.finishSession(session)
+        harness.clock.advance(by: 30)
+
+        try harness.workouts.setType(.warmup, of: plannedSet)
+
+        #expect(plannedSet.setType == .warmup)
+        #expect(plannedSet.updatedAt == harness.clock.current)
+        #expect(workout.updatedAt == harness.clock.current)
+        #expect(harness.context.hasChanges == false)
+        #expect(session.orderedExercises[0].orderedSetLogs.map(\.setType) == [.working, .working])
+
+        // The same type again writes nothing.
+        harness.clock.advance(by: 30)
+        try harness.workouts.setType(.warmup, of: plannedSet)
+        #expect(plannedSet.updatedAt == harness.clock.current.addingTimeInterval(-30))
+    }
+
     @Test("Planned set values above the limits are rejected and change nothing")
     func plannedSetLimits() throws {
         let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10, kg: 20)])])

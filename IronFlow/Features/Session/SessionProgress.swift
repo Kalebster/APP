@@ -48,10 +48,12 @@ struct SessionProgress: Equatable {
         !sets.isEmpty && sets.allSatisfy(\.isCompleted)
     }
 
-    /// The load lifted: the sum of load × repetitions of the sets done. Sets without a load do not count.
+    /// The load lifted: the sum of load × repetitions of the working and failure sets done. Warm-up and
+    /// feeder sets, and sets without a load, do not count (`SetType.countsTowardLiftedLoad`).
     static func volumeKg(of sets: [SetLog]) -> Double {
         sets.reduce(0) { total, log in
-            guard log.isCompleted, let weightKg = log.weightKg, let reps = log.reps else { return total }
+            guard log.isCompleted, log.setType.countsTowardLiftedLoad,
+                  let weightKg = log.weightKg, let reps = log.reps else { return total }
             return total + weightKg * Double(reps)
         }
     }

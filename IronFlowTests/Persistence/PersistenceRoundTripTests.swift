@@ -133,4 +133,22 @@ struct PersistenceRoundTripTests {
             #expect(abs(session.updatedAt.timeIntervalSince(updatedAt)) < 0.001)
         }
     }
+
+    @Test("Set types of the plan and of the sessions survive reopening the store")
+    func setTypesSurviveReopening() throws {
+        var sessionID = UUID()
+
+        try roundTripThroughDisk { context in
+            let graph = SampleGraph.insert(into: context)
+            graph.benchPlan.orderedPlannedSets[0].setType = .warmup
+            graph.benchPlan.orderedPlannedSets[1].setType = .failure
+            graph.notCompletedSet.setType = .feeder
+            sessionID = graph.session.id
+        } read: { context in
+            let workout = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
+            #expect(workout.orderedExercises.map { $0.orderedPlannedSets.map(\.setType) } == [[.warmup, .failure], [.working]])
+            let session = try #require(try fetchSession(id: sessionID, in: context))
+            #expect(session.orderedExercises.map { $0.orderedSetLogs.map(\.setType) } == [[.working, .feeder], [.working]])
+        }
+    }
 }

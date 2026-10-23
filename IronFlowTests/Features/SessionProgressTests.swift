@@ -19,9 +19,10 @@ struct SessionProgressTests {
         weight: Double? = nil,
         reps: Int? = nil,
         min: Int? = nil,
-        max: Int? = nil
+        max: Int? = nil,
+        type: SetType = .working
     ) -> SetLog {
-        let log = SetLog(sortIndex: 0, weightKg: weight, reps: reps, targetRepsMin: min, targetRepsMax: max)
+        let log = SetLog(sortIndex: 0, weightKg: weight, reps: reps, targetRepsMin: min, targetRepsMax: max, setType: type)
         log.isCompleted = done
         container.mainContext.insert(log)
         return log
@@ -87,6 +88,24 @@ struct SessionProgressTests {
         #expect(SessionFormatting.volumeText(2_440) == "2.440 kg levantados")
         #expect(SessionFormatting.volumeText(780.4) == "780 kg levantados")
         #expect(SessionFormatting.volumeText(0) == "0 kg levantados")
+    }
+
+    @Test("Warm-up and feeder sets stay out of the load lifted; working and failure sets count; every set counts as a set")
+    func volumeByType() {
+        let sets = [
+            set(done: true, weight: 40, reps: 15, type: .warmup),
+            set(done: true, weight: 50, reps: 6, type: .feeder),
+            set(done: true, weight: 60, reps: 10, type: .working),
+            set(done: true, weight: 55, reps: 12, type: .failure),
+            set(done: false, weight: 60, reps: 10, type: .working),
+        ]
+        #expect(SessionProgress.volumeKg(of: sets) == 60 * 10 + 55 * 12)
+        #expect(SessionProgress.volumeKg(of: Array(sets.prefix(2))) == 0)
+
+        let progress = SessionProgress(sets: [sets])
+        #expect(progress.completedSets == 4)
+        #expect(progress.totalSets == 5)
+        #expect(progress.setsText == "4 de 5 séries")
     }
 
     @Test("An exercise is finished when it has sets and all are done")

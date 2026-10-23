@@ -72,7 +72,7 @@ struct SessionService {
         return descriptor
     }
 
-    /// Starts a session from a workout, copying names, muscle groups, order and targets.
+    /// Starts a session from a workout, copying names, muscle groups, order, targets and set types.
     /// Later changes to the workout do not affect the session.
     ///
     /// The sets start empty: the planned load is kept as the set's target and offered in its empty
@@ -117,7 +117,8 @@ struct SessionService {
                     reps: nil,
                     targetWeightKg: planned.weightKg,
                     targetRepsMin: planned.repsMin,
-                    targetRepsMax: planned.repsMax
+                    targetRepsMax: planned.repsMax,
+                    setType: planned.setType
                 )
                 log.createdAt = timestamp
                 log.updatedAt = timestamp
@@ -144,7 +145,7 @@ struct SessionService {
         return session
     }
 
-    /// Appends exercises to the active session, in the given order, each with one empty set.
+    /// Appends exercises to the active session, in the given order, each with one empty working set.
     ///
     /// Changes only the session: the planned workout is never touched. An exercise cannot be in
     /// the session twice and an archived exercise cannot be added. All or nothing.
@@ -179,8 +180,8 @@ struct SessionService {
         return added
     }
 
-    /// Appends a set to a performed exercise of the active session, with the load and targets of
-    /// its last set and no repetitions. Changes only the session, never the planned workout.
+    /// Appends a working set to a performed exercise of the active session, with the load and targets
+    /// of its last set and no repetitions. Changes only the session, never the planned workout.
     @discardableResult
     func addSetCopyingLast(to performed: SessionExercise) throws -> SetLog {
         guard let session = performed.session, session.isActive else { throw SessionError.sessionNotActive }
@@ -229,6 +230,19 @@ struct SessionService {
         guard !exerciseIDs.isEmpty else { return [:] }
         let finished = try context.fetch(Self.finishedSessionsDescriptor)
         return LastPerformance.previousSets(for: exerciseIDs, in: finished, excluding: session.id)
+    }
+
+    /// Changes the type of a set of the active session, done or not. Changes only the session, never
+    /// the planned workout.
+    func setType(_ setType: SetType, of log: SetLog) throws {
+        let session = try activeSession(of: log)
+        guard log.setType != setType else { return }
+
+        let timestamp = now()
+        log.setType = setType
+        log.updatedAt = timestamp
+        session.updatedAt = timestamp
+        try context.saveOrRollback()
     }
 
     /// Edits the values of a set without changing whether it is completed.
@@ -330,7 +344,7 @@ struct SessionService {
         guard try context.fetchCount(descriptor) == 0 else { throw SessionError.activeSessionExists }
     }
 
-    /// A new, not completed set: the load and targets of `previous` when given, otherwise empty.
+    /// A new, not completed working set: the load and targets of `previous` when given, otherwise empty.
     private func makeSetLog(sortIndex: Int, copying previous: SetLog?, at timestamp: Date) -> SetLog {
         let log = SetLog(
             sortIndex: sortIndex,

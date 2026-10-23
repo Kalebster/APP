@@ -170,6 +170,9 @@
     "A carga pode ter no máximo duas casas decimais." : {
 
     },
+    "A série de trabalho. Conta nos kg levantados." : {
+
+    },
     "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
 
     },
@@ -218,6 +221,9 @@
     "Antebraços" : {
 
     },
+    "Aquecimento" : {
+
+    },
     "Arquivado" : {
 
     },
@@ -240,6 +246,9 @@
 
     },
     "As séries planejadas deste exercício também serão removidas." : {
+
+    },
+    "Até não conseguir mais repetições. Conta nos kg levantados." : {
 
     },
     "Barra" : {
@@ -419,6 +428,9 @@
     "Exercícios padrão não podem ser excluídos, apenas arquivados." : {
 
     },
+    "Falha" : {
+
+    },
     "Falta 1 para fechar a semana" : {
 
     },
@@ -497,6 +509,9 @@
     "kg" : {
 
     },
+    "Leve, para aquecer. Não conta nos kg levantados." : {
+
+    },
     "Limpar busca" : {
 
     },
@@ -507,6 +522,9 @@
 
     },
     "Mais opções do treino" : {
+
+    },
+    "Mais pesada, para chegar pronto na carga. Não conta nos kg levantados." : {
 
     },
     "Marca o dia como treino feito fora do app." : {
@@ -700,6 +718,9 @@
 
     },
     "Posteriores de coxa" : {
+
+    },
+    "Preparatória" : {
 
     },
     "Programado" : {
@@ -904,6 +925,9 @@
 
     },
     "Você já tem um treino em andamento." : {
+
+    },
+    "Válida" : {
 
     },
     "Última" : {

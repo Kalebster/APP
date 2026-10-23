@@ -7,7 +7,7 @@ import SwiftData
 /// planned set, and `sortIndex` values stay 0...n-1.
 @MainActor
 struct WorkoutService {
-    /// Planned sets every exercise starts with when added to a workout: 3 sets of 8–12 reps, no load.
+    /// Planned sets every exercise starts with when added to a workout: 3 working sets of 8–12 reps, no load.
     static let defaultPlannedSets = Array(repeating: PlannedSetValues(weightKg: nil, repsMin: 8, repsMax: 12), count: 3)
 
     let context: ModelContext
@@ -80,7 +80,7 @@ struct WorkoutService {
             item.workout = workout
             item.exercise = exercise
             for (setIndex, values) in Self.defaultPlannedSets.enumerated() {
-                makePlannedSet(sortIndex: setIndex, values: values, at: timestamp).workoutExercise = item
+                makePlannedSet(sortIndex: setIndex, values: values, setType: .working, at: timestamp).workoutExercise = item
             }
             return item
         }
@@ -115,22 +115,23 @@ struct WorkoutService {
     // MARK: - Planned sets
 
     @discardableResult
-    func addPlannedSet(to item: WorkoutExercise, values: PlannedSetValues) throws -> PlannedSet {
+    func addPlannedSet(to item: WorkoutExercise, values: PlannedSetValues, setType: SetType = .working) throws -> PlannedSet {
         try values.validate()
 
         let timestamp = now()
-        let plannedSet = makePlannedSet(sortIndex: item.plannedSets.count, values: values, at: timestamp)
+        let plannedSet = makePlannedSet(sortIndex: item.plannedSets.count, values: values, setType: setType, at: timestamp)
         plannedSet.workoutExercise = item
         item.workout?.updatedAt = timestamp
         try context.saveOrRollback()
         return plannedSet
     }
 
-    /// Appends a planned set with the same values as the item's last set.
+    /// Appends a planned set with the same values and type as the item's last set; the copy of a
+    /// warm-up or feeder set is a working set (`SetType.typeOfCopy`).
     @discardableResult
     func addPlannedSetCopyingLast(to item: WorkoutExercise) throws -> PlannedSet {
         guard let last = item.orderedPlannedSets.last else { throw WorkoutError.plannedSetsMissing }
-        return try addPlannedSet(to: item, values: PlannedSetValues(last))
+        return try addPlannedSet(to: item, values: PlannedSetValues(last), setType: last.setType.typeOfCopy)
     }
 
     func updatePlannedSet(_ plannedSet: PlannedSet, values: PlannedSetValues) throws {
@@ -140,6 +141,17 @@ struct WorkoutService {
         plannedSet.weightKg = values.weightKg
         plannedSet.repsMin = values.repsMin
         plannedSet.repsMax = values.repsMax
+        plannedSet.updatedAt = timestamp
+        plannedSet.workoutExercise?.workout?.updatedAt = timestamp
+        try context.saveOrRollback()
+    }
+
+    /// Changes the type of a planned set. Sessions started before keep the type they copied.
+    func setType(_ setType: SetType, of plannedSet: PlannedSet) throws {
+        guard plannedSet.setType != setType else { return }
+
+        let timestamp = now()
+        plannedSet.setType = setType
         plannedSet.updatedAt = timestamp
         plannedSet.workoutExercise?.workout?.updatedAt = timestamp
         try context.saveOrRollback()
@@ -171,12 +183,13 @@ struct WorkoutService {
 
     // MARK: - Private
 
-    private func makePlannedSet(sortIndex: Int, values: PlannedSetValues, at timestamp: Date) -> PlannedSet {
+    private func makePlannedSet(sortIndex: Int, values: PlannedSetValues, setType: SetType, at timestamp: Date) -> PlannedSet {
         let plannedSet = PlannedSet(
             sortIndex: sortIndex,
             weightKg: values.weightKg,
             repsMin: values.repsMin,
-            repsMax: values.repsMax
+            repsMax: values.repsMax,
+            setType: setType
         )
         plannedSet.createdAt = timestamp
         plannedSet.updatedAt = timestamp
