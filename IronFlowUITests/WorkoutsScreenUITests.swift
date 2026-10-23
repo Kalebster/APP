@@ -163,12 +163,17 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(app.staticTexts["1 treino no plano"].exists, "Subtitle after cancelling")
 
         // Delete: confirming removes it and shows the empty card.
+        let menuFrame = app.buttons["Opções de Pull"].frame
         app.buttons["Opções de Pull"].tap()
         XCTAssertTrue(app.buttons["Excluir"].waitForExistence(timeout: 10), "Delete option not found")
         app.buttons["Excluir"].tap()
         XCTAssertTrue(element(labelStartingWith: "Excluir “Pull”", in: app).waitForExistence(timeout: 10), "Delete confirmation not shown")
         let confirm = app.buttons["Excluir"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Confirm button not shown")
+        // The confirmation points to the card's ⋮ it came from: it opens right below it.
+        XCTAssertGreaterThan(confirm.frame.minY, menuFrame.maxY, "Confirmation not below the ⋮ \(menuFrame): \(confirm.frame)")
+        XCTAssertLessThan(confirm.frame.minY, menuFrame.maxY + 300, "Confirmation far from the ⋮ \(menuFrame): \(confirm.frame)")
+        attachScreenshot(named: "82-workouts-delete-confirmation", of: app)
         confirm.tap()
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Empty card not shown after deleting")
         XCTAssertFalse(app.buttons["workouts.card"].exists, "Deleted workout still listed")

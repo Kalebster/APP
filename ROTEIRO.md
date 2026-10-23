@@ -69,6 +69,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - O banco é aberto de forma síncrona ao iniciar o app; uma migração num banco grande atrasaria a abertura.
 - Após uma falha ao salvar, o rollback() do SwiftData não restaura os valores alterados nos objetos em memória. O banco fica correto e o erro é mostrado, mas a tela pode exibir o valor não salvo até o objeto ser lido de novo. Raro (ex.: disco cheio). Prioridade baixa: resolver antes da S10. Coberto por teste com withKnownIssue.
 - Com o maior tamanho de texto (acessibilidade), a barra "Treino em andamento", mostrada com o treino minimizado, chega a 438 pt de altura e quebra "Treino em andamento" numa coluna estreita (89 pt). Rever o layout dela numa etapa futura (visto no PR #23).
+- HomeUITests.testEditSummaryValues falhou uma vez por um toque perdido durante animação (run 39884902708); investigar se falhar de novo.
 
 ## Decisões
 

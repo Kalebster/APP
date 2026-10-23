@@ -123,6 +123,24 @@ struct SessionProgressTests {
         #expect(SessionProgress.targetText(of: [set(), set()]) == nil)
     }
 
+    @Test("The targets come from the working and failure sets; from all sets when there are none")
+    func targetsByType() {
+        // The sets of the workout editor's model: warm-up 12–15, feeder 5–6, working 8–10 twice, failure 8–12.
+        let sets = [
+            set(min: 12, max: 15, type: .warmup),
+            set(min: 5, max: 6, type: .feeder),
+            set(min: 8, max: 10, type: .working),
+            set(min: 8, max: 10, type: .working),
+            set(min: 8, max: 12, type: .failure),
+        ]
+        #expect(SessionProgress.targetText(of: sets) == "meta 8–12 reps")
+        #expect(SessionProgress.targetText(of: [set(min: 6, max: 8, type: .warmup), set(min: 10, max: 10, type: .working)]) == "meta 10 reps")
+        #expect(SessionProgress.targetText(of: [set(min: 12, max: 15, type: .failure)]) == "meta 12–15 reps")
+        // Only warm-up and feeder sets: all of them, as before set types.
+        #expect(SessionProgress.targetText(of: Array(sets.prefix(2))) == "meta 5–15 reps")
+        #expect(SessionProgress.targetText(of: [set(type: .warmup)]) == nil)
+    }
+
     @Test("The closed card repeats the load only when it changes")
     func doneSummary() {
         let sets = [

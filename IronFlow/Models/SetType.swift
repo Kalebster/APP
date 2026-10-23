@@ -46,6 +46,15 @@ enum SetType: String, CaseIterable, Sendable {
         }
     }
 
+    /// Whether the set's repetition target makes up the exercise's target in the session ("meta 8–12
+    /// reps"). Warm-up and feeder sets have targets of their own, outside the work, and do not.
+    var countsTowardTarget: Bool {
+        switch self {
+        case .working, .failure: true
+        case .warmup, .feeder: false
+        }
+    }
+
     /// The type of a new set copied from a set of this type: a copy of a warm-up or feeder set is a
     /// working set, the others keep their type.
     var typeOfCopy: SetType {

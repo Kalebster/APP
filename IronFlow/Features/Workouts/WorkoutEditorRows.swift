@@ -13,15 +13,13 @@ struct EditorExerciseHeader: View {
     let onReorder: @MainActor () -> Void
     let onRemove: @MainActor () -> Void
 
-    @ScaledMetric(relativeTo: .body) private var tileSide: CGFloat = 32
-    @ScaledMetric(relativeTo: .body) private var iconSide: CGFloat = 17
     @ScaledMetric(relativeTo: .body) private var menuSide: CGFloat = 30
 
     var body: some View {
         let exercise = item.exercise
         let entry = EditorExerciseInfo.libraryEntry(of: exercise)
         HStack(spacing: 10) {
-            EditorExerciseTile(exercise: exercise, equipment: entry?.equipment, side: tileSide, iconSide: iconSide, cornerRadius: 9)
+            EditorExerciseTile(exercise: exercise, equipment: entry?.equipment)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: EditorExerciseInfo.name(of: exercise))
                     .scaledFont(14, weight: .heavy)
@@ -66,31 +64,44 @@ struct EditorExerciseHeader: View {
 }
 
 /// The equipment icon in light blue on the dark blue square, the initial of a custom exercise, or a
-/// dumbbell for an exercise that no longer exists.
+/// dumbbell for an exercise that no longer exists. 32 points at the default text size; it grows with the
+/// text up to the largest standard size and stops there, so with the accessibility sizes the exercise's
+/// name keeps the room it needs beside it.
 struct EditorExerciseTile: View {
     let exercise: Exercise?
     let equipment: Equipment?
-    let side: CGFloat
-    let iconSide: CGFloat
-    let cornerRadius: CGFloat
 
     var body: some View {
-        Group {
-            if let equipment {
-                EquipmentIcon(equipment: equipment)
-                    .frame(width: iconSide, height: iconSide)
-            } else if let exercise, let initial = exercise.name.first {
-                Text(verbatim: String(initial).uppercased())
-                    .font(.system(size: iconSide * 0.8, weight: .bold))
-            } else {
-                Image(systemName: "dumbbell")
-                    .font(.system(size: iconSide * 0.75, weight: .semibold))
+        Square(exercise: exercise, equipment: equipment)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            .accessibilityHidden(true)
+    }
+
+    /// The tile itself. Its sizes follow the text size it is given, which the tile limits above.
+    private struct Square: View {
+        let exercise: Exercise?
+        let equipment: Equipment?
+
+        @ScaledMetric(relativeTo: .body) private var side: CGFloat = 32
+        @ScaledMetric(relativeTo: .body) private var iconSide: CGFloat = 17
+
+        var body: some View {
+            Group {
+                if let equipment {
+                    EquipmentIcon(equipment: equipment)
+                        .frame(width: iconSide, height: iconSide)
+                } else if let exercise, let initial = exercise.name.first {
+                    Text(verbatim: String(initial).uppercased())
+                        .font(.system(size: iconSide * 0.8, weight: .bold))
+                } else {
+                    Image(systemName: "dumbbell")
+                        .font(.system(size: iconSide * 0.75, weight: .semibold))
+                }
             }
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(width: side, height: side)
+            .background(Theme.Colors.iconTileBackground, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
         }
-        .foregroundStyle(Theme.Colors.lightAccent)
-        .frame(width: side, height: side)
-        .background(Theme.Colors.iconTileBackground, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .accessibilityHidden(true)
     }
 }
 
@@ -289,18 +300,12 @@ struct EditorAddSetRow: View {
 struct EditorOrderingRow: View {
     let item: WorkoutExercise
 
-    @ScaledMetric(relativeTo: .body) private var tileSide: CGFloat = 32
-    @ScaledMetric(relativeTo: .body) private var iconSide: CGFloat = 17
-
     var body: some View {
         let exercise = item.exercise
         HStack(spacing: 12) {
             EditorExerciseTile(
                 exercise: exercise,
-                equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment,
-                side: tileSide,
-                iconSide: iconSide,
-                cornerRadius: 9
+                equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment
             )
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: EditorExerciseInfo.name(of: exercise))

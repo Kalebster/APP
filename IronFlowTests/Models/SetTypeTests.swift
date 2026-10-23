@@ -36,6 +36,11 @@ struct SetTypeTests {
         #expect(SetType.allCases.filter(\.countsTowardLiftedLoad) == [.working, .failure])
     }
 
+    @Test("Only working and failure sets make up the exercise's target")
+    func target() {
+        #expect(SetType.allCases.filter(\.countsTowardTarget) == [.working, .failure])
+    }
+
     @Test("A copy of a warm-up or feeder set is a working set; the others keep their type")
     func typeOfCopy() {
         #expect(SetType.allCases.map(\.typeOfCopy) == [.working, .working, .working, .failure])

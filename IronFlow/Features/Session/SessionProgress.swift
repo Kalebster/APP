@@ -58,11 +58,14 @@ struct SessionProgress: Equatable {
         }
     }
 
-    /// The repetition targets of an exercise's sets: "meta 8–12 reps" from the lowest minimum to the
+    /// The repetition targets of an exercise's working and failure sets (`SetType.countsTowardTarget`),
+    /// or of all its sets when it has none of those: "meta 8–12 reps" from the lowest minimum to the
     /// highest maximum, "meta 10 reps" when they are equal, `nil` when no set has a target.
     static func targetText(of sets: [SetLog]) -> String? {
-        let lows = sets.compactMap { $0.targetRepsMin ?? $0.targetRepsMax }
-        let highs = sets.compactMap { $0.targetRepsMax ?? $0.targetRepsMin }
+        let work = sets.filter(\.setType.countsTowardTarget)
+        let counted = work.isEmpty ? sets : work
+        let lows = counted.compactMap { $0.targetRepsMin ?? $0.targetRepsMax }
+        let highs = counted.compactMap { $0.targetRepsMax ?? $0.targetRepsMin }
         guard let low = lows.min(), let high = highs.max() else { return nil }
         return low == high
             ? String(localized: "meta \(low) reps")

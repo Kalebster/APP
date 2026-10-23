@@ -468,9 +468,16 @@ final class WorkoutUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos", seed: ["workout:Push"])
         openWorkout(named: "Push", in: app)
 
+        let menu = app.buttons["workout.menu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 10), "Editor menu not shown")
+        let menuFrame = menu.frame
         chooseFromEditorMenu("Excluir treino", in: app)
         XCTAssertTrue(element(labelStartingWith: "Excluir “Push”", in: app).waitForExistence(timeout: 10), "Delete confirmation not shown")
         XCTAssertTrue(app.staticTexts["O histórico dos treinos já feitos continua salvo. Não dá para desfazer."].exists, "Delete message")
+        // The confirmation points to the ⋯ it came from: it opens right below it.
+        let confirmationFrame = app.buttons["Excluir"].frame
+        XCTAssertGreaterThan(confirmationFrame.minY, menuFrame.maxY, "Confirmation not below the ⋯ \(menuFrame): \(confirmationFrame)")
+        XCTAssertLessThan(confirmationFrame.minY, menuFrame.maxY + 300, "Confirmation far from the ⋯ \(menuFrame): \(confirmationFrame)")
         attachScreenshot(named: "15-workout-delete-confirmation", of: app)
         cancelDialog(confirmLabel: "Excluir", in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.title", in: app), toBe: "Push"), "Cancel left the editor")
@@ -542,9 +549,13 @@ final class WorkoutUITests: IronFlowUITestCase {
         }
         XCTAssertGreaterThan(minimum.frame.minY, weight.frame.maxY, "The repetitions are not below the load")
         XCTAssertEqual(type.label, "Série 1, Aquecimento")
+        // The exercise's icon stops growing at the largest standard size: the name keeps most of the width.
+        let name = app.staticTexts["Supino Reto com Barra"].firstMatch
+        XCTAssertTrue(name.exists, "Exercise name not shown")
+        XCTAssertLessThan(name.frame.minX, screen.width / 4, "The icon takes the name's room: \(name.frame)")
         recordMeasurement(
             "Medição: editor com o maior texto (tela de \(Int(screen.width)) pt)",
-            "type \(Int(type.frame.minX))–\(Int(type.frame.maxX)); load \(Int(weight.frame.minX))–\(Int(weight.frame.maxX)) × \(Int(weight.frame.minY))–\(Int(weight.frame.maxY)); min \(Int(minimum.frame.minX))–\(Int(minimum.frame.maxX)); max \(Int(maximum.frame.minX))–\(Int(maximum.frame.maxX)) × \(Int(maximum.frame.minY))–\(Int(maximum.frame.maxY))"
+            "name \(Int(name.frame.minX))–\(Int(name.frame.maxX)) × \(Int(name.frame.minY))–\(Int(name.frame.maxY)); type \(Int(type.frame.minX))–\(Int(type.frame.maxX)); load \(Int(weight.frame.minX))–\(Int(weight.frame.maxX)) × \(Int(weight.frame.minY))–\(Int(weight.frame.maxY)); min \(Int(minimum.frame.minX))–\(Int(minimum.frame.maxX)); max \(Int(maximum.frame.minX))–\(Int(maximum.frame.maxX)) × \(Int(maximum.frame.minY))–\(Int(maximum.frame.maxY))"
         )
         attachScreenshot(named: "81-workout-editor-large-text", of: app)
     }

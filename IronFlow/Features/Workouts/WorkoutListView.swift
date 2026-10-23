@@ -26,13 +26,12 @@ struct WorkoutListView: View {
     @State private var openedWorkout: Workout?
     @State private var renamingWorkout: Workout?
     @State private var pendingDeletion: PendingDeletion?
-    @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
 
     /// The workout the user asked to delete, with its name taken when the question was asked, so the
-    /// confirmation never reads the workout itself.
+    /// confirmation, on the card's ⋮ menu, never reads the workout itself.
     private struct PendingDeletion {
-        let workout: Workout
+        let id: UUID
         let name: String
     }
 
@@ -72,16 +71,6 @@ struct WorkoutListView: View {
             WorkoutNameSheet(title: "Renomear treino", initialName: workout.name) { name in
                 try WorkoutService(context: context).rename(workout, to: name)
             }
-        }
-        .confirmationDialog(
-            Text("Excluir “\(pendingDeletion?.name ?? "")”?"),
-            isPresented: $isConfirmingDelete,
-            titleVisibility: .visible
-        ) {
-            Button("Excluir", role: .destructive, action: deletePendingWorkout)
-            Button("Cancelar", role: .cancel) {}
-        } message: {
-            Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
         }
         .navigationDestination(item: $openedWorkout) { workout in
             WorkoutEditorView(workout: workout, sessionActions: sessionActions)
@@ -222,7 +211,7 @@ struct WorkoutListView: View {
     }
 
     private func card(for workout: Workout, isToday: Bool) -> some View {
-        WorkoutGridCard(workout: workout, isToday: isToday) {
+        WorkoutGridCard(workout: workout, isToday: isToday, deletionName: deletionName(of: workout)) {
             openedWorkout = workout
         } onEdit: {
             openedWorkout = workout
@@ -231,9 +220,20 @@ struct WorkoutListView: View {
         } onRename: {
             renamingWorkout = workout
         } onDelete: {
-            pendingDeletion = PendingDeletion(workout: workout, name: workout.name)
-            isConfirmingDelete = true
+            pendingDeletion = PendingDeletion(id: workout.id, name: workout.name)
+        } onConfirmDelete: {
+            delete(workout)
         }
+    }
+
+    /// The name shown in the card's delete confirmation while the deletion of its workout waits for
+    /// one; dismissing the confirmation clears it.
+    private func deletionName(of workout: Workout) -> Binding<String?> {
+        let id = workout.id
+        return Binding(
+            get: { pendingDeletion?.id == id ? pendingDeletion?.name : nil },
+            set: { if $0 == nil { pendingDeletion = nil } }
+        )
     }
 
     /// Two columns; one with the accessibility text sizes, so names and counts are never cut.
@@ -250,8 +250,7 @@ struct WorkoutListView: View {
     }
 
     /// Deletes the workout the user confirmed; the history of performed workouts is kept.
-    private func deletePendingWorkout() {
-        guard let workout = pendingDeletion?.workout else { return }
+    private func delete(_ workout: Workout) {
         // Cleared first, so nothing reads the workout once it is deleted.
         pendingDeletion = nil
         do {

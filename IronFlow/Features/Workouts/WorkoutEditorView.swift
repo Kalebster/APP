@@ -149,16 +149,6 @@ struct WorkoutEditorView: View {
         } message: {
             Text("As séries planejadas dele também saem deste treino. O histórico não muda.")
         }
-        .confirmationDialog(
-            Text("Excluir “\(workout.name)”?"),
-            isPresented: $isConfirmingDelete,
-            titleVisibility: .visible
-        ) {
-            Button("Excluir", role: .destructive, action: deleteWorkout)
-            Button("Cancelar", role: .cancel) {}
-        } message: {
-            Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
-        }
         .sheet(item: $typeSheet) { target in
             SetTypeSheet(
                 number: target.number,
@@ -269,6 +259,17 @@ struct WorkoutEditorView: View {
                 .padding(.trailing, min(0, (menuSide - 44) / 2))
                 .accessibilityLabel(Text("Opções do treino"))
                 .accessibilityIdentifier("workout.menu")
+                // On the ⋯ itself, so the confirmation points to the button it came from.
+                .confirmationDialog(
+                    Text("Excluir “\(workout.name)”?"),
+                    isPresented: $isConfirmingDelete,
+                    titleVisibility: .visible
+                ) {
+                    Button("Excluir", role: .destructive, action: deleteWorkout)
+                    Button("Cancelar", role: .cancel) {}
+                } message: {
+                    Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
+                }
             }
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
