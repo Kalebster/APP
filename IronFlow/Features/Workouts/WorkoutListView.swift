@@ -81,10 +81,10 @@ struct WorkoutListView: View {
             Button("Excluir", role: .destructive, action: deletePendingWorkout)
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("O histórico de treinos realizados será mantido.")
+            Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
         }
         .navigationDestination(item: $openedWorkout) { workout in
-            WorkoutEditorView(workout: workout)
+            WorkoutEditorView(workout: workout, sessionActions: sessionActions)
         }
         .navigationDestination(isPresented: $isShowingPlan) {
             WeeklyPlanView()
@@ -223,6 +223,8 @@ struct WorkoutListView: View {
 
     private func card(for workout: Workout, isToday: Bool) -> some View {
         WorkoutGridCard(workout: workout, isToday: isToday) {
+            openedWorkout = workout
+        } onEdit: {
             openedWorkout = workout
         } onStart: {
             sessionActions.start(workout)

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A workout in the "Meus treinos" grid: name, what it holds and its muscle groups, a start button (▶)
-/// and an options menu (⋮). The workout planned for today is highlighted, with "HOJE". The card opens
+/// and an options menu (⋮) with "Editar treino", "Renomear" and "Excluir". The workout planned for today is highlighted, with "HOJE". The card opens
 /// the workout's editor; the other two controls sit over it, not inside its button, so each one is its
 /// own accessibility element. The card fills the height it is given, so the cards of a row match.
 struct WorkoutGridCard: View {
@@ -9,6 +9,7 @@ struct WorkoutGridCard: View {
     /// Planned for today in the weekly plan.
     let isToday: Bool
     let onOpen: @MainActor () -> Void
+    let onEdit: @MainActor () -> Void
     let onStart: @MainActor () -> Void
     let onRename: @MainActor () -> Void
     let onDelete: @MainActor () -> Void
@@ -86,9 +87,10 @@ struct WorkoutGridCard: View {
         return parts.joined(separator: ", ")
     }
 
-    /// The ⋮ menu: rename and delete. 27 points of dots in a 44-point touch area.
+    /// The ⋮ menu: edit, rename and delete. 27 points of dots in a 44-point touch area.
     private var optionsMenu: some View {
         Menu {
+            Button("Editar treino", systemImage: "slider.horizontal.3", action: onEdit)
             Button("Renomear", systemImage: "pencil", action: onRename)
             Button("Excluir", systemImage: "trash", role: .destructive, action: onDelete)
         } label: {

@@ -90,28 +90,6 @@
         }
       }
     },
-    "%lld reps" : {
-      "localizations" : {
-        "pt-BR" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld rep"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld reps"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld séries" : {
       "localizations" : {
         "pt-BR" : {
@@ -143,9 +121,6 @@
     "%lld treinos no plano" : {
 
     },
-    "%lld–%lld reps" : {
-
-    },
     "1 dia" : {
 
     },
@@ -159,6 +134,9 @@
 
     },
     "1 treino no plano" : {
+
+    },
+    "a" : {
 
     },
     "A carga não pode ser negativa." : {
@@ -200,10 +178,10 @@
     "Adicionar série" : {
 
     },
-    "Adicione exercícios ao treino" : {
+    "Adicione exercícios para começar." : {
 
     },
-    "Adicione exercícios para começar." : {
+    "Adicione os exercícios deste treino." : {
 
     },
     "Ajustes" : {
@@ -245,7 +223,7 @@
     "As séries já feitas dele serão apagadas deste treino; o treino planejado não muda." : {
 
     },
-    "As séries planejadas deste exercício também serão removidas." : {
+    "As séries planejadas dele também saem deste treino. O histórico não muda." : {
 
     },
     "Até não conseguir mais repetições. Conta nos kg levantados." : {
@@ -264,9 +242,6 @@
 
     },
     "Cancelar" : {
-
-    },
-    "Carga (kg)" : {
 
     },
     "Carga da série %lld" : {
@@ -359,6 +334,9 @@
     "Duração: %@" : {
 
     },
+    "Editar treino" : {
+
+    },
     "Elástico" : {
 
     },
@@ -378,6 +356,9 @@
 
     },
     "Escolha um treino para cada dia. A programação não impede treinos em outros dias." : {
+
+    },
+    "Escolhe o tipo da série ou a remove." : {
 
     },
     "Escolher outro" : {
@@ -594,10 +575,16 @@
     "Máquina" : {
 
     },
-    "Máximo" : {
+    "máx" : {
 
     },
-    "Mínimo" : {
+    "Máximo de repetições da série %lld" : {
+
+    },
+    "mín" : {
+
+    },
+    "Mínimo de repetições da série %lld" : {
 
     },
     "Nada programado" : {
@@ -610,6 +597,9 @@
 
     },
     "Nenhum exercício" : {
+
+    },
+    "Nenhum exercício ainda" : {
 
     },
     "Nenhum exercício encontrado" : {
@@ -657,10 +647,16 @@
     "Não é possível marcar um dia que ainda não chegou." : {
 
     },
+    "O exercício precisa ter pelo menos 1 série." : {
+
+    },
     "O exercício precisa ter pelo menos uma série." : {
 
     },
-    "O histórico de treinos realizados será mantido." : {
+    "O histórico dos treinos já feitos continua salvo. Não dá para desfazer." : {
+
+    },
+    "O máximo não pode ser menor que o mínimo." : {
 
     },
     "O mínimo de repetições não pode ser maior que o máximo." : {
@@ -678,16 +674,13 @@
     "Ombros" : {
 
     },
-    "Opcional" : {
-
-    },
-    "Opções" : {
-
-    },
     "Opções de %@" : {
 
     },
-    "Ordenar" : {
+    "Opções do treino" : {
+
+    },
+    "Ordenar exercícios" : {
 
     },
     "Outro" : {
@@ -765,6 +758,12 @@
     "Remover" : {
 
     },
+    "Remover %@?" : {
+
+    },
+    "Remover do treino" : {
+
+    },
     "Remover esta série?" : {
 
     },
@@ -781,9 +780,6 @@
 
     },
     "Renomear treino" : {
-
-    },
-    "Repetições" : {
 
     },
     "Repetições da série %lld" : {
@@ -871,6 +867,12 @@
 
     },
     "Terça-feira" : {
+
+    },
+    "Tipo da série %lld" : {
+
+    },
+    "Tipos de série: %@" : {
 
     },
     "Todos" : {
