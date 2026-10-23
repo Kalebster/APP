@@ -93,6 +93,8 @@ struct WorkoutEditorView: View {
             }
         }
         .screenBackground()
+        // The navigation bar is hidden for the model's own top row; the swipe back stays.
+        .background(InteractivePopEnabler())
         .toolbar(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -123,7 +125,7 @@ struct WorkoutEditorView: View {
         .task(id: rangeNotices) {
             guard rangeNotices > 0 else { return }
             do {
-                try await Task.sleep(for: .seconds(3))
+                try await Task.sleep(for: .seconds(4))
             } catch {
                 // Cancelled by a newer notice, which hides itself.
                 return

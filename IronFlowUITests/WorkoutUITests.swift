@@ -303,12 +303,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "6", "Minimum not saved")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "10", "Maximum not saved")
 
-        // A maximum below the minimum: the minimum follows it, with the notice.
+        // A maximum below the minimum: the minimum follows it, with the notice. The notice shows for a
+        // few seconds, so it is looked for right after OK, before anything else is waited for.
         replaceText(of: fields("workout.set.max", in: app).element(boundBy: 0), with: "4")
-        tapOK(in: app)
+        app.buttons["OK"].tap()
         let notice = element("workout.rangeNotice", in: app)
-        XCTAssertTrue(notice.waitForExistence(timeout: 5), "Notice not shown")
+        XCTAssertTrue(notice.waitForExistence(timeout: 3), "Notice not shown")
         XCTAssertEqual(notice.label, "O máximo não pode ser menor que o mínimo.")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertTrue(notice.waitForNonExistence(timeout: 10), "Notice did not go away")
