@@ -19,9 +19,10 @@ struct SessionProgressTests {
         weight: Double? = nil,
         reps: Int? = nil,
         min: Int? = nil,
-        max: Int? = nil
+        max: Int? = nil,
+        type: SetType = .working
     ) -> SetLog {
-        let log = SetLog(sortIndex: 0, weightKg: weight, reps: reps, targetRepsMin: min, targetRepsMax: max)
+        let log = SetLog(sortIndex: 0, weightKg: weight, reps: reps, targetRepsMin: min, targetRepsMax: max, setType: type)
         log.isCompleted = done
         container.mainContext.insert(log)
         return log
@@ -89,6 +90,24 @@ struct SessionProgressTests {
         #expect(SessionFormatting.volumeText(0) == "0 kg levantados")
     }
 
+    @Test("Warm-up and feeder sets stay out of the load lifted; working and failure sets count; every set counts as a set")
+    func volumeByType() {
+        let sets = [
+            set(done: true, weight: 40, reps: 15, type: .warmup),
+            set(done: true, weight: 50, reps: 6, type: .feeder),
+            set(done: true, weight: 60, reps: 10, type: .working),
+            set(done: true, weight: 55, reps: 12, type: .failure),
+            set(done: false, weight: 60, reps: 10, type: .working),
+        ]
+        #expect(SessionProgress.volumeKg(of: sets) == 60 * 10 + 55 * 12)
+        #expect(SessionProgress.volumeKg(of: Array(sets.prefix(2))) == 0)
+
+        let progress = SessionProgress(sets: [sets])
+        #expect(progress.completedSets == 4)
+        #expect(progress.totalSets == 5)
+        #expect(progress.setsText == "4 de 5 séries")
+    }
+
     @Test("An exercise is finished when it has sets and all are done")
     func finished() {
         #expect(SessionProgress.isFinished([set(done: true), set(done: true)]))
@@ -102,6 +121,24 @@ struct SessionProgressTests {
         #expect(SessionProgress.targetText(of: [set(min: 10, max: 10)]) == "meta 10 reps")
         #expect(SessionProgress.targetText(of: [set(max: 12)]) == "meta 12 reps")
         #expect(SessionProgress.targetText(of: [set(), set()]) == nil)
+    }
+
+    @Test("The targets come from the working and failure sets; from all sets when there are none")
+    func targetsByType() {
+        // The sets of the workout editor's model: warm-up 12–15, feeder 5–6, working 8–10 twice, failure 8–12.
+        let sets = [
+            set(min: 12, max: 15, type: .warmup),
+            set(min: 5, max: 6, type: .feeder),
+            set(min: 8, max: 10, type: .working),
+            set(min: 8, max: 10, type: .working),
+            set(min: 8, max: 12, type: .failure),
+        ]
+        #expect(SessionProgress.targetText(of: sets) == "meta 8–12 reps")
+        #expect(SessionProgress.targetText(of: [set(min: 6, max: 8, type: .warmup), set(min: 10, max: 10, type: .working)]) == "meta 10 reps")
+        #expect(SessionProgress.targetText(of: [set(min: 12, max: 15, type: .failure)]) == "meta 12–15 reps")
+        // Only warm-up and feeder sets: all of them, as before set types.
+        #expect(SessionProgress.targetText(of: Array(sets.prefix(2))) == "meta 5–15 reps")
+        #expect(SessionProgress.targetText(of: [set(type: .warmup)]) == nil)
     }
 
     @Test("The closed card repeats the load only when it changes")

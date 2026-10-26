@@ -18,6 +18,8 @@ struct SessionExerciseCard: View {
     let onToggle: @MainActor (SetLog, SetSuggestion) -> Void
     let onAddSet: @MainActor () -> Void
     let onRemoveSet: @MainActor (SetLog) -> Void
+    /// Opens the set type sheet of a set, with its number.
+    let onChooseType: @MainActor (SetLog, Int) -> Void
     let onRemoveExercise: @MainActor () -> Void
     let onOpenOrClose: @MainActor () -> Void
 
@@ -54,10 +56,10 @@ struct SessionExerciseCard: View {
                         suggestion: suggestion,
                         isCurrent: log.id == currentSetID,
                         draft: draft(log),
-                        focusedField: focusedField
-                    ) {
-                        onToggle(log, suggestion)
-                    }
+                        focusedField: focusedField,
+                        onToggle: { onToggle(log, suggestion) },
+                        onChooseType: { onChooseType(log, index + 1) }
+                    )
                     .padding(.vertical, 2)
                     .sessionCardRow(.middle, isCurrent: isCurrent)
                     // Removing takes a second tap, on the button the swipe shows.
@@ -196,10 +198,12 @@ enum SessionCardRowPosition {
 
 /// The part of an exercise's card behind one row: the card fill with its corners at the top or the
 /// bottom, the outline of the current exercise on the card's outer edges only, and after the last row
-/// the gap to the next card.
+/// the gap to the next card. Used by the session and by the workout editor.
 struct SessionCardSegment: View {
     let position: SessionCardRowPosition
     let isCurrent: Bool
+    /// The space below the card's last row.
+    var bottomGap: CGFloat = SessionCardSegment.gap
 
     static let cornerRadius: CGFloat = 15
     /// The space between two cards, below each card's last row.
@@ -228,7 +232,7 @@ struct SessionCardSegment: View {
             }
             .clipped()
             .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.bottom, isBottom ? Self.gap : 0)
+            .padding(.bottom, isBottom ? bottomGap : 0)
     }
 }
 
@@ -236,6 +240,12 @@ extension View {
     /// A row of an exercise's card in the session list: the card's margins, no separator, and the part
     /// of the card behind it.
     func sessionCardRow(_ position: SessionCardRowPosition, isCurrent: Bool) -> some View {
+        cardSegmentRow(position, isCurrent: isCurrent, gap: SessionCardSegment.gap)
+    }
+
+    /// A row of an exercise's card in a list: the card's margins (8 points inside the screen margin), no
+    /// separator, and the part of the card behind it, with `gap` below the card's last row.
+    func cardSegmentRow(_ position: SessionCardRowPosition, isCurrent: Bool = false, gap: CGFloat) -> some View {
         listRowInsets(EdgeInsets(
             top: 0,
             leading: Theme.Metrics.screenPadding + 8,
@@ -243,6 +253,6 @@ extension View {
             trailing: Theme.Metrics.screenPadding + 8
         ))
         .listRowSeparator(.hidden)
-        .listRowBackground(SessionCardSegment(position: position, isCurrent: isCurrent))
+        .listRowBackground(SessionCardSegment(position: position, isCurrent: isCurrent, bottomGap: gap))
     }
 }

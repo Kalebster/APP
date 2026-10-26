@@ -68,7 +68,9 @@ struct SessionSetColumns: View {
 /// One set of the session: its number, what it did the last time ("ÚLTIMA"), its load and repetitions
 /// and the completion mark. An empty field shows the suggestion in gray, which checking the set records.
 /// A set done shows its number in light blue and its values in white; the current set (the first not
-/// done of the current exercise) is highlighted. In one line, or in two with the accessibility text sizes.
+/// done of the current exercise) is highlighted. A warm-up, feeder or failure set shows its number in the
+/// colors of its type; a tap on the number opens the set type sheet. In one line, or in two with the
+/// accessibility text sizes.
 struct SessionSetRow: View {
     let number: Int
     let log: SetLog
@@ -78,6 +80,7 @@ struct SessionSetRow: View {
     @Binding var draft: SetDraft
     let focusedField: FocusState<SetField?>.Binding
     let onToggle: @MainActor () -> Void
+    let onChooseType: @MainActor () -> Void
 
     @ScaledMetric(relativeTo: .caption) private var numberWidth = SetRowMetrics.numberWidth
     @ScaledMetric(relativeTo: .caption2) private var previousWidth = SetRowMetrics.previousWidth
@@ -136,19 +139,53 @@ struct SessionSetRow: View {
         .accessibilityIdentifier("session.set")
     }
 
+    /// The number: a working set as before (in a blue circle when current, light blue once done); the
+    /// other types in a circle of their color, filled when current. A tap opens the set type sheet; it
+    /// answers on the whole height of the row.
     private var numberView: some View {
-        Text(number.formatted())
-            .scaledFont(12, weight: .bold)
-            .monospacedDigit()
-            .foregroundStyle(isCurrent ? Color.white : isDone ? Theme.Colors.lightAccent : Color.secondary)
-            .frame(width: numberSide, height: numberSide)
-            .background {
-                if isCurrent {
-                    Circle().fill(Color.accentColor)
+        let type = log.setType
+        return Button(action: onChooseType) {
+            Text(number.formatted())
+                .scaledFont(12, weight: .bold)
+                .monospacedDigit()
+                .foregroundStyle(numberColor(type))
+                .frame(width: numberSide, height: numberSide)
+                .background {
+                    if type == .working {
+                        if isCurrent {
+                            Circle().fill(Color.accentColor)
+                        }
+                    } else {
+                        Circle().fill(isCurrent ? type.numberColor : type.numberBackground)
+                    }
                 }
-            }
-            .frame(width: max(numberWidth, numberSide))
-            .accessibilityLabel(isCurrent ? Text("Série \(number), atual") : Text("Série \(number)"))
+                .frame(width: max(numberWidth, numberSide) + 8, height: rowHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, -4)
+        .accessibilityLabel(Text(verbatim: numberAccessibilityText(type)))
+        .accessibilityHint(Text("Escolhe o tipo da série ou a remove."))
+        .accessibilityIdentifier("session.set.type")
+    }
+
+    private func numberColor(_ type: SetType) -> Color {
+        if type == .working {
+            return isCurrent ? Color.white : isDone ? Theme.Colors.lightAccent : Color.secondary
+        }
+        return isCurrent ? Theme.Colors.screenBackground : type.numberColor
+    }
+
+    /// "Série 2", "Série 2, atual"; the other types say theirs: "Série 1, Aquecimento".
+    private func numberAccessibilityText(_ type: SetType) -> String {
+        var parts = [String(localized: "Série \(number)")]
+        if type != .working {
+            parts.append(String(localized: type.displayName))
+        }
+        if isCurrent {
+            parts.append(String(localized: "atual"))
+        }
+        return parts.joined(separator: ", ")
     }
 
     private var previousText: some View {

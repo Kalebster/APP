@@ -48,19 +48,24 @@ struct SessionProgress: Equatable {
         !sets.isEmpty && sets.allSatisfy(\.isCompleted)
     }
 
-    /// The load lifted: the sum of load × repetitions of the sets done. Sets without a load do not count.
+    /// The load lifted: the sum of load × repetitions of the working and failure sets done. Warm-up and
+    /// feeder sets, and sets without a load, do not count (`SetType.countsTowardLiftedLoad`).
     static func volumeKg(of sets: [SetLog]) -> Double {
         sets.reduce(0) { total, log in
-            guard log.isCompleted, let weightKg = log.weightKg, let reps = log.reps else { return total }
+            guard log.isCompleted, log.setType.countsTowardLiftedLoad,
+                  let weightKg = log.weightKg, let reps = log.reps else { return total }
             return total + weightKg * Double(reps)
         }
     }
 
-    /// The repetition targets of an exercise's sets: "meta 8–12 reps" from the lowest minimum to the
+    /// The repetition targets of an exercise's working and failure sets (`SetType.countsTowardTarget`),
+    /// or of all its sets when it has none of those: "meta 8–12 reps" from the lowest minimum to the
     /// highest maximum, "meta 10 reps" when they are equal, `nil` when no set has a target.
     static func targetText(of sets: [SetLog]) -> String? {
-        let lows = sets.compactMap { $0.targetRepsMin ?? $0.targetRepsMax }
-        let highs = sets.compactMap { $0.targetRepsMax ?? $0.targetRepsMin }
+        let work = sets.filter(\.setType.countsTowardTarget)
+        let counted = work.isEmpty ? sets : work
+        let lows = counted.compactMap { $0.targetRepsMin ?? $0.targetRepsMax }
+        let highs = counted.compactMap { $0.targetRepsMax ?? $0.targetRepsMin }
         guard let low = lows.min(), let high = highs.max() else { return nil }
         return low == high
             ? String(localized: "meta \(low) reps")

@@ -63,6 +63,16 @@ enum Theme {
         /// Secondary text between `mediumText` and `dimText`: the counts, the search icon and the muscle
         /// group of an exercise.
         static let secondaryText = Color(.secondaryText)
+
+        // The workout editor model.
+        /// The fill of an exercise chosen in the exercise picker, outlined in the accent color.
+        static let selectedCardBackground = Color(.selectedCardBackground)
+        /// The border of the dashed "Adicionar exercícios" button.
+        static let dashedBorder = Color(.dashedBorder)
+        /// The colors of the set types, for the number of a set; their fills are these colors at 16–17%.
+        static let warmupSet = Color(.warmupSet)
+        static let feederSet = Color(.feederSet)
+        static let failureSet = Color(.failureSet)
     }
 
     enum Metrics {

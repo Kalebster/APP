@@ -4,6 +4,7 @@ import SwiftData
 ///
 /// Adds the user's body data (`BodyWeightEntry`, `UserProfile`). The seven models of
 /// `SchemaV1` are unchanged and reused as they are; the migration from V1 only adds tables.
+/// Frozen: every model is named explicitly, never through the app's aliases.
 enum SchemaV2: VersionedSchema {
     static var versionIdentifier: Schema.Version {
         Schema.Version(2, 0, 0)
@@ -11,8 +12,8 @@ enum SchemaV2: VersionedSchema {
 
     static var models: [any PersistentModel.Type] {
         SchemaV1.models + [
-            BodyWeightEntry.self,
-            UserProfile.self,
+            SchemaV2.BodyWeightEntry.self,
+            SchemaV2.UserProfile.self,
         ]
     }
 }

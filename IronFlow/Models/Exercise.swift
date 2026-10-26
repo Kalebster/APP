@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Exercise = SchemaV1.Exercise
+typealias Exercise = SchemaV5.Exercise
 
-extension SchemaV1 {
+extension SchemaV5 {
     /// An exercise in the library: built into the app or created by the user.
     @Model
     final class Exercise {

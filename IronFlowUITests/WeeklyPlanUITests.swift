@@ -102,7 +102,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         closePlan(in: app)
         openWorkout(named: "Push", in: app)
         deleteWorkoutFromEditor(in: app)
-        XCTAssertTrue(app.navigationBars["Push"].waitForNonExistence(timeout: 10), "Editor still open after deleting")
+        XCTAssertTrue(element("workout.title", in: app).waitForNonExistence(timeout: 10), "Editor still open after deleting")
 
         openPlan(in: app)
         XCTAssertTrue(waitForLabel(of: element("plan.today", in: app), containing: ", hoje, descanso"), "Today's row: \(element("plan.today", in: app).label)")
