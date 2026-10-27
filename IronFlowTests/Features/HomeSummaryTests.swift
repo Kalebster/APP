@@ -219,9 +219,9 @@ struct HomeSummaryTests {
         #expect(noWorkouts.subtitle == "Crie um treino na aba Treinos ou comece um treino livre.")
 
         let nothingPlanned = TodayWorkoutContent(state: .nothingPlanned)
-        #expect(nothingPlanned.badge == nil)
-        #expect(nothingPlanned.title == "Nada programado")
-        #expect(nothingPlanned.subtitle == "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre.")
-        #expect(nothingPlanned.accessibilityText.contains("Nenhum treino planejado para hoje."))
+        #expect(nothingPlanned.badge == "Livre")
+        #expect(nothingPlanned.title == "Descanso hoje")
+        #expect(nothingPlanned.subtitle == "Nada programado para hoje. Quer treinar mesmo assim?")
+        #expect(nothingPlanned.accessibilityText == "Descanso hoje. Nada programado para hoje. Quer treinar mesmo assim?")
     }
 }

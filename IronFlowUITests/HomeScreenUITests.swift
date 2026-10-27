@@ -59,9 +59,13 @@ final class HomeScreenUITests: IronFlowUITestCase {
 
         let today = element("home.today", in: app)
         XCTAssertTrue(today.waitForExistence(timeout: 10), "Today's block not shown")
-        XCTAssertTrue(today.label.hasPrefix("Nada programado."), "Today: \(today.label)")
-        XCTAssertEqual(app.buttons["home.chooseWorkout"].label, "Escolher um treino")
+        XCTAssertEqual(today.label, "Descanso hoje. Nada programado para hoje. Quer treinar mesmo assim?")
+        XCTAssertEqual(app.buttons["home.chooseWorkout"].label, "Escolher treino")
         XCTAssertEqual(app.buttons["home.startFree"].label, "Iniciar treino livre")
+        // Only "Treino livre" below "Escolher treino", the whole width: no "Escolher outro".
+        XCTAssertEqual(app.buttons.matching(identifier: "home.chooseWorkout").count, 1)
+        let screen = app.windows.firstMatch.frame
+        XCTAssertGreaterThan(app.buttons["home.startFree"].frame.width, screen.width * 0.7, "Treino livre is not the whole width")
 
         // Without a plan: no ring, the week's count and the invitation to plan it.
         XCTAssertFalse(element("home.week.goal", in: app).exists, "Ring shown without a weekly plan")
@@ -72,6 +76,54 @@ final class HomeScreenUITests: IronFlowUITestCase {
 
         plan.tap()
         XCTAssertTrue(element("plan.screen", in: app).waitForExistence(timeout: 10), "Plan screen not opened")
+    }
+
+    /// A rest day with workouts: "Escolher treino" opens the sheet, a workout without exercises cannot be
+    /// started, and tapping a row starts its workout at once.
+    @MainActor
+    func testRestDayChooseWorkoutAndStart() throws {
+        continueAfterFailure = false
+        let app = launchOnHome(seed: workouts + ["workout:Costas e Bíceps"])
+
+        let choose = app.buttons["home.chooseWorkout"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher treino")
+        XCTAssertEqual(choose.label, "Escolher treino")
+        attachScreenshot(named: "83-home-rest-day", of: app)
+
+        choose.tap()
+        let rows = app.buttons.matching(identifier: "workoutPicker.workout")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Workout picker not shown")
+        XCTAssertTrue(app.staticTexts["O treino começa assim que você tocar nele."].exists, "No picker text")
+        XCTAssertEqual(rows.count, 4)
+        XCTAssertEqual(rows.element(boundBy: 0).label, "Push, 4 exercícios · 12 séries, Peito · Ombros · Tríceps")
+        let empty = rows.element(boundBy: 3)
+        XCTAssertEqual(empty.label, "Costas e Bíceps, Sem exercícios · adicione na tela Treinos")
+        XCTAssertFalse(empty.isEnabled, "A workout without exercises can be started")
+
+        rows.element(boundBy: 1).tap()
+        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
+        XCTAssertEqual(element("session.name", in: app).label, "Pull")
+    }
+
+    /// "Escolher outro" on a day with a planned workout: today's workout comes first, with "HOJE".
+    @MainActor
+    func testChooseAnotherWorkoutListsTodaysFirst() throws {
+        continueAfterFailure = false
+        let app = launchOnHome(seed: workouts + ["workout:Costas e Bíceps", "plan-today:Pull"])
+
+        let another = app.buttons["home.chooseWorkout"]
+        XCTAssertTrue(another.waitForExistence(timeout: 10), "No Escolher outro")
+        XCTAssertEqual(another.label, "Escolher outro treino")
+        another.tap()
+        let rows = app.buttons.matching(identifier: "workoutPicker.workout")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "Workout picker not shown")
+        XCTAssertTrue(rows.element(boundBy: 0).label.hasPrefix("Pull, hoje, "), "First row: \(rows.element(boundBy: 0).label)")
+        XCTAssertTrue(rows.element(boundBy: 1).label.hasPrefix("Push, "), "Second row: \(rows.element(boundBy: 1).label)")
+        attachScreenshot(named: "84-workout-picker", of: app)
+
+        rows.element(boundBy: 2).tap()
+        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
+        XCTAssertEqual(element("session.name", in: app).label, "Pernas")
     }
 
     @MainActor

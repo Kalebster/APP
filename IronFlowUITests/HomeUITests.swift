@@ -55,7 +55,7 @@ final class HomeUITests: IronFlowUITestCase {
         createWorkout(named: "Push", in: app)
         openTab("Início", in: app)
         XCTAssertTrue(today.waitForExistence(timeout: 10))
-        XCTAssertTrue(today.label.contains("Nenhum treino planejado para hoje."), "Today card: \(today.label)")
+        XCTAssertTrue(today.label.contains("Nada programado para hoje."), "Today card: \(today.label)")
     }
 
     @MainActor

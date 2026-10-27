@@ -91,9 +91,9 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         closePlan(in: app)
         openTab("Início", in: app)
         let card = element("home.today", in: app)
-        XCTAssertTrue(waitForLabel(of: card, containing: "Nenhum treino planejado para hoje."), "Card: \(card.label)")
+        XCTAssertTrue(waitForLabel(of: card, containing: "Nada programado para hoje."), "Card: \(card.label)")
         XCTAssertTrue(app.buttons["home.startPlanned"].waitForNonExistence(timeout: 10), "Iniciar Push still offered")
-        XCTAssertEqual(app.buttons["home.chooseWorkout"].label, "Escolher um treino")
+        XCTAssertEqual(app.buttons["home.chooseWorkout"].label, "Escolher treino")
 
         // Planned again, then the workout is deleted: its day becomes a rest day.
         openTab("Treinos", in: app)
@@ -108,7 +108,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: element("plan.today", in: app), containing: ", hoje, descanso"), "Today's row: \(element("plan.today", in: app).label)")
         closePlan(in: app)
         openTab("Início", in: app)
-        XCTAssertTrue(waitForLabel(of: card, containing: "Nenhum treino planejado para hoje."), "Card: \(card.label)")
+        XCTAssertTrue(waitForLabel(of: card, containing: "Nada programado para hoje."), "Card: \(card.label)")
         XCTAssertFalse(app.buttons["home.startPlanned"].exists, "Iniciar Push offered after deleting the workout")
     }
 }

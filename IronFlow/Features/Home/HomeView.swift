@@ -100,7 +100,7 @@ struct HomeView: View {
             SummaryCustomizeSheet(storedMetrics: $storedMetrics)
         }
         .sheet(isPresented: $isChoosingWorkout, onDismiss: startChosenWorkout) {
-            WorkoutPickerSheet { workout in
+            WorkoutPickerSheet(todayWorkoutID: scheduledID) { workout in
                 chosenWorkout = workout
             }
         }
@@ -436,8 +436,8 @@ private struct TodayWorkoutCard: View {
             return (title, title, "play.fill")
         case .chooseWorkout:
             if isMain {
-                let title = String(localized: "Escolher um treino")
-                return (title, title, "list.bullet")
+                let title = String(localized: "Escolher treino")
+                return (title, title, "play.fill")
             }
             return (String(localized: "Escolher outro"), String(localized: "Escolher outro treino"), nil)
         case .startFreeWorkout:

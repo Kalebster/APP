@@ -236,7 +236,7 @@ extension TodayWorkoutState {
 /// What the "Treino de hoje" block says in each state: the badge, the title, the line under it, the
 /// muscle group chips and what VoiceOver reads for all of it.
 struct TodayWorkoutContent: Equatable {
-    /// "Programado", "Em andamento" or "Concluído"; none without a workout for today.
+    /// "Programado", "Em andamento", "Concluído" or, on a rest day, "Livre"; none without workouts.
     let badge: String?
     let title: String
     let subtitle: String
@@ -285,9 +285,9 @@ struct TodayWorkoutContent: Equatable {
             chips = []
             accessibilityText = "\(title). \(subtitle)"
         case .nothingPlanned:
-            badge = nil
-            title = String(localized: "Nada programado")
-            subtitle = String(localized: "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre.")
+            badge = String(localized: "Livre")
+            title = String(localized: "Descanso hoje")
+            subtitle = String(localized: "Nada programado para hoje. Quer treinar mesmo assim?")
             chips = []
             accessibilityText = "\(title). \(subtitle)"
         }

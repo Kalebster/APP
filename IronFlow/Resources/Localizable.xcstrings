@@ -310,6 +310,9 @@
     "Descanso" : {
 
     },
+    "Descanso hoje" : {
+
+    },
     "Descartar" : {
 
     },
@@ -370,7 +373,7 @@
     "Escolher outro treino" : {
 
     },
-    "Escolher um treino" : {
+    "Escolher treino" : {
 
     },
     "Este dia já está marcado." : {
@@ -505,6 +508,9 @@
     "Limpar filtros" : {
 
     },
+    "Livre" : {
+
+    },
     "Mais 15 segundos" : {
 
     },
@@ -590,7 +596,7 @@
     "Mínimo de repetições da série %lld" : {
 
     },
-    "Nada programado" : {
+    "Nada programado para hoje. Quer treinar mesmo assim?" : {
 
     },
     "Nenhum dia" : {
@@ -615,9 +621,6 @@
 
     },
     "Nenhum treino criado" : {
-
-    },
-    "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre." : {
 
     },
     "Nenhum treino realizado" : {
@@ -666,6 +669,9 @@
 
     },
     "O nome pode ter no máximo %lld caracteres." : {
+
+    },
+    "O treino começa assim que você tocar nele." : {
 
     },
     "O treino não tem exercícios." : {
@@ -804,6 +810,9 @@
 
     },
     "Sem carga" : {
+
+    },
+    "Sem exercícios · adicione na tela Treinos" : {
 
     },
     "Sem meta" : {
