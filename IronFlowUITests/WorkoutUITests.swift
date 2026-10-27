@@ -98,6 +98,25 @@ final class WorkoutUITests: IronFlowUITestCase {
         return query.count == expected
     }
 
+    /// While reordering three exercises: drags the first one by its handle below the last one, slowly
+    /// and held a moment over its new place, so the list follows the drag on a busy simulator too.
+    @MainActor
+    private func dragFirstExerciseBelowTheLast(in app: XCUIApplication) {
+        let cells = app.cells.containing(.any, identifier: "workout.ordering.exercise")
+        let first = cells.element(boundBy: 0)
+        let last = cells.element(boundBy: 2)
+        let handle = first.buttons.firstMatch
+        let start = handle.exists
+            ? handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            : first.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
+        start.press(
+            forDuration: 0.8,
+            thenDragTo: last.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.9)),
+            withVelocity: XCUIGestureVelocity(rawValue: 150),
+            thenHoldForDuration: 0.6
+        )
+    }
+
     /// Opens the editor's ⋯ menu and chooses `option`.
     @MainActor
     private func chooseFromEditorMenu(_ option: String, in app: XCUIApplication) {
@@ -383,15 +402,15 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(rows.element(boundBy: 0).label, "Supino Reto com Barra, 3 séries")
         attachScreenshot(named: "78-workout-reorder", of: app)
 
-        // The first exercise dragged by its handle below the last one.
-        let first = app.cells.containing(.any, identifier: "workout.ordering.exercise").element(boundBy: 0)
-        let last = app.cells.containing(.any, identifier: "workout.ordering.exercise").element(boundBy: 2)
-        let handle = first.buttons.firstMatch
-        let start = handle.exists
-            ? handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-            : first.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
-        start.press(forDuration: 0.6, thenDragTo: last.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.9)))
-        XCTAssertTrue(waitForLabel(of: rows.element(boundBy: 2), toBe: "Supino Reto com Barra, 3 séries"), "Not reordered: \(rows.element(boundBy: 2).label)")
+        // The first exercise dragged by its handle below the last one. A drag the list did not follow at
+        // all (seen on a busy CI machine: the order unchanged) is made once more; the new order is
+        // checked either way.
+        let moved = "Supino Reto com Barra, 3 séries"
+        dragFirstExerciseBelowTheLast(in: app)
+        if !waitForLabel(of: rows.element(boundBy: 2), toBe: moved, timeout: 5), rows.element(boundBy: 0).label == moved {
+            dragFirstExerciseBelowTheLast(in: app)
+        }
+        XCTAssertTrue(waitForLabel(of: rows.element(boundBy: 2), toBe: moved), "Not reordered: \(rows.element(boundBy: 2).label)")
 
         app.buttons["workout.ordering.done"].tap()
         XCTAssertTrue(app.buttons["workout.menu"].waitForExistence(timeout: 10), "Reorder mode not left")

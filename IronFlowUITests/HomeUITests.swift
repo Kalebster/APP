@@ -14,12 +14,20 @@ final class HomeUITests: IronFlowUITestCase {
         card(metric, in: app).tap()
         let field = app.textFields["metric.editor.field"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown")
-        field.tap()
+        focusEditorField(field)
         field.typeText(text)
         let save = app.buttons["metric.editor.save"]
         XCTAssertTrue(save.isEnabled, "Save disabled with a valid value")
         save.tap()
         XCTAssertTrue(save.waitForNonExistence(timeout: 10), "Editor not closed")
+    }
+
+    /// Taps the editor's field at its right edge and waits until it has keyboard focus: typing never
+    /// counts on the field opening active (on a busy simulator it was not yet, and the keys were
+    /// refused). The value is aligned right and ends at that edge, so the cursor lands after it.
+    @MainActor
+    private func focusEditorField(_ field: XCUIElement) {
+        field.tapAndWaitForKeyboardFocus(at: CGVector(dx: 0.99, dy: 0.5))
     }
 
     @MainActor
@@ -62,14 +70,16 @@ final class HomeUITests: IronFlowUITestCase {
         card("height", in: app).tap()
         let field = app.textFields["metric.editor.field"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown")
-        field.tap()
+        focusEditorField(field)
         field.typeText("99")
         let error = app.descendants(matching: .any)["metric.editor.error"]
         XCTAssertFalse(error.exists, "Error shown while typing")
         app.buttons["metric.editor.save"].tap()
         XCTAssertTrue(error.waitForExistence(timeout: 5), "Error not shown")
         XCTAssertTrue(field.exists, "Editor closed with an invalid height")
+        focusEditorField(field)
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 2) + "180")
+        XCTAssertTrue(field.waitForValue("180"), "Height field holds \(String(describing: field.value))")
         app.buttons["metric.editor.save"].tap()
         XCTAssertTrue(app.buttons["metric.editor.save"].waitForNonExistence(timeout: 10), "Editor not closed")
         XCTAssertTrue(card("height", in: app).label.contains("180 cm"), "Height: \(card("height", in: app).label)")
@@ -83,7 +93,9 @@ final class HomeUITests: IronFlowUITestCase {
         let weightField = app.textFields["metric.editor.field"]
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Editor not shown")
         XCTAssertEqual(weightField.value as? String, "80")
+        focusEditorField(weightField)
         weightField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 2) + "81")
+        XCTAssertTrue(weightField.waitForValue("81"), "Weight field holds \(String(describing: weightField.value))")
         app.buttons["metric.editor.save"].tap()
         XCTAssertTrue(app.buttons["metric.editor.save"].waitForNonExistence(timeout: 10), "Editor not closed")
         XCTAssertTrue(card("bodyWeight", in: app).label.contains("81 kg"), "Weight: \(card("bodyWeight", in: app).label)")
