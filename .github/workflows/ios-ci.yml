@@ -39,8 +39,10 @@ jobs:
     # The interface tests take most of the run, and green runs last about 40 minutes (42 on main after
     # PR #20). A run that fails also spends up to 5 more minutes collecting the simulator log, and with
     # a 45-minute limit that pushed it over (the first run of S3-B was cancelled that way, before its
-    # artifacts were uploaded). 60 minutes leaves room for both as screens are added.
-    timeout-minutes: 60
+    # artifacts were uploaded). With 58 interface tests, green runs last 35 to 50 minutes and a slow
+    # runner reached 60 (main at da8fd37 was cancelled in the Release build, after every test had
+    # passed): 90 minutes leaves room for both.
+    timeout-minutes: 90
 
     steps:
       - name: Check out repository
