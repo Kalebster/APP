@@ -123,9 +123,9 @@ extension XCTestCase {
 
     /// Waits until the element's label is exactly `label`.
     @MainActor
-    func waitForLabel(of element: XCUIElement, toBe label: String) -> Bool {
+    func waitForLabel(of element: XCUIElement, toBe label: String, timeout: TimeInterval = 10) -> Bool {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)
-        return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
     /// Closes a confirmation dialog without confirming it. Depending on the system layout the dialog has a
