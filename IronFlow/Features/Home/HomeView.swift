@@ -22,7 +22,9 @@ struct HomeView: View {
     /// The moment the week and today's workout are shown for. Updated when the day changes with the
     /// app open, when the time or time zone changes, and when the app comes back to the foreground.
     @State private var now = Date.now
-    @State private var editingMetric: SummaryMetric?
+    @State private var editingMetric: BodyMetric?
+    /// The notice of the last save ("Peso salvo").
+    @State private var toast: ToastMessage?
     @State private var isCustomizing = false
     @State private var isChoosingWorkout = false
     /// Workout chosen in the sheet, started once the sheet is dismissed.
@@ -90,10 +92,13 @@ struct HomeView: View {
         }
         .statusBarBackground()
         .screenBackground()
+        .toast($toast)
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $editingMetric) { metric in
             MetricEditorSheet(metric: metric, initialValue: value(of: metric), savesUnchangedValue: savesUnchangedValue(for: metric)) { value in
                 try save(value, for: metric)
+            } onSaved: {
+                toast = ToastMessage(String(localized: metric.savedMessage))
             }
         }
         .sheet(isPresented: $isCustomizing) {
@@ -167,9 +172,9 @@ struct HomeView: View {
     private func metricCards(_ metrics: [SummaryMetric]) -> some View {
         let cards = ForEach(metrics) { metric in
             Button {
-                editingMetric = metric
+                editingMetric = metric.bodyMetric
             } label: {
-                SummaryMetricCard(metric: metric, value: value(of: metric), valueText: valueText(of: metric))
+                SummaryMetricCard(metric: metric, value: value(of: metric.bodyMetric), valueText: valueText(of: metric.bodyMetric))
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("home.metric.\(metric.rawValue)")
@@ -183,7 +188,7 @@ struct HomeView: View {
         }
     }
 
-    private func value(of metric: SummaryMetric) -> Double? {
+    private func value(of metric: BodyMetric) -> Double? {
         switch metric {
         case .bodyWeight: latestWeight.first?.weightKg
         case .height: profiles.first?.heightCm.map { Double($0) }
@@ -192,13 +197,13 @@ struct HomeView: View {
     }
 
     /// The same weight on a new day is a new measurement; an unchanged height or goal needs no write.
-    private func savesUnchangedValue(for metric: SummaryMetric) -> Bool {
+    private func savesUnchangedValue(for metric: BodyMetric) -> Bool {
         guard metric == .bodyWeight, let latest = latestWeight.first else { return false }
         return !TrainingDay.calendar.isDateInToday(latest.measuredAt)
     }
 
     /// The value with its unit, as VoiceOver reads it ("80 kg", "2.300 kcal").
-    private func valueText(of metric: SummaryMetric) -> String? {
+    private func valueText(of metric: BodyMetric) -> String? {
         switch metric {
         case .bodyWeight: latestWeight.first.map { HomeSummary.weightText($0.weightKg) }
         case .height: profiles.first?.heightCm.map(HomeSummary.heightText)
@@ -206,7 +211,7 @@ struct HomeView: View {
         }
     }
 
-    private func save(_ value: Double, for metric: SummaryMetric) throws {
+    private func save(_ value: Double, for metric: BodyMetric) throws {
         let service = ProfileService(context: context)
         switch metric {
         case .bodyWeight: try service.recordWeight(value)

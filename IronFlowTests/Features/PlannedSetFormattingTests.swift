@@ -43,12 +43,17 @@ struct PlannedSetFormattingTests {
         for invalid in ["abc", "1,2,3", "1.2,3", "-5", ",5", "8 2", "82kg"] {
             #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.weightKg(invalid) }
         }
-        // The separator is only for decimals: a thousands separator is reported, never read as a smaller load.
-        for grouped in ["1.000", "1,000", "1.500", "12,500"] {
-            #expect(throws: PlannedSetInputError.thousandsSeparator) { try PlannedSetFormatting.weightKg(grouped) }
-        }
-        for tooPrecise in ["1,0000", "82.5055"] {
+        // At most two decimals: "12,5" and "12.5" are 12,5 kg, and a text with three or more decimals
+        // or a thousands separator is reported, never read as another number.
+        #expect(try PlannedSetFormatting.weightKg("12,5") == 12.5)
+        #expect(try PlannedSetFormatting.weightKg("12.5") == 12.5)
+        #expect(try PlannedSetFormatting.weightKg("12,50") == 12.5)
+        #expect(try PlannedSetFormatting.weightKg("12,25") == 12.25)
+        for tooPrecise in ["12,500", "12.500", "1.000", "1,000", "1.500", "1,0000", "82.5055", "0,125"] {
             #expect(throws: ValidationError.tooManyDecimals) { try PlannedSetFormatting.weightKg(tooPrecise) }
+        }
+        for grouped in ["1.000,5", "1,000.5", "1.000.000"] {
+            #expect(throws: ValidationError.invalidWeight) { try PlannedSetFormatting.weightKg(grouped) }
         }
     }
 }

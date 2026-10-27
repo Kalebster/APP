@@ -11,9 +11,16 @@ struct ProfileServiceTests {
 
     var context: ModelContext { container.mainContext }
 
+    /// The days of the body weight, in a fixed time zone: the clock starts at 06:13 there.
+    static let calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        return calendar
+    }()
+
     init() throws {
         container = try ModelContainerFactory.makeInMemory()
-        profile = ProfileService(context: container.mainContext, now: clock.now)
+        profile = ProfileService(context: container.mainContext, now: clock.now, calendar: Self.calendar)
     }
 
     @Test("There is no weight and no profile at first")
@@ -22,7 +29,7 @@ struct ProfileServiceTests {
         #expect(try profile.profile() == nil)
     }
 
-    @Test("Each weight is a new measurement; the latest is the most recent")
+    @Test("Each day's weight is a new measurement; the latest is the most recent")
     func weightHistory() throws {
         let first = try profile.recordWeight(80)
         #expect(first.measuredAt == clock.current)
@@ -37,12 +44,65 @@ struct ProfileServiceTests {
         #expect(context.hasChanges == false)
     }
 
+    @Test("A weight saved again the same day updates the day's record; the other days never change")
+    func oneWeightPerDay() throws {
+        let yesterday = try profile.recordWeight(81.2)
+        clock.advance(by: 86_400)
+        let today = try profile.recordWeight(80.6)
+        clock.advance(by: 3 * 3_600)
+        let again = try profile.recordWeight(80)
+
+        #expect(again.id == today.id)
+        #expect(today.weightKg == 80)
+        #expect(today.measuredAt == clock.current)
+        #expect(today.updatedAt == clock.current)
+        #expect(yesterday.weightKg == 81.2)
+        #expect(try count(BodyWeightEntry.self, in: context) == 2)
+        #expect(try profile.latestWeight()?.id == today.id)
+        #expect(context.hasChanges == false)
+
+        // The next day is a new record again.
+        clock.advance(by: 86_400)
+        let tomorrow = try profile.recordWeight(79.8)
+        #expect(tomorrow.id != today.id)
+        #expect(try count(BodyWeightEntry.self, in: context) == 3)
+        #expect(today.weightKg == 80)
+    }
+
+    @Test("Should a day hold two weights from before, saving again updates the latest of them only")
+    func dayWithTwoOldRecords() throws {
+        let timestamp = clock.current
+        let older = BodyWeightEntry(weightKg: 81, measuredAt: timestamp)
+        let newer = BodyWeightEntry(weightKg: 80.5, measuredAt: timestamp.addingTimeInterval(60))
+        context.insert(older)
+        context.insert(newer)
+        try context.save()
+        clock.advance(by: 120)
+
+        let saved = try profile.recordWeight(80)
+        #expect(saved.id == newer.id)
+        #expect(newer.weightKg == 80)
+        #expect(older.weightKg == 81)
+        #expect(try count(BodyWeightEntry.self, in: context) == 2)
+    }
+
+    @Test("The editor's latest records: at most four, the newest first")
+    func recentWeights() throws {
+        for weight in [82.0, 81.5, 81.2, 80.6, 80.0] {
+            try profile.recordWeight(weight)
+            clock.advance(by: 86_400)
+        }
+        let recent = try context.fetch(ProfileService.recentWeightsDescriptor)
+        #expect(recent.map(\.weightKg) == [80.0, 80.6, 81.2, 81.5])
+    }
+
     @Test("An invalid weight is rejected and saves nothing")
     func invalidWeight() throws {
         try profile.recordWeight(80)
-        for invalid in [19.99, 300.01, 80.123, .nan] {
+        for invalid in [19.99, 300.01, .nan] {
             #expect(throws: ValidationError.invalidBodyWeight) { try profile.recordWeight(invalid) }
         }
+        #expect(throws: ValidationError.tooManyDecimals) { try profile.recordWeight(80.123) }
         #expect(try count(BodyWeightEntry.self, in: context) == 1)
         #expect(try profile.latestWeight()?.weightKg == 80)
         #expect(context.hasChanges == false)
@@ -84,8 +144,9 @@ struct ProfileServiceTests {
     @Test("Body data survives closing and reopening the store")
     func bodyDataSurvivesReopening() throws {
         try roundTripThroughDisk { context in
-            let service = ProfileService(context: context)
+            let service = ProfileService(context: context, now: clock.now, calendar: Self.calendar)
             try service.recordWeight(79.5)
+            clock.advance(by: 86_400)
             try service.recordWeight(80.25)
             try service.setHeight(180)
             try service.setDailyCalorieGoal(2_300)

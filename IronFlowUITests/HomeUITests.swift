@@ -101,6 +101,113 @@ final class HomeUITests: IronFlowUITestCase {
         XCTAssertTrue(card("bodyWeight", in: app).label.contains("81 kg"), "Weight: \(card("bodyWeight", in: app).label)")
     }
 
+    /// The editor opens without the keyboard; − and + step from the reference value (nothing saved),
+    /// never pass the limits, bring a number beyond them back, and "Salvar" shows its notice.
+    @MainActor
+    func testEditorStepsWithinTheLimits() throws {
+        continueAfterFailure = false
+        let app = launchOnHome()
+
+        card("height", in: app).tap()
+        let field = app.textFields["metric.editor.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown")
+        XCTAssertTrue(app.staticTexts["Altura"].exists, "No title")
+        XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2), "The keyboard opened by itself")
+        let minus = app.buttons["metric.editor.minus"]
+        let plus = app.buttons["metric.editor.plus"]
+        XCTAssertEqual(plus.label, "Aumentar 1 cm")
+
+        // Nothing saved and the field empty: 170 cm is the start.
+        plus.tap()
+        XCTAssertTrue(field.waitForValue("171"), "Field holds \(String(describing: field.value))")
+        minus.tap()
+        minus.tap()
+        XCTAssertTrue(field.waitForValue("169"), "Field holds \(String(describing: field.value))")
+
+        // At the upper limit + is unavailable; past it, − brings the value back to the limit.
+        focusEditorField(field)
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 3) + "250")
+        XCTAssertTrue(field.waitForValue("250"))
+        XCTAssertFalse(plus.isEnabled, "+ available at the limit")
+        XCTAssertTrue(minus.isEnabled)
+        field.typeText(XCUIKeyboardKey.delete.rawValue + "9")
+        XCTAssertTrue(field.waitForValue("259"))
+        minus.tap()
+        XCTAssertTrue(field.waitForValue("250"), "Field holds \(String(describing: field.value))")
+
+        app.buttons["metric.editor.save"].tap()
+        let toast = app.staticTexts["toast"]
+        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice after saving")
+        XCTAssertEqual(toast.label, "Altura salva")
+        XCTAssertTrue(card("height", in: app).label.contains("250 cm"), "Height: \(card("height", in: app).label)")
+
+        // The weight steps 0,1 kg from 70,0 kg, and the goal 50 kcal from 2.000 kcal.
+        card("bodyWeight", in: app).tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Weight editor not shown")
+        XCTAssertTrue(app.staticTexts["Cada novo peso fica registrado com a data de hoje."].exists, "No weight help")
+        app.buttons["metric.editor.plus"].tap()
+        XCTAssertTrue(field.waitForValue("70,1"), "Field holds \(String(describing: field.value))")
+        app.buttons["metric.editor.cancel"].tap()
+        XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Weight editor not closed")
+
+        card("dailyCalorieGoal", in: app).tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Goal editor not shown")
+        XCTAssertTrue(app.staticTexts["Meta diária de calorias"].exists, "No goal title")
+        XCTAssertTrue(app.staticTexts["Quantas calorias você quer comer por dia."].exists, "No goal help")
+        app.buttons["metric.editor.minus"].tap()
+        XCTAssertTrue(field.waitForValue("1.950"), "Field holds \(String(describing: field.value))")
+        app.buttons["metric.editor.save"].tap()
+        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice after saving the goal")
+        XCTAssertEqual(toast.label, "Meta salva")
+        XCTAssertTrue(card("dailyCalorieGoal", in: app).label.contains("1.950 kcal"), "Goal: \(card("dailyCalorieGoal", in: app).label)")
+    }
+
+    /// The weight editor lists the latest records with their changes, and a weight with three decimals
+    /// is refused with its message.
+    @MainActor
+    func testWeightEditorShowsTheLatestRecords() throws {
+        continueAfterFailure = false
+        let app = launchOnHome(seed: ["weights:81.2@14|80.6@7|80@2"])
+
+        card("bodyWeight", in: app).tap()
+        let field = app.textFields["metric.editor.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown")
+        XCTAssertEqual(field.value as? String, "80")
+        XCTAssertTrue(app.staticTexts["Peso corporal"].exists, "No title")
+        let records = app.descendants(matching: .any).matching(identifier: "metric.editor.record")
+        XCTAssertEqual(records.count, 3)
+        XCTAssertTrue(records.element(boundBy: 0).label.hasSuffix(", 80 kg, \u{2212}0,6 kg"), "Newest: \(records.element(boundBy: 0).label)")
+        XCTAssertTrue(records.element(boundBy: 2).label.hasSuffix(", 81,2 kg"), "Oldest: \(records.element(boundBy: 2).label)")
+        attachScreenshot(named: "85-weight-editor", of: app)
+
+        focusEditorField(field)
+        // The decimal key of the simulator's region: both are read as decimals.
+        let separator = app.keys[","].exists ? "," : "."
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 2) + "80\(separator)500")
+        app.buttons["metric.editor.save"].tap()
+        let error = app.descendants(matching: .any)["metric.editor.error"]
+        XCTAssertTrue(error.waitForExistence(timeout: 5), "No error for three decimals")
+        XCTAssertEqual(error.label, "Use no máximo 2 casas decimais.")
+
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "\(separator)4")
+        XCTAssertTrue(field.waitForValue("80\(separator)4"), "Field holds \(String(describing: field.value))")
+        app.buttons["metric.editor.save"].tap()
+        XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Editor not closed")
+        XCTAssertTrue(card("bodyWeight", in: app).label.contains("80,4 kg"), "Weight: \(card("bodyWeight", in: app).label)")
+
+        // Today's weight is a new record; saved again today, it is updated, not added.
+        card("bodyWeight", in: app).tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown again")
+        XCTAssertEqual(records.count, 4)
+        app.buttons["metric.editor.plus"].tap()
+        app.buttons["metric.editor.save"].tap()
+        XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Editor not closed")
+        card("bodyWeight", in: app).tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown a third time")
+        XCTAssertEqual(records.count, 4)
+        XCTAssertTrue(records.element(boundBy: 0).label.contains("80,5 kg"), "Newest: \(records.element(boundBy: 0).label)")
+    }
+
     @MainActor
     func testCustomizeSummary() throws {
         continueAfterFailure = false

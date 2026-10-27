@@ -4,8 +4,6 @@ import Foundation
 enum PlannedSetInputError: Error, Equatable {
     /// A repetition field is empty or not a whole number.
     case repsRequired
-    /// The load uses a thousands separator ("1.000"); a thousand kilograms is typed as "1000".
-    case thousandsSeparator
 }
 
 /// How planned set values are shown, and how the values typed in the workout editor are read.
@@ -34,11 +32,12 @@ enum PlannedSetFormatting {
         return Int(trimmed) ?? Int.max
     }
 
-    /// The typed load: `nil` when empty, otherwise digits with an optional decimal comma or dot
-    /// ("82,5", "82.5", "82,"). The separator is only for decimals, so a grouped number is never
-    /// read as a smaller load: exactly three digits after it ("1.000", "1,000") throw
-    /// `PlannedSetInputError.thousandsSeparator`, more than three throw
+    /// The typed load: `nil` when empty, otherwise digits with an optional decimal comma or dot and at
+    /// most two decimals ("82,5", "82.5", "82,"). The separator is only for decimals, so no text is ever
+    /// read as another number: three or more digits after it ("12,500", "1.000") throw
     /// `ValidationError.tooManyDecimals`, and anything else unreadable throws `ValidationError.invalidWeight`.
+    /// Every field of kilograms reads its text here: the loads of the workout and of the session and the
+    /// body weight.
     static func weightKg(_ text: String) throws -> Double? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -55,14 +54,8 @@ enum PlannedSetFormatting {
                 throw ValidationError.invalidWeight
             }
         }
-        if let separator = number.firstIndex(of: ".") {
-            let decimals = number[number.index(after: separator)...].count
-            if decimals == 3 {
-                throw PlannedSetInputError.thousandsSeparator
-            }
-            if decimals > 3 {
-                throw ValidationError.tooManyDecimals
-            }
+        if let separator = number.firstIndex(of: "."), number[number.index(after: separator)...].count > 2 {
+            throw ValidationError.tooManyDecimals
         }
         if number.hasSuffix(".") {
             number.removeLast()

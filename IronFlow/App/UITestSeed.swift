@@ -29,9 +29,18 @@ import SwiftData
 ///   storage key ("chest", "back"...);
 /// - `set-types:<workout>`: the planned sets of the workout's first exercise become those of the workout
 ///   editor's model: a warm-up of 40 kg for 12–15, a feeder of 50 kg for 5–6, two working sets of 60 kg
-///   for 8–10 and a failure set of 55 kg for 8–12.
+///   for 8–10 and a failure set of 55 kg for 8–12;
+/// - `weights:<kg>@<days ago>|<kg>@<days ago>`: body weights measured that many days ago, at this time
+///   of day ("81.2@14|80.6@7"), with a decimal point;
+/// - `profile:<height cm>:<calorie goal kcal>`: the height and the daily calorie goal.
 @MainActor
 enum UITestSeed {
+    /// A body weight of `weights`.
+    struct WeightRecord: Equatable {
+        let weightKg: Double
+        let daysAgo: Int
+    }
+
     enum Item: Equatable {
         case workout(name: String, exercises: [String])
         case planToday(workout: String)
@@ -43,6 +52,8 @@ enum UITestSeed {
         case lastTime(workout: String)
         case customExercise(name: String, group: MuscleGroup)
         case setTypes(workout: String)
+        case weights([WeightRecord])
+        case profile(heightCm: Int, goalKcal: Int)
     }
 
     /// The planned sets of `set-types`, in order.
@@ -123,6 +134,19 @@ enum UITestSeed {
                 return .customExercise(name: parts[1], group: group)
             case ("set-types", 2):
                 return .setTypes(workout: parts[1])
+            case ("weights", 2):
+                let records = try parts[1].split(separator: "|").map { record -> WeightRecord in
+                    let pair = record.split(separator: "@")
+                    guard pair.count == 2, let weightKg = Double(pair[0]), let daysAgo = Int(pair[1]), daysAgo >= 0 else {
+                        throw SeedError.unknownItem(String(token))
+                    }
+                    return WeightRecord(weightKg: weightKg, daysAgo: daysAgo)
+                }
+                guard !records.isEmpty else { throw SeedError.unknownItem(String(token)) }
+                return .weights(records)
+            case ("profile", 3):
+                guard let heightCm = Int(parts[1]), let goalKcal = Int(parts[2]) else { throw SeedError.unknownItem(String(token)) }
+                return .profile(heightCm: heightCm, goalKcal: goalKcal)
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -214,6 +238,15 @@ enum UITestSeed {
                 for extra in existing.dropFirst(setTypesSets.count) {
                     try service.removePlannedSet(extra)
                 }
+            case .weights(let records):
+                for record in records {
+                    let measuredAt = TrainingDay.calendar.date(byAdding: .day, value: -record.daysAgo, to: .now) ?? .now
+                    try ProfileService(context: context, now: { measuredAt }).recordWeight(record.weightKg)
+                }
+            case .profile(let heightCm, let goalKcal):
+                let service = ProfileService(context: context)
+                try service.setHeight(heightCm)
+                try service.setDailyCalorieGoal(goalKcal)
             }
         }
     }

@@ -220,7 +220,8 @@ struct SessionFormattingTests {
         #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "abc")) }
         #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "99999999999999999999")) }
         #expect(throws: ValidationError.invalidWeight) { try SessionFormatting.values(of: SetDraft(weight: "abc", reps: "")) }
-        #expect(throws: PlannedSetInputError.thousandsSeparator) { try SessionFormatting.values(of: SetDraft(weight: "1.000", reps: "")) }
+        #expect(throws: ValidationError.tooManyDecimals) { try SessionFormatting.values(of: SetDraft(weight: "1.000", reps: "")) }
+        #expect(throws: ValidationError.tooManyDecimals) { try SessionFormatting.values(of: SetDraft(weight: "12,500", reps: "")) }
     }
 
     @Test("Checking a set with empty repetitions takes the target (the maximum of a range)")

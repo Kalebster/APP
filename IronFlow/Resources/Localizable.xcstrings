@@ -145,9 +145,6 @@
     "A carga pode ser no máximo %@." : {
 
     },
-    "A carga pode ter no máximo duas casas decimais." : {
-
-    },
     "A série de trabalho. Conta nos kg levantados." : {
 
     },
@@ -193,6 +190,9 @@
     "Altura" : {
 
     },
+    "Altura salva" : {
+
+    },
     "Anilha" : {
 
     },
@@ -230,6 +230,9 @@
 
     },
     "Até não conseguir mais repetições. Conta nos kg levantados." : {
+
+    },
+    "Aumentar %@" : {
 
     },
     "Barra" : {
@@ -332,6 +335,18 @@
 
     },
     "dia futuro" : {
+
+    },
+    "Digite um peso entre %@ e %@ kg." : {
+
+    },
+    "Digite uma altura entre %@ e %@ cm." : {
+
+    },
+    "Digite uma meta entre %@ e %@ kcal." : {
+
+    },
+    "Diminuir %@" : {
 
     },
     "Domingo" : {
@@ -460,15 +475,6 @@
     "Informe um nome." : {
 
     },
-    "Informe um peso entre %@ e %@, com até duas casas decimais." : {
-
-    },
-    "Informe uma altura entre %@ e %@, em número inteiro." : {
-
-    },
-    "Informe uma meta entre %@ e %@, em número inteiro." : {
-
-    },
     "Iniciado em %@, às %@" : {
 
     },
@@ -555,6 +561,12 @@
 
     },
     "Meta diária" : {
+
+    },
+    "Meta diária de calorias" : {
+
+    },
+    "Meta salva" : {
 
     },
     "Meta: %@" : {
@@ -698,9 +710,6 @@
     "Panturrilhas" : {
 
     },
-    "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais." : {
-
-    },
     "Pede confirmação para desmarcar o dia." : {
 
     },
@@ -717,6 +726,9 @@
 
     },
     "Peso do corpo" : {
+
+    },
+    "Peso salvo" : {
 
     },
     "Polia" : {
@@ -750,6 +762,9 @@
 
     },
     "Quadríceps" : {
+
+    },
+    "Quantas calorias você quer comer por dia." : {
 
     },
     "Quarta" : {
@@ -932,7 +947,7 @@
     "Usar agora" : {
 
     },
-    "Valor" : {
+    "Use no máximo 2 casas decimais." : {
 
     },
     "Ver tudo" : {
@@ -951,6 +966,9 @@
 
     },
     "Última vez: %@, %@" : {
+
+    },
+    "Últimos registros" : {
 
     }
   },

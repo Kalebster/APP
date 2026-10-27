@@ -16,7 +16,7 @@ enum ValidationError: Error, Equatable {
     /// More load than a planned set allows.
     case weightTooHigh
     case invalidReps
-    /// A body weight outside the allowed range or with more than two decimal places.
+    /// A body weight outside the allowed range. More than two decimal places is `tooManyDecimals`.
     case invalidBodyWeight
     /// A height that is not a whole number of centimeters within the allowed range.
     case invalidHeight

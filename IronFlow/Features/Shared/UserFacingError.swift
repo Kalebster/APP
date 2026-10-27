@@ -21,13 +21,9 @@ enum UserFacingError {
             }
         case is WeeklyPlanError:
             String(localized: "Escolha um dia de segunda a domingo.")
-        case let error as PlannedSetInputError:
-            switch error {
-            case .repsRequired:
-                String(localized: "Informe as repetições com números inteiros.")
-            case .thousandsSeparator:
-                String(localized: "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais.")
-            }
+        // A repetition field that is empty or not a whole number, the only input error.
+        case is PlannedSetInputError:
+            String(localized: "Informe as repetições com números inteiros.")
         case is SaveError:
             String(localized: "Não foi possível salvar. Nenhuma alteração foi feita.")
         default:
@@ -56,17 +52,17 @@ enum UserFacingError {
         case .invalidWeight:
             String(localized: "Carga inválida.")
         case .tooManyDecimals:
-            String(localized: "A carga pode ter no máximo duas casas decimais.")
+            String(localized: "Use no máximo 2 casas decimais.")
         case .weightTooHigh:
             String(localized: "A carga pode ser no máximo \(PlannedSetFormatting.weightText(Validation.maxPlannedWeightKg)).")
         case .invalidReps:
             String(localized: "As repetições devem ser maiores que zero.")
         case .invalidBodyWeight:
-            String(localized: "Informe um peso entre \(HomeSummary.weightText(Validation.bodyWeightRangeKg.lowerBound)) e \(HomeSummary.weightText(Validation.bodyWeightRangeKg.upperBound)), com até duas casas decimais.")
+            String(localized: "Digite um peso entre \(HomeSummary.number(Validation.bodyWeightRangeKg.lowerBound)) e \(HomeSummary.number(Validation.bodyWeightRangeKg.upperBound)) kg.")
         case .invalidHeight:
-            String(localized: "Informe uma altura entre \(HomeSummary.heightText(Validation.heightRangeCm.lowerBound)) e \(HomeSummary.heightText(Validation.heightRangeCm.upperBound)), em número inteiro.")
+            String(localized: "Digite uma altura entre \(HomeSummary.number(Double(Validation.heightRangeCm.lowerBound))) e \(HomeSummary.number(Double(Validation.heightRangeCm.upperBound))) cm.")
         case .invalidCalorieGoal:
-            String(localized: "Informe uma meta entre \(HomeSummary.calorieText(Validation.dailyCalorieGoalRangeKcal.lowerBound)) e \(HomeSummary.calorieText(Validation.dailyCalorieGoalRangeKcal.upperBound)), em número inteiro.")
+            String(localized: "Digite uma meta entre \(HomeSummary.number(Double(Validation.dailyCalorieGoalRangeKcal.lowerBound))) e \(HomeSummary.number(Double(Validation.dailyCalorieGoalRangeKcal.upperBound))) kcal.")
         }
     }
 

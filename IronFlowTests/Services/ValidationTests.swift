@@ -70,9 +70,10 @@ struct ValidationTests {
         for valid in [20, 300, 80.5, 72.25] {
             try Validation.bodyWeight(valid)
         }
-        for invalid in [19.99, 300.01, 80.123, 0, -80, .nan, .infinity] {
+        for invalid in [19.99, 300.01, 0, -80, .nan, .infinity] {
             #expect(throws: ValidationError.invalidBodyWeight) { try Validation.bodyWeight(invalid) }
         }
+        #expect(throws: ValidationError.tooManyDecimals) { try Validation.bodyWeight(80.123) }
     }
 
     @Test("Height is 100–250 cm and the daily calorie goal is 800–8.000 kcal")

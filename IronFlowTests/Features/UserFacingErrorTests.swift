@@ -13,7 +13,7 @@ struct UserFacingErrorTests {
             ValidationError.negativeWeight, ValidationError.invalidWeight, ValidationError.tooManyDecimals,
             ValidationError.invalidReps, ValidationError.repsTooHigh, ValidationError.weightTooHigh,
             ValidationError.invalidBodyWeight, ValidationError.invalidHeight, ValidationError.invalidCalorieGoal,
-            PlannedSetInputError.repsRequired, PlannedSetInputError.thousandsSeparator,
+            PlannedSetInputError.repsRequired,
             WorkoutError.exerciseArchived, WorkoutError.exerciseAlreadyInWorkout, WorkoutError.lastPlannedSet,
             WorkoutError.workoutHasNoExercises, WorkoutError.exerciseMissing, WorkoutError.plannedSetsMissing,
             WorkoutError.invalidPosition,
@@ -36,12 +36,12 @@ struct UserFacingErrorTests {
         #expect(UserFacingError.message(for: WorkoutError.exerciseAlreadyInWorkout) == "Este exercício já está no treino.")
         #expect(UserFacingError.message(for: ValidationError.nameTooLong) == "O nome pode ter no máximo 60 caracteres.")
         #expect(UserFacingError.message(for: ValidationError.repsTooHigh) == "As repetições podem ser no máximo 100.")
-        #expect(UserFacingError.message(for: ValidationError.invalidBodyWeight) == "Informe um peso entre 20 kg e 300 kg, com até duas casas decimais.")
-        #expect(UserFacingError.message(for: ValidationError.invalidHeight) == "Informe uma altura entre 100 cm e 250 cm, em número inteiro.")
-        #expect(UserFacingError.message(for: ValidationError.invalidCalorieGoal) == "Informe uma meta entre 800 kcal e 8.000 kcal, em número inteiro.")
+        #expect(UserFacingError.message(for: ValidationError.invalidBodyWeight) == "Digite um peso entre 20 e 300 kg.")
+        #expect(UserFacingError.message(for: ValidationError.invalidHeight) == "Digite uma altura entre 100 e 250 cm.")
+        #expect(UserFacingError.message(for: ValidationError.invalidCalorieGoal) == "Digite uma meta entre 800 e 8.000 kcal.")
+        #expect(UserFacingError.message(for: ValidationError.tooManyDecimals) == "Use no máximo 2 casas decimais.")
         #expect(UserFacingError.message(for: ValidationError.weightTooHigh) == "A carga pode ser no máximo 1.000 kg.")
         #expect(UserFacingError.message(for: PlannedSetInputError.repsRequired) == "Informe as repetições com números inteiros.")
-        #expect(UserFacingError.message(for: PlannedSetInputError.thousandsSeparator) == "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais.")
     }
 
     @Test("Specific messages for the errors the session screens show")
