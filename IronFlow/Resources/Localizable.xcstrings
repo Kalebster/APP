@@ -289,6 +289,9 @@
     "Concluído hoje · %@" : {
 
     },
+    "Confira a data de nascimento: a calculadora vale de 15 a 100 anos." : {
+
+    },
     "Continuar" : {
 
     },
@@ -370,6 +373,9 @@
     "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
 
     },
+    "Escolha o sexo e a data de nascimento para ver o resultado." : {
+
+    },
     "Escolha os exercícios na hora e registre suas séries" : {
 
     },
@@ -418,6 +424,15 @@
     "Exercício %lld de %lld" : {
 
     },
+    "Exercício de 1 a 3 dias por semana" : {
+
+    },
+    "Exercício de 3 a 5 dias por semana" : {
+
+    },
+    "Exercício de 6 a 7 dias por semana" : {
+
+    },
     "Exercício removido" : {
 
     },
@@ -436,6 +451,12 @@
     "Falta 1 para fechar a semana" : {
 
     },
+    "Falta escolher a data de nascimento completa." : {
+
+    },
+    "Falta escolher o sexo." : {
+
+    },
     "Faltam %lld para fechar a semana" : {
 
     },
@@ -446,6 +467,12 @@
 
     },
     "feito no app e marcado fora do app" : {
+
+    },
+    "Feminino" : {
+
+    },
+    "Ganhar" : {
 
     },
     "Glúteos" : {
@@ -487,6 +514,9 @@
     "Iniciar treino livre" : {
 
     },
+    "Intenso" : {
+
+    },
     "Início" : {
 
     },
@@ -503,6 +533,9 @@
 
     },
     "kg" : {
+
+    },
+    "Leve" : {
 
     },
     "Leve, para aquecer. Não conta nos kg levantados." : {
@@ -526,10 +559,16 @@
     "Mais pesada, para chegar pronto na carga. Não conta nos kg levantados." : {
 
     },
+    "Manter" : {
+
+    },
     "Marca o dia como treino feito fora do app." : {
 
     },
     "marcado como feito fora do app" : {
+
+    },
+    "Masculino" : {
 
     },
     "Menos 15 segundos" : {
@@ -590,7 +629,13 @@
     "Minimizar" : {
 
     },
+    "Moderado" : {
+
+    },
     "Mostra as séries." : {
+
+    },
+    "Muito intenso" : {
 
     },
     "Máquina" : {
@@ -716,6 +761,9 @@
     "Peito" : {
 
     },
+    "Perder" : {
+
+    },
     "Personalizar" : {
 
     },
@@ -735,6 +783,9 @@
 
     },
     "Posteriores de coxa" : {
+
+    },
+    "Pouco ou nenhum exercício" : {
 
     },
     "Preparatória" : {
@@ -779,6 +830,9 @@
     "Quinta-feira" : {
 
     },
+    "Registre o seu peso e a sua altura para calcular." : {
+
+    },
     "Remover" : {
 
     },
@@ -816,6 +870,9 @@
 
     },
     "Salvar" : {
+
+    },
+    "Sedentário" : {
 
     },
     "Segunda" : {
@@ -912,6 +969,9 @@
 
     },
     "Treino livre" : {
+
+    },
+    "Treino pesado todo dia ou trabalho físico" : {
 
     },
     "treino programado" : {

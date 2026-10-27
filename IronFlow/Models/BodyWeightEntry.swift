@@ -4,7 +4,8 @@ import SwiftData
 typealias BodyWeightEntry = SchemaV2.BodyWeightEntry
 
 extension SchemaV2 {
-    /// One body weight measurement. Every new weight is a new entry, so the history is kept.
+    /// One body weight measurement. A day has one: a new day's weight is a new entry, so the history is
+    /// kept, and a weight saved again the same day updates that day's entry (`ProfileService`).
     @Model
     final class BodyWeightEntry {
         @Attribute(.unique) var id: UUID = UUID()

@@ -5,8 +5,8 @@ import Testing
 
 @MainActor
 struct ModelContainerFactoryTests {
-    @Test("Store uses schema V5: the seven main models with the set type, the body data, the days trained outside the app and the weekly plan")
-    func schemaV5() throws {
+    @Test("Store uses schema V6: the seven main models with the set type, the body data with the calculator's choices, the days trained outside the app and the weekly plan")
+    func schemaV6() throws {
         let container = try ModelContainerFactory.makeInMemory()
 
         let entityNames = Set(container.schema.entities.map(\.name))
@@ -22,6 +22,9 @@ struct ModelContainerFactoryTests {
         for entity in setEntities {
             #expect(entity.attributes.contains { $0.name == "setTypeRaw" }, "\(entity.name) has no set type")
         }
+        let profile = try #require(container.schema.entities.first { $0.name == "UserProfile" })
+        let profileAttributes = Set(profile.attributes.map(\.name))
+        #expect(profileAttributes.isSuperset(of: ["sexRaw", "birthDay", "birthMonth", "birthYear", "activityLevelRaw", "weightGoalRaw"]))
 
         // Versions 1 to 4 add tables only: each one reuses every model of the one before.
         #expect(Set(SchemaV1.models.map { ObjectIdentifier($0) }).isSubset(of: Set(SchemaV2.models.map { ObjectIdentifier($0) })))
@@ -36,7 +39,13 @@ struct ModelContainerFactoryTests {
         let reused = Set(reusedModels.map { ObjectIdentifier($0) })
         #expect(v4.intersection(v5) == reused)
         #expect(SchemaV5.models.count == 11)
-        // The app's models are the version 5 ones.
+        // Version 6 redeclares only the profile and reuses every other model of version 5.
+        let v6 = Set(SchemaV6.models.map { ObjectIdentifier($0) })
+        #expect(v5.subtracting(v6) == [ObjectIdentifier(SchemaV2.UserProfile.self)])
+        #expect(v6.subtracting(v5) == [ObjectIdentifier(SchemaV6.UserProfile.self)])
+        #expect(SchemaV6.models.count == 11)
+        #expect(ObjectIdentifier(UserProfile.self) == ObjectIdentifier(SchemaV6.UserProfile.self))
+        // The app's main models are the version 5 ones.
         #expect(ObjectIdentifier(PlannedSet.self) == ObjectIdentifier(SchemaV5.PlannedSet.self))
         #expect(ObjectIdentifier(SetLog.self) == ObjectIdentifier(SchemaV5.SetLog.self))
         #expect(ObjectIdentifier(Workout.self) == ObjectIdentifier(SchemaV5.Workout.self))
@@ -46,11 +55,12 @@ struct ModelContainerFactoryTests {
         #expect(SchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
         #expect(SchemaV4.versionIdentifier == Schema.Version(4, 0, 0))
         #expect(SchemaV5.versionIdentifier == Schema.Version(5, 0, 0))
+        #expect(SchemaV6.versionIdentifier == Schema.Version(6, 0, 0))
         #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [
             ObjectIdentifier(SchemaV1.self), ObjectIdentifier(SchemaV2.self), ObjectIdentifier(SchemaV3.self),
-            ObjectIdentifier(SchemaV4.self), ObjectIdentifier(SchemaV5.self),
+            ObjectIdentifier(SchemaV4.self), ObjectIdentifier(SchemaV5.self), ObjectIdentifier(SchemaV6.self),
         ])
-        #expect(IronFlowMigrationPlan.stages.count == 4)
+        #expect(IronFlowMigrationPlan.stages.count == 5)
     }
 
     @Test("In-memory stores are isolated from each other")

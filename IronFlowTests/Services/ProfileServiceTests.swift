@@ -141,6 +141,63 @@ struct ProfileServiceTests {
         #expect(context.hasChanges == false)
     }
 
+    @Test("The calculator's choices start empty, with a moderate level and the goal of keeping the weight")
+    func calculatorDefaults() throws {
+        try profile.setHeight(180)
+        let saved = try #require(try profile.profile())
+        #expect(saved.sex == nil)
+        #expect(saved.birthDate == BirthDate())
+        #expect(saved.activityLevel == .moderate)
+        #expect(saved.weightGoal == .maintain)
+    }
+
+    @Test("Each choice of the calculator is saved at once, in the single profile, and keeps the other data")
+    func calculatorChoices() throws {
+        try profile.setHeight(180)
+        clock.advance(by: 60)
+        try profile.setSex(.male)
+        #expect(try profile.profile()?.updatedAt == clock.current)
+        try profile.setBirthDate(BirthDate(day: 12, month: nil, year: nil))
+        try profile.setBirthDate(BirthDate(day: 12, month: 5, year: 1994))
+        try profile.setActivityLevel(.light)
+        try profile.setWeightGoal(.gain)
+
+        let saved = try #require(try profile.profile())
+        #expect(try count(UserProfile.self, in: context) == 1)
+        #expect(saved.heightCm == 180)
+        #expect(saved.sexRaw == "male")
+        #expect(saved.birthDate == BirthDate(day: 12, month: 5, year: 1994))
+        #expect(saved.activityLevelRaw == "light")
+        #expect(saved.weightGoalRaw == "gain")
+        #expect(context.hasChanges == false)
+    }
+
+    @Test("The first choice creates the profile, and a part of the date of birth is saved on its own")
+    func firstChoiceCreatesTheProfile() throws {
+        try profile.setBirthDate(BirthDate(day: nil, month: 2, year: nil))
+        let saved = try #require(try profile.profile())
+        #expect(saved.birthDate == BirthDate(day: nil, month: 2, year: nil))
+        #expect(saved.createdAt == clock.current)
+        #expect(saved.heightCm == nil)
+    }
+
+    @Test("A day beyond its month is saved as the month's last day")
+    func birthDayKeptInMonth() throws {
+        try profile.setBirthDate(BirthDate(day: 31, month: 4, year: 1990))
+        #expect(try profile.profile()?.birthDate == BirthDate(day: 30, month: 4, year: 1990))
+        try profile.setBirthDate(BirthDate(day: 31, month: 2, year: 1990))
+        #expect(try profile.profile()?.birthDate == BirthDate(day: 28, month: 2, year: 1990))
+        try profile.setBirthDate(BirthDate(day: 30, month: 2, year: 1992))
+        #expect(try profile.profile()?.birthDate == BirthDate(day: 29, month: 2, year: 1992))
+        // Without the year, February keeps the 29th; the year chosen later brings it to the 28th.
+        try profile.setBirthDate(BirthDate(day: 31, month: 2, year: nil))
+        #expect(try profile.profile()?.birthDate == BirthDate(day: 29, month: 2, year: nil))
+        try profile.setBirthDate(BirthDate(day: 29, month: 2, year: 2001))
+        #expect(try profile.profile()?.birthDate == BirthDate(day: 28, month: 2, year: 2001))
+        try profile.setBirthDate(BirthDate(day: 29, month: 2, year: 2000))
+        #expect(try profile.profile()?.birthDate == BirthDate(day: 29, month: 2, year: 2000))
+    }
+
     @Test("Body data survives closing and reopening the store")
     func bodyDataSurvivesReopening() throws {
         try roundTripThroughDisk { context in
@@ -150,6 +207,10 @@ struct ProfileServiceTests {
             try service.recordWeight(80.25)
             try service.setHeight(180)
             try service.setDailyCalorieGoal(2_300)
+            try service.setSex(.female)
+            try service.setBirthDate(BirthDate(day: 1, month: 1, year: 1990))
+            try service.setActivityLevel(.veryIntense)
+            try service.setWeightGoal(.lose)
         } read: { context in
             let service = ProfileService(context: context)
             let weightCount = try count(BodyWeightEntry.self, in: context)
@@ -158,6 +219,10 @@ struct ProfileServiceTests {
             #expect(try service.latestWeight()?.weightKg == 80.25)
             #expect(profile.heightCm == 180)
             #expect(profile.dailyCalorieGoalKcal == 2_300)
+            #expect(profile.sex == .female)
+            #expect(profile.birthDate == BirthDate(day: 1, month: 1, year: 1990))
+            #expect(profile.activityLevel == .veryIntense)
+            #expect(profile.weightGoal == .lose)
         }
     }
 }

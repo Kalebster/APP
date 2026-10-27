@@ -1,7 +1,8 @@
 import Foundation
 import SwiftData
 
-/// Business rules for the user's body data: body weight history, height and daily calorie goal.
+/// Business rules for the user's body data: body weight history, height, daily calorie goal and the
+/// choices of the BMR calculator.
 @MainActor
 struct ProfileService {
     let context: ModelContext
@@ -104,7 +105,40 @@ struct ProfileService {
         try context.saveOrRollback()
     }
 
+    // MARK: - BMR calculator
+
+    func setSex(_ sex: BiologicalSex) throws {
+        try change { $0.sex = sex }
+    }
+
+    /// Saves the date of birth chosen so far, each part still `nil` until chosen. A day beyond its
+    /// month is saved as the month's last day (31 of April is 30 of April).
+    func setBirthDate(_ birthDate: BirthDate) throws {
+        let date = birthDate.keepingDayInMonth()
+        try change { profile in
+            profile.birthDay = date.day
+            profile.birthMonth = date.month
+            profile.birthYear = date.year
+        }
+    }
+
+    func setActivityLevel(_ level: ActivityLevel) throws {
+        try change { $0.activityLevel = level }
+    }
+
+    func setWeightGoal(_ goal: WeightGoal) throws {
+        try change { $0.weightGoal = goal }
+    }
+
     // MARK: - Private
+
+    /// Applies `update` to the profile, created on the first change, and saves it.
+    private func change(_ update: (UserProfile) -> Void) throws {
+        let profile = try profileForChange()
+        update(profile)
+        profile.updatedAt = now()
+        try context.saveOrRollback()
+    }
 
     /// The existing profile, or a new one inserted (not saved) on the first change.
     private func profileForChange() throws -> UserProfile {
