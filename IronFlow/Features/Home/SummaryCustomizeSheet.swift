@@ -119,11 +119,11 @@ struct SummaryCustomizeSheet: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Unavailable with three chosen: VoiceOver says so, as the button reads its own state.
         .disabled(!isAvailable)
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: metric.title)), \(line)"))
         .accessibilityValue(Text(verbatim: position.map { "\($0 + 1)º" } ?? ""))
-        .accessibilityAddTraits(position != nil ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAddTraits(position != nil ? .isSelected : [])
         .accessibilityIdentifier("customize.\(metric.rawValue)")
     }
 

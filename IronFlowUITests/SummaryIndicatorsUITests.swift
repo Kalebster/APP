@@ -45,13 +45,13 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
         XCTAssertFalse(app.buttons["customize.streak"].isEnabled, "A fourth indicator can be chosen")
 
         // Unmarking renumbers the others and frees a place.
-        app.buttons["customize.height"].tap()
+        toggle("height", in: app)
         XCTAssertTrue(app.buttons["customize.dailyCalorieGoal"].waitForValue("2º"), "Not renumbered")
         XCTAssertEqual(app.buttons["customize.height"].value as? String, "")
         XCTAssertTrue(app.buttons["customize.streak"].isEnabled, "No place freed")
 
         // The new one comes last.
-        app.buttons["customize.monthWorkouts"].tap()
+        toggle("monthWorkouts", in: app)
         XCTAssertTrue(app.buttons["customize.monthWorkouts"].waitForValue("3º"), "Not chosen third")
         XCTAssertFalse(app.buttons["customize.height"].isEnabled)
         attachScreenshot(named: "86-customize", of: app)
@@ -82,7 +82,7 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
         app.buttons["home.customize"].tap()
         XCTAssertTrue(app.buttons["customize.bodyWeight"].waitForExistence(timeout: 10), "Personalizar not shown")
         for option in ["bodyWeight", "height", "dailyCalorieGoal", "bmr", "lastWorkout", "weightChange"] {
-            app.buttons["customize.\(option)"].tap()
+            toggle(option, in: app)
         }
         app.buttons["customize.done"].tap()
 
@@ -107,5 +107,19 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
     @MainActor
     private func card(_ metric: String, in app: XCUIApplication) -> XCUIElement {
         app.buttons["home.metric.\(metric)"]
+    }
+
+    /// Taps an indicator in Personalizar. A row behind the "Pronto" button, which stays at the bottom of
+    /// the sheet, is first scrolled above it, so the tap reaches the row and not the button.
+    @MainActor
+    private func toggle(_ option: String, in app: XCUIApplication) {
+        let row = app.buttons["customize.\(option)"]
+        let done = app.buttons["customize.done"]
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "No \(option) in Personalizar")
+        for _ in 0..<4 where row.frame.maxY > done.frame.minY {
+            app.swipeUp()
+        }
+        XCTAssertLessThanOrEqual(row.frame.maxY, done.frame.minY, "\(option) stays behind Pronto")
+        row.tap()
     }
 }
