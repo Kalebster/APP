@@ -85,12 +85,17 @@ final class BMRCalculatorUITests: IronFlowUITestCase {
         XCTAssertEqual(element("bmr.result.expenditure", in: app).label, "gasto do dia: 2.760 kcal")
         XCTAssertEqual(element("bmr.result.goal", in: app).label, "meta sugerida: 2.360 kcal")
         let close = app.buttons["bmr.close"]
+        let closeBefore = close.frame
         for _ in 0..<4 where !close.isHittable {
             app.swipeUp()
         }
         XCTAssertTrue(close.isHittable, "The end of the calculator was not reached")
         // Scrolled to its end, the calculator has no empty space below "Fechar".
         let window = app.windows.firstMatch.frame
+        recordMeasurement(
+            "Medição fim da calculadora",
+            "Fechar em \(Int(closeBefore.minY))–\(Int(closeBefore.maxY)) antes de rolar e \(Int(close.frame.minY))–\(Int(close.frame.maxY)) depois, tela de \(Int(window.height)) pt"
+        )
         XCTAssertGreaterThan(close.frame.maxY, window.maxY - 100, "Empty space below Fechar: \(close.frame) in \(window)")
         XCTAssertEqual(app.buttons["bmr.use"].label, "Usar 2.360 kcal como meta")
         attachScreenshot(named: "88-bmr-result", of: app)

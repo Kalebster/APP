@@ -102,6 +102,9 @@ struct SheetButton: View {
 struct FittedSheet<Content: View, Bottom: View>: View {
     private let content: Content
     private let bottom: Bottom
+    /// Whether there are buttons kept at the bottom; without them there is no bar at all, which would
+    /// otherwise take room below the content.
+    private let hasBottom: Bool
 
     @State private var contentHeight: CGFloat?
     @State private var bottomHeight: CGFloat?
@@ -116,34 +119,33 @@ struct FittedSheet<Content: View, Bottom: View>: View {
     init(@ViewBuilder content: () -> Content, @ViewBuilder bottom: () -> Bottom) {
         self.content = content()
         self.bottom = bottom()
+        hasBottom = true
     }
 
     /// A sheet whose buttons scroll with its content.
     init(@ViewBuilder content: () -> Content) where Bottom == EmptyView {
         self.content = content()
         bottom = EmptyView()
+        hasBottom = false
         _bottomHeight = State(initialValue: 0)
     }
 
     var body: some View {
-        ScrollView {
-            content
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    proxy.size.height
-                } action: { height in
-                    contentHeight = height
-                    fit()
-                }
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            bottom
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    proxy.size.height
-                } action: { height in
-                    bottomHeight = height
-                    fit()
-                }
+        Group {
+            if hasBottom {
+                scrollingContent
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        bottom
+                            .onGeometryChange(for: CGFloat.self) { proxy in
+                                proxy.size.height
+                            } action: { height in
+                                bottomHeight = height
+                                fit()
+                            }
+                    }
+            } else {
+                scrollingContent
+            }
         }
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.height
@@ -155,6 +157,19 @@ struct FittedSheet<Content: View, Bottom: View>: View {
         .presentationDetents([detent], selection: $detent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Theme.Colors.cardBackground)
+    }
+
+    private var scrollingContent: some View {
+        ScrollView {
+            content
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    contentHeight = height
+                    fit()
+                }
+        }
+        .scrollBounceBehavior(.basedOnSize)
     }
 
     /// Takes the height of the content and the buttons once they and the room of the tallest sheet are
