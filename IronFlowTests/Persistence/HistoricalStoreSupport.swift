@@ -90,7 +90,7 @@ enum FrozenSchemaFingerprints {
         "Session": "HNYoMs0B88OrlUPyl8IWVpum9Q+nhSawFatu08CW0Qc=",
         "SessionExercise": "A3XjHUXXqzx8QIAke0/FK5XUb4R/R0xT4w/hqTE8dxc=",
         "SetLog": "xQoQ9isZV42wwZcmtpgbHxbF51LdBrAYwG7MGi95rGk=",
-        "UserProfile": "PENDENTE-CI",
+        "UserProfile": "4Nr0098cSQpmwuBwsNYjY5qSwvqc4f2hutnk73koRn0=",
         "WeeklyPlanDay": "7w4IMQhG9NUouQpJpyY4GaJzs+iVRf9iOCMwk9z/0Rs=",
         "Workout": "dJaZ5Te6/QwBv2X26ydCT8/LdJDgg62L3rCKFfOAxPo=",
         "WorkoutExercise": "SP+1dSWCM1Ixum4aJcztrcAI0UG6U5UQc1C4LpAUztw=",
