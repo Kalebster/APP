@@ -5,12 +5,19 @@ import SwiftUI
 /// the current week, Monday to Sunday, each with its date and its workout or "Descanso". Tapping a day
 /// opens its sheet, where choosing saves at once and closes it; the day then shows a blue outline for a
 /// moment. A day has at most one workout; the same workout can be on several days.
+///
+/// As in the model, the navigation and tab bars are hidden: the screen has its own "‹ Treinos" (or
+/// "‹ Início", `backTitle`), and the swipe from the edge still goes back.
 struct WeeklyPlanView: View {
+    /// The screen it was opened from: "Treinos" or "Início".
+    let backTitle: LocalizedStringKey
+
     @Query(sort: [SortDescriptor(\Workout.createdAt), SortDescriptor(\Workout.name)]) private var workouts: [Workout]
     /// The weekly plan: at most seven records, so all of them are read.
     @Query private var plan: [WeeklyPlanDay]
 
     @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
     /// The moment "Hoje" and the dates are shown for; follows the day, as the Home does.
     @State private var now = Date.now
     @State private var editingDay: WeeklyPlanSummary.Row?
@@ -30,14 +37,23 @@ struct WeeklyPlanView: View {
         let byID = Dictionary(workouts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(verbatim: WeeklyPlanSummary.headerText(plannedDays: plannedDays))
-                    .scaledFont(15)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                    .accessibilityIdentifier("plan.header")
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Programação semanal")
+                        .scaledFont(29, weight: .heavy)
+                        .tracking(-0.5)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityAddTraits(.isHeader)
+                        .accessibilityIdentifier("plan.title")
+                    Text(verbatim: WeeklyPlanSummary.headerText(plannedDays: plannedDays))
+                        .scaledFont(13)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                        .accessibilityIdentifier("plan.header")
+                }
+                .padding(.bottom, 8)
 
                 goalCard(plannedDays: plannedDays)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 6)
 
                 ForEach(rows) { row in
                     let workout = row.workoutID.flatMap { byID[$0] }
@@ -58,20 +74,34 @@ struct WeeklyPlanView: View {
                 }
 
                 Text("A programação não impede treinar em outros dias · toque num dia para mudar")
-                    .scaledFont(12)
+                    .scaledFont(10)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 6)
             }
             .padding(.horizontal, Theme.Metrics.screenPadding)
+            .padding(.top, 4)
             .padding(.bottom, Theme.Metrics.screenPadding)
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            HStack {
+                TextBackButton(title: backTitle) {
+                    dismiss()
+                }
+                .accessibilityIdentifier("plan.back")
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, Theme.Metrics.screenPadding)
+            .background(Theme.Colors.screenBackground)
         }
         .screenBackground()
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("plan.screen")
-        .navigationTitle("Programação semanal")
-        .navigationBarTitleDisplayMode(.large)
+        // The navigation bar is hidden for the model's own top row; the swipe back stays.
+        .background(InteractivePopEnabler())
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .sheet(item: $editingDay) { row in
             WeeklyPlanDaySheet(row: row, workouts: workouts) { workout in
                 choose(workout, for: row.weekday)
@@ -95,20 +125,20 @@ struct WeeklyPlanView: View {
 
     /// "Meta da semana: 4 treinos" on blue, with what it means.
     private func goalCard(plannedDays: Int) -> some View {
-        HStack(spacing: 14) {
-            IconTile(systemImage: "target", side: 40, cornerRadius: 11)
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 12) {
+            IconTile(systemImage: "target", side: 36, cornerRadius: 10)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: WeeklyPlanSummary.goalText(plannedDays: plannedDays))
-                    .scaledFont(17, weight: .heavy)
+                    .scaledFont(15, weight: .heavy)
                     .foregroundStyle(Theme.Colors.highlightText)
                 Text("É o anel da semana no Início. Cada dia com treino conta 1.")
-                    .scaledFont(13)
+                    .scaledFont(11)
                     .foregroundStyle(Theme.Colors.highlightSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .highlightStyle(padding: EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16), cornerRadius: 17)
+        .highlightStyle(padding: EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14), cornerRadius: 15)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("plan.goal")
     }
@@ -140,43 +170,51 @@ private struct WeeklyPlanDayRow: View {
     /// Just changed: outlined in blue.
     let isChanged: Bool
 
-    @ScaledMetric(relativeTo: .body) private var dateSide: CGFloat = 50
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .subheadline) private var dateSide: CGFloat = 46
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 17, style: .continuous)
-        HStack(spacing: 14) {
+        let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
+        HStack(spacing: 12) {
             dateSquare
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 8) {
                     Text(verbatim: row.choiceText)
-                        .scaledFont(17, weight: .bold)
+                        .scaledFont(15, weight: .bold)
                         .foregroundStyle(workout == nil ? Theme.Colors.secondaryText : Theme.Colors.brightText)
-                        .lineLimit(2)
+                        .lineLimit(lineLimit)
                     if row.isToday {
                         CapsuleBadge(
                             text: String(localized: "HOJE"),
                             weight: .bold,
                             tracking: 0.9,
-                            padding: EdgeInsets(top: 3, leading: 7, bottom: 3, trailing: 7)
+                            padding: EdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6),
+                            size: 9
                         )
                         .accessibilityHidden(true)
                     }
                 }
                 Text(detail)
-                    .scaledFont(13)
-                    .lineLimit(2)
+                    .scaledFont(11)
+                    .lineLimit(lineLimit)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: "chevron.right")
-                .scaledFont(13, weight: .semibold)
+                .scaledFont(12, weight: .semibold)
                 .foregroundStyle(Theme.Colors.dimText)
         }
-        .padding(12)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(row.isToday ? Theme.Colors.highlightBackground : Theme.Colors.cardBackground, in: shape)
         .overlay(shape.strokeBorder(row.isToday ? Theme.Colors.highlightBorder : Theme.Colors.cardBorder, lineWidth: 1))
         .overlay(shape.strokeBorder(Color.accentColor, lineWidth: 2).opacity(isChanged ? 1 : 0))
         .contentShape(shape)
+    }
+
+    /// Two lines at most, cut at the end; whole with the accessibility text sizes.
+    private var lineLimit: Int? {
+        dynamicTypeSize.isAccessibilitySize ? nil : 2
     }
 
     /// "SEG" over "12", blue on a day with a workout.
@@ -186,7 +224,7 @@ private struct WeeklyPlanDayRow: View {
                 .scaledFont(11, weight: .heavy)
                 .tracking(0.8)
             Text(verbatim: "\(dayNumber)")
-                .scaledFont(19, weight: .heavy)
+                .scaledFont(15, weight: .heavy)
         }
         .foregroundStyle(workout == nil ? Theme.Colors.secondaryText : Theme.Colors.plannedDayLetter)
         .frame(width: dateSide, height: dateSide)
@@ -227,47 +265,25 @@ struct WeeklyPlanDaySheet: View {
     let onChoose: @MainActor (Workout?) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @ScaledMetric(relativeTo: .body) private var buttonHeight: CGFloat = 50
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        ScrollView {
+        FittedSheet {
             VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(verbatim: WeeklyPlanSummary.sheetTitle(weekday: row.weekday, isToday: row.isToday))
-                        .scaledFont(20, weight: .heavy)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("Escolha o treino deste dia. A mudança é salva na hora.")
-                        .scaledFont(15)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                SheetHeader(
+                    Text(verbatim: WeeklyPlanSummary.sheetTitle(weekday: row.weekday, isToday: row.isToday)),
+                    explanation: Text("Escolha o treino deste dia. A mudança é salva na hora.")
+                )
                 options
             }
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
-            .padding(.bottom, Theme.Metrics.screenPadding)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Button {
+            .sheetContentPadding()
+        } bottom: {
+            SheetButton(Text("Cancelar"), kind: .secondary) {
                 dismiss()
-            } label: {
-                Text("Cancelar")
-                    .scaledFont(16, weight: .bold)
-                    .foregroundStyle(Theme.Colors.brightText)
-                    .frame(maxWidth: .infinity, minHeight: buttonHeight)
-                    .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             .accessibilityIdentifier("plan.sheet.cancel")
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.vertical, 8)
-            .background(Theme.Colors.cardBackground)
+            .sheetButtonBar()
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     /// "Descanso" and the workouts in one block, a line between them.
@@ -310,25 +326,25 @@ struct WeeklyPlanDaySheet: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(verbatim: title)
-                        .scaledFont(16, weight: .bold)
+                        .scaledFont(15, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(detail)
-                        .scaledFont(12)
+                        .scaledFont(11)
                         .foregroundStyle(Theme.Colors.secondaryText)
-                        .lineLimit(2)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .scaledFont(14, weight: .bold)
+                        .scaledFont(13, weight: .bold)
                         .foregroundStyle(Theme.Colors.lightAccent)
                 }
             }
-            .padding(.vertical, 13)
-            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

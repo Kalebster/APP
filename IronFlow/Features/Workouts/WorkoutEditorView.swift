@@ -93,9 +93,11 @@ struct WorkoutEditorView: View {
             }
         }
         .screenBackground()
-        // The navigation bar is hidden for the model's own top row; the swipe back stays.
+        // The navigation bar is hidden for the model's own top row; the swipe back stays. The tab bar is
+        // hidden too, as in the model.
         .background(InteractivePopEnabler())
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -187,19 +189,8 @@ struct WorkoutEditorView: View {
     /// "‹ Treinos" and the ⋯ menu, or "Concluir" while the exercises are reordered. It stays in place.
     private func topBar(canReorder: Bool) -> some View {
         HStack(spacing: 8) {
-            Button(action: goBack) {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                        .scaledFont(17, weight: .semibold)
-                    Text("Treinos")
-                        .scaledFont(17)
-                }
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("workout.back")
+            TextBackButton(title: "Treinos", action: goBack)
+                .accessibilityIdentifier("workout.back")
             Spacer(minLength: 8)
             if isOrdering {
                 Button {

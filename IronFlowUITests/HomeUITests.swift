@@ -53,6 +53,8 @@ final class HomeUITests: IronFlowUITestCase {
         // With a workout, nothing is planned for today yet.
         openTab("Treinos", in: app)
         createWorkout(named: "Push", in: app)
+        // The editor hides the tab bar, as in the model.
+        goBackFromEditor(in: app)
         openTab("Início", in: app)
         XCTAssertTrue(today.waitForExistence(timeout: 10))
         XCTAssertTrue(today.label.contains("Nada programado para hoje."), "Today card: \(today.label)")
@@ -178,7 +180,6 @@ final class HomeUITests: IronFlowUITestCase {
         XCTAssertEqual(records.count, 3)
         XCTAssertTrue(records.element(boundBy: 0).label.hasSuffix(", 80 kg, \u{2212}0,6 kg"), "Newest: \(records.element(boundBy: 0).label)")
         XCTAssertTrue(records.element(boundBy: 2).label.hasSuffix(", 81,2 kg"), "Oldest: \(records.element(boundBy: 2).label)")
-        attachScreenshot(named: "85-weight-editor", of: app)
 
         focusEditorField(field)
         // The decimal key of the simulator's region: both are read as decimals.
@@ -199,6 +200,11 @@ final class HomeUITests: IronFlowUITestCase {
         card("bodyWeight", in: app).tap()
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Editor not shown again")
         XCTAssertEqual(records.count, 4)
+        // The sheet is as tall as its content: the four latest records fit above "Salvar" without
+        // scrolling.
+        let save = app.buttons["metric.editor.save"]
+        XCTAssertLessThanOrEqual(records.element(boundBy: 3).frame.maxY, save.frame.minY, "The fourth record is behind Salvar")
+        attachScreenshot(named: "85-weight-editor", of: app)
         app.buttons["metric.editor.plus"].tap()
         app.buttons["metric.editor.save"].tap()
         XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Editor not closed")

@@ -12,12 +12,15 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Programação semanal row not found")
         row.tap()
         XCTAssertTrue(element("plan.screen", in: app).waitForExistence(timeout: 10), "Plan screen not shown")
+        XCTAssertTrue(waitForHiddenTabBar(in: app), "Tab bar shown on the plan")
     }
 
-    /// Goes back from the plan to the Treinos list.
+    /// Goes back from the plan to the Treinos list with "‹ Treinos".
     @MainActor
     private func closePlan(in app: XCUIApplication) {
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let back = app.buttons["plan.back"]
+        XCTAssertTrue(back.label.contains("Treinos"), "Back: \(back.label)")
+        back.tap()
         XCTAssertTrue(app.buttons["workouts.plan"].waitForExistence(timeout: 10), "Workout list not shown")
     }
 
@@ -115,6 +118,9 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         XCTAssertEqual(app.buttons["plan.option.Vazio"].label, "Vazio, Nenhum exercício ainda")
         XCTAssertFalse(app.buttons["plan.option.Pull"].isSelected)
         XCTAssertTrue(app.staticTexts["Escolha o treino deste dia. A mudança é salva na hora."].exists)
+        // The sheet is as tall as its content: "Cancelar" right below the last workout.
+        let gap = app.buttons["plan.sheet.cancel"].frame.minY - app.buttons["plan.option.Vazio"].frame.maxY
+        XCTAssertTrue((0...40).contains(gap), "Space between the last workout and Cancelar: \(gap)")
         attachScreenshot(named: "90-plan-day-sheet", of: app)
 
         // Choosing saves at once and closes the sheet; the count and the goal follow.
@@ -132,6 +138,21 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         cancel.tap()
         XCTAssertTrue(cancel.waitForNonExistence(timeout: 10), "Sheet not closed")
         XCTAssertEqual(header.label, "4 dias de treino · 3 de descanso")
+    }
+
+    /// Without the navigation bar, a swipe from the left edge still goes back, and the tab bar returns.
+    @MainActor
+    func testSwipeFromTheEdgeGoesBack() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        openPlan(in: app)
+
+        let window = app.windows.firstMatch
+        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        edge.press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        XCTAssertTrue(app.buttons["workouts.plan"].waitForExistence(timeout: 10), "The swipe did not go back to Treinos")
+        XCTAssertTrue(element("plan.screen", in: app).waitForNonExistence(timeout: 10), "Plan still shown")
+        XCTAssertTrue(app.tabBars.buttons["Treinos"].waitForExistence(timeout: 10), "Tab bar not shown again")
     }
 
     @MainActor

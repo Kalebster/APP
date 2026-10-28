@@ -17,63 +17,39 @@ struct SummaryCustomizeSheet: View {
     /// The value of every indicator, read once when the sheet opens.
     @State private var values: [SummaryMetric: IndicatorValue] = [:]
     @State private var errorMessage: String?
-    @ScaledMetric(relativeTo: .body) private var buttonHeight: CGFloat = 50
-    @ScaledMetric(relativeTo: .body) private var badgeSide: CGFloat = 28
+    @ScaledMetric(relativeTo: .subheadline) private var badgeSide: CGFloat = 26
 
     var body: some View {
         let selection = HomeSummary.metrics(fromStored: storedMetrics)
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Personalizar resumo")
-                        .scaledFont(20, weight: .heavy)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("Escolha até \(HomeSummary.maxVisibleMetrics). Eles aparecem no Início na ordem em que você marcar.")
-                        .scaledFont(15)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        FittedSheet {
+            VStack(alignment: .leading, spacing: 14) {
+                SheetHeader(
+                    Text("Personalizar resumo"),
+                    explanation: Text("Escolha até \(HomeSummary.maxVisibleMetrics). Eles aparecem no Início na ordem em que você marcar.")
+                )
                 if let errorMessage {
                     Text(verbatim: errorMessage)
-                        .scaledFont(13)
+                        .scaledFont(12)
                         .foregroundStyle(Theme.Colors.failureSet)
                         .accessibilityIdentifier("customize.error")
                 }
                 ForEach(SummaryMetric.Category.allCases, id: \.self) { category in
-                    VStack(alignment: .leading, spacing: 10) {
-                        SectionTitle(LocalizedStringKey(String(localized: category.title)))
-                            .foregroundStyle(Theme.Colors.secondaryText)
+                    VStack(alignment: .leading, spacing: 8) {
+                        SheetSectionTitle(LocalizedStringKey(String(localized: category.title)))
                         rows(SummaryMetric.allCases.filter { $0.category == category }, selection: selection)
                     }
                 }
             }
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
-            .padding(.bottom, Theme.Metrics.screenPadding)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Button {
+            .sheetContentPadding()
+        } bottom: {
+            SheetButton(Text("Pronto"), kind: .primary) {
                 dismiss()
-            } label: {
-                Text("Pronto")
-                    .scaledFont(16, weight: .bold)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: buttonHeight)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             .accessibilityIdentifier("customize.done")
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.vertical, 8)
-            .background(Theme.Colors.cardBackground)
+            .sheetButtonBar()
         }
         .onAppear(perform: load)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     /// The indicators of a group in one block, a line between them.
@@ -99,22 +75,22 @@ struct SummaryCustomizeSheet: View {
         return Button {
             storedMetrics = HomeSummary.storedValue(for: HomeSummary.toggled(metric, in: selection))
         } label: {
-            HStack(spacing: 14) {
-                IconTile(systemImage: metric.systemImage, side: 36, cornerRadius: 10)
-                VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 12) {
+                IconTile(systemImage: metric.systemImage, side: 32, cornerRadius: 9)
+                VStack(alignment: .leading, spacing: 2) {
                     Text(metric.title)
-                        .scaledFont(16, weight: .bold)
+                        .scaledFont(15, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(verbatim: line)
-                        .scaledFont(12)
+                        .scaledFont(11)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 orderMark(position)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
             .opacity(isAvailable ? 1 : 0.4)
             .contentShape(Rectangle())
         }
@@ -132,7 +108,7 @@ struct SummaryCustomizeSheet: View {
     private func orderMark(_ position: Int?) -> some View {
         if let position {
             Text(verbatim: "\(position + 1)")
-                .scaledFont(14, weight: .bold)
+                .scaledFont(12, weight: .heavy)
                 .foregroundStyle(.white)
                 .frame(width: badgeSide, height: badgeSide)
                 .background(Color.accentColor, in: Circle())

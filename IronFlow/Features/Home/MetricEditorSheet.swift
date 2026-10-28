@@ -32,11 +32,10 @@ struct MetricEditorSheet: View {
     @State private var calculatedGoal: Int?
     @FocusState private var isFieldFocused: Bool
 
-    @ScaledMetric(relativeTo: .body) private var stepSide: CGFloat = 56
-    @ScaledMetric(relativeTo: .body) private var fieldWidth: CGFloat = 150
-    @ScaledMetric(relativeTo: .footnote) private var messageHeight: CGFloat = 34
-    @ScaledMetric(relativeTo: .footnote) private var changeWidth: CGFloat = 48
-    @ScaledMetric(relativeTo: .body) private var buttonHeight: CGFloat = 50
+    @ScaledMetric(relativeTo: .body) private var stepSide: CGFloat = 52
+    @ScaledMetric(relativeTo: .body) private var fieldWidth: CGFloat = 136
+    @ScaledMetric(relativeTo: .caption) private var messageHeight: CGFloat = 32
+    @ScaledMetric(relativeTo: .caption2) private var changeWidth: CGFloat = 44
 
     init(
         metric: BodyMetric,
@@ -56,11 +55,9 @@ struct MetricEditorSheet: View {
     }
 
     var body: some View {
-        ScrollView {
+        FittedSheet {
             VStack(alignment: .leading, spacing: 16) {
-                Text(metric.editorTitle)
-                    .scaledFont(20, weight: .heavy)
-                    .accessibilityAddTraits(.isHeader)
+                SheetHeader(Text(metric.editorTitle))
                 valueRow
                 message
                 if metric == .dailyCalorieGoal, onCalculatedGoal != nil {
@@ -70,15 +67,11 @@ struct MetricEditorSheet: View {
                     records
                 }
             }
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
-            .padding(.bottom, Theme.Metrics.screenPadding)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+            .sheetContentPadding()
+        } bottom: {
             buttons
         }
+        .scrollDismissesKeyboard(.interactively)
         .onChange(of: text) {
             errorMessage = nil
         }
@@ -87,9 +80,6 @@ struct MetricEditorSheet: View {
                 calculatedGoal = goal
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     // MARK: - Value
@@ -129,13 +119,13 @@ struct MetricEditorSheet: View {
             TextField(text: $text, prompt: Text(verbatim: "—")) {
                 Text(metric.editorTitle)
             }
-            .scaledFont(52, weight: .heavy)
+            .scaledFont(46, weight: .heavy)
             .foregroundStyle(Theme.Colors.brightText)
             .multilineTextAlignment(.center)
             .keyboardType(metric == .bodyWeight ? .decimalPad : .numberPad)
             .focused($isFieldFocused)
             // Wide enough for "80,25" and "8.000"; never wider than the sheet with large text.
-            .frame(width: min(fieldWidth, 260))
+            .frame(width: min(fieldWidth, 240))
             .padding(.bottom, 4)
             .overlay(alignment: .bottom) {
                 Rectangle()
@@ -145,7 +135,7 @@ struct MetricEditorSheet: View {
             }
             .accessibilityIdentifier("metric.editor.field")
             Text(verbatim: metric.unit)
-                .scaledFont(20, weight: .semibold)
+                .scaledFont(17, weight: .semibold)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .accessibilityHidden(true)
         }
@@ -159,12 +149,12 @@ struct MetricEditorSheet: View {
         let isEnabled = MetricEditing.canStep(base, metric: metric, direction: direction)
         let stepText = "\(HomeSummary.number(MetricEditing.step(of: metric))) \(metric.unit)"
         // Grows with the text, up to a size that still leaves room for the value.
-        let side = min(stepSide, 88)
+        let side = min(stepSide, 84)
         return Button {
             text = HomeSummary.fieldText(MetricEditing.stepped(base, metric: metric, direction: direction), for: metric)
         } label: {
             Image(systemName: direction == .up ? "plus" : "minus")
-                .font(.system(size: side * 0.36, weight: .semibold))
+                .font(.system(size: side * 0.5, weight: .semibold))
                 .foregroundStyle(Theme.Colors.brightText)
                 .frame(width: side, height: side)
                 .background(Theme.Colors.setFieldBackground, in: Circle())
@@ -190,7 +180,7 @@ struct MetricEditorSheet: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
-        .scaledFont(13)
+        .scaledFont(12)
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, minHeight: messageHeight, alignment: .top)
@@ -228,8 +218,7 @@ struct MetricEditorSheet: View {
     private var records: some View {
         let rows = HomeSummary.weightRecordRows(recentWeights, now: .now, calendar: TrainingDay.calendar)
         return VStack(alignment: .leading, spacing: 10) {
-            SectionTitle("Últimos registros")
-                .foregroundStyle(Theme.Colors.secondaryText)
+            SheetSectionTitle("Últimos registros")
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                     if index > 0 {
@@ -259,9 +248,9 @@ struct MetricEditorSheet: View {
                 recordValue(row)
             }
         }
-        .scaledFont(15)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
+        .scaledFont(14)
+        .padding(.vertical, 11)
+        .padding(.horizontal, 14)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [row.dateText, row.valueText, row.changeText.map { "\($0) kg" }].compactMap { $0 }.joined(separator: ", ")))
         .accessibilityIdentifier("metric.editor.record")
@@ -274,7 +263,7 @@ struct MetricEditorSheet: View {
                 .fontWeight(.bold)
                 .foregroundStyle(Theme.Colors.brightText)
             Text(verbatim: row.changeText ?? "")
-                .scaledFont(12)
+                .scaledFont(11)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .frame(minWidth: changeWidth, alignment: .trailing)
         }
@@ -285,36 +274,15 @@ struct MetricEditorSheet: View {
     /// "Salvar" in blue and "Cancelar" below it, above the keyboard while it is open.
     private var buttons: some View {
         VStack(spacing: 10) {
-            Button(action: saveTapped) {
-                Text("Salvar")
-                    .scaledFont(16, weight: .bold)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: buttonHeight)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .opacity(isTextEmpty ? 0.4 : 1)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(isTextEmpty)
-            .accessibilityIdentifier("metric.editor.save")
-
-            Button {
+            SheetButton(Text("Salvar"), kind: .primary, action: saveTapped)
+                .disabled(isTextEmpty)
+                .accessibilityIdentifier("metric.editor.save")
+            SheetButton(Text("Cancelar"), kind: .secondary) {
                 dismiss()
-            } label: {
-                Text("Cancelar")
-                    .scaledFont(16, weight: .bold)
-                    .foregroundStyle(Theme.Colors.brightText)
-                    .frame(maxWidth: .infinity, minHeight: buttonHeight)
-                    .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             .accessibilityIdentifier("metric.editor.cancel")
         }
-        .padding(.horizontal, Theme.Metrics.screenPadding)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-        .background(Theme.Colors.cardBackground)
+        .sheetButtonBar()
     }
 
     private var isTextEmpty: Bool {

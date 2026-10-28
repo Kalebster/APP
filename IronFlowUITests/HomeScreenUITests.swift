@@ -76,6 +76,12 @@ final class HomeScreenUITests: IronFlowUITestCase {
 
         plan.tap()
         XCTAssertTrue(element("plan.screen", in: app).waitForExistence(timeout: 10), "Plan screen not opened")
+        // Opened from the Início, it goes back to it, with the tab bar hidden meanwhile.
+        let back = app.buttons["plan.back"]
+        XCTAssertTrue(back.label.contains("Início"), "Back: \(back.label)")
+        XCTAssertTrue(waitForHiddenTabBar(in: app), "Tab bar shown on the plan")
+        back.tap()
+        XCTAssertTrue(plan.waitForExistence(timeout: 10), "Início not shown again")
     }
 
     /// A rest day with workouts: "Escolher treino" opens the sheet, a workout without exercises cannot be
@@ -99,6 +105,9 @@ final class HomeScreenUITests: IronFlowUITestCase {
         let empty = rows.element(boundBy: 3)
         XCTAssertEqual(empty.label, "Costas e Bíceps, Sem exercícios · adicione na tela Treinos")
         XCTAssertFalse(empty.isEnabled, "A workout without exercises can be started")
+        // The sheet is as tall as its content: "Cancelar" right below the last workout.
+        let gap = app.buttons["workoutPicker.cancel"].frame.minY - empty.frame.maxY
+        XCTAssertTrue((0...40).contains(gap), "Space between the last workout and Cancelar: \(gap)")
 
         rows.element(boundBy: 1).tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")

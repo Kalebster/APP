@@ -114,6 +114,17 @@ extension XCTestCase {
         app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
     }
 
+    /// Waits until the tab bar is off the screen: hidden on the workout editor and the weekly plan, as in
+    /// the model.
+    @MainActor
+    func waitForHiddenTabBar(in app: XCUIApplication, timeout: TimeInterval = 5) -> Bool {
+        let hidden = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false OR hittable == false"),
+            object: app.tabBars.buttons["Início"]
+        )
+        return XCTWaiter().wait(for: [hidden], timeout: timeout) == .completed
+    }
+
     /// Waits until the element's label contains `text`.
     @MainActor
     func waitForLabel(of element: XCUIElement, containing text: String) -> Bool {

@@ -76,7 +76,7 @@ struct WorkoutListView: View {
             WorkoutEditorView(workout: workout, sessionActions: sessionActions)
         }
         .navigationDestination(isPresented: $isShowingPlan) {
-            WeeklyPlanView()
+            WeeklyPlanView(backTitle: "Treinos")
         }
         .navigationDestination(for: Session.self) { session in
             HistorySessionDetailView(detail: HistorySessionDetail(session))

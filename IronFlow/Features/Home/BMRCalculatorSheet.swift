@@ -19,10 +19,10 @@ struct BMRCalculatorSheet: View {
     /// Set when the goal is used, so a second tap while the sheet closes saves nothing.
     @State private var isGoalUsed = false
 
-    @ScaledMetric(relativeTo: .body) private var buttonHeight: CGFloat = 50
-    @ScaledMetric(relativeTo: .body) private var segmentHeight: CGFloat = 44
-    @ScaledMetric(relativeTo: .body) private var dayMenuWidth: CGFloat = 76
-    @ScaledMetric(relativeTo: .body) private var yearMenuWidth: CGFloat = 104
+    @ScaledMetric(relativeTo: .subheadline) private var segmentHeight: CGFloat = 38
+    @ScaledMetric(relativeTo: .callout) private var menuHeight: CGFloat = 44
+    @ScaledMetric(relativeTo: .callout) private var dayMenuWidth: CGFloat = 72
+    @ScaledMetric(relativeTo: .callout) private var yearMenuWidth: CGFloat = 98
 
     var body: some View {
         let calendar = TrainingDay.calendar
@@ -30,18 +30,13 @@ struct BMRCalculatorSheet: View {
         let inputs = BMRCalculator.inputs(profile: profiles.first, weightKg: latestWeight.first?.weightKg)
         let estimate = BMRCalculator.estimate(inputs, now: now, calendar: calendar)
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Calcular TMB")
-                        .scaledFont(20, weight: .heavy)
-                        .accessibilityAddTraits(.isHeader)
-                    Text(verbatim: Self.introduction(weightKg: inputs.weightKg, heightCm: inputs.heightCm))
-                        .scaledFont(15)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("bmr.intro")
-                }
+        FittedSheet {
+            VStack(alignment: .leading, spacing: 18) {
+                SheetHeader(
+                    Text("Calcular TMB"),
+                    explanation: Text(verbatim: Self.introduction(weightKg: inputs.weightKg, heightCm: inputs.heightCm)),
+                    explanationIdentifier: "bmr.intro"
+                )
 
                 section("Sexo") {
                     segments(BiologicalSex.allCases, selected: inputs.sex, name: \.displayName, identifier: { "bmr.sex.\($0.rawValue)" }) { sex in
@@ -64,14 +59,8 @@ struct BMRCalculatorSheet: View {
                 }
                 closing
             }
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
-            .padding(.bottom, Theme.Metrics.screenPadding)
+            .sheetContentPadding()
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     /// What the BMR is and which data it uses: "… Usamos o seu peso (80 kg) e a sua altura (180 cm).";
@@ -93,9 +82,8 @@ struct BMRCalculatorSheet: View {
     // MARK: - Choices
 
     private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title)
-                .foregroundStyle(Theme.Colors.secondaryText)
+        VStack(alignment: .leading, spacing: 8) {
+            SheetSectionTitle(title)
             content()
         }
     }
@@ -119,16 +107,16 @@ struct BMRCalculatorSheet: View {
                     }
                 } label: {
                     Text(name(option))
-                        .scaledFont(16, weight: .semibold)
+                        .scaledFont(14, weight: .semibold)
                         .foregroundStyle(isSelected ? Theme.Colors.highlightText : Theme.Colors.mediumText)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity, minHeight: segmentHeight)
                         .background {
                             if isSelected {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
                                     .fill(Theme.Colors.highlightBadge)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        RoundedRectangle(cornerRadius: 9, style: .continuous)
                                             .strokeBorder(Theme.Colors.highlightLine, lineWidth: 1)
                                     )
                             }
@@ -140,8 +128,8 @@ struct BMRCalculatorSheet: View {
                 .accessibilityIdentifier(identifier(option))
             }
         }
-        .padding(4)
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .padding(3)
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     /// Day, month by name and year, each in a menu. The years go from 15 to 100 years ago, the most
@@ -219,7 +207,7 @@ struct BMRCalculatorSheet: View {
                             .foregroundStyle(Theme.Colors.dimText)
                     }
                 }
-                .scaledFont(17, weight: .semibold)
+                .scaledFont(16, weight: .semibold)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
@@ -227,10 +215,10 @@ struct BMRCalculatorSheet: View {
                     .scaledFont(12, weight: .bold)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: buttonHeight)
-            .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: menuHeight)
+            .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .accessibilityLabel(Text(title))
@@ -260,25 +248,25 @@ struct BMRCalculatorSheet: View {
                 save { try $0.setActivityLevel(level) }
             }
         } label: {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(level.displayName)
-                        .scaledFont(16, weight: .bold)
+                        .scaledFont(14, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(level.detail)
-                        .scaledFont(12)
+                        .scaledFont(11)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .scaledFont(14, weight: .bold)
+                        .scaledFont(13, weight: .bold)
                         .foregroundStyle(Theme.Colors.lightAccent)
                 }
             }
-            .padding(.vertical, 13)
-            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -294,11 +282,11 @@ struct BMRCalculatorSheet: View {
     /// meta"; or, without a result, what is missing.
     @ViewBuilder
     private func result(_ estimate: Result<BMRCalculator.Estimate, BMRCalculator.Missing>, goal: WeightGoal) -> some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             Group {
                 switch estimate {
                 case .success(let values):
-                    VStack(spacing: 12) {
+                    VStack(spacing: 10) {
                         ViewThatFits(in: .horizontal) {
                             // The three boxes share the height of the tallest one.
                             HStack(spacing: 8) { resultBoxes(values) }
@@ -306,7 +294,7 @@ struct BMRCalculatorSheet: View {
                             VStack(spacing: 8) { resultBoxes(values) }
                         }
                         Text(Self.resultNote(for: goal))
-                            .scaledFont(13)
+                            .scaledFont(12)
                             .foregroundStyle(Theme.Colors.highlightSecondaryText)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
@@ -314,7 +302,7 @@ struct BMRCalculatorSheet: View {
                     }
                 case .failure(let missing):
                     Text(missing.message)
-                        .scaledFont(15)
+                        .scaledFont(13)
                         .foregroundStyle(Theme.Colors.highlightSecondaryText)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -330,7 +318,7 @@ struct BMRCalculatorSheet: View {
 
             if let errorMessage {
                 Text(verbatim: errorMessage)
-                    .scaledFont(13)
+                    .scaledFont(12)
                     .foregroundStyle(Theme.Colors.failureSet)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
@@ -338,19 +326,9 @@ struct BMRCalculatorSheet: View {
             }
 
             if case .success(let values) = estimate {
-                Button {
+                SheetButton(Text("Usar \(HomeSummary.number(Double(values.goalKcal))) kcal como meta"), kind: .primary) {
                     use(values.goalKcal)
-                } label: {
-                    Text("Usar \(HomeSummary.number(Double(values.goalKcal))) kcal como meta")
-                        .scaledFont(16, weight: .bold)
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 12)
-                        .frame(maxWidth: .infinity, minHeight: buttonHeight)
-                        .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
                 .accessibilityIdentifier("bmr.use")
             }
         }
@@ -367,17 +345,18 @@ struct BMRCalculatorSheet: View {
         let number = HomeSummary.number(Double(kcal))
         return VStack(alignment: .leading, spacing: 2) {
             Text(verbatim: number)
-                .scaledFont(20, weight: .heavy)
+                .scaledFont(16, weight: .heavy)
                 .foregroundStyle(Theme.Colors.brightText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+            // One line at the standard sizes; with larger text it wraps rather than being cut.
             Text(label)
-                .scaledFont(13)
+                .scaledFont(11)
                 .foregroundStyle(Theme.Colors.highlightSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 10)
+        .padding(.vertical, 9)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.Colors.selectedCardBackground, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         .accessibilityElement(children: .ignore)
@@ -396,24 +375,16 @@ struct BMRCalculatorSheet: View {
 
     /// The note on the estimate and "Fechar".
     private var closing: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             Text("É uma estimativa pela fórmula de Mifflin-St Jeor. Para um plano sob medida, procure um nutricionista.")
-                .scaledFont(12)
+                .scaledFont(11)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity)
-            Button {
+            SheetButton(Text("Fechar"), kind: .secondary) {
                 dismiss()
-            } label: {
-                Text("Fechar")
-                    .scaledFont(16, weight: .bold)
-                    .foregroundStyle(Theme.Colors.brightText)
-                    .frame(maxWidth: .infinity, minHeight: buttonHeight)
-                    .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             .accessibilityIdentifier("bmr.close")
         }
     }

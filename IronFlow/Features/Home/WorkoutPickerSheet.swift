@@ -12,41 +12,29 @@ struct WorkoutPickerSheet: View {
 
     @Query(sort: [SortDescriptor(\Workout.createdAt), SortDescriptor(\Workout.name)]) private var workouts: [Workout]
     @Environment(\.dismiss) private var dismiss
-    @ScaledMetric(relativeTo: .body) private var cancelHeight: CGFloat = 50
 
     var body: some View {
         let ordered = Self.ordered(workouts, todayID: todayWorkoutID)
 
-        ScrollView {
+        FittedSheet {
             VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Escolher treino")
-                        .scaledFont(20, weight: .heavy)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("O treino começa assim que você tocar nele.")
-                        .scaledFont(13)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                SheetHeader(Text("Escolher treino"), explanation: Text("O treino começa assim que você tocar nele."))
                 if ordered.isEmpty {
                     Text("Nenhum treino ainda")
-                        .scaledFont(14)
+                        .scaledFont(13)
                         .foregroundStyle(Theme.Colors.secondaryText)
                 } else {
                     rows(ordered)
                 }
             }
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
-            .padding(.bottom, Theme.Metrics.screenPadding)
+            .sheetContentPadding()
+        } bottom: {
+            SheetButton(Text("Cancelar"), kind: .secondary) {
+                dismiss()
+            }
+            .accessibilityIdentifier("workoutPicker.cancel")
+            .sheetButtonBar()
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            cancelButton
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     /// The workout planned for today first, then the others in their order.
@@ -79,25 +67,6 @@ struct WorkoutPickerSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
     }
 
-    private var cancelButton: some View {
-        Button {
-            dismiss()
-        } label: {
-            Text("Cancelar")
-                .scaledFont(15, weight: .bold)
-                .foregroundStyle(Theme.Colors.brightText)
-                .frame(maxWidth: .infinity, minHeight: cancelHeight)
-                .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, Theme.Metrics.screenPadding)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-        .background(Theme.Colors.cardBackground)
-        .accessibilityIdentifier("workoutPicker.cancel")
-    }
-
     private func choose(_ workout: Workout) {
         onChoose(workout)
         dismiss()
@@ -112,7 +81,7 @@ private struct WorkoutPickerRow: View {
     let isToday: Bool
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .body) private var playSide: CGFloat = 36
+    @ScaledMetric(relativeTo: .subheadline) private var playSide: CGFloat = 32
 
     var body: some View {
         let isEmpty = workout.exercises.isEmpty
@@ -120,7 +89,7 @@ private struct WorkoutPickerRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(verbatim: workout.name)
-                        .scaledFont(17, weight: .bold)
+                        .scaledFont(15, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                     if isToday {
@@ -128,12 +97,13 @@ private struct WorkoutPickerRow: View {
                             text: String(localized: "HOJE"),
                             weight: .bold,
                             tracking: 0.9,
-                            padding: EdgeInsets(top: 3, leading: 7, bottom: 3, trailing: 7)
+                            padding: EdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6),
+                            size: 9
                         )
                     }
                 }
                 Text(detail(isEmpty: isEmpty))
-                    .scaledFont(12)
+                    .scaledFont(11)
                     // One line, cut at its end, like the model; whole with the accessibility text sizes.
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             }

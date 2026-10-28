@@ -24,6 +24,28 @@ struct IconTile: View {
     }
 }
 
+/// "‹ Treinos": the blue back of the screens that hide the navigation bar for the model's own top row,
+/// the workout editor and the weekly plan.
+struct TextBackButton: View {
+    let title: LocalizedStringKey
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                    .scaledFont(17, weight: .semibold)
+                Text(title)
+                    .scaledFont(17)
+            }
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 /// A small capsule on the highlight: "Programado" on today's workout in the Início, "HOJE" on the card
 /// of today's workout in Treinos.
 struct CapsuleBadge: View {
@@ -31,10 +53,12 @@ struct CapsuleBadge: View {
     let weight: Font.Weight
     let tracking: CGFloat
     let padding: EdgeInsets
+    /// In points of the default text size: 10, or 9 on the rows of the sheets.
+    var size: CGFloat = 10
 
     var body: some View {
         Text(verbatim: text)
-            .scaledFont(10, weight: weight)
+            .scaledFont(size, weight: weight)
             .tracking(tracking)
             .foregroundStyle(Theme.Colors.highlightText)
             .lineLimit(1)

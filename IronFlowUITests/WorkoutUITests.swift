@@ -533,12 +533,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
     }
 
-    /// The editor is pushed over the Treinos list: a swipe from the left edge goes back, as on any screen.
+    /// The editor is pushed over the Treinos list, without the tab bar as in the model: a swipe from the
+    /// left edge goes back, as on any screen.
     @MainActor
     func testSwipeFromTheEdgeGoesBack() throws {
         continueAfterFailure = false
         let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
         openWorkout(named: "Push", in: app)
+        XCTAssertTrue(waitForHiddenTabBar(in: app), "Tab bar shown on the editor")
 
         let window = app.windows.firstMatch
         let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))

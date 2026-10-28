@@ -136,7 +136,7 @@ struct HomeView: View {
             }
         }
         .navigationDestination(isPresented: $isShowingPlan) {
-            WeeklyPlanView()
+            WeeklyPlanView(backTitle: "Início")
         }
         .updatingCurrentDate($now)
         .onAppear {
