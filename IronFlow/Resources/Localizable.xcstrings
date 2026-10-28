@@ -52,6 +52,9 @@
     "%lld dias" : {
 
     },
+    "%lld dias de treino · %lld de descanso" : {
+
+    },
     "%lld dias programados" : {
 
     },
@@ -157,6 +160,9 @@
     "1 dia" : {
 
     },
+    "1 dia de treino · %lld de descanso" : {
+
+    },
     "1 dia programado" : {
 
     },
@@ -182,6 +188,9 @@
 
     },
     "A carga pode ser no máximo %@." : {
+
+    },
+    "A programação não impede treinar em outros dias · toque num dia para mudar" : {
 
     },
     "A série de trabalho. Conta nos kg levantados." : {
@@ -448,13 +457,13 @@
     "Escolha o sexo e a data de nascimento para ver o resultado." : {
 
     },
+    "Escolha o treino deste dia. A mudança é salva na hora." : {
+
+    },
     "Escolha os exercícios na hora e registre suas séries" : {
 
     },
     "Escolha um dia de segunda a domingo." : {
-
-    },
-    "Escolha um treino para cada dia. A programação não impede treinos em outros dias." : {
 
     },
     "Escolhe o tipo da série ou a remove." : {
@@ -683,6 +692,12 @@
     "meta %lld–%lld reps" : {
 
     },
+    "Meta da semana: %lld treinos" : {
+
+    },
+    "Meta da semana: 1 treino" : {
+
+    },
     "Meta de %@ kcal salva" : {
 
     },
@@ -756,6 +771,9 @@
 
     },
     "Nenhum dia" : {
+
+    },
+    "Nenhum dia com treino ainda" : {
 
     },
     "Nenhum dia programado" : {
@@ -1025,6 +1043,9 @@
     "Sem meta" : {
 
     },
+    "Sem meta da semana" : {
+
+    },
     "Sem registro da última vez" : {
 
     },
@@ -1032,6 +1053,9 @@
 
     },
     "sem treino" : {
+
+    },
+    "Sem treino neste dia" : {
 
     },
     "Semana completa" : {
@@ -1212,6 +1236,9 @@
 
     },
     "Válida" : {
+
+    },
+    "É o anel da semana no Início. Cada dia com treino conta 1." : {
 
     },
     "É uma estimativa pela fórmula de Mifflin-St Jeor. Para um plano sob medida, procure um nutricionista." : {
