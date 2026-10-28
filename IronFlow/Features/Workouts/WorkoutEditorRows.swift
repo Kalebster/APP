@@ -6,12 +6,20 @@ let editorCardGap: CGFloat = 12
 
 /// The first row of an exercise card in the workout editor: the equipment icon (the initial of a custom
 /// exercise), the name, "Grupo · Foco", "Arquivado" when the exercise was archived, and the ⋯ menu with
-/// "Ordenar exercícios" and "Remover do treino".
+/// "Ordenar exercícios" and "Remover do treino". The question before removing opens from the ⋯ itself,
+/// so it points to the exercise it is about.
 struct EditorExerciseHeader: View {
     let item: WorkoutExercise
     let canReorder: Bool
+    /// Whether the question "Remover … ?" is open for this exercise.
+    @Binding var isConfirmingRemoval: Bool
+    /// The exercise's name in the question, taken when it was asked.
+    let removalName: String
     let onReorder: @MainActor () -> Void
+    /// Asks before removing: sets `isConfirmingRemoval`.
     let onRemove: @MainActor () -> Void
+    /// Removes the exercise, once confirmed.
+    let onConfirmRemoval: @MainActor () -> Void
 
     @ScaledMetric(relativeTo: .body) private var menuSide: CGFloat = 30
 
@@ -55,6 +63,17 @@ struct EditorExerciseHeader: View {
             .padding(min(0, (menuSide - 44) / 2))
             .accessibilityLabel(Text("Opções de \(EditorExerciseInfo.name(of: exercise))"))
             .accessibilityIdentifier("workout.exercise.menu")
+            // On the ⋯ itself, so the confirmation points to the exercise it came from.
+            .confirmationDialog(
+                Text("Remover \(removalName)?"),
+                isPresented: $isConfirmingRemoval,
+                titleVisibility: .visible
+            ) {
+                Button("Remover do treino", role: .destructive, action: onConfirmRemoval)
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("As séries planejadas dele também saem deste treino. O histórico não muda.")
+            }
         }
         .padding(.top, 10)
         .accessibilityElement(children: .contain)

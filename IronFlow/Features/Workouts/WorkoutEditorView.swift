@@ -134,21 +134,6 @@ struct WorkoutEditorView: View {
                 isShowingRangeNotice = false
             }
         }
-        .confirmationDialog(
-            Text("Remover \(removal?.name ?? "")?"),
-            isPresented: isConfirmingRemoval,
-            titleVisibility: .visible
-        ) {
-            Button("Remover do treino", role: .destructive) {
-                if let item = removal?.item {
-                    removal = nil
-                    removeExercise(item)
-                }
-            }
-            Button("Cancelar", role: .cancel) {}
-        } message: {
-            Text("As séries planejadas dele também saem deste treino. O histórico não muda.")
-        }
         .sheet(item: $typeSheet) { target in
             SetTypeSheet(
                 number: target.number,
@@ -304,8 +289,11 @@ struct WorkoutEditorView: View {
             EditorExerciseHeader(
                 item: item,
                 canReorder: canReorder,
+                isConfirmingRemoval: isConfirmingRemoval(of: item),
+                removalName: removal.flatMap { $0.item.id == item.id ? $0.name : nil } ?? EditorExerciseInfo.name(of: item.exercise),
                 onReorder: startOrdering,
-                onRemove: { confirmRemoval(of: item) }
+                onRemove: { confirmRemoval(of: item) },
+                onConfirmRemoval: confirmedRemoval
             )
             .cardSegmentRow(.top, gap: editorCardGap)
             PlannedSetColumns()
@@ -401,9 +389,10 @@ struct WorkoutEditorView: View {
             .accessibilityIdentifier("workout.rangeNotice")
     }
 
-    private var isConfirmingRemoval: Binding<Bool> {
+    /// Whether the question before removing is open for `item`.
+    private func isConfirmingRemoval(of item: WorkoutExercise) -> Binding<Bool> {
         Binding(
-            get: { removal != nil },
+            get: { removal?.item.id == item.id },
             set: { if !$0 { removal = nil } }
         )
     }
@@ -521,6 +510,13 @@ struct WorkoutEditorView: View {
         focusedField = nil
         commitAll()
         removal = PendingRemoval(item: item, name: EditorExerciseInfo.name(of: item.exercise))
+    }
+
+    /// "Remover do treino" in the question: removes the exercise it was asked about.
+    private func confirmedRemoval() {
+        guard let item = removal?.item else { return }
+        removal = nil
+        removeExercise(item)
     }
 
     private func removeExercise(_ item: WorkoutExercise) {

@@ -443,6 +443,11 @@ final class WorkoutUITests: IronFlowUITestCase {
         app.buttons["Remover do treino"].tap()
         XCTAssertTrue(app.staticTexts["Remover Crossover na Polia Alta?"].waitForExistence(timeout: 10), "Removal question not shown")
         XCTAssertTrue(app.staticTexts["As séries planejadas dele também saem deste treino. O histórico não muda."].exists, "Removal message")
+        // The question points to the exercise's ⋯: it opens right below it.
+        let menuFrame = menu.frame
+        let confirmationFrame = app.buttons["Remover do treino"].frame
+        XCTAssertGreaterThan(confirmationFrame.minY, menuFrame.maxY, "Confirmation not below the exercise's ⋯ \(menuFrame): \(confirmationFrame)")
+        XCTAssertLessThan(confirmationFrame.minY, menuFrame.maxY + 300, "Confirmation far from the exercise's ⋯ \(menuFrame): \(confirmationFrame)")
         cancelDialog(confirmLabel: "Remover do treino", in: app)
         XCTAssertEqual(element("workout.summary", in: app).label, "2 exercícios · 6 séries", "Cancel removed the exercise")
 
