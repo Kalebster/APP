@@ -7,7 +7,26 @@ struct HomeSummaryTests {
     @Test("Without a saved choice the three indicators are shown in the default order")
     func defaultMetrics() {
         #expect(HomeSummary.metrics(fromStored: nil) == [.bodyWeight, .height, .dailyCalorieGoal])
-        #expect(HomeSummary.defaultMetrics == SummaryMetric.allCases)
+        #expect(HomeSummary.defaultMetrics == [.bodyWeight, .height, .dailyCalorieGoal])
+    }
+
+    @Test("Ten indicators, the workout ones first; the keys saved by earlier versions stay the same")
+    func tenIndicators() {
+        #expect(SummaryMetric.allCases.map(\.rawValue) == [
+            "monthWorkouts", "streak", "weekVolume", "weekTime", "lastWorkout",
+            "bodyWeight", "height", "dailyCalorieGoal", "bmr", "weightChange",
+        ])
+        #expect(SummaryMetric.allCases.map { String(localized: $0.title) } == [
+            "Treinos no mês", "Sequência", "Kg na semana", "Tempo na semana", "Último treino",
+            "Peso", "Altura", "Meta de calorias", "TMB", "Variação do peso",
+        ])
+        #expect(SummaryMetric.allCases.filter { $0.category == .training } == [.monthWorkouts, .streak, .weekVolume, .weekTime, .lastWorkout])
+        #expect(SummaryMetric.allCases.filter { $0.category == .body } == [.bodyWeight, .height, .dailyCalorieGoal, .bmr, .weightChange])
+        #expect(SummaryMetric.Category.allCases.map { String(localized: $0.title) } == ["Treino", "Corpo"])
+        #expect(Set(SummaryMetric.allCases.map(\.systemImage)).count == 10)
+        // A choice saved before the new indicators is still read as it was.
+        #expect(HomeSummary.metrics(fromStored: "height,dailyCalorieGoal") == [.height, .dailyCalorieGoal])
+        #expect(HomeSummary.metrics(fromStored: "bmr,streak,bodyWeight") == [.bmr, .streak, .bodyWeight])
     }
 
     @Test("A saved choice keeps its order")
@@ -75,23 +94,6 @@ struct HomeSummaryTests {
         #expect(HomeSummary.number(80.6) == "80,6")
     }
 
-    @Test("A summary card shows the number large with its unit beside it; the calorie goal's unit is in its name")
-    func cardValues() {
-        let weight = HomeSummary.cardValue(of: .bodyWeight, value: 80)
-        #expect(weight.number == "80")
-        #expect(weight.unit == "kg")
-        #expect(HomeSummary.cardValue(of: .bodyWeight, value: 80.5).number == "80,5")
-        let height = HomeSummary.cardValue(of: .height, value: 180)
-        #expect(height.number == "180")
-        #expect(height.unit == "cm")
-        let goal = HomeSummary.cardValue(of: .dailyCalorieGoal, value: 2_300)
-        #expect(goal.number == "2.300")
-        #expect(goal.unit == nil)
-        // The card shows the short name; Personalizar and VoiceOver keep the full one.
-        #expect(SummaryMetric.allCases.map { String(localized: $0.cardTitle) } == ["Peso", "Altura", "kcal / dia"])
-        #expect(SummaryMetric.allCases.map { String(localized: $0.title) } == ["Peso corporal", "Altura", "Meta diária"])
-    }
-
     @Test("Typed values are read and checked for each indicator; an empty field has no value")
     func typedValues() throws {
         #expect(try HomeSummary.value(for: .bodyWeight, text: "") == nil)
@@ -134,7 +136,8 @@ struct HomeSummaryTests {
             "Cada novo peso fica registrado com a data de hoje.", nil, "Quantas calorias você quer comer por dia.",
         ])
         #expect(BodyMetric.allCases.map { String(localized: $0.savedMessage) } == ["Peso salvo", "Altura salva", "Meta salva"])
-        #expect(SummaryMetric.allCases.map(\.bodyMetric) == [.bodyWeight, .height, .dailyCalorieGoal])
+        #expect(SummaryMetric.allCases.compactMap(\.bodyMetric) == [.bodyWeight, .height, .dailyCalorieGoal])
+        #expect(SummaryMetric.bmr.bodyMetric == nil)
     }
 
     @Test("− and + step 0,1 kg, 1 cm and 50 kcal and never pass the limits")

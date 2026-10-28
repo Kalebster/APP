@@ -217,7 +217,7 @@ enum SessionFormatting {
     }()
 
     /// The abbreviated month ("set"), from 1 for January.
-    private static func monthAbbreviation(_ month: Int) -> String {
+    static func monthAbbreviation(_ month: Int) -> String {
         monthAbbreviations.indices.contains(month - 1) ? monthAbbreviations[month - 1] : ""
     }
 
