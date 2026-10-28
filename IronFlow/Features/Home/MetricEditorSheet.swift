@@ -75,11 +75,6 @@ struct MetricEditorSheet: View {
         .onChange(of: text) {
             errorMessage = nil
         }
-        .sheet(isPresented: $isCalculating, onDismiss: finishCalculation) {
-            BMRCalculatorSheet { goal in
-                calculatedGoal = goal
-            }
-        }
     }
 
     // MARK: - Value
@@ -186,7 +181,9 @@ struct MetricEditorSheet: View {
         .frame(maxWidth: .infinity, minHeight: messageHeight, alignment: .top)
     }
 
-    /// "Calcular pela minha TMB": opens the BMR calculator over the editor.
+    /// "Calcular pela minha TMB": opens the BMR calculator over the editor. The calculator's sheet is
+    /// attached here, inside the editor's content: attached around the whole editor, it kept the editor
+    /// at the middle height instead of the height of its content.
     private var calculatorLink: some View {
         Button {
             isFieldFocused = false
@@ -201,6 +198,11 @@ struct MetricEditorSheet: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("metric.editor.bmr")
+        .sheet(isPresented: $isCalculating, onDismiss: finishCalculation) {
+            BMRCalculatorSheet { goal in
+                calculatedGoal = goal
+            }
+        }
     }
 
     /// Once the calculator is gone: a goal used there closes the editor too, without saving its field.
