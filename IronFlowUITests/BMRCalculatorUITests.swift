@@ -59,9 +59,10 @@ final class BMRCalculatorUITests: IronFlowUITestCase {
         XCTAssertEqual(use.label, "Usar 2.150 kcal como meta")
         use.tap()
         XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Editor not closed")
+        // The notice stays 2,5 s and comes while both sheets close: its text is checked as soon as it
+        // shows, not after the closing ends.
         let toast = app.staticTexts["toast"]
-        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice after using the goal")
-        XCTAssertEqual(toast.label, "Meta de 2.150 kcal salva")
+        XCTAssertTrue(waitForLabel(of: toast, toBe: "Meta de 2.150 kcal salva", timeout: 5), "No notice after using the goal")
         let card = app.buttons["home.metric.dailyCalorieGoal"]
         XCTAssertTrue(card.label.contains("2.150 kcal"), "Goal: \(card.label)")
     }
