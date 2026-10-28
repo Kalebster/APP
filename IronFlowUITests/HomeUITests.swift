@@ -139,8 +139,8 @@ final class HomeUITests: IronFlowUITestCase {
 
         app.buttons["metric.editor.save"].tap()
         let toast = app.staticTexts["toast"]
-        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice after saving")
-        XCTAssertEqual(toast.label, "Altura salva")
+        // A notice stays 2,5 s: its text is checked as soon as it shows.
+        XCTAssertTrue(waitForLabel(of: toast, toBe: "Altura salva", timeout: 5), "No notice after saving")
         XCTAssertTrue(card("height", in: app).label.contains("250 cm"), "Height: \(card("height", in: app).label)")
 
         // The weight steps 0,1 kg from 70,0 kg, and the goal 50 kcal from 2.000 kcal.
@@ -159,8 +159,7 @@ final class HomeUITests: IronFlowUITestCase {
         app.buttons["metric.editor.minus"].tap()
         XCTAssertTrue(field.waitForValue("1.950"), "Field holds \(String(describing: field.value))")
         app.buttons["metric.editor.save"].tap()
-        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice after saving the goal")
-        XCTAssertEqual(toast.label, "Meta salva")
+        XCTAssertTrue(waitForLabel(of: toast, toBe: "Meta salva", timeout: 5), "No notice after saving the goal")
         XCTAssertTrue(card("dailyCalorieGoal", in: app).label.contains("1.950 kcal"), "Goal: \(card("dailyCalorieGoal", in: app).label)")
     }
 

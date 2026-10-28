@@ -68,9 +68,9 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
 
         // A computed indicator says what it is.
         month.tap()
+        // A notice stays 2,5 s: its text is checked as soon as it shows.
         let toast = app.staticTexts["toast"]
-        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice")
-        XCTAssertEqual(toast.label, "Treinos concluídos em \(monthName)")
+        XCTAssertTrue(waitForLabel(of: toast, toBe: "Treinos concluídos em \(monthName)", timeout: 5), "No notice")
     }
 
     /// The TMB card opens the calculator; the last workout's card says what it is.
@@ -100,8 +100,7 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
 
         card("lastWorkout", in: app).tap()
         let toast = app.staticTexts["toast"]
-        XCTAssertTrue(toast.waitForExistence(timeout: 5), "No notice")
-        XCTAssertEqual(toast.label, "O último treino concluído")
+        XCTAssertTrue(waitForLabel(of: toast, toBe: "O último treino concluído", timeout: 5), "No notice")
     }
 
     @MainActor
