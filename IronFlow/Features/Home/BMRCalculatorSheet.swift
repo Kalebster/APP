@@ -300,7 +300,9 @@ struct BMRCalculatorSheet: View {
                 case .success(let values):
                     VStack(spacing: 12) {
                         ViewThatFits(in: .horizontal) {
+                            // The three boxes share the height of the tallest one.
                             HStack(spacing: 8) { resultBoxes(values) }
+                                .fixedSize(horizontal: false, vertical: true)
                             VStack(spacing: 8) { resultBoxes(values) }
                         }
                         Text(Self.resultNote(for: goal))
@@ -374,9 +376,9 @@ struct BMRCalculatorSheet: View {
                 .foregroundStyle(Theme.Colors.highlightSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 10)
         .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.Colors.selectedCardBackground, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: label)): \(number) kcal"))
