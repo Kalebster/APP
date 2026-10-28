@@ -220,4 +220,15 @@ enum SessionFormatting {
     private static func monthAbbreviation(_ month: Int) -> String {
         monthAbbreviations.indices.contains(month - 1) ? monthAbbreviations[month - 1] : ""
     }
+
+    /// The whole name of `month` (1 = January), in lowercase: "maio", "outubro"; empty for no month.
+    static func monthName(_ month: Int) -> String {
+        monthNames.indices.contains(month - 1) ? monthNames[month - 1] : ""
+    }
+
+    private static let monthNames: [String] = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        return calendar.standaloneMonthSymbols.map { $0.lowercased(with: locale) }
+    }()
 }

@@ -32,7 +32,9 @@ import SwiftData
 ///   for 8–10 and a failure set of 55 kg for 8–12;
 /// - `weights:<kg>@<days ago>|<kg>@<days ago>`: body weights measured that many days ago, at this time
 ///   of day ("81.2@14|80.6@7"), with a decimal point;
-/// - `profile:<height cm>:<calorie goal kcal>`: the height and the daily calorie goal.
+/// - `profile:<height cm>:<calorie goal kcal>`: the height and the daily calorie goal;
+/// - `bmr:<sex>:<age>:<goal>`: the calculator's choices: the sex and goal by storage key ("male",
+///   "lose"), and a date of birth on 1 January that gives that age in full years today.
 @MainActor
 enum UITestSeed {
     /// A body weight of `weights`.
@@ -54,6 +56,7 @@ enum UITestSeed {
         case setTypes(workout: String)
         case weights([WeightRecord])
         case profile(heightCm: Int, goalKcal: Int)
+        case bmr(sex: BiologicalSex, age: Int, goal: WeightGoal)
     }
 
     /// The planned sets of `set-types`, in order.
@@ -147,6 +150,11 @@ enum UITestSeed {
             case ("profile", 3):
                 guard let heightCm = Int(parts[1]), let goalKcal = Int(parts[2]) else { throw SeedError.unknownItem(String(token)) }
                 return .profile(heightCm: heightCm, goalKcal: goalKcal)
+            case ("bmr", 4):
+                guard let sex = BiologicalSex(rawValue: String(parts[1])),
+                      let age = Int(parts[2]), age >= 0,
+                      let goal = WeightGoal(rawValue: String(parts[3])) else { throw SeedError.unknownItem(String(token)) }
+                return .bmr(sex: sex, age: age, goal: goal)
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -247,6 +255,12 @@ enum UITestSeed {
                 let service = ProfileService(context: context)
                 try service.setHeight(heightCm)
                 try service.setDailyCalorieGoal(goalKcal)
+            case .bmr(let sex, let age, let goal):
+                let service = ProfileService(context: context)
+                let year = TrainingDay.calendar.component(.year, from: .now) - age
+                try service.setSex(sex)
+                try service.setBirthDate(BirthDate(day: 1, month: 1, year: year))
+                try service.setWeightGoal(goal)
             }
         }
     }

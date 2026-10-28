@@ -24,7 +24,7 @@ final class HomeUITests: IronFlowUITestCase {
 
     /// Taps the editor's field at its right edge and waits until it has keyboard focus: typing never
     /// counts on the field opening active (on a busy simulator it was not yet, and the keys were
-    /// refused). The value is aligned right and ends at that edge, so the cursor lands after it.
+    /// refused). Past the end of the centered value, the cursor lands after it.
     @MainActor
     private func focusEditorField(_ field: XCUIElement) {
         field.tapAndWaitForKeyboardFocus(at: CGVector(dx: 0.99, dy: 0.5))

@@ -17,7 +17,7 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push,weights:81.2@14|80.6@7|80@2,profile:180:2300")
+        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push,weights:81.2@14|80.6@7|80@2,profile:180:2300,bmr:male:30:lose")
 
         #expect(items == [
             .workout(name: "Push", exercises: ["Crossover na Polia Alta", "Barra Fixa Pronada"]),
@@ -37,6 +37,7 @@ struct UITestSeedTests {
                 UITestSeed.WeightRecord(weightKg: 80, daysAgo: 2),
             ]),
             .profile(heightCm: 180, goalKcal: 2_300),
+            .bmr(sex: .male, age: 30, goal: .lose),
         ])
     }
 
@@ -45,23 +46,30 @@ struct UITestSeedTests {
         for list in ["unknown:1", "workout", "finished:Push", "finished:Push:0", "finished:Push:many", "plan-today", "open-session",
                      "plan:Push", "plan:Push:0", "plan:Push:8", "plan:Push:segunda", "finished-today", "last-time",
                      "custom-exercise:Meu Supino", "custom-exercise:Meu Supino:peito", "set-types", "set-types:Push:1",
-                     "weights", "weights:", "weights:80", "weights:abc@1", "weights:80@-1", "profile:180", "profile:alto:2300"] {
+                     "weights", "weights:", "weights:80", "weights:abc@1", "weights:80@-1", "profile:180", "profile:alto:2300",
+                     "bmr:male:30", "bmr:homem:30:lose", "bmr:male:trinta:lose", "bmr:male:30:perder", "bmr:male:-1:lose"] {
             #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
         }
     }
 
-    @Test("Body weights are recorded on their days, and the profile gets its height and goal")
+    @Test("Body weights are recorded on their days, and the profile gets its height, goal and calculator's choices")
     func createsBodyData() throws {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("weights:81.2@14|80.6@7|80@0,profile:180:2300"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("weights:81.2@14|80.6@7|80@0,profile:180:2300,bmr:female:30:gain"), in: context)
 
         let weights = try context.fetch(ProfileService.recentWeightsDescriptor)
         #expect(weights.map(\.weightKg) == [80, 80.6, 81.2])
         let profile = try #require(try ProfileService(context: context).profile())
         #expect(profile.heightCm == 180)
         #expect(profile.dailyCalorieGoalKcal == 2_300)
+        #expect(profile.sex == .female)
+        let thisYear = TrainingDay.calendar.component(.year, from: .now)
+        #expect(profile.birthDate == BirthDate(day: 1, month: 1, year: thisYear - 30))
+        #expect(BMRCalculator.age(of: profile.birthDate, on: .now, calendar: TrainingDay.calendar) == 30)
+        #expect(profile.weightGoal == .gain)
+        #expect(profile.activityLevel == .moderate)
     }
 
     @Test("A workout comes with its exercises in order, each with the default planned sets")

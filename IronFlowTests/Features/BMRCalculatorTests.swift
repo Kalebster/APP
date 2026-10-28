@@ -201,6 +201,23 @@ struct BMRCalculatorTests {
         ))
     }
 
+    @Test("The calculator's texts: the data it uses, what the values are and the notice of the goal used")
+    @MainActor
+    func sheetTexts() {
+        let intro = "A taxa metabólica basal é o quanto o seu corpo gasta parado."
+        #expect(BMRCalculatorSheet.introduction(weightKg: 80, heightCm: 180) == "\(intro) Usamos o seu peso (80 kg) e a sua altura (180 cm).")
+        #expect(BMRCalculatorSheet.introduction(weightKg: 80.5, heightCm: 175) == "\(intro) Usamos o seu peso (80,5 kg) e a sua altura (175 cm).")
+        #expect(BMRCalculatorSheet.introduction(weightKg: 80, heightCm: nil) == "\(intro) Usamos o seu peso e a sua altura.")
+        #expect(BMRCalculatorSheet.introduction(weightKg: nil, heightCm: 180) == "\(intro) Usamos o seu peso e a sua altura.")
+        #expect(WeightGoal.allCases.map { String(localized: BMRCalculatorSheet.resultNote(for: $0)) } == [
+            "Valores em kcal por dia · meta para perder peso (\u{2212}400 kcal por dia)",
+            "Valores em kcal por dia · meta para manter o peso",
+            "Valores em kcal por dia · meta para ganhar massa (+300 kcal por dia)",
+        ])
+        #expect(BMRCalculatorSheet.goalSavedMessage(2_360) == "Meta de 2.360 kcal salva")
+        #expect(BMRCalculatorSheet.goalSavedMessage(800) == "Meta de 800 kcal salva")
+    }
+
     // MARK: - Support
 
     static func calendar(_ identifier: String) -> Calendar {

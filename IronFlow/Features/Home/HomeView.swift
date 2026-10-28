@@ -99,6 +99,8 @@ struct HomeView: View {
                 try save(value, for: metric)
             } onSaved: {
                 toast = ToastMessage(String(localized: metric.savedMessage))
+            } onCalculatedGoal: { goal in
+                toast = ToastMessage(BMRCalculatorSheet.goalSavedMessage(goal))
             }
         }
         .sheet(isPresented: $isCustomizing) {

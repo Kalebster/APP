@@ -151,6 +151,12 @@
     "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
 
     },
+    "A taxa metabólica basal é o quanto o seu corpo gasta parado. Usamos o seu peso (%@) e a sua altura (%@)." : {
+
+    },
+    "A taxa metabólica basal é o quanto o seu corpo gasta parado. Usamos o seu peso e a sua altura." : {
+
+    },
     "Abdômen" : {
 
     },
@@ -194,6 +200,9 @@
 
     },
     "Anilha" : {
+
+    },
+    "Ano" : {
 
     },
     "Antebraços" : {
@@ -245,6 +254,12 @@
 
     },
     "Cada novo peso fica registrado com a data de hoje." : {
+
+    },
+    "Calcular pela minha TMB" : {
+
+    },
+    "Calcular TMB" : {
 
     },
     "Cancelar" : {
@@ -313,6 +328,9 @@
     "Crie um treino para programar a semana." : {
 
     },
+    "Data de nascimento" : {
+
+    },
     "Descanso" : {
 
     },
@@ -335,6 +353,9 @@
 
     },
     "Desmarcar série %lld" : {
+
+    },
+    "Dia" : {
 
     },
     "dia futuro" : {
@@ -460,6 +481,9 @@
     "Faltam %lld para fechar a semana" : {
 
     },
+    "Fechar" : {
+
+    },
     "Fechar %@" : {
 
     },
@@ -473,6 +497,9 @@
 
     },
     "Ganhar" : {
+
+    },
+    "gasto do dia" : {
 
     },
     "Glúteos" : {
@@ -599,6 +626,9 @@
     "meta %lld–%lld reps" : {
 
     },
+    "Meta de %@ kcal salva" : {
+
+    },
     "Meta diária" : {
 
     },
@@ -606,6 +636,9 @@
 
     },
     "Meta salva" : {
+
+    },
+    "meta sugerida" : {
 
     },
     "Meta: %@" : {
@@ -645,6 +678,9 @@
 
     },
     "Máximo de repetições da série %lld" : {
+
+    },
+    "Mês" : {
 
     },
     "mín" : {
@@ -710,6 +746,9 @@
     "Não é possível marcar um dia que ainda não chegou." : {
 
     },
+    "Nível de atividade" : {
+
+    },
     "O exercício precisa ter pelo menos 1 série." : {
 
     },
@@ -732,6 +771,9 @@
 
     },
     "O treino não tem exercícios." : {
+
+    },
+    "Objetivo" : {
 
     },
     "OK" : {
@@ -866,6 +908,9 @@
     "Reps" : {
 
     },
+    "Resultado" : {
+
+    },
     "Resumo rápido" : {
 
     },
@@ -920,6 +965,9 @@
     "Seus treinos concluídos aparecerão aqui." : {
 
     },
+    "Sexo" : {
+
+    },
     "Sexta" : {
 
     },
@@ -954,6 +1002,9 @@
 
     },
     "Tipos de série: %@" : {
+
+    },
+    "TMB" : {
 
     },
     "Todos" : {
@@ -1004,10 +1055,22 @@
     "Usar %@" : {
 
     },
+    "Usar %@ kcal como meta" : {
+
+    },
     "Usar agora" : {
 
     },
     "Use no máximo 2 casas decimais." : {
+
+    },
+    "Valores em kcal por dia · meta para ganhar massa (+300 kcal por dia)" : {
+
+    },
+    "Valores em kcal por dia · meta para manter o peso" : {
+
+    },
+    "Valores em kcal por dia · meta para perder peso (−400 kcal por dia)" : {
 
     },
     "Ver tudo" : {
@@ -1017,6 +1080,9 @@
 
     },
     "Válida" : {
+
+    },
+    "É uma estimativa pela fórmula de Mifflin-St Jeor. Para um plano sob medida, procure um nutricionista." : {
 
     },
     "Última" : {

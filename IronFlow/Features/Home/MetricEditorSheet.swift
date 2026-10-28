@@ -7,13 +7,16 @@ import SwiftUI
 ///
 /// `onSave` receives the checked value; when it throws, the sheet stays open and shows the error.
 /// An unchanged value closes the sheet without saving, unless `savesUnchangedValue` is set. `onSaved`
-/// is called whenever "Salvar" closes the sheet.
+/// is called whenever "Salvar" closes the sheet. With `onCalculatedGoal`, the calorie goal links to the
+/// BMR calculator: "Fechar" there comes back here, and a goal used there closes both sheets and is
+/// passed to `onCalculatedGoal`.
 struct MetricEditorSheet: View {
     let metric: BodyMetric
     let initialValue: Double?
     let savesUnchangedValue: Bool
     let onSave: @MainActor (Double) throws -> Void
     let onSaved: @MainActor () -> Void
+    let onCalculatedGoal: (@MainActor (Int) -> Void)?
 
     /// The latest body weights, the newest first: the "ÚLTIMOS REGISTROS" of the weight.
     @Query(ProfileService.recentWeightsDescriptor) private var recentWeights: [BodyWeightEntry]
@@ -24,6 +27,9 @@ struct MetricEditorSheet: View {
     @State private var errorMessage: String?
     /// Set by a successful save, so a second tap while the sheet closes saves nothing.
     @State private var isSaved = false
+    @State private var isCalculating = false
+    /// The goal saved by the BMR calculator, handed on once the calculator is gone.
+    @State private var calculatedGoal: Int?
     @FocusState private var isFieldFocused: Bool
 
     @ScaledMetric(relativeTo: .body) private var stepSide: CGFloat = 56
@@ -37,13 +43,15 @@ struct MetricEditorSheet: View {
         initialValue: Double?,
         savesUnchangedValue: Bool = false,
         onSave: @escaping @MainActor (Double) throws -> Void,
-        onSaved: @escaping @MainActor () -> Void = {}
+        onSaved: @escaping @MainActor () -> Void = {},
+        onCalculatedGoal: (@MainActor (Int) -> Void)? = nil
     ) {
         self.metric = metric
         self.initialValue = initialValue
         self.savesUnchangedValue = savesUnchangedValue
         self.onSave = onSave
         self.onSaved = onSaved
+        self.onCalculatedGoal = onCalculatedGoal
         _text = State(initialValue: HomeSummary.fieldText(initialValue, for: metric))
     }
 
@@ -55,6 +63,9 @@ struct MetricEditorSheet: View {
                     .accessibilityAddTraits(.isHeader)
                 valueRow
                 message
+                if metric == .dailyCalorieGoal, onCalculatedGoal != nil {
+                    calculatorLink
+                }
                 if metric == .bodyWeight, !recentWeights.isEmpty {
                     records
                 }
@@ -70,6 +81,11 @@ struct MetricEditorSheet: View {
         }
         .onChange(of: text) {
             errorMessage = nil
+        }
+        .sheet(isPresented: $isCalculating, onDismiss: finishCalculation) {
+            BMRCalculatorSheet { goal in
+                calculatedGoal = goal
+            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -178,6 +194,32 @@ struct MetricEditorSheet: View {
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, minHeight: messageHeight, alignment: .top)
+    }
+
+    /// "Calcular pela minha TMB": opens the BMR calculator over the editor.
+    private var calculatorLink: some View {
+        Button {
+            isFieldFocused = false
+            calculatedGoal = nil
+            isCalculating = true
+        } label: {
+            Text("Calcular pela minha TMB")
+                .scaledFont(15, weight: .semibold)
+                .foregroundStyle(Theme.Colors.lightAccent)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("metric.editor.bmr")
+    }
+
+    /// Once the calculator is gone: a goal used there closes the editor too, without saving its field.
+    private func finishCalculation() {
+        guard let goal = calculatedGoal, !isSaved else { return }
+        calculatedGoal = nil
+        isSaved = true
+        onCalculatedGoal?(goal)
+        dismiss()
     }
 
     // MARK: - Records
