@@ -97,7 +97,7 @@ struct SheetButton: View {
 
 /// A sheet as tall as what it shows: its scrolling content and the buttons kept at its bottom (when it
 /// has them) are measured, and the sheet takes their height, never leaving empty space below. Content
-/// taller than the screen (the largest text sizes, a long calculator) gets the tallest sheet and
+/// taller than the tallest sheet (the largest text sizes, the calculator) gets the tallest sheet and
 /// scrolls, so nothing is cut.
 struct FittedSheet<Content: View, Bottom: View>: View {
     private let content: Content
@@ -105,9 +105,13 @@ struct FittedSheet<Content: View, Bottom: View>: View {
 
     @State private var contentHeight: CGFloat?
     @State private var bottomHeight: CGFloat?
-    /// The sheet's only height: the middle one until the content is measured, then the content's. It is
-    /// also the selected one: a sheet already open stays where it is when only its heights change.
-    @State private var detent = PresentationDetent.medium
+    /// The room of the tallest sheet, measured while the sheet has that height.
+    @State private var largeHeight: CGFloat?
+    /// The sheet's only height: the tallest until the content is measured, then the content's when it
+    /// fits. It is also the selected one: a sheet already open stays where it is when only its heights
+    /// change. A height above the tallest is never asked for: the system shortens the sheet, but its
+    /// content then scrolls past its end.
+    @State private var detent = PresentationDetent.large
 
     init(@ViewBuilder content: () -> Content, @ViewBuilder bottom: () -> Bottom) {
         self.content = content()
@@ -141,16 +145,24 @@ struct FittedSheet<Content: View, Bottom: View>: View {
                     fit()
                 }
         }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.height
+        } action: { height in
+            guard detent == .large else { return }
+            largeHeight = height
+            fit()
+        }
         .presentationDetents([detent], selection: $detent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Theme.Colors.cardBackground)
     }
 
-    /// Takes the height of the content and the buttons once both are measured; the system keeps it within
-    /// the screen.
+    /// Takes the height of the content and the buttons once they and the room of the tallest sheet are
+    /// measured; content that does not fit keeps the tallest sheet.
     private func fit() {
-        guard let contentHeight, let bottomHeight else { return }
-        detent = .height((contentHeight + bottomHeight).rounded(.up))
+        guard let contentHeight, let bottomHeight, let largeHeight else { return }
+        let height = (contentHeight + bottomHeight).rounded(.up)
+        detent = height < largeHeight ? .height(height) : .large
     }
 }
 
