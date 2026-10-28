@@ -105,6 +105,9 @@ struct FittedSheet<Content: View, Bottom: View>: View {
 
     @State private var contentHeight: CGFloat?
     @State private var bottomHeight: CGFloat?
+    /// The sheet's only height: the middle one until the content is measured, then the content's. It is
+    /// also the selected one: a sheet already open stays where it is when only its heights change.
+    @State private var detent = PresentationDetent.medium
 
     init(@ViewBuilder content: () -> Content, @ViewBuilder bottom: () -> Bottom) {
         self.content = content()
@@ -125,6 +128,7 @@ struct FittedSheet<Content: View, Bottom: View>: View {
                     proxy.size.height
                 } action: { height in
                     contentHeight = height
+                    fit()
                 }
         }
         .scrollBounceBehavior(.basedOnSize)
@@ -134,18 +138,19 @@ struct FittedSheet<Content: View, Bottom: View>: View {
                     proxy.size.height
                 } action: { height in
                     bottomHeight = height
+                    fit()
                 }
         }
-        .presentationDetents(detents)
+        .presentationDetents([detent], selection: $detent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Theme.Colors.cardBackground)
     }
 
-    /// The content's height once it is measured; the system keeps it within the screen. Until then, the
-    /// middle height.
-    private var detents: Set<PresentationDetent> {
-        guard let contentHeight, let bottomHeight else { return [.medium] }
-        return [.height((contentHeight + bottomHeight).rounded(.up))]
+    /// Takes the height of the content and the buttons once both are measured; the system keeps it within
+    /// the screen.
+    private func fit() {
+        guard let contentHeight, let bottomHeight else { return }
+        detent = .height((contentHeight + bottomHeight).rounded(.up))
     }
 }
 
