@@ -173,7 +173,6 @@ struct HomeSummaryTests {
         // A number beyond the limits is the start too: a step brings it back within them.
         #expect(MetricEditing.base(of: .bodyWeight, text: "500", saved: 80) == 500)
     }
-    }
 
     @Test("ÚLTIMOS REGISTROS: the date, the value and the change from the record below; the oldest has none")
     func weightRecords() throws {
