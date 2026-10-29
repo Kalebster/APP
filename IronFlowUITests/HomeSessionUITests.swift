@@ -12,7 +12,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
         // Without workouts there is nothing to choose: only the free workout is offered.
         let startFree = app.buttons["home.startFree"]
         XCTAssertTrue(startFree.waitForExistence(timeout: 10), "No Iniciar treino livre")
-        XCTAssertFalse(app.buttons["home.chooseWorkout"].exists, "Escolher um treino shown without workouts")
+        XCTAssertFalse(app.buttons["home.chooseWorkout"].exists, "Escolher treino shown without workouts")
         attachScreenshot(named: "30-home-actions-no-workouts", of: app)
 
         startFree.tap()
@@ -44,7 +44,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
         let app = launchOnHome(seed: ["workout:Push:Barra Fixa Pronada"])
 
         let choose = app.buttons["home.chooseWorkout"]
-        XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher um treino")
+        XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher treino")
         XCTAssertTrue(app.buttons["home.startFree"].exists, "No Iniciar treino livre")
         attachScreenshot(named: "31-home-actions", of: app)
 
@@ -65,7 +65,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
         // In progress, the card only continues; the bar is not shown on the Home but is on the other tabs.
         let resume = app.buttons["home.continue"]
         XCTAssertTrue(resume.waitForExistence(timeout: 10), "No Continuar")
-        XCTAssertFalse(app.buttons["home.chooseWorkout"].exists, "Escolher um treino shown during a session")
+        XCTAssertFalse(app.buttons["home.chooseWorkout"].exists, "Escolher treino shown during a session")
         XCTAssertFalse(app.buttons["home.startFree"].exists, "Iniciar treino livre shown during a session")
         XCTAssertFalse(app.buttons["session.bar"].exists, "Session bar shown on the Home")
         attachScreenshot(named: "51-home-in-progress", of: app)
@@ -85,7 +85,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
         let app = launchOnHome(seed: ["workout:Vazio"])
 
         let choose = app.buttons["home.chooseWorkout"]
-        XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher um treino")
+        XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher treino")
         choose.tap()
         let workout = app.buttons.matching(identifier: "workoutPicker.workout").firstMatch
         XCTAssertTrue(workout.waitForExistence(timeout: 10), "Workout picker not shown")

@@ -1,38 +1,107 @@
 import Foundation
 
-/// An indicator that can be shown in the Home "Resumo rápido".
+/// An indicator that can be shown in the Home "Resumo rápido". The raw value is the key kept in the
+/// app preferences, so the indicators of earlier versions keep theirs. The order of the cases is the
+/// order of Personalizar: the workout indicators first, then those of the body.
 enum SummaryMetric: String, CaseIterable, Identifiable, Sendable {
+    case monthWorkouts
+    case streak
+    case weekVolume
+    case weekTime
+    case lastWorkout
     case bodyWeight
     case height
     case dailyCalorieGoal
+    case bmr
+    case weightChange
 
-    var id: String { rawValue }
+    /// The groups of Personalizar.
+    enum Category: CaseIterable, Sendable {
+        case training
+        case body
 
-    /// The full name: in Personalizar and for VoiceOver.
-    var title: LocalizedStringResource {
-        switch self {
-        case .bodyWeight: "Peso corporal"
-        case .height: "Altura"
-        case .dailyCalorieGoal: "Meta diária"
+        var title: LocalizedStringResource {
+            switch self {
+            case .training: "Treino"
+            case .body: "Corpo"
+            }
         }
     }
 
-    /// The short name under the value of a summary card.
-    var cardTitle: LocalizedStringResource {
+    var id: String { rawValue }
+
+    var category: Category {
         switch self {
+        case .monthWorkouts, .streak, .weekVolume, .weekTime, .lastWorkout: .training
+        case .bodyWeight, .height, .dailyCalorieGoal, .bmr, .weightChange: .body
+        }
+    }
+
+    /// The name: in Personalizar and for VoiceOver.
+    var title: LocalizedStringResource {
+        switch self {
+        case .monthWorkouts: "Treinos no mês"
+        case .streak: "Sequência"
+        case .weekVolume: "Kg na semana"
+        case .weekTime: "Tempo na semana"
+        case .lastWorkout: "Último treino"
         case .bodyWeight: "Peso"
         case .height: "Altura"
-        case .dailyCalorieGoal: "kcal / dia"
+        case .dailyCalorieGoal: "Meta de calorias"
+        case .bmr: "TMB"
+        case .weightChange: "Variação do peso"
         }
     }
 
     var systemImage: String {
         switch self {
+        case .monthWorkouts: "calendar"
+        case .streak: "medal"
+        case .weekVolume: "dumbbell"
+        case .weekTime: "stopwatch"
+        case .lastWorkout: "clock.arrow.circlepath"
         case .bodyWeight: "scalemass"
         case .height: "ruler"
         case .dailyCalorieGoal: "flame"
+        case .bmr: "waveform.path.ecg"
+        case .weightChange: "chart.line.uptrend.xyaxis"
         }
     }
+
+    /// The body data value the card edits; `nil` for the indicators that are computed.
+    var bodyMetric: BodyMetric? {
+        switch self {
+        case .bodyWeight: .bodyWeight
+        case .height: .height
+        case .dailyCalorieGoal: .dailyCalorieGoal
+        default: nil
+        }
+    }
+
+    /// What a tap on the card does: Peso, Altura and Meta open their editor, TMB opens the calculator,
+    /// and the others say what the value is. `month` (1 to 12) names the month's workouts.
+    func cardAction(month: Int) -> SummaryCardAction {
+        switch self {
+        case .bodyWeight: .edit(.bodyWeight)
+        case .height: .edit(.height)
+        case .dailyCalorieGoal: .edit(.dailyCalorieGoal)
+        case .bmr: .calculateBMR
+        case .monthWorkouts: .explain(SummaryIndicators.monthWorkoutsExplanation(month: month))
+        case .streak: .explain(String(localized: "Semanas seguidas em que você bateu a meta da programação"))
+        case .weekVolume: .explain(String(localized: "Soma das séries válidas e de falha desta semana"))
+        case .weekTime: .explain(String(localized: "Tempo dos treinos concluídos nesta semana"))
+        case .lastWorkout: .explain(String(localized: "O último treino concluído"))
+        case .weightChange: .explain(String(localized: "Calculado com os seus registros de peso"))
+        }
+    }
+}
+
+/// What a tap on a card of the "Resumo rápido" does.
+enum SummaryCardAction: Equatable, Sendable {
+    case edit(BodyMetric)
+    case calculateBMR
+    /// Shows this notice.
+    case explain(String)
 }
 
 /// The Home quick summary: which indicators are shown, how values are shown and how typed
@@ -94,31 +163,39 @@ enum HomeSummary {
         "\(kcal.formatted(.number.locale(locale))) kcal"
     }
 
-    /// A value as a summary card shows it: the number large and the unit small beside it ("80" and
-    /// "kg", "180" and "cm"); the calorie goal has no unit there, its card's name says "kcal / dia".
-    static func cardValue(of metric: SummaryMetric, value: Double) -> (number: String, unit: String?) {
+    /// A number in the Brazilian format, with up to two decimals: "20", "8.000", "80,5", "80,25".
+    static func number(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...2)).locale(locale))
+    }
+
+    /// The value as the editor's field shows it ("80,5", "180", "2.300"); empty when there is none.
+    static func fieldText(_ value: Double?, for metric: BodyMetric) -> String {
+        guard let value else { return "" }
         switch metric {
-        // The number of `weightText`: up to two decimals with a comma.
-        case .bodyWeight: (value.formatted(.number.precision(.fractionLength(0...2)).locale(locale)), "kg")
-        case .height: (Int(value).formatted(.number.locale(locale)), "cm")
-        case .dailyCalorieGoal: (Int(value).formatted(.number.locale(locale)), nil)
+        case .bodyWeight: return PlannedSetFormatting.weightFieldText(value)
+        case .height: return Int(value.rounded()).formatted(.number.grouping(.never).locale(locale))
+        case .dailyCalorieGoal: return Int(value.rounded()).formatted(.number.locale(locale))
         }
     }
 
-    /// The value as it is typed in the editor ("80,5", "180", "2300"); empty when there is none.
-    static func fieldText(_ value: Double?) -> String {
-        PlannedSetFormatting.weightFieldText(value)
-    }
-
     /// Reads and checks a typed value for `metric`. Returns `nil` for an empty field; throws the
-    /// metric's validation error for anything that is not an allowed value.
-    static func value(for metric: SummaryMetric, text: String) throws -> Double? {
+    /// metric's validation error for anything that is not an allowed value, and `tooManyDecimals` for
+    /// a weight with three or more decimals ("80,500"), never read as another number.
+    static func value(for metric: BodyMetric, text: String) throws -> Double? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         switch metric {
         case .bodyWeight:
-            // The same number reading as the load of a planned set (decimal comma or dot).
-            guard let weightKg = try? PlannedSetFormatting.weightKg(trimmed) else { throw ValidationError.invalidBodyWeight }
+            let weightKg: Double
+            do {
+                // The same reading as every field of kilograms (decimal comma or dot).
+                guard let typed = try PlannedSetFormatting.weightKg(trimmed) else { return nil }
+                weightKg = typed
+            } catch ValidationError.tooManyDecimals {
+                throw ValidationError.tooManyDecimals
+            } catch {
+                throw ValidationError.invalidBodyWeight
+            }
             try Validation.bodyWeight(weightKg)
             return weightKg
         case .height:
@@ -126,10 +203,72 @@ enum HomeSummary {
             try Validation.height(heightCm)
             return Double(heightCm)
         case .dailyCalorieGoal:
-            guard let kcal = PlannedSetFormatting.reps(trimmed) else { throw ValidationError.invalidCalorieGoal }
+            guard let kcal = wholeNumber(trimmed) else { throw ValidationError.invalidCalorieGoal }
             try Validation.dailyCalorieGoal(kcal)
             return Double(kcal)
         }
+    }
+
+    /// The number a field of `metric` holds, read without checking its limits, for − and + to start
+    /// from; `nil` when the field is empty or cannot be read.
+    static func typedNumber(_ text: String, for metric: BodyMetric) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch metric {
+        case .bodyWeight: return try? PlannedSetFormatting.weightKg(trimmed)
+        case .height: return PlannedSetFormatting.reps(trimmed).map(Double.init)
+        case .dailyCalorieGoal: return wholeNumber(trimmed).map(Double.init)
+        }
+    }
+
+    /// A whole number typed with or without the dots of the thousands ("2300", "2.300"); `nil` for
+    /// anything else, such as a dot out of place ("2.30").
+    static func wholeNumber(_ text: String) -> Int? {
+        if let plain = PlannedSetFormatting.reps(text) {
+            return plain
+        }
+        let groups = text.split(separator: ".", omittingEmptySubsequences: false)
+        guard groups.count > 1,
+              let first = groups.first, (1...3).contains(first.count),
+              groups.dropFirst().allSatisfy({ $0.count == 3 }) else { return nil }
+        return PlannedSetFormatting.reps(groups.joined())
+    }
+
+    // MARK: - Body weight records
+
+    /// A body weight record of the editor's "ÚLTIMOS REGISTROS".
+    struct WeightRecordRow: Equatable, Identifiable {
+        let id: UUID
+        /// "Ter, 14 out".
+        let dateText: String
+        /// "80 kg", "80,6 kg".
+        let valueText: String
+        /// The change from the record below it, with its sign: "−0,6", "+0,4", "0"; `nil` for the last
+        /// (oldest) record of the list.
+        let changeText: String?
+    }
+
+    /// The rows of `entries`, the newest first as they come. Each shows its change from the next
+    /// (older) one; the oldest of the list shows none.
+    static func weightRecordRows(_ entries: [BodyWeightEntry], now: Date, calendar: Calendar) -> [WeightRecordRow] {
+        entries.indices.map { index in
+            let entry = entries[index]
+            let older = entries.indices.contains(index + 1) ? entries[index + 1] : nil
+            return WeightRecordRow(
+                id: entry.id,
+                dateText: SessionFormatting.weekdayDateText(entry.measuredAt, now: now, calendar: calendar),
+                valueText: weightText(entry.weightKg),
+                changeText: older.map { signedNumber(entry.weightKg - $0.weightKg) }
+            )
+        }
+    }
+
+    /// A change with its sign and the typographic minus: "−0,6", "+1,25", "0". Rounded to hundredths,
+    /// so the remainder of binary arithmetic never shows.
+    static func signedNumber(_ value: Double) -> String {
+        let hundredths = (value * 100).rounded()
+        guard hundredths != 0 else { return "0" }
+        let text = number(abs(hundredths) / 100)
+        return hundredths < 0 ? "\u{2212}\(text)" : "+\(text)"
     }
 
     // MARK: - Today's workout
@@ -236,7 +375,7 @@ extension TodayWorkoutState {
 /// What the "Treino de hoje" block says in each state: the badge, the title, the line under it, the
 /// muscle group chips and what VoiceOver reads for all of it.
 struct TodayWorkoutContent: Equatable {
-    /// "Programado", "Em andamento" or "Concluído"; none without a workout for today.
+    /// "Programado", "Em andamento", "Concluído" or, on a rest day, "Livre"; none without workouts.
     let badge: String?
     let title: String
     let subtitle: String
@@ -285,9 +424,9 @@ struct TodayWorkoutContent: Equatable {
             chips = []
             accessibilityText = "\(title). \(subtitle)"
         case .nothingPlanned:
-            badge = nil
-            title = String(localized: "Nada programado")
-            subtitle = String(localized: "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre.")
+            badge = String(localized: "Livre")
+            title = String(localized: "Descanso hoje")
+            subtitle = String(localized: "Nada programado para hoje. Quer treinar mesmo assim?")
             chips = []
             accessibilityText = "\(title). \(subtitle)"
         }

@@ -1,15 +1,23 @@
 import Foundation
 import SwiftData
 
-/// Business rules for the user's body data: body weight history, height and daily calorie goal.
+/// Business rules for the user's body data: body weight history, height, daily calorie goal and the
+/// choices of the BMR calculator.
 @MainActor
 struct ProfileService {
     let context: ModelContext
     let now: @MainActor () -> Date
+    /// The calendar of the days: a body weight is recorded once per day of it.
+    let calendar: Calendar
 
-    init(context: ModelContext, now: @escaping @MainActor () -> Date = { Date.now }) {
+    init(
+        context: ModelContext,
+        now: @escaping @MainActor () -> Date = { Date.now },
+        calendar: Calendar = TrainingDay.calendar
+    ) {
         self.context = context
         self.now = now
+        self.calendar = calendar
     }
 
     /// The most recent body weight measurement, if any.
@@ -31,6 +39,16 @@ struct ProfileService {
         return descriptor
     }
 
+    /// How many records the body weight editor lists ("ÚLTIMOS REGISTROS").
+    nonisolated static var recentWeightsLimit: Int { 4 }
+
+    /// The latest measurements, the newest first, at most `recentWeightsLimit`. Shared with the editor.
+    nonisolated static var recentWeightsDescriptor: FetchDescriptor<BodyWeightEntry> {
+        var descriptor = latestWeightDescriptor
+        descriptor.fetchLimit = recentWeightsLimit
+        return descriptor
+    }
+
     /// The profile in use: the oldest. Shared with the screens that observe it.
     nonisolated static var profileDescriptor: FetchDescriptor<UserProfile> {
         var descriptor = FetchDescriptor<UserProfile>(sortBy: [SortDescriptor(\.createdAt)])
@@ -38,12 +56,31 @@ struct ProfileService {
         return descriptor
     }
 
-    /// Records a new body weight measured now. Earlier measurements are kept as history.
+    /// Records the body weight measured now. A day has one record: when today already has one, it is
+    /// updated (its value and time); otherwise a new record is added. The records of the other days are
+    /// the history and never change. Should today hold more than one (recorded before this rule), the
+    /// latest is the one updated.
     @discardableResult
     func recordWeight(_ weightKg: Double) throws -> BodyWeightEntry {
         try Validation.bodyWeight(weightKg)
 
         let timestamp = now()
+        let day = TrainingDay.dayInterval(of: timestamp, calendar: calendar)
+        let start = day.start
+        let end = day.end
+        var todays = FetchDescriptor<BodyWeightEntry>(
+            predicate: #Predicate { $0.measuredAt >= start && $0.measuredAt < end },
+            sortBy: [SortDescriptor(\.measuredAt, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        todays.fetchLimit = 1
+        if let today = try context.fetch(todays).first {
+            today.weightKg = weightKg
+            today.measuredAt = timestamp
+            today.updatedAt = timestamp
+            try context.saveOrRollback()
+            return today
+        }
+
         let entry = BodyWeightEntry(weightKg: weightKg, measuredAt: timestamp)
         entry.createdAt = timestamp
         entry.updatedAt = timestamp
@@ -68,7 +105,40 @@ struct ProfileService {
         try context.saveOrRollback()
     }
 
+    // MARK: - BMR calculator
+
+    func setSex(_ sex: BiologicalSex) throws {
+        try change { $0.sex = sex }
+    }
+
+    /// Saves the date of birth chosen so far, each part still `nil` until chosen. A day beyond its
+    /// month is saved as the month's last day (31 of April is 30 of April).
+    func setBirthDate(_ birthDate: BirthDate) throws {
+        let date = birthDate.keepingDayInMonth()
+        try change { profile in
+            profile.birthDay = date.day
+            profile.birthMonth = date.month
+            profile.birthYear = date.year
+        }
+    }
+
+    func setActivityLevel(_ level: ActivityLevel) throws {
+        try change { $0.activityLevel = level }
+    }
+
+    func setWeightGoal(_ goal: WeightGoal) throws {
+        try change { $0.weightGoal = goal }
+    }
+
     // MARK: - Private
+
+    /// Applies `update` to the profile, created on the first change, and saves it.
+    private func change(_ update: (UserProfile) -> Void) throws {
+        let profile = try profileForChange()
+        update(profile)
+        profile.updatedAt = now()
+        try context.saveOrRollback()
+    }
 
     /// The existing profile, or a new one inserted (not saved) on the first change.
     private func profileForChange() throws -> UserProfile {

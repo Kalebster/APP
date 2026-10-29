@@ -93,6 +93,54 @@ enum WeeklyPlanSummary {
         Set(workoutsByWeekday(plan: plan, workouts: workouts).keys)
     }
 
+    // MARK: - Programação semanal
+
+    /// "4 dias de treino · 3 de descanso" under the title; "Nenhum dia com treino ainda" without one.
+    static func headerText(plannedDays: Int) -> String {
+        let rest = 7 - plannedDays
+        switch plannedDays {
+        case ...0: return String(localized: "Nenhum dia com treino ainda")
+        case 1: return String(localized: "1 dia de treino · \(rest) de descanso")
+        default: return String(localized: "\(plannedDays) dias de treino · \(rest) de descanso")
+        }
+    }
+
+    /// "Meta da semana: 4 treinos": each day with a workout counts 1 in the week's ring on the Início.
+    /// "Sem meta da semana" without one.
+    static func goalText(plannedDays: Int) -> String {
+        switch plannedDays {
+        case ...0: String(localized: "Sem meta da semana")
+        case 1: String(localized: "Meta da semana: 1 treino")
+        default: String(localized: "Meta da semana: \(plannedDays) treinos")
+        }
+    }
+
+    /// "SEG" to "DOM" for 1 to 7, over the day of the month.
+    static func dayAbbreviation(_ weekday: Int) -> String {
+        let abbreviations = ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"]
+        return abbreviations.indices.contains(weekday - 1) ? abbreviations[weekday - 1] : ""
+    }
+
+    /// "Segunda" to "Domingo" for 1 to 7: the title of a day's sheet.
+    static func shortDayName(_ weekday: Int) -> String {
+        switch weekday {
+        case 1: String(localized: "Segunda")
+        case 2: String(localized: "Terça")
+        case 3: String(localized: "Quarta")
+        case 4: String(localized: "Quinta")
+        case 5: String(localized: "Sexta")
+        case 6: String(localized: "Sábado")
+        case 7: String(localized: "Domingo")
+        default: ""
+        }
+    }
+
+    /// The title of a day's sheet: "Terça", or "Sexta · hoje" for today.
+    static func sheetTitle(weekday: Int, isToday: Bool) -> String {
+        let name = shortDayName(weekday)
+        return isToday ? "\(name) · \(String(localized: "hoje"))" : name
+    }
+
     /// "Nenhum dia", "1 dia", "4 dias": the short count of the Treinos row. The singular and the none
     /// case are chosen here: the Portuguese plural rules treat 0 as singular, which would read "0 dia".
     static func dayCountText(_ count: Int) -> String {

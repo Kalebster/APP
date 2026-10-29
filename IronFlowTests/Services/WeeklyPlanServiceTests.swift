@@ -155,4 +155,25 @@ struct WeeklyPlanServiceTests {
         #expect(try count(Workout.self, in: harness.context) == 1)
         #expect(harness.context.hasChanges == false)
     }
+
+    @Test("The week's goal is the number of days with a workout, and deleting a workout frees its days")
+    func goalFollowsThePlan() throws {
+        try service.setWorkout(push, for: 1)
+        try service.setWorkout(pull, for: 3)
+        try service.setWorkout(push, for: 5)
+        try service.setWorkout(pull, for: 6)
+        let workouts = { try self.harness.context.fetch(FetchDescriptor<Workout>()) }
+        #expect(WeeklyPlanSummary.plannedDayCount(plan: try stored(), workouts: try workouts()) == 4)
+        #expect(WeeklyPlanSummary.goalText(plannedDays: 4) == "Meta da semana: 4 treinos")
+        #expect(WeeklyPlanSummary.headerText(plannedDays: 4) == "4 dias de treino · 3 de descanso")
+
+        try harness.workouts.delete(push)
+
+        let plannedDays = WeeklyPlanSummary.plannedDayCount(plan: try stored(), workouts: try workouts())
+        #expect(plannedDays == 2)
+        #expect(WeeklyPlanSummary.rows(plan: try stored(), workouts: try workouts(), todayWeekday: 1).map(\.workoutID) == [
+            nil, nil, pull.id, nil, nil, pull.id, nil,
+        ])
+        #expect(WeeklyPlanSummary.goalText(plannedDays: plannedDays) == "Meta da semana: 2 treinos")
+    }
 }

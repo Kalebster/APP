@@ -36,14 +36,11 @@ enum Validation {
     static let heightRangeCm: ClosedRange<Int> = 100...250
     static let dailyCalorieGoalRangeKcal: ClosedRange<Int> = 800...8_000
 
-    /// A body weight in kilograms: within `bodyWeightRangeKg`, at most two decimal places.
+    /// A body weight in kilograms: within `bodyWeightRangeKg` (`invalidBodyWeight`), at most two decimal
+    /// places (`tooManyDecimals`).
     static func bodyWeight(_ weightKg: Double) throws {
         guard weightKg.isFinite, bodyWeightRangeKg.contains(weightKg) else { throw ValidationError.invalidBodyWeight }
-        do {
-            try weight(weightKg)
-        } catch {
-            throw ValidationError.invalidBodyWeight
-        }
+        try weight(weightKg)
     }
 
     /// A height in whole centimeters within `heightRangeCm`.

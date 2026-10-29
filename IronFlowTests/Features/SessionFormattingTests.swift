@@ -47,6 +47,16 @@ struct SessionFormattingTests {
         return calendar
     }
 
+    @Test("The whole name of a month, in lowercase, as the menus of the date of birth show it")
+    func monthNames() {
+        #expect((1...12).map(SessionFormatting.monthName) == [
+            "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+            "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+        ])
+        #expect(SessionFormatting.monthName(0) == "")
+        #expect(SessionFormatting.monthName(13) == "")
+    }
+
     @Test("The short date is the day and the abbreviated month without a period, with the year only for another year")
     func shortDate() throws {
         let calendar = try saoPauloCalendar()
@@ -220,7 +230,8 @@ struct SessionFormattingTests {
         #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "abc")) }
         #expect(throws: PlannedSetInputError.repsRequired) { try SessionFormatting.values(of: SetDraft(weight: "", reps: "99999999999999999999")) }
         #expect(throws: ValidationError.invalidWeight) { try SessionFormatting.values(of: SetDraft(weight: "abc", reps: "")) }
-        #expect(throws: PlannedSetInputError.thousandsSeparator) { try SessionFormatting.values(of: SetDraft(weight: "1.000", reps: "")) }
+        #expect(throws: ValidationError.tooManyDecimals) { try SessionFormatting.values(of: SetDraft(weight: "1.000", reps: "")) }
+        #expect(throws: ValidationError.tooManyDecimals) { try SessionFormatting.values(of: SetDraft(weight: "12,500", reps: "")) }
     }
 
     @Test("Checking a set with empty repetitions takes the target (the maximum of a range)")

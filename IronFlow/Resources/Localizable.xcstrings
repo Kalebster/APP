@@ -4,7 +4,28 @@
     "%@ concluído hoje" : {
 
     },
+    "%@ kcal" : {
+
+    },
+    "%@ kcal por dia" : {
+
+    },
+    "%@ kcal · o que o corpo gasta parado" : {
+
+    },
     "%@ kg levantados" : {
+
+    },
+    "%@ kg na semana" : {
+
+    },
+    "%@ kg nos últimos 30 dias" : {
+
+    },
+    "%@ treinando esta semana" : {
+
+    },
+    "%@ · o último registro" : {
 
     },
     "%@, concluído: %@, %@" : {
@@ -29,6 +50,9 @@
 
     },
     "%lld dias" : {
+
+    },
+    "%lld dias de treino · %lld de descanso" : {
 
     },
     "%lld dias programados" : {
@@ -65,6 +89,9 @@
     "%lld h %@ min" : {
 
     },
+    "%lld h %lld min" : {
+
+    },
     "%lld min" : {
 
     },
@@ -89,6 +116,12 @@
           }
         }
       }
+    },
+    "%lld sem." : {
+
+    },
+    "%lld semanas seguidas batendo a meta" : {
+
     },
     "%lld séries" : {
       "localizations" : {
@@ -115,6 +148,9 @@
     "%lld séries não foram concluídas e ficarão registradas como não feitas." : {
 
     },
+    "%lld treinos em %@" : {
+
+    },
     "%lld treinos esta semana" : {
 
     },
@@ -124,10 +160,19 @@
     "1 dia" : {
 
     },
+    "1 dia de treino · %lld de descanso" : {
+
+    },
     "1 dia programado" : {
 
     },
+    "1 semana seguida batendo a meta" : {
+
+    },
     "1 série não foi concluída e ficará registrada como não feita." : {
+
+    },
+    "1 treino em %@" : {
 
     },
     "1 treino esta semana" : {
@@ -145,13 +190,19 @@
     "A carga pode ser no máximo %@." : {
 
     },
-    "A carga pode ter no máximo duas casas decimais." : {
+    "A programação não impede treinar em outros dias · toque num dia para mudar" : {
 
     },
     "A série de trabalho. Conta nos kg levantados." : {
 
     },
     "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
+
+    },
+    "A taxa metabólica basal é o quanto o seu corpo gasta parado. Usamos o seu peso (%@) e a sua altura (%@)." : {
+
+    },
+    "A taxa metabólica basal é o quanto o seu corpo gasta parado. Usamos o seu peso e a sua altura." : {
 
     },
     "Abdômen" : {
@@ -193,7 +244,13 @@
     "Altura" : {
 
     },
+    "Altura salva" : {
+
+    },
     "Anilha" : {
+
+    },
+    "Ano" : {
 
     },
     "Antebraços" : {
@@ -232,6 +289,9 @@
     "Até não conseguir mais repetições. Conta nos kg levantados." : {
 
     },
+    "Aumentar %@" : {
+
+    },
     "Barra" : {
 
     },
@@ -242,6 +302,18 @@
 
     },
     "Cada novo peso fica registrado com a data de hoje." : {
+
+    },
+    "Calculado com os seus registros de peso" : {
+
+    },
+    "calcular" : {
+
+    },
+    "Calcular pela minha TMB" : {
+
+    },
+    "Calcular TMB" : {
 
     },
     "Cancelar" : {
@@ -286,10 +358,16 @@
     "Concluído hoje · %@" : {
 
     },
+    "Confira a data de nascimento: a calculadora vale de 15 a 100 anos." : {
+
+    },
     "Continuar" : {
 
     },
     "Continuar treino atual" : {
+
+    },
+    "Corpo" : {
 
     },
     "Corpo inteiro" : {
@@ -307,7 +385,13 @@
     "Crie um treino para programar a semana." : {
 
     },
+    "Data de nascimento" : {
+
+    },
     "Descanso" : {
+
+    },
+    "Descanso hoje" : {
 
     },
     "Descartar" : {
@@ -328,13 +412,31 @@
     "Desmarcar série %lld" : {
 
     },
+    "Dia" : {
+
+    },
     "dia futuro" : {
+
+    },
+    "Digite um peso entre %@ e %@ kg." : {
+
+    },
+    "Digite uma altura entre %@ e %@ cm." : {
+
+    },
+    "Digite uma meta entre %@ e %@ kcal." : {
+
+    },
+    "Diminuir %@" : {
 
     },
     "Domingo" : {
 
     },
     "Duração: %@" : {
+
+    },
+    "editar" : {
 
     },
     "Editar treino" : {
@@ -349,16 +451,19 @@
     "Escolha até %lld indicadores em Personalizar." : {
 
     },
-    "Escolha até %lld indicadores. A ordem na tela segue a ordem de escolha." : {
+    "Escolha até %lld. Eles aparecem no Início na ordem em que você marcar." : {
+
+    },
+    "Escolha o sexo e a data de nascimento para ver o resultado." : {
+
+    },
+    "Escolha o treino deste dia. A mudança é salva na hora." : {
 
     },
     "Escolha os exercícios na hora e registre suas séries" : {
 
     },
     "Escolha um dia de segunda a domingo." : {
-
-    },
-    "Escolha um treino para cada dia. A programação não impede treinos em outros dias." : {
 
     },
     "Escolhe o tipo da série ou a remove." : {
@@ -370,7 +475,7 @@
     "Escolher outro treino" : {
 
     },
-    "Escolher um treino" : {
+    "Escolher treino" : {
 
     },
     "Este dia já está marcado." : {
@@ -400,6 +505,15 @@
     "Exercício %lld de %lld" : {
 
     },
+    "Exercício de 1 a 3 dias por semana" : {
+
+    },
+    "Exercício de 3 a 5 dias por semana" : {
+
+    },
+    "Exercício de 6 a 7 dias por semana" : {
+
+    },
     "Exercício removido" : {
 
     },
@@ -418,7 +532,16 @@
     "Falta 1 para fechar a semana" : {
 
     },
+    "Falta escolher a data de nascimento completa." : {
+
+    },
+    "Falta escolher o sexo." : {
+
+    },
     "Faltam %lld para fechar a semana" : {
+
+    },
+    "Fechar" : {
 
     },
     "Fechar %@" : {
@@ -428,6 +551,15 @@
 
     },
     "feito no app e marcado fora do app" : {
+
+    },
+    "Feminino" : {
+
+    },
+    "Ganhar" : {
+
+    },
+    "gasto do dia" : {
 
     },
     "Glúteos" : {
@@ -457,15 +589,6 @@
     "Informe um nome." : {
 
     },
-    "Informe um peso entre %@ e %@, com até duas casas decimais." : {
-
-    },
-    "Informe uma altura entre %@ e %@, em número inteiro." : {
-
-    },
-    "Informe uma meta entre %@ e %@, em número inteiro." : {
-
-    },
     "Iniciado em %@, às %@" : {
 
     },
@@ -476,6 +599,9 @@
 
     },
     "Iniciar treino livre" : {
+
+    },
+    "Intenso" : {
 
     },
     "Início" : {
@@ -496,6 +622,15 @@
     "kg" : {
 
     },
+    "Kg na semana" : {
+
+    },
+    "kg na semana" : {
+
+    },
+    "Leve" : {
+
+    },
     "Leve, para aquecer. Não conta nos kg levantados." : {
 
     },
@@ -503,6 +638,9 @@
 
     },
     "Limpar filtros" : {
+
+    },
+    "Livre" : {
 
     },
     "Mais 15 segundos" : {
@@ -514,10 +652,16 @@
     "Mais pesada, para chegar pronto na carga. Não conta nos kg levantados." : {
 
     },
+    "Manter" : {
+
+    },
     "Marca o dia como treino feito fora do app." : {
 
     },
     "marcado como feito fora do app" : {
+
+    },
+    "Masculino" : {
 
     },
     "Menos 15 segundos" : {
@@ -548,7 +692,25 @@
     "meta %lld–%lld reps" : {
 
     },
-    "Meta diária" : {
+    "Meta da semana: %lld treinos" : {
+
+    },
+    "Meta da semana: 1 treino" : {
+
+    },
+    "Meta de %@ kcal salva" : {
+
+    },
+    "Meta de calorias" : {
+
+    },
+    "Meta diária de calorias" : {
+
+    },
+    "Meta salva" : {
+
+    },
+    "meta sugerida" : {
 
     },
     "Meta: %@" : {
@@ -572,7 +734,16 @@
     "Minimizar" : {
 
     },
+    "Moderado" : {
+
+    },
+    "Monte a Programação semanal para ter uma meta" : {
+
+    },
     "Mostra as séries." : {
+
+    },
+    "Muito intenso" : {
 
     },
     "Máquina" : {
@@ -584,16 +755,25 @@
     "Máximo de repetições da série %lld" : {
 
     },
+    "Mês" : {
+
+    },
     "mín" : {
 
     },
     "Mínimo de repetições da série %lld" : {
 
     },
-    "Nada programado" : {
+    "Na meta" : {
+
+    },
+    "Nada programado para hoje. Quer treinar mesmo assim?" : {
 
     },
     "Nenhum dia" : {
+
+    },
+    "Nenhum dia com treino ainda" : {
 
     },
     "Nenhum dia programado" : {
@@ -611,13 +791,16 @@
     "Nenhum exercício registrado." : {
 
     },
+    "Nenhum registro ainda" : {
+
+    },
     "Nenhum treino ainda" : {
 
     },
-    "Nenhum treino criado" : {
+    "Nenhum treino concluído ainda" : {
 
     },
-    "Nenhum treino planejado para hoje. Escolha um treino ou comece um treino livre." : {
+    "Nenhum treino criado" : {
 
     },
     "Nenhum treino realizado" : {
@@ -647,7 +830,13 @@
     "Não foi possível salvar. Nenhuma alteração foi feita." : {
 
     },
+    "Não informada" : {
+
+    },
     "Não é possível marcar um dia que ainda não chegou." : {
+
+    },
+    "Nível de atividade" : {
 
     },
     "O exercício precisa ter pelo menos 1 série." : {
@@ -668,13 +857,25 @@
     "O nome pode ter no máximo %lld caracteres." : {
 
     },
+    "O treino começa assim que você tocar nele." : {
+
+    },
     "O treino não tem exercícios." : {
+
+    },
+    "O último treino concluído" : {
+
+    },
+    "Objetivo" : {
 
     },
     "OK" : {
 
     },
     "Ombros" : {
+
+    },
+    "ontem" : {
 
     },
     "Opções de %@" : {
@@ -692,16 +893,19 @@
     "Panturrilhas" : {
 
     },
-    "Para mil quilos, digite 1000. Use vírgula ou ponto só para casas decimais." : {
-
-    },
     "Pede confirmação para desmarcar o dia." : {
 
     },
     "Peito" : {
 
     },
+    "Perder" : {
+
+    },
     "Personalizar" : {
+
+    },
+    "Personalizar resumo" : {
 
     },
     "Peso" : {
@@ -713,10 +917,19 @@
     "Peso do corpo" : {
 
     },
+    "Peso em 30 dias" : {
+
+    },
+    "Peso salvo" : {
+
+    },
     "Polia" : {
 
     },
     "Posteriores de coxa" : {
+
+    },
+    "Pouco ou nenhum exercício" : {
 
     },
     "Preparatória" : {
@@ -737,6 +950,9 @@
     "Programe a semana para acompanhar sua meta." : {
 
     },
+    "Pronto" : {
+
+    },
     "Pular" : {
 
     },
@@ -744,6 +960,9 @@
 
     },
     "Quadríceps" : {
+
+    },
+    "Quantas calorias você quer comer por dia." : {
 
     },
     "Quarta" : {
@@ -756,6 +975,12 @@
 
     },
     "Quinta-feira" : {
+
+    },
+    "Registre o peso mais vezes para ver a variação" : {
+
+    },
+    "Registre o seu peso e a sua altura para calcular." : {
 
     },
     "Remover" : {
@@ -791,10 +1016,16 @@
     "Reps" : {
 
     },
+    "Resultado" : {
+
+    },
     "Resumo rápido" : {
 
     },
     "Salvar" : {
+
+    },
+    "Sedentário" : {
 
     },
     "Segunda" : {
@@ -806,7 +1037,13 @@
     "Sem carga" : {
 
     },
+    "Sem exercícios · adicione na tela Treinos" : {
+
+    },
     "Sem meta" : {
+
+    },
+    "Sem meta da semana" : {
 
     },
     "Sem registro da última vez" : {
@@ -818,7 +1055,16 @@
     "sem treino" : {
 
     },
+    "Sem treino neste dia" : {
+
+    },
     "Semana completa" : {
+
+    },
+    "Semanas seguidas em que você bateu a meta da programação" : {
+
+    },
+    "Sequência" : {
 
     },
     "Seu último registro foi em %@ às %@. Usar esse horário como fim?" : {
@@ -839,6 +1085,9 @@
     "Seus treinos concluídos aparecerão aqui." : {
 
     },
+    "Sexo" : {
+
+    },
     "Sexta" : {
 
     },
@@ -848,6 +1097,9 @@
     "Smith" : {
 
     },
+    "Soma das séries válidas e de falha desta semana" : {
+
+    },
     "Sua semana" : {
 
     },
@@ -855,6 +1107,15 @@
 
     },
     "Série %lld" : {
+
+    },
+    "Só séries válidas e de falha" : {
+
+    },
+    "Tempo dos treinos concluídos nesta semana" : {
+
+    },
+    "Tempo na semana" : {
 
     },
     "Tentar novamente" : {
@@ -875,10 +1136,25 @@
     "Tipos de série: %@" : {
 
     },
+    "TMB" : {
+
+    },
+    "TMB (kcal)" : {
+
+    },
+    "TMB · calcular" : {
+
+    },
     "Todos" : {
 
     },
+    "Treinando" : {
+
+    },
     "treino" : {
+
+    },
+    "Treino" : {
 
     },
     "Treino de hoje" : {
@@ -890,6 +1166,9 @@
     "Treino livre" : {
 
     },
+    "Treino pesado todo dia ou trabalho físico" : {
+
+    },
     "treino programado" : {
 
     },
@@ -897,6 +1176,15 @@
 
     },
     "treinos" : {
+
+    },
+    "Treinos concluídos em %@" : {
+
+    },
+    "Treinos em %@" : {
+
+    },
+    "Treinos no mês" : {
 
     },
     "Treinos recentes" : {
@@ -920,10 +1208,25 @@
     "Usar %@" : {
 
     },
+    "Usar %@ kcal como meta" : {
+
+    },
     "Usar agora" : {
 
     },
-    "Valor" : {
+    "Use no máximo 2 casas decimais." : {
+
+    },
+    "Valores em kcal por dia · meta para ganhar massa (+300 kcal por dia)" : {
+
+    },
+    "Valores em kcal por dia · meta para manter o peso" : {
+
+    },
+    "Valores em kcal por dia · meta para perder peso (−400 kcal por dia)" : {
+
+    },
+    "Variação do peso" : {
 
     },
     "Ver tudo" : {
@@ -935,6 +1238,12 @@
     "Válida" : {
 
     },
+    "É o anel da semana no Início. Cada dia com treino conta 1." : {
+
+    },
+    "É uma estimativa pela fórmula de Mifflin-St Jeor. Para um plano sob medida, procure um nutricionista." : {
+
+    },
     "Última" : {
 
     },
@@ -942,6 +1251,12 @@
 
     },
     "Última vez: %@, %@" : {
+
+    },
+    "Último treino" : {
+
+    },
+    "Últimos registros" : {
 
     }
   },

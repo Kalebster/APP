@@ -443,6 +443,11 @@ final class WorkoutUITests: IronFlowUITestCase {
         app.buttons["Remover do treino"].tap()
         XCTAssertTrue(app.staticTexts["Remover Crossover na Polia Alta?"].waitForExistence(timeout: 10), "Removal question not shown")
         XCTAssertTrue(app.staticTexts["As séries planejadas dele também saem deste treino. O histórico não muda."].exists, "Removal message")
+        // The question points to the exercise's ⋯: it opens right below it.
+        let menuFrame = menu.frame
+        let confirmationFrame = app.buttons["Remover do treino"].frame
+        XCTAssertGreaterThan(confirmationFrame.minY, menuFrame.maxY, "Confirmation not below the exercise's ⋯ \(menuFrame): \(confirmationFrame)")
+        XCTAssertLessThan(confirmationFrame.minY, menuFrame.maxY + 300, "Confirmation far from the exercise's ⋯ \(menuFrame): \(confirmationFrame)")
         cancelDialog(confirmLabel: "Remover do treino", in: app)
         XCTAssertEqual(element("workout.summary", in: app).label, "2 exercícios · 6 séries", "Cancel removed the exercise")
 
@@ -528,12 +533,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
     }
 
-    /// The editor is pushed over the Treinos list: a swipe from the left edge goes back, as on any screen.
+    /// The editor is pushed over the Treinos list, without the tab bar as in the model: a swipe from the
+    /// left edge goes back, as on any screen.
     @MainActor
     func testSwipeFromTheEdgeGoesBack() throws {
         continueAfterFailure = false
         let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
         openWorkout(named: "Push", in: app)
+        XCTAssertTrue(waitForHiddenTabBar(in: app), "Tab bar shown on the editor")
 
         let window = app.windows.firstMatch
         let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))

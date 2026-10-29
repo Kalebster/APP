@@ -161,6 +161,30 @@ struct WeeklyPlanSummaryTests {
         #expect(WeeklyPlanSummary.dayCountText(7) == "7 dias")
     }
 
+    @Test("The header of the Programação semanal: training days and rest days, or none yet")
+    func headerText() {
+        #expect(WeeklyPlanSummary.headerText(plannedDays: 0) == "Nenhum dia com treino ainda")
+        #expect(WeeklyPlanSummary.headerText(plannedDays: 1) == "1 dia de treino · 6 de descanso")
+        #expect(WeeklyPlanSummary.headerText(plannedDays: 4) == "4 dias de treino · 3 de descanso")
+        #expect(WeeklyPlanSummary.headerText(plannedDays: 7) == "7 dias de treino · 0 de descanso")
+    }
+
+    @Test("The week's goal is the number of days with a workout")
+    func goalText() {
+        #expect(WeeklyPlanSummary.goalText(plannedDays: 0) == "Sem meta da semana")
+        #expect(WeeklyPlanSummary.goalText(plannedDays: 1) == "Meta da semana: 1 treino")
+        #expect(WeeklyPlanSummary.goalText(plannedDays: 4) == "Meta da semana: 4 treinos")
+    }
+
+    @Test("The days' abbreviations, short names and the title of a day's sheet")
+    func dayNames() {
+        #expect((1...7).map(WeeklyPlanSummary.dayAbbreviation) == ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"])
+        #expect((1...7).map(WeeklyPlanSummary.shortDayName) == ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"])
+        #expect(WeeklyPlanSummary.dayAbbreviation(0) == "")
+        #expect(WeeklyPlanSummary.sheetTitle(weekday: 2, isToday: false) == "Terça")
+        #expect(WeeklyPlanSummary.sheetTitle(weekday: 5, isToday: true) == "Sexta · hoje")
+    }
+
     @Test("The summary of the plan: none, one and several planned days")
     func summaryText() {
         #expect(WeeklyPlanSummary.summaryText(0) == "Nenhum dia programado")

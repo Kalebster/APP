@@ -16,7 +16,8 @@ import Testing
 /// body data models and keeps the version 1 hashes; version 3 adds the days trained outside the app
 /// and keeps the version 2 hashes; version 4 adds the weekly plan and keeps the version 3 hashes;
 /// version 5 adds the set type to `PlannedSet` and `SetLog`, which get new hashes, and keeps the
-/// version 4 hashes of every other entity.
+/// version 4 hashes of every other entity; version 6 adds the choices of the BMR calculator to
+/// `UserProfile`, which gets a new hash, and keeps the version 5 hashes of every other entity.
 enum FrozenSchemaFingerprints {
     static let v1: [String: String] = [
         "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
@@ -81,8 +82,22 @@ enum FrozenSchemaFingerprints {
         "WorkoutExercise": "SP+1dSWCM1Ixum4aJcztrcAI0UG6U5UQc1C4LpAUztw=",
     ]
 
+    static let v6: [String: String] = [
+        "BodyWeightEntry": "kGO75AdAUmfpekEnf0AsZdNSW0wGvtLcYRFbi7oB0nc=",
+        "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
+        "ExternalWorkoutDay": "K9sh48mJ6F+Y/BbOXLaz5n1vJ0en9wZmSRoY+vmsH4o=",
+        "PlannedSet": "/ylbFYlVI2t38xF8Ae1EFCMXF4YtZ0kfuWQGMuzskag=",
+        "Session": "HNYoMs0B88OrlUPyl8IWVpum9Q+nhSawFatu08CW0Qc=",
+        "SessionExercise": "A3XjHUXXqzx8QIAke0/FK5XUb4R/R0xT4w/hqTE8dxc=",
+        "SetLog": "xQoQ9isZV42wwZcmtpgbHxbF51LdBrAYwG7MGi95rGk=",
+        "UserProfile": "4Nr0098cSQpmwuBwsNYjY5qSwvqc4f2hutnk73koRn0=",
+        "WeeklyPlanDay": "7w4IMQhG9NUouQpJpyY4GaJzs+iVRf9iOCMwk9z/0Rs=",
+        "Workout": "dJaZ5Te6/QwBv2X26ydCT8/LdJDgg62L3rCKFfOAxPo=",
+        "WorkoutExercise": "SP+1dSWCM1Ixum4aJcztrcAI0UG6U5UQc1C4LpAUztw=",
+    ]
+
     /// One fingerprint per version of `IronFlowMigrationPlan.schemas`, in the same order.
-    static let byVersion: [[String: String]] = [v1, v2, v3, v4, v5]
+    static let byVersion: [[String: String]] = [v1, v2, v3, v4, v5, v6]
 }
 
 /// The fingerprint written into the metadata of the store at `url`, by entity name.
@@ -101,8 +116,10 @@ func fingerprintLiteral(_ fingerprint: [String: String]) -> String {
 /// Creates a store of exactly the given schema version at `url`, independent of the current schema.
 ///
 /// Versions 1 to 4 share the seven main models of `SchemaV1`, so the records of their stores are
-/// written by `LegacyRecords` and read by `legacyHistorySnapshot`, with those classes. A migrated store
-/// is read with the app's models (the version 5 classes) by `historySnapshot`.
+/// written by `LegacyRecords` and read by `legacyHistorySnapshot`, with those classes. Versions 2 to 5
+/// share the profile of `SchemaV2`, read by `legacyBodyDataSnapshot`. A migrated store is read with the
+/// app's models (the version 5 main models and the version 6 profile) by `historySnapshot` and
+/// `bodyDataSnapshot`.
 @MainActor
 func makeStore(of version: any VersionedSchema.Type, at url: URL) throws -> ModelContainer {
     let schema = Schema(versionedSchema: version)
@@ -290,17 +307,43 @@ func storedSetTypeKeys(_ context: ModelContext) throws -> (planned: [String], pe
     )
 }
 
-/// Every stored value of the body data models added in version 2, one sorted line per record.
+/// Every stored value of the body data models added in version 2, except the choices of the BMR
+/// calculator added to the profile in version 6, one sorted line per record. Those are read by
+/// `profileChoicesSnapshot`.
 @MainActor
 func bodyDataSnapshot(_ context: ModelContext) throws -> [String] {
-    var lines: [String] = []
-    for item in try context.fetch(FetchDescriptor<BodyWeightEntry>()) {
-        lines.append("BodyWeightEntry \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) measured=\(text(item.measuredAt)) kg=\(item.weightKg)")
-    }
+    var lines = try bodyWeightLines(context)
     for item in try context.fetch(FetchDescriptor<UserProfile>()) {
         lines.append("UserProfile \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) height=\(text(item.heightCm)) goal=\(text(item.dailyCalorieGoalKcal))")
     }
     return lines.sorted()
+}
+
+/// The same lines as `bodyDataSnapshot`, read with the version 2 profile from a store of versions 2 to 5.
+@MainActor
+func legacyBodyDataSnapshot(_ context: ModelContext) throws -> [String] {
+    var lines = try bodyWeightLines(context)
+    for item in try context.fetch(FetchDescriptor<SchemaV2.UserProfile>()) {
+        lines.append("UserProfile \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) height=\(text(item.heightCm)) goal=\(text(item.dailyCalorieGoalKcal))")
+    }
+    return lines.sorted()
+}
+
+/// The choices of the BMR calculator added to the profile in version 6, as stored, one line per profile.
+@MainActor
+func profileChoicesSnapshot(_ context: ModelContext) throws -> [String] {
+    try context.fetch(FetchDescriptor<UserProfile>()).map { item in
+        "UserProfile \(item.id) sex=\(text(item.sexRaw)) birth=\(text(item.birthDay))/\(text(item.birthMonth))/\(text(item.birthYear)) activity=\(item.activityLevelRaw) goal=\(item.weightGoalRaw)"
+    }
+    .sorted()
+}
+
+/// The body weights, unchanged since version 2, so the same class reads every store.
+@MainActor
+private func bodyWeightLines(_ context: ModelContext) throws -> [String] {
+    try context.fetch(FetchDescriptor<BodyWeightEntry>()).map { item in
+        "BodyWeightEntry \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) measured=\(text(item.measuredAt)) kg=\(item.weightKg)"
+    }
 }
 
 /// Every stored value of the days trained outside the app, added in version 3, one sorted line per record.

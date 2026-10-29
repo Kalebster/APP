@@ -22,7 +22,8 @@ struct PlannedSetEditingTests {
     @Test("A load beyond the limits or unreadable is refused")
     func invalidLoad() {
         #expect(throws: ValidationError.weightTooHigh) { try outcome(.weight, "1000,5") }
-        #expect(throws: PlannedSetInputError.thousandsSeparator) { try outcome(.weight, "1.000") }
+        #expect(throws: ValidationError.tooManyDecimals) { try outcome(.weight, "1.000") }
+        #expect(throws: ValidationError.tooManyDecimals) { try outcome(.weight, "12,500") }
         #expect(throws: ValidationError.tooManyDecimals) { try outcome(.weight, "2,5555") }
         #expect(throws: ValidationError.invalidWeight) { try outcome(.weight, "abc") }
         #expect(throws: ValidationError.invalidWeight) { try outcome(.weight, "-5") }

@@ -18,12 +18,18 @@ struct HomeView: View {
     @AppStorage(HomeSummary.metricsPreferenceKey, store: AppPreferences.store) private var storedMetrics: String?
 
     @Environment(\.modelContext) private var context
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// The moment the week and today's workout are shown for. Updated when the day changes with the
     /// app open, when the time or time zone changes, and when the app comes back to the foreground.
     @State private var now = Date.now
-    @State private var editingMetric: SummaryMetric?
+    @State private var editingMetric: BodyMetric?
+    /// The notice of the last save ("Peso salvo").
+    @State private var toast: ToastMessage?
     @State private var isCustomizing = false
+    /// The BMR calculator, opened by the TMB card.
+    @State private var isCalculatingBMR = false
+    /// Grows each time the Início appears, so the summary reads its values again after the history
+    /// was changed in another tab.
+    @State private var appearances = 0
     @State private var isChoosingWorkout = false
     /// Workout chosen in the sheet, started once the sheet is dismissed.
     @State private var chosenWorkout: Workout?
@@ -34,6 +40,11 @@ struct HomeView: View {
         let metrics = HomeSummary.metrics(fromStored: storedMetrics)
         let calendar = TrainingDay.calendar
         let week = WeekSummary.week(containing: now, calendar: calendar)
+        let known = SummaryIndicatorLoader.Known(
+            latestWeightKg: latestWeight.first?.weightKg,
+            profile: profiles.first,
+            planGoal: WeeklyPlanSummary.plannedDayCount(plan: weeklyPlan, workouts: workouts)
+        )
         let scheduledID = WeeklyPlanSummary.scheduledWorkoutID(
             plan: weeklyPlan,
             weekday: TrainingDay.planWeekday(of: now, calendar: calendar)
@@ -80,7 +91,17 @@ struct HomeView: View {
                             .scaledFont(12)
                             .foregroundStyle(.secondary)
                     } else {
-                        metricCards(metrics)
+                        // A new week is a new section, so its queries are built again for the new limits.
+                        SummaryCards(
+                            metrics: metrics,
+                            week: week,
+                            now: now,
+                            calendar: calendar,
+                            known: known,
+                            refreshCount: appearances,
+                            onAction: perform
+                        )
+                        .id(week.start)
                     }
                 }
             }
@@ -90,24 +111,47 @@ struct HomeView: View {
         }
         .statusBarBackground()
         .screenBackground()
+        .toast($toast)
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $editingMetric) { metric in
             MetricEditorSheet(metric: metric, initialValue: value(of: metric), savesUnchangedValue: savesUnchangedValue(for: metric)) { value in
                 try save(value, for: metric)
+            } onSaved: {
+                toast = ToastMessage(String(localized: metric.savedMessage))
+            } onCalculatedGoal: { goal in
+                toast = ToastMessage(BMRCalculatorSheet.goalSavedMessage(goal))
             }
         }
         .sheet(isPresented: $isCustomizing) {
-            SummaryCustomizeSheet(storedMetrics: $storedMetrics)
+            SummaryCustomizeSheet(storedMetrics: $storedMetrics, known: known, now: now, calendar: calendar)
+        }
+        .sheet(isPresented: $isCalculatingBMR) {
+            BMRCalculatorSheet { goal in
+                toast = ToastMessage(BMRCalculatorSheet.goalSavedMessage(goal))
+            }
         }
         .sheet(isPresented: $isChoosingWorkout, onDismiss: startChosenWorkout) {
-            WorkoutPickerSheet { workout in
+            WorkoutPickerSheet(todayWorkoutID: scheduledID) { workout in
                 chosenWorkout = workout
             }
         }
         .navigationDestination(isPresented: $isShowingPlan) {
-            WeeklyPlanView()
+            WeeklyPlanView(backTitle: "Início")
         }
         .updatingCurrentDate($now)
+        .onAppear {
+            appearances += 1
+        }
+    }
+
+    /// A tap on a summary card: Peso, Altura and Meta open their editor, TMB the calculator, and the
+    /// others say what their value is.
+    private func perform(_ action: SummaryCardAction) {
+        switch action {
+        case .edit(let metric): editingMetric = metric
+        case .calculateBMR: isCalculatingBMR = true
+        case .explain(let text): toast = ToastMessage(text)
+        }
     }
 
     private func chooseWorkout() {
@@ -162,28 +206,7 @@ struct HomeView: View {
         }
     }
 
-    /// One row of cards; a column with the largest text sizes, so values are never cut.
-    @ViewBuilder
-    private func metricCards(_ metrics: [SummaryMetric]) -> some View {
-        let cards = ForEach(metrics) { metric in
-            Button {
-                editingMetric = metric
-            } label: {
-                SummaryMetricCard(metric: metric, value: value(of: metric), valueText: valueText(of: metric))
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("home.metric.\(metric.rawValue)")
-        }
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(spacing: 9) { cards }
-        } else {
-            // Cards in a row share the height of the tallest one.
-            HStack(alignment: .top, spacing: 9) { cards }
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func value(of metric: SummaryMetric) -> Double? {
+    private func value(of metric: BodyMetric) -> Double? {
         switch metric {
         case .bodyWeight: latestWeight.first?.weightKg
         case .height: profiles.first?.heightCm.map { Double($0) }
@@ -192,21 +215,12 @@ struct HomeView: View {
     }
 
     /// The same weight on a new day is a new measurement; an unchanged height or goal needs no write.
-    private func savesUnchangedValue(for metric: SummaryMetric) -> Bool {
+    private func savesUnchangedValue(for metric: BodyMetric) -> Bool {
         guard metric == .bodyWeight, let latest = latestWeight.first else { return false }
         return !TrainingDay.calendar.isDateInToday(latest.measuredAt)
     }
 
-    /// The value with its unit, as VoiceOver reads it ("80 kg", "2.300 kcal").
-    private func valueText(of metric: SummaryMetric) -> String? {
-        switch metric {
-        case .bodyWeight: latestWeight.first.map { HomeSummary.weightText($0.weightKg) }
-        case .height: profiles.first?.heightCm.map(HomeSummary.heightText)
-        case .dailyCalorieGoal: profiles.first?.dailyCalorieGoalKcal.map(HomeSummary.calorieText)
-        }
-    }
-
-    private func save(_ value: Double, for metric: SummaryMetric) throws {
+    private func save(_ value: Double, for metric: BodyMetric) throws {
         let service = ProfileService(context: context)
         switch metric {
         case .bodyWeight: try service.recordWeight(value)
@@ -436,8 +450,8 @@ private struct TodayWorkoutCard: View {
             return (title, title, "play.fill")
         case .chooseWorkout:
             if isMain {
-                let title = String(localized: "Escolher um treino")
-                return (title, title, "list.bullet")
+                let title = String(localized: "Escolher treino")
+                return (title, title, "play.fill")
             }
             return (String(localized: "Escolher outro"), String(localized: "Escolher outro treino"), nil)
         case .startFreeWorkout:
@@ -489,50 +503,5 @@ private struct HighlightOutlinedButtonStyle: ButtonStyle {
             .padding(.vertical, 5)
             .contentShape(Rectangle())
             .opacity(configuration.isPressed ? 0.6 : 1)
-    }
-}
-
-/// A quick summary card: icon, value with its unit (or "Adicionar") and the short name. VoiceOver
-/// reads the full name and the value with its unit.
-private struct SummaryMetricCard: View {
-    let metric: SummaryMetric
-    let value: Double?
-    /// The value with its unit ("80 kg"), for VoiceOver.
-    let valueText: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            IconTile(systemImage: metric.systemImage, side: 29, cornerRadius: 9)
-            VStack(alignment: .leading, spacing: 2) {
-                if let value {
-                    let parts = HomeSummary.cardValue(of: metric, value: value)
-                    HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text(verbatim: parts.number)
-                            .scaledFont(19, weight: .heavy)
-                        if let unit = parts.unit {
-                            Text(verbatim: unit)
-                                .scaledFont(12, weight: .semibold)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                } else {
-                    Text("Adicionar")
-                        .scaledFont(13, weight: .semibold)
-                        .foregroundStyle(Theme.Colors.lightAccent)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                Text(metric.cardTitle)
-                    .scaledFont(11)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-        }
-        .frame(maxHeight: .infinity, alignment: .topLeading)
-        .cardStyle(padding: EdgeInsets(top: 12, leading: 10, bottom: 12, trailing: 10), cornerRadius: 17)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(String(localized: metric.title)), \(valueText ?? String(localized: "Adicionar"))"))
     }
 }

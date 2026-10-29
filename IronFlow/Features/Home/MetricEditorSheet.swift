@@ -1,127 +1,320 @@
+import SwiftData
 import SwiftUI
 
-/// Edits one quick summary value: body weight (a new measurement), height or daily calorie goal.
+/// Edits one value of the body data: body weight (the measurement of today), height or daily calorie
+/// goal. The value is large in the middle, with − and + beside it that step within the limits; the
+/// keyboard opens only when the number is tapped. Body weight lists its latest records.
+///
 /// `onSave` receives the checked value; when it throws, the sheet stays open and shows the error.
-/// An unchanged value closes the sheet without saving, unless `savesUnchangedValue` is set.
+/// An unchanged value closes the sheet without saving, unless `savesUnchangedValue` is set. `onSaved`
+/// is called whenever "Salvar" closes the sheet. With `onCalculatedGoal`, the calorie goal links to the
+/// BMR calculator: "Fechar" there comes back here, and a goal used there closes both sheets and is
+/// passed to `onCalculatedGoal`.
 struct MetricEditorSheet: View {
-    let metric: SummaryMetric
+    let metric: BodyMetric
     let initialValue: Double?
     let savesUnchangedValue: Bool
     let onSave: @MainActor (Double) throws -> Void
+    let onSaved: @MainActor () -> Void
+    let onCalculatedGoal: (@MainActor (Int) -> Void)?
 
+    /// The latest body weights, the newest first: the "ÚLTIMOS REGISTROS" of the weight.
+    @Query(ProfileService.recentWeightsDescriptor) private var recentWeights: [BodyWeightEntry]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var text: String
-    @State private var saveErrorMessage: String?
-    /// A typed value is checked when Salvar is tapped, so no error shows while it is still being typed.
-    @State private var showsInputError = false
+    /// The error of the last "Salvar", shown under the value until the text changes.
+    @State private var errorMessage: String?
     /// Set by a successful save, so a second tap while the sheet closes saves nothing.
     @State private var isSaved = false
+    @State private var isCalculating = false
+    /// The goal saved by the BMR calculator, handed on once the calculator is gone.
+    @State private var calculatedGoal: Int?
     @FocusState private var isFieldFocused: Bool
 
+    @ScaledMetric(relativeTo: .body) private var stepSide: CGFloat = 52
+    @ScaledMetric(relativeTo: .body) private var fieldWidth: CGFloat = 136
+    @ScaledMetric(relativeTo: .caption) private var messageHeight: CGFloat = 32
+    @ScaledMetric(relativeTo: .caption2) private var changeWidth: CGFloat = 44
+
     init(
-        metric: SummaryMetric,
+        metric: BodyMetric,
         initialValue: Double?,
         savesUnchangedValue: Bool = false,
-        onSave: @escaping @MainActor (Double) throws -> Void
+        onSave: @escaping @MainActor (Double) throws -> Void,
+        onSaved: @escaping @MainActor () -> Void = {},
+        onCalculatedGoal: (@MainActor (Int) -> Void)? = nil
     ) {
         self.metric = metric
         self.initialValue = initialValue
         self.savesUnchangedValue = savesUnchangedValue
         self.onSave = onSave
-        _text = State(initialValue: HomeSummary.fieldText(initialValue))
-    }
-
-    private var unit: String {
-        switch metric {
-        case .bodyWeight: "kg"
-        case .height: "cm"
-        case .dailyCalorieGoal: "kcal"
-        }
+        self.onSaved = onSaved
+        self.onCalculatedGoal = onCalculatedGoal
+        _text = State(initialValue: HomeSummary.fieldText(initialValue, for: metric))
     }
 
     var body: some View {
-        // The typed value, checked once per update: nil while empty.
-        let input = Result { try HomeSummary.value(for: metric, text: text) }
-        let value = try? input.get()
-        let inputErrorMessage = showsInputError ? Self.message(for: input) : nil
-
-        NavigationStack {
-            Form {
-                Section {
-                    LabeledContent {
-                        HStack(spacing: 6) {
-                            TextField("Valor", text: $text)
-                                .keyboardType(metric == .bodyWeight ? .decimalPad : .numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .focused($isFieldFocused)
-                                .accessibilityIdentifier("metric.editor.field")
-                            Text(verbatim: unit)
-                                .foregroundStyle(.secondary)
-                        }
-                    } label: {
-                        Text(metric.title)
-                    }
-                } footer: {
-                    if let message = saveErrorMessage ?? inputErrorMessage {
-                        Text(message)
-                            .foregroundStyle(.red)
-                            .accessibilityIdentifier("metric.editor.error")
-                    } else if metric == .bodyWeight {
-                        Text("Cada novo peso fica registrado com a data de hoje.")
-                    }
+        FittedSheet {
+            VStack(alignment: .leading, spacing: 16) {
+                SheetHeader(Text(metric.editorTitle))
+                valueRow
+                message
+                if metric == .dailyCalorieGoal, onCalculatedGoal != nil {
+                    calculatorLink
+                }
+                if metric == .bodyWeight, !recentWeights.isEmpty {
+                    records
                 }
             }
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(Text(metric.title))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") {
-                        dismiss()
-                    }
-                    .accessibilityIdentifier("metric.editor.cancel")
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
-                        if let value {
-                            save(value)
-                        } else {
-                            showsInputError = true
-                        }
-                    }
-                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .accessibilityIdentifier("metric.editor.save")
-                }
-            }
-            .onChange(of: text) {
-                saveErrorMessage = nil
-                showsInputError = false
-            }
-            .onAppear {
-                isFieldFocused = true
-            }
+            .sheetContentPadding()
+        } bottom: {
+            buttons
         }
-        .presentationDetents([.medium, .large])
+        .scrollDismissesKeyboard(.interactively)
+        .onChange(of: text) {
+            errorMessage = nil
+        }
     }
 
-    private static func message(for input: Result<Double?, any Error>) -> String? {
-        guard case .failure(let error) = input else { return nil }
-        return UserFacingError.message(for: error)
+    // MARK: - Value
+
+    /// The value from which − and + step.
+    private var base: Double {
+        MetricEditing.base(of: metric, text: text, saved: initialValue)
+    }
+
+    /// − and + beside the value; below it from the second largest standard text size on, where the
+    /// three no longer fit side by side, so nothing is cut.
+    @ViewBuilder
+    private var valueRow: some View {
+        if dynamicTypeSize > .xLarge {
+            VStack(spacing: 14) {
+                valueField
+                HStack {
+                    stepButton(.down)
+                    Spacer(minLength: 16)
+                    stepButton(.up)
+                }
+            }
+        } else {
+            HStack(spacing: 8) {
+                stepButton(.down)
+                Spacer(minLength: 0)
+                valueField
+                Spacer(minLength: 0)
+                stepButton(.up)
+            }
+        }
+    }
+
+    /// The number, large and underlined, with its unit beside it. Tapping it opens the keyboard.
+    private var valueField: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            TextField(text: $text, prompt: Text(verbatim: "—")) {
+                Text(metric.editorTitle)
+            }
+            .scaledFont(46, weight: .heavy)
+            .foregroundStyle(Theme.Colors.brightText)
+            .multilineTextAlignment(.center)
+            .keyboardType(metric == .bodyWeight ? .decimalPad : .numberPad)
+            .focused($isFieldFocused)
+            // Wide enough for "80,25" and "8.000"; never wider than the sheet with large text.
+            .frame(width: min(fieldWidth, 240))
+            .padding(.bottom, 4)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(isFieldFocused ? Color.accentColor : Theme.Colors.controlBorder)
+                    .frame(height: 2)
+                    .accessibilityHidden(true)
+            }
+            .accessibilityIdentifier("metric.editor.field")
+            Text(verbatim: metric.unit)
+                .scaledFont(17, weight: .semibold)
+                .foregroundStyle(Theme.Colors.secondaryText)
+                .accessibilityHidden(true)
+        }
+        // The number stops growing past the first accessibility size, so it fits the width of the sheet.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        .frame(maxWidth: .infinity)
+    }
+
+    /// A round − or +: one step (0,1 kg, 1 cm or 50 kcal), unavailable at the limit.
+    private func stepButton(_ direction: MetricEditing.Direction) -> some View {
+        let isEnabled = MetricEditing.canStep(base, metric: metric, direction: direction)
+        let stepText = "\(HomeSummary.number(MetricEditing.step(of: metric))) \(metric.unit)"
+        // Grows with the text, up to a size that still leaves room for the value.
+        let side = min(stepSide, 84)
+        return Button {
+            text = HomeSummary.fieldText(MetricEditing.stepped(base, metric: metric, direction: direction), for: metric)
+        } label: {
+            Image(systemName: direction == .up ? "plus" : "minus")
+                .font(.system(size: side * 0.5, weight: .semibold))
+                .foregroundStyle(Theme.Colors.brightText)
+                .frame(width: side, height: side)
+                .background(Theme.Colors.setFieldBackground, in: Circle())
+                .opacity(isEnabled ? 1 : 0.35)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .accessibilityLabel(direction == .up ? Text("Aumentar \(stepText)") : Text("Diminuir \(stepText)"))
+        .accessibilityIdentifier(direction == .up ? "metric.editor.plus" : "metric.editor.minus")
+    }
+
+    /// The error of the last "Salvar" or, without one, what the value means. It keeps its height, so the
+    /// sheet does not move when an error comes or goes.
+    private var message: some View {
+        Group {
+            if let errorMessage {
+                Text(verbatim: errorMessage)
+                    .foregroundStyle(Theme.Colors.failureSet)
+                    .accessibilityIdentifier("metric.editor.error")
+            } else if let help = metric.help {
+                Text(help)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+        }
+        .scaledFont(12)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, minHeight: messageHeight, alignment: .top)
+    }
+
+    /// "Calcular pela minha TMB": opens the BMR calculator over the editor. The calculator's sheet is
+    /// attached here, inside the editor's content: attached around the whole editor, it kept the editor
+    /// at the middle height instead of the height of its content.
+    private var calculatorLink: some View {
+        Button {
+            isFieldFocused = false
+            calculatedGoal = nil
+            isCalculating = true
+        } label: {
+            Text("Calcular pela minha TMB")
+                .scaledFont(15, weight: .semibold)
+                .foregroundStyle(Theme.Colors.lightAccent)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("metric.editor.bmr")
+        .sheet(isPresented: $isCalculating, onDismiss: finishCalculation) {
+            BMRCalculatorSheet { goal in
+                calculatedGoal = goal
+            }
+        }
+    }
+
+    /// Once the calculator is gone: a goal used there closes the editor too, without saving its field.
+    private func finishCalculation() {
+        guard let goal = calculatedGoal, !isSaved else { return }
+        calculatedGoal = nil
+        isSaved = true
+        onCalculatedGoal?(goal)
+        dismiss()
+    }
+
+    // MARK: - Records
+
+    /// "ÚLTIMOS REGISTROS": the latest body weights, each with its change from the one below it.
+    private var records: some View {
+        let rows = HomeSummary.weightRecordRows(recentWeights, now: .now, calendar: TrainingDay.calendar)
+        return VStack(alignment: .leading, spacing: 10) {
+            SheetSectionTitle("Últimos registros")
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                    if index > 0 {
+                        Theme.Colors.rowSeparator
+                            .frame(height: 1)
+                            .accessibilityHidden(true)
+                    }
+                    recordRow(row)
+                }
+            }
+            .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        }
+    }
+
+    private func recordRow(_ row: HomeSummary.WeightRecordRow) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                Text(verbatim: row.dateText)
+                    .foregroundStyle(Theme.Colors.brightText)
+                Spacer(minLength: 8)
+                recordValue(row)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: row.dateText)
+                    .foregroundStyle(Theme.Colors.brightText)
+                recordValue(row)
+            }
+        }
+        .scaledFont(14)
+        .padding(.vertical, 11)
+        .padding(.horizontal, 14)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: [row.dateText, row.valueText, row.changeText.map { "\($0) kg" }].compactMap { $0 }.joined(separator: ", ")))
+        .accessibilityIdentifier("metric.editor.record")
+    }
+
+    /// "80 kg" and, in gray, its change ("−0,6") in a column of its own, so the values line up.
+    private func recordValue(_ row: HomeSummary.WeightRecordRow) -> some View {
+        HStack(spacing: 8) {
+            Text(verbatim: row.valueText)
+                .fontWeight(.bold)
+                .foregroundStyle(Theme.Colors.brightText)
+            Text(verbatim: row.changeText ?? "")
+                .scaledFont(11)
+                .foregroundStyle(Theme.Colors.secondaryText)
+                .frame(minWidth: changeWidth, alignment: .trailing)
+        }
+    }
+
+    // MARK: - Buttons
+
+    /// "Salvar" in blue and "Cancelar" below it, above the keyboard while it is open.
+    private var buttons: some View {
+        VStack(spacing: 10) {
+            SheetButton(Text("Salvar"), kind: .primary, action: saveTapped)
+                .disabled(isTextEmpty)
+                .accessibilityIdentifier("metric.editor.save")
+            SheetButton(Text("Cancelar"), kind: .secondary) {
+                dismiss()
+            }
+            .accessibilityIdentifier("metric.editor.cancel")
+        }
+        .sheetButtonBar()
+    }
+
+    private var isTextEmpty: Bool {
+        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Checks the typed value; an error stays under the value until the text changes.
+    private func saveTapped() {
+        do {
+            guard let value = try HomeSummary.value(for: metric, text: text) else { return }
+            save(value)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
     }
 
     private func save(_ value: Double) {
         guard !isSaved else { return }
         // An unchanged value needs no write.
-        guard value != initialValue || savesUnchangedValue else {
-            dismiss()
-            return
+        if value != initialValue || savesUnchangedValue {
+            do {
+                try onSave(value)
+            } catch {
+                errorMessage = UserFacingError.message(for: error)
+                return
+            }
         }
-        do {
-            try onSave(value)
-            isSaved = true
-            dismiss()
-        } catch {
-            saveErrorMessage = UserFacingError.message(for: error)
-        }
+        isSaved = true
+        isFieldFocused = false
+        onSaved()
+        dismiss()
     }
 }
