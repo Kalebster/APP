@@ -18,7 +18,7 @@ struct WorkoutEditorView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
-    /// Shows a failure once this screen has closed.
+    /// Shows the notices ("Nome salvo"), and a failure once this screen has closed.
     @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     /// Typed values not saved yet, by field.
     @State private var drafts: [PlannedSetField: String] = [:]
@@ -31,9 +31,6 @@ struct WorkoutEditorView: View {
     @State private var removal: PendingRemoval?
     /// The planned set whose type sheet is open.
     @State private var typeSheet: TypeSheetTarget?
-    /// Counts the times the range of a set was adjusted, so the notice shows again each time.
-    @State private var rangeNotices = 0
-    @State private var isShowingRangeNotice = false
     /// Set right before the workout is deleted, so the view stops reading it.
     @State private var isDeleted = false
     @State private var errorMessage: String?
@@ -89,11 +86,6 @@ struct WorkoutEditorView: View {
                     .allowsHitTesting(false)
             }
         }
-        .overlay(alignment: .bottom) {
-            if isShowingRangeNotice {
-                rangeNotice
-            }
-        }
         .screenBackground()
         // The navigation bar is hidden for the model's own top row; the swipe back stays. The tab bar is
         // hidden too, as in the model.
@@ -132,18 +124,6 @@ struct WorkoutEditorView: View {
                 rootFeedback.errorMessage = errorMessage
             }
         }
-        .task(id: rangeNotices) {
-            guard rangeNotices > 0 else { return }
-            do {
-                try await Task.sleep(for: .seconds(4))
-            } catch {
-                // Cancelled by a newer notice, which hides itself.
-                return
-            }
-            withAnimation {
-                isShowingRangeNotice = false
-            }
-        }
         .sheet(item: $typeSheet) { target in
             SetTypeSheet(
                 number: target.number,
@@ -161,6 +141,7 @@ struct WorkoutEditorView: View {
         .sheet(isPresented: $isRenaming) {
             WorkoutNameSheet(title: "Renomear treino", initialName: workout.name) { name in
                 try service.rename(workout, to: name)
+                rootFeedback?.show(String(localized: "Nome salvo"))
             }
         }
         .errorAlert($errorMessage)
@@ -372,22 +353,6 @@ struct WorkoutEditorView: View {
         .editorRow(top: 2, bottom: Theme.Metrics.screenPadding)
     }
 
-    /// "O máximo não pode ser menor que o mínimo.", for a few seconds after the range of a set was adjusted.
-    private var rangeNotice: some View {
-        Text("O máximo não pode ser menor que o mínimo.")
-            .scaledFont(13, weight: .semibold)
-            .foregroundStyle(Theme.Colors.brightText)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Theme.Colors.setFieldBackground, in: Capsule())
-            .overlay(Capsule().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.bottom, 12)
-            .transition(.opacity)
-            .accessibilityIdentifier("workout.rangeNotice")
-    }
-
     /// Whether the question before removing is open for `item`.
     private func isConfirmingRemoval(of item: WorkoutExercise) -> Binding<Bool> {
         Binding(
@@ -427,7 +392,7 @@ struct WorkoutEditorView: View {
             guard outcome.values != stored else { return true }
             try service.updatePlannedSet(plannedSet, values: outcome.values)
             if outcome.rangeWasAdjusted {
-                showRangeNotice()
+                rootFeedback?.show(String(localized: "O máximo não pode ser menor que o mínimo."))
             }
             return true
         } catch {
@@ -447,14 +412,6 @@ struct WorkoutEditorView: View {
             }
         }
         return succeeded
-    }
-
-    private func showRangeNotice() {
-        withAnimation {
-            isShowingRangeNotice = true
-        }
-        rangeNotices += 1
-        AccessibilityNotification.Announcement(String(localized: "O máximo não pode ser menor que o mínimo.")).post()
     }
 
     // MARK: - Actions
@@ -553,6 +510,7 @@ struct WorkoutEditorView: View {
         isDeleted = true
         do {
             try service.delete(workout)
+            rootFeedback?.show(String(localized: "Treino excluído"))
             dismiss()
         } catch {
             isDeleted = false

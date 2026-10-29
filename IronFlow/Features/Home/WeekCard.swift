@@ -26,6 +26,8 @@ struct WeekCard: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// Shows "Dia 13 marcado como treinado".
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     @State private var dayToUnmark: WeekSummary.Day?
     @State private var errorMessage: String?
 
@@ -171,6 +173,7 @@ struct WeekCard: View {
         case .mark:
             do {
                 try ExternalWorkoutService(context: context, calendar: calendar).mark(day.date)
+                rootFeedback?.show(String(localized: "Dia \(day.number) marcado como treinado"))
             } catch {
                 errorMessage = UserFacingError.message(for: error)
             }

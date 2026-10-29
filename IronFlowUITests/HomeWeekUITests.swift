@@ -35,8 +35,13 @@ final class HomeWeekUITests: IronFlowUITestCase {
         XCTAssertTrue(today(in: app).label.contains("hoje, sem treino"), "Today: \(today(in: app).label)")
         expectCount("0 treinos esta semana", in: app)
 
-        // Marking today counts one workout on one day.
+        // Marking today counts one workout on one day, with a notice.
+        let dayNumber = Calendar(identifier: .gregorian).component(.day, from: .now)
         today(in: app).tap()
+        XCTAssertTrue(
+            waitForLabel(of: app.staticTexts["toast"], toBe: "Dia \(dayNumber) marcado como treinado", timeout: 5),
+            "No notice after marking: \(app.staticTexts["toast"].label)"
+        )
         expectCount("1 treino esta semana", in: app)
         XCTAssertTrue(today(in: app).label.contains("hoje, marcado como feito fora do app"), "Today: \(today(in: app).label)")
         attachScreenshot(named: "38-home-week", of: app)
@@ -70,7 +75,7 @@ final class HomeWeekUITests: IronFlowUITestCase {
         reps.tap()
         reps.typeText("10")
         app.buttons.matching(identifier: "session.set.check").element(boundBy: 0).tap()
-        finishSessionWithSetsLeft(in: app)
+        saveSessionFromTheFinishSheet(in: app)
 
         expectCount("1 treino esta semana", in: app)
         XCTAssertTrue(today(in: app).label.contains("hoje, feito no app"), "Today: \(today(in: app).label)")

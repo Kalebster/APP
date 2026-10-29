@@ -50,6 +50,15 @@ struct SessionFinishSummary: Identifiable {
             : String(localized: "\(doneSets) de \(totalSets) séries feitas")
     }
 
+    /// The notice once the session is saved: "Treino salvo · 5 séries · 2.640 kg", every set done and the
+    /// load of the working and failure sets; without a load lifted, "Treino salvo · 1 série".
+    static func savedText(doneSets: Int, volumeKg: Double) -> String {
+        let sets = String(localized: "\(doneSets) séries")
+        let kilograms = SessionFormatting.kilogramsText(volumeKg)
+        guard kilograms != "0" else { return String(localized: "Treino salvo · \(sets)") }
+        return String(localized: "Treino salvo · \(sets) · \(kilograms) kg")
+    }
+
     /// "A série não marcada não será salva.", "As 3 séries não marcadas não serão salvas."; `nil` when
     /// every set is done.
     var notDoneText: String? {

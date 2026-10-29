@@ -94,7 +94,10 @@ final class SessionUITests: IronFlowUITestCase {
         app.buttons["finish.continue"].tap()
         XCTAssertTrue(save.waitForNonExistence(timeout: 10), "Concluir treino? not closed")
         XCTAssertTrue(element("session.name", in: app).exists, "Continuar treinando closed the session")
-        finishSessionWithSetsLeft(in: app)
+        saveSessionFromTheFinishSheet(in: app)
+        // Every set done and the load of the working and failure sets.
+        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Treino salvo · 2 séries · 200 kg", timeout: 5), "No notice after finishing")
+        attachScreenshot(named: "93-workout-saved-notice", of: app)
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
 
         openTab("Histórico", in: app)
@@ -138,6 +141,7 @@ final class SessionUITests: IronFlowUITestCase {
         XCTAssertTrue(app.staticTexts["Descartar este treino?"].exists, "Not the discard question")
         confirm.tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Treino descartado", timeout: 5), "No notice after discarding")
         XCTAssertFalse(app.buttons["session.bar"].exists, "Session bar still shown after discarding")
 
         // The planned workout is kept; nothing reaches the history.

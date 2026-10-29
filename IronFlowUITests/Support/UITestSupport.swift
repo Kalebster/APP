@@ -288,12 +288,12 @@ extension XCTestCase {
     @MainActor
     func completeFirstSetAndFinishSession(in app: XCUIApplication) {
         app.buttons.matching(identifier: "session.set.check").element(boundBy: 0).tap()
-        finishSessionWithSetsLeft(in: app)
+        saveSessionFromTheFinishSheet(in: app)
     }
 
-    /// In the session on screen, with a set done: finishes it with "Concluir e salvar" in "Concluir treino?".
+    /// In the session on screen, with a set done: "Concluir", then "Concluir e salvar" in "Concluir treino?".
     @MainActor
-    func finishSessionWithSetsLeft(in app: XCUIApplication) {
+    func saveSessionFromTheFinishSheet(in app: XCUIApplication) {
         app.buttons["session.finish"].tap()
         let save = app.buttons["finish.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 10), "Concluir treino? not shown")

@@ -17,6 +17,8 @@ struct WorkoutListView: View {
     @Query(SessionService.recentSessionsDescriptor) private var recentSessions: [Session]
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// Shows "Treino criado", "Nome salvo" and "Treino excluído".
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     /// The moment today's workout is found for; follows the day, as the Início does.
     @State private var now = Date.now
     @State private var isShowingPlan = false
@@ -65,11 +67,13 @@ struct WorkoutListView: View {
         .sheet(isPresented: $isCreating, onDismiss: openCreatedWorkout) {
             WorkoutNameSheet(title: "Novo treino") { name in
                 createdWorkout = try WorkoutService(context: context).createWorkout(name: name)
+                rootFeedback?.show(String(localized: "Treino criado"))
             }
         }
         .sheet(item: $renamingWorkout) { workout in
             WorkoutNameSheet(title: "Renomear treino", initialName: workout.name) { name in
                 try WorkoutService(context: context).rename(workout, to: name)
+                rootFeedback?.show(String(localized: "Nome salvo"))
             }
         }
         .navigationDestination(item: $openedWorkout) { workout in
@@ -255,6 +259,7 @@ struct WorkoutListView: View {
         pendingDeletion = nil
         do {
             try WorkoutService(context: context).delete(workout)
+            rootFeedback?.show(String(localized: "Treino excluído"))
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }

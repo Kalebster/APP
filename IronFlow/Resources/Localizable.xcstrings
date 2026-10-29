@@ -89,6 +89,28 @@
         }
       }
     },
+    "%lld exercícios adicionados" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld exercício adicionado"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld exercícios adicionados"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld h" : {
 
     },
@@ -439,6 +461,9 @@
     "Dia" : {
 
     },
+    "Dia %lld marcado como treinado" : {
+
+    },
     "dia futuro" : {
 
     },
@@ -545,6 +570,9 @@
 
     },
     "Exercício removido" : {
+
+    },
+    "Exercício removido do treino" : {
 
     },
     "Exercícios" : {
@@ -851,6 +879,9 @@
     "Nome do treino" : {
 
     },
+    "Nome salvo" : {
+
+    },
     "Novo treino" : {
 
     },
@@ -1148,6 +1179,9 @@
     "Série %lld" : {
 
     },
+    "Série removida" : {
+
+    },
     "séries" : {
 
     },
@@ -1187,6 +1221,9 @@
     "TMB · calcular" : {
 
     },
+    "Todas as séries feitas. Toque em Concluir." : {
+
+    },
     "Todos" : {
 
     },
@@ -1199,10 +1236,19 @@
     "Treino" : {
 
     },
+    "Treino criado" : {
+
+    },
     "Treino de hoje" : {
 
     },
+    "Treino descartado" : {
+
+    },
     "Treino em andamento" : {
+
+    },
+    "Treino excluído" : {
 
     },
     "Treino livre" : {
@@ -1212,6 +1258,12 @@
 
     },
     "treino programado" : {
+
+    },
+    "Treino salvo · %@" : {
+
+    },
+    "Treino salvo · %@ · %@ kg" : {
 
     },
     "Treinos" : {

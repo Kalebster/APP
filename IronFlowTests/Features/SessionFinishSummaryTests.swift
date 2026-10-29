@@ -73,6 +73,15 @@ struct SessionFinishSummaryTests {
         #expect(SessionFormatting.compactDurationText(summary.duration(endingAt: .lastCompletedSet)) == "1 h")
     }
 
+    @Test("The notice once saved: every set done, and the load lifted only when there is one")
+    func savedNotice() {
+        #expect(SessionFinishSummary.savedText(doneSets: 5, volumeKg: 2_640) == "Treino salvo · 5 séries · 2.640 kg")
+        #expect(SessionFinishSummary.savedText(doneSets: 1, volumeKg: 0) == "Treino salvo · 1 série")
+        // Rounded like the load lifted: less than half a kilogram is no load.
+        #expect(SessionFinishSummary.savedText(doneSets: 2, volumeKg: 0.4) == "Treino salvo · 2 séries")
+        #expect(SessionFinishSummary.savedText(doneSets: 1, volumeKg: 99.6) == "Treino salvo · 1 série · 100 kg")
+    }
+
     @Test("The duration as VoiceOver reads it")
     func spokenDuration() {
         #expect(SessionFormatting.spokenDurationText(10) == "1 minuto")

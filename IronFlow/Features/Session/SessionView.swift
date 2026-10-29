@@ -20,6 +20,10 @@ struct SessionView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
+    /// Shows "Treino salvo" and "Treino descartado" once the screen has closed.
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
+    /// The notice of the last change on this screen ("Série removida").
+    @State private var toast: ToastMessage?
     /// Typed values not saved yet, by set id.
     @State private var drafts: [UUID: SetDraft] = [:]
     @FocusState private var focusedField: SetField?
@@ -103,6 +107,8 @@ struct SessionView: View {
             .scrollContentBackground(.hidden)
             .environment(\.defaultMinListRowHeight, 0)
             .scrollDismissesKeyboard(.interactively)
+            // Below the header, which keeps "Concluir" in sight.
+            .toast($toast)
             // The header and the rest bar stay in place, so, like the system's bars, they stop growing at
             // the first accessibility text size: with the largest ones they would leave the sets no room.
             .safeAreaInset(edge: .top, spacing: 0) {
@@ -213,7 +219,8 @@ struct SessionView: View {
             }
             .fullScreenCover(isPresented: $isPickingExercises) {
                 ExercisePickerView(workoutExerciseIDs: Set(session.exercises.compactMap { $0.exercise?.id })) { exercises in
-                    try service.addExercises(exercises, to: session)
+                    let added = try service.addExercises(exercises, to: session)
+                    toast = ToastMessage(String(localized: "\(added.count) exercícios adicionados"))
                 }
             }
             .errorAlert($errorMessage)
@@ -395,6 +402,9 @@ struct SessionView: View {
                 focusedField = nil
             }
             restTimer.start(for: session.id, at: .now)
+            if session.exercises.allSatisfy({ $0.setLogs.allSatisfy(\.isCompleted) }) {
+                toast = ToastMessage(String(localized: "Todas as séries feitas. Toque em Concluir."))
+            }
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -461,6 +471,7 @@ struct SessionView: View {
         }
         do {
             try service.removeSet(log)
+            toast = ToastMessage(String(localized: "Série removida"))
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -484,6 +495,7 @@ struct SessionView: View {
         openedFinished.remove(performed.id)
         do {
             try service.removeExercise(performed)
+            toast = ToastMessage(String(localized: "Exercício removido do treino"))
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -522,10 +534,17 @@ struct SessionView: View {
     }
 
     private func finish(endingAt end: SessionEnd) {
+        // Read before finishing, which keeps only the sets done.
+        let sets = session.exercises.flatMap(\.setLogs)
+        let saved = SessionFinishSummary.savedText(
+            doneSets: sets.filter(\.isCompleted).count,
+            volumeKg: SessionProgress.volumeKg(of: sets)
+        )
         do {
             try service.finishSession(session, endingAt: end)
             isClosed = true
             restTimer.stop()
+            rootFeedback?.show(saved)
             onClose()
         } catch {
             errorMessage = UserFacingError.message(for: error)
@@ -538,6 +557,7 @@ struct SessionView: View {
             try service.discardSession(session)
             drafts = [:]
             restTimer.stop()
+            rootFeedback?.show(String(localized: "Treino descartado"))
             onClose()
         } catch {
             isClosed = false

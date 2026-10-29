@@ -147,6 +147,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         field.typeText("Costas e Bíceps")
         XCTAssertTrue(save.isEnabled, "Save disabled with a valid name")
         save.tap()
+        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Treino criado", timeout: 5), "No notice after creating")
 
         // Saving closes the name sheet; the new workout's editor opens once the sheet has closed, with only
         // the empty card: no legend, no dashed button, no "Iniciar".
@@ -322,13 +323,12 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "6", "Minimum not saved")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "10", "Maximum not saved")
 
-        // A maximum below the minimum: the minimum follows it, with the notice. The notice shows for a
-        // few seconds, so it is looked for right after OK, before anything else is waited for.
+        // A maximum below the minimum: the minimum follows it, with the notice. A notice stays 2,5 s,
+        // so it is looked for right after OK, before anything else is waited for.
         replaceText(of: fields("workout.set.max", in: app).element(boundBy: 0), with: "4")
         app.buttons["OK"].tap()
-        let notice = element("workout.rangeNotice", in: app)
-        XCTAssertTrue(notice.waitForExistence(timeout: 3), "Notice not shown")
-        XCTAssertEqual(notice.label, "O máximo não pode ser menor que o mínimo.")
+        let notice = app.staticTexts["toast"]
+        XCTAssertTrue(waitForLabel(of: notice, toBe: "O máximo não pode ser menor que o mínimo.", timeout: 5), "Notice not shown")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "4")

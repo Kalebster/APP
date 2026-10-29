@@ -21,7 +21,7 @@ struct RootView: View {
     /// The rest between sets of the session in progress. Kept here, so it goes on while the session
     /// screen is minimized; never stored.
     @State private var restTimer = RestTimer()
-    /// The root's errors, its own and those of screens that already closed.
+    /// The notices over every tab, and the root's errors, its own and those of screens that already closed.
     @State private var feedback = RootFeedback()
 
     var body: some View {
@@ -104,6 +104,7 @@ struct RootView: View {
         } message: {
             Text("Conclua ou descarte o treino atual antes de iniciar outro.")
         }
+        .toast($feedback.toast)
         .errorAlert($feedback.errorMessage)
         .environment(feedback)
     }
