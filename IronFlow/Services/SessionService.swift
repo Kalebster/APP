@@ -301,8 +301,10 @@ struct SessionService {
     }
 
     /// Ends the session, now or when its last set was completed. The end is never before the start
-    /// nor after now. Sets that were not completed stay recorded as not done.
-    /// A session without any completed set cannot be finished (it must be discarded instead).
+    /// nor after now. Only what was done is saved: the sets not completed are deleted, and so is an
+    /// exercise without any set completed; what is left is numbered again in order. Sessions finished
+    /// before keep everything they recorded. A session without any completed set cannot be finished
+    /// (it must be discarded instead). All or nothing.
     func finishSession(_ session: Session, endingAt end: SessionEnd = .now) throws {
         guard session.isActive else { throw SessionError.sessionNotActive }
         let hasCompletedSet = session.exercises.contains { performed in
@@ -316,6 +318,25 @@ struct SessionService {
         case .now: timestamp
         case .lastCompletedSet: lastCompletionTime(of: session) ?? timestamp
         }
+        var kept: [SessionExercise] = []
+        for performed in session.orderedExercises {
+            let logs = performed.orderedSetLogs
+            let done = logs.filter(\.isCompleted)
+            if done.isEmpty {
+                // Its sets go with it.
+                context.delete(performed)
+                continue
+            }
+            if done.count < logs.count {
+                for log in logs where !log.isCompleted {
+                    context.delete(log)
+                }
+                SortIndexing.renumber(done, at: timestamp)
+                performed.updatedAt = timestamp
+            }
+            kept.append(performed)
+        }
+        SortIndexing.renumber(kept, at: timestamp)
         session.endedAt = endTime(of: session, at: requested, now: timestamp)
         session.updatedAt = timestamp
         try context.saveOrRollback()

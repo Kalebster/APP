@@ -184,8 +184,26 @@ enum SessionFormatting {
 
     /// The load lifted in the session, rounded to the kilogram: "2.440 kg levantados".
     static func volumeText(_ volumeKg: Double) -> String {
-        let kilograms = Int(max(0, volumeKg).rounded()).formatted(.number.grouping(.automatic).locale(locale))
-        return String(localized: "\(kilograms) kg levantados")
+        String(localized: "\(kilogramsText(volumeKg)) kg levantados")
+    }
+
+    /// The load lifted as a number, rounded to the kilogram: "2.440".
+    static func kilogramsText(_ volumeKg: Double) -> String {
+        Int(max(0, volumeKg).rounded()).formatted(.number.grouping(.automatic).locale(locale))
+    }
+
+    /// A duration as VoiceOver reads it, rounded to minutes like `durationText`: "42 minutos",
+    /// "1 hora", "1 hora e 5 minutos".
+    static func spokenDurationText(_ duration: TimeInterval) -> String {
+        func minutesText(_ count: Int) -> String {
+            count == 1 ? String(localized: "1 minuto") : String(localized: "\(count) minutos")
+        }
+        let minutes = max(1, Int((max(0, duration) / 60).rounded()))
+        guard minutes >= 60 else { return minutesText(minutes) }
+        let hours = minutes / 60
+        let hoursText = hours == 1 ? String(localized: "1 hora") : String(localized: "\(hours) horas")
+        let rest = minutes % 60
+        return rest == 0 ? hoursText : String(localized: "\(hoursText) e \(minutesText(rest))")
     }
 
     /// The rest time left, rounded up to the second: "1:30", "0:05", "0:00".

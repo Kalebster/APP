@@ -31,11 +31,10 @@ struct SessionView: View {
     /// Rests that reached zero on screen, for the vibration.
     @State private var restsEnded = 0
     @State private var isPickingExercises = false
-    @State private var isConfirmingFinish = false
-    /// Sets not completed when "Concluir" was tapped, for the confirmation message.
-    @State private var notCompletedCount = 0
-    /// The end offered when "Concluir" was tapped on a session left open (see `SessionService.suggestedEnd`).
-    @State private var suggestedEnd: Date?
+    /// "Concluir treino?", with what the session did when "Concluir" was tapped.
+    @State private var finishSummary: SessionFinishSummary?
+    /// What a button of "Concluir treino?" asked for, done once the sheet has closed.
+    @State private var afterFinishSheet: FinishSheetAction?
     @State private var isConfirmingDiscard = false
     /// A set already done that is about to be removed, waiting for the confirmation.
     @State private var setPendingRemoval: SetLog?
@@ -54,6 +53,11 @@ struct SessionView: View {
         let id: UUID
         let number: Int
         let type: SetType
+    }
+
+    private enum FinishSheetAction {
+        case finish(SessionEnd)
+        case discard
     }
 
     private var service: SessionService {
@@ -163,22 +167,12 @@ struct SessionView: View {
                 await endRestWhenOver()
             }
             .sensoryFeedback(.success, trigger: restsEnded)
-            .confirmationDialog("Concluir treino?", isPresented: $isConfirmingFinish, titleVisibility: .visible) {
-                if let suggestedEnd {
-                    Button("Usar \(SessionFormatting.timeText(suggestedEnd, calendar: TrainingDay.calendar))") {
-                        finish(endingAt: .lastCompletedSet)
-                    }
-                    Button("Usar agora") {
-                        finish(endingAt: .now)
-                    }
-                } else {
-                    Button("Concluir treino") {
-                        finish(endingAt: .now)
-                    }
-                }
-                Button("Cancelar", role: .cancel) {}
-            } message: {
-                Text(verbatim: finishMessage)
+            .sheet(item: $finishSummary, onDismiss: actAfterFinishSheet) { summary in
+                FinishSessionSheet(
+                    summary: summary,
+                    onFinish: { (end: SessionEnd) in afterFinishSheet = .finish(end) },
+                    onDiscard: { afterFinishSheet = .discard }
+                )
             }
             .confirmationDialog("Descartar este treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
                 Button("Descartar", role: .destructive, action: discard)
@@ -501,36 +495,30 @@ struct SessionView: View {
         onClose()
     }
 
+    /// "Concluir": saves what was typed, then shows "Concluir treino?" with what the session did, or
+    /// "Nenhuma série marcada" without any set done. Nothing is saved before its "Concluir e salvar".
     private func requestFinish() {
         focusedField = nil
         guard commitAll() else { return }
-        let logs = session.exercises.flatMap(\.setLogs)
-        guard logs.contains(where: \.isCompleted) else {
-            errorMessage = UserFacingError.message(for: SessionError.noCompletedSets)
-            return
-        }
-        notCompletedCount = logs.filter { !$0.isCompleted }.count
-        suggestedEnd = service.suggestedEnd(for: session)
-        if notCompletedCount > 0 || suggestedEnd != nil {
-            isConfirmingFinish = true
-        } else {
-            finish(endingAt: .now)
-        }
+        finishSummary = SessionFinishSummary(
+            sets: session.exercises.flatMap(\.setLogs),
+            startedAt: session.startedAt,
+            now: .now,
+            suggestedEnd: service.suggestedEnd(for: session)
+        )
     }
 
-    /// The finish confirmation's message: the sets left undone, and the question about the end when
-    /// the session was probably left open. Both are asked in one dialog.
-    private var finishMessage: String {
-        var sentences: [String] = []
-        if notCompletedCount == 1 {
-            sentences.append(String(localized: "1 série não foi concluída e ficará registrada como não feita."))
-        } else if notCompletedCount > 1 {
-            sentences.append(String(localized: "\(notCompletedCount) séries não foram concluídas e ficarão registradas como não feitas."))
+    /// Finishes or discards once "Concluir treino?" has closed, as its button asked; a confirmation
+    /// cannot show while the sheet closes.
+    private func actAfterFinishSheet() {
+        guard let action = afterFinishSheet else { return }
+        afterFinishSheet = nil
+        switch action {
+        case .finish(let end):
+            finish(endingAt: end)
+        case .discard:
+            isConfirmingDiscard = true
         }
-        if let suggestedEnd {
-            sentences.append(SessionFormatting.lastRecordQuestion(suggestedEnd, calendar: TrainingDay.calendar))
-        }
-        return sentences.joined(separator: " ")
     }
 
     private func finish(endingAt end: SessionEnd) {

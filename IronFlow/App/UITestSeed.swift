@@ -17,7 +17,8 @@ import SwiftData
 /// - `finished:<workout>:<count>`: that many finished sessions of the workout, each with its first set
 ///   done, started 2 hours apart (the latest 2 hours ago) and lasting 40 minutes;
 /// - `session-detail:<workout>`: one finished session of the workout with two sets done (20 kg for 10
-///   repetitions; no load for 12) and the third not done;
+///   repetitions; no load for 12) and the third not done, as sessions finished before sets not done
+///   stopped being saved;
 /// - `open-session:<workout>`: a session of the workout left open: started 3 hours ago, its first set
 ///   done 2 hours ago (10 repetitions) and not finished;
 /// - `finished-today:<workout>`: one finished session of the workout that started today, 55 minutes
@@ -190,10 +191,24 @@ enum UITestSeed {
                 }
             case .sessionDetail(let name):
                 let workout = try findWorkout(named: name, in: context)
-                try finishSession(of: workout, startedAt: Date.now.addingTimeInterval(-7_200), in: context) { logs, service in
+                let session = try finishSession(of: workout, startedAt: Date.now.addingTimeInterval(-7_200), in: context) { logs, service in
                     try service.completeSet(logs[0], weightKg: 20, reps: 10)
                     try service.completeSet(logs[1], weightKg: nil, reps: 12)
                 }
+                // Finishing no longer saves a set not done; sessions recorded before kept them, and the
+                // history still shows them. The third set is that record, written as it was then.
+                guard let performed = session.orderedExercises.first, let last = performed.orderedSetLogs.last else {
+                    throw SeedError.workoutHasNoExercises(name)
+                }
+                let notDone = SetLog(
+                    sortIndex: performed.setLogs.count,
+                    targetWeightKg: last.targetWeightKg,
+                    targetRepsMin: last.targetRepsMin,
+                    targetRepsMax: last.targetRepsMax
+                )
+                context.insert(notDone)
+                notDone.sessionExercise = performed
+                try context.save()
             case .openSession(let name):
                 let workout = try findWorkout(named: name, in: context)
                 let start = Date.now.addingTimeInterval(-10_800)
@@ -278,12 +293,13 @@ enum UITestSeed {
 
     /// Starts a session of `workout` at `start`, lets `complete` do the sets of its first exercise, and
     /// finishes it 40 minutes later.
+    @discardableResult
     private static func finishSession(
         of workout: Workout,
         startedAt start: Date,
         in context: ModelContext,
         complete: ([SetLog], SessionService) throws -> Void
-    ) throws {
+    ) throws -> Session {
         let clock = SeedClock(start)
         let service = SessionService(context: context, now: { clock.current })
         let session = try service.startSession(from: workout)
@@ -291,6 +307,7 @@ enum UITestSeed {
         try complete(logs, service)
         clock.current = start.addingTimeInterval(2_400)
         try service.finishSession(session)
+        return session
     }
 
     private static func findWorkout(named name: String, in context: ModelContext) throws -> Workout {

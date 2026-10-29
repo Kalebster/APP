@@ -4,6 +4,9 @@
     "%@ concluído hoje" : {
 
     },
+    "%@ e %@" : {
+
+    },
     "%@ kcal" : {
 
     },
@@ -34,6 +37,9 @@
     "%lld de %lld séries" : {
 
     },
+    "%lld de %lld séries feitas" : {
+
+    },
     "%lld de %lld treinos" : {
 
     },
@@ -41,6 +47,9 @@
 
     },
     "%lld de 1 série" : {
+
+    },
+    "%lld de 1 série feita" : {
 
     },
     "%lld de 1 treino" : {
@@ -92,7 +101,13 @@
     "%lld h %lld min" : {
 
     },
+    "%lld horas" : {
+
+    },
     "%lld min" : {
+
+    },
+    "%lld minutos" : {
 
     },
     "%lld repetições" : {
@@ -145,9 +160,6 @@
         }
       }
     },
-    "%lld séries não foram concluídas e ficarão registradas como não feitas." : {
-
-    },
     "%lld treinos em %@" : {
 
     },
@@ -166,10 +178,13 @@
     "1 dia programado" : {
 
     },
-    "1 semana seguida batendo a meta" : {
+    "1 hora" : {
 
     },
-    "1 série não foi concluída e ficará registrada como não feita." : {
+    "1 minuto" : {
+
+    },
+    "1 semana seguida batendo a meta" : {
 
     },
     "1 treino em %@" : {
@@ -197,6 +212,9 @@
 
     },
     "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
+
+    },
+    "A série não marcada não será salva." : {
 
     },
     "A taxa metabólica basal é o quanto o seu corpo gasta parado. Usamos o seu peso (%@) e a sua altura (%@)." : {
@@ -260,6 +278,9 @@
 
     },
     "Arquivado" : {
+
+    },
+    "As %lld séries não marcadas não serão salvas." : {
 
     },
     "As opções do app chegarão em breve." : {
@@ -337,10 +358,10 @@
     "Concluir" : {
 
     },
-    "Concluir série %lld" : {
+    "Concluir e salvar" : {
 
     },
-    "Concluir treino" : {
+    "Concluir série %lld" : {
 
     },
     "Concluir treino?" : {
@@ -362,6 +383,9 @@
 
     },
     "Continuar" : {
+
+    },
+    "Continuar treinando" : {
 
     },
     "Continuar treino atual" : {
@@ -431,6 +455,12 @@
 
     },
     "Domingo" : {
+
+    },
+    "duração" : {
+
+    },
+    "duração %@" : {
 
     },
     "Duração: %@" : {
@@ -622,6 +652,9 @@
     "kg" : {
 
     },
+    "kg levantados" : {
+
+    },
     "Kg na semana" : {
 
     },
@@ -659,6 +692,9 @@
 
     },
     "marcado como feito fora do app" : {
+
+    },
+    "Marque pelo menos uma série para salvar o treino." : {
 
     },
     "Masculino" : {
@@ -804,6 +840,9 @@
 
     },
     "Nenhum treino realizado" : {
+
+    },
+    "Nenhuma série marcada" : {
 
     },
     "NO TREINO" : {
@@ -1107,6 +1146,9 @@
 
     },
     "Série %lld" : {
+
+    },
+    "séries" : {
 
     },
     "Só séries válidas e de falha" : {

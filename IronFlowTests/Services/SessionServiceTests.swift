@@ -489,17 +489,71 @@ struct SessionServiceTests {
         #expect(try harness.sessions.activeSession() == nil)
     }
 
-    @Test("Finishing keeps the sets that were not completed")
-    func finishKeepsIncompleteSets() throws {
+    @Test("Finishing saves only the sets done: the others are deleted and the sets left are numbered again")
+    func finishSavesOnlyTheSetsDone() throws {
         let session = try harness.sessions.startSession(from: workout)
-        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        let bench = session.orderedExercises[0].orderedSetLogs
+        try harness.sessions.completeSet(bench[1], weightKg: 22.5, reps: 8)
+        try harness.sessions.completeSet(session.orderedExercises[1].orderedSetLogs[0], weightKg: nil, reps: 12)
+        let plan = try planCounts()
 
         try harness.sessions.finishSession(session)
 
-        #expect(try count(SetLog.self, in: harness.context) == 3)
-        let states = session.orderedExercises.flatMap(\.orderedSetLogs).map { ($0.isCompleted, $0.completedAt == nil) }
-        #expect(states.map(\.0) == [true, false, false])
-        #expect(states.map(\.1) == [false, true, true])
+        #expect(try count(SetLog.self, in: harness.context) == 2)
+        let saved = session.orderedExercises.map(\.orderedSetLogs)
+        #expect(saved.map { $0.map(\.id) } == [[bench[1].id], [session.orderedExercises[1].orderedSetLogs[0].id]])
+        #expect(saved.flatMap { $0 }.allSatisfy { $0.isCompleted && $0.completedAt != nil })
+        #expect(saved[0].map(\.sortIndex) == [0])
+        #expect(saved[0].map(\.weightKg) == [22.5])
+        #expect(try planCounts() == plan)
+    }
+
+    @Test("An exercise without any set done is not saved, and the exercises left are numbered again")
+    func finishLeavesOutExercisesNotDone() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(session.orderedExercises[1].orderedSetLogs[0], weightKg: nil, reps: 12)
+
+        try harness.sessions.finishSession(session)
+
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Rosca Direta"])
+        #expect(session.orderedExercises.map(\.sortIndex) == [0])
+        #expect(try count(SessionExercise.self, in: harness.context) == 1)
+        #expect(try count(SetLog.self, in: harness.context) == 1)
+        // The planned workout keeps both exercises.
+        #expect(workout.orderedExercises.count == 2)
+        #expect(HistorySessionDetail(session).exercises.map(\.name) == ["Rosca Direta"])
+    }
+
+    @Test("A session finished before keeps its sets not done, \"Não concluída\" in its detail, when another is finished")
+    func finishKeepsTheOlderHistory() throws {
+        // Recorded before sets not done stopped being saved: one set done and one not.
+        let old = Session(startedAt: harness.clock.current.addingTimeInterval(-86_400), workoutNameSnapshot: "Push")
+        old.endedAt = old.startedAt.addingTimeInterval(2_700)
+        harness.context.insert(old)
+        let oldExercise = SessionExercise(sortIndex: 0, exerciseNameSnapshot: "Supino Reto", muscleGroupSnapshot: .chest)
+        harness.context.insert(oldExercise)
+        oldExercise.session = old
+        oldExercise.exercise = bench
+        let oldDone = SetLog(sortIndex: 0, weightKg: 20, reps: 10, targetRepsMin: 8, targetRepsMax: 10)
+        oldDone.isCompleted = true
+        oldDone.completedAt = old.startedAt.addingTimeInterval(600)
+        let oldNotDone = SetLog(sortIndex: 1, weightKg: nil, reps: nil, targetRepsMin: 6, targetRepsMax: 8)
+        for log in [oldDone, oldNotDone] {
+            harness.context.insert(log)
+            log.sessionExercise = oldExercise
+        }
+        try harness.context.save()
+        let oldUpdatedAt = old.updatedAt
+
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        try harness.sessions.finishSession(session)
+
+        #expect(old.orderedExercises.map { $0.orderedSetLogs.map(\.id) } == [[oldDone.id, oldNotDone.id]])
+        #expect(old.updatedAt == oldUpdatedAt)
+        let sets = try #require(HistorySessionDetail(old).exercises.first).sets
+        #expect(sets.map(\.isCompleted) == [true, false])
+        #expect(sets[1].accessibilityText == "Série 2, Meta: 6–8, Sem carga, Sem repetições, Não concluída")
     }
 
     @Test("A session without any completed set cannot be finished and stays intact")
