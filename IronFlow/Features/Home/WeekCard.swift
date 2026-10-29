@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// The Home "Sua semana" card: the week's goal (a ring with the days trained against the days of the
-/// weekly plan) or, without a plan, the week's count of workouts, and its seven days. Tapping a day marks it as
-/// trained outside the app; a marked day is unmarked after a confirmation.
+/// weekly plan) or, without a plan, the week's count of workouts, and its seven days. Tapping a day
+/// marks it as trained outside the app; a marked day is unmarked after a confirmation.
 ///
 /// The card reads only `week`: its queries are built from the week's limits when the card is
 /// created. `HomeView` gives the card the week's start as its identity, so a new week creates a new
