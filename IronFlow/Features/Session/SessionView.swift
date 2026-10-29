@@ -352,7 +352,7 @@ struct SessionView: View {
             lastPerformances = try service.lastPerformances(for: session)
         } catch {
             lastPerformances = [:]
-            sessionLogger.error("Última vez could not be read: \(String(describing: error), privacy: .public)")
+            sessionLogger.error("Última vez could not be read: \(String(describing: error), privacy: .private)")
         }
     }
 

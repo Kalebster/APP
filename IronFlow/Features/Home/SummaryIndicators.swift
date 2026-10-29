@@ -35,9 +35,9 @@ enum SummaryIndicators {
 
     // MARK: - Counting
 
-    /// The workouts of a period, counted like the week's ring: each finished session plus each day
-    /// marked as trained outside the app, a day marked more than once counting once. `sessionCount` and
-    /// `markedDays` are those of the period only.
+    /// The workouts of a period ("Treinos no mês"): each finished session plus each day marked as
+    /// trained outside the app, a day marked more than once counting once. Unlike the week's goal, two
+    /// workouts on one day count two. `sessionCount` and `markedDays` are those of the period only.
     static func workoutCount(sessionCount: Int, markedDays: [String]) -> Int {
         sessionCount + Set(markedDays).count
     }

@@ -129,11 +129,16 @@ struct WeekSummaryTests {
         // Monday has two sessions, Wednesday one; the session in progress does not count.
         #expect(days.map(\.appWorkouts) == [2, 0, 1, 0, 0, 0, 0])
         #expect(days.map(\.isMarked) == [false, true, true, false, false, false, false])
-        // Three finished sessions and two marked days, on three distinct days.
+        // Three finished sessions and two marked days, on three distinct days: without a plan the card
+        // counts every workout.
         #expect(WeekSummary.workoutCount(of: days) == 5)
         #expect(days.filter(\.isTrained).count == 3)
-        // The goal counts every workout of the week: it can go past the planned days.
-        #expect(WeekSummary.goal(of: days, plannedDays: 4) == WeekSummary.Goal(done: 5, total: 4))
+        // The goal counts each day with a workout once: Monday's two sessions, and Wednesday's session
+        // and marking, count one day each.
+        #expect(WeekSummary.trainedDayCount(of: days) == 3)
+        #expect(WeekSummary.goal(of: days, plannedDays: 4) == WeekSummary.Goal(done: 3, total: 4))
+        // It can go past the planned days.
+        #expect(WeekSummary.goal(of: days, plannedDays: 2) == WeekSummary.Goal(done: 3, total: 2))
         #expect(WeekSummary.goal(of: days, plannedDays: 0) == nil)
     }
 
@@ -147,6 +152,7 @@ struct WeekSummaryTests {
 
         #expect(days.map(\.isMarked) == [false, true, false, false, false, false, false])
         #expect(WeekSummary.workoutCount(of: days) == 1)
+        #expect(WeekSummary.trainedDayCount(of: days) == 1)
         #expect(days.filter(\.isTrained).count == 1)
     }
 
