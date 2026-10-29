@@ -693,8 +693,9 @@ struct SessionServiceTests {
 
         #expect(try harness.sessions.activeSession() == nil)
         #expect(try count(Session.self, in: harness.context) == 1)
-        #expect(try count(SessionExercise.self, in: harness.context) == 2)
-        #expect(try count(SetLog.self, in: harness.context) == 3)
+        // What the finished session saved: its only set done, of the first exercise.
+        #expect(try count(SessionExercise.self, in: harness.context) == 1)
+        #expect(try count(SetLog.self, in: harness.context) == 1)
         #expect(finished.endedAt != nil)
         #expect(try count(Workout.self, in: harness.context) == 1)
         #expect(try count(PlannedSet.self, in: harness.context) == 3)

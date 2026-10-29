@@ -138,7 +138,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Push".count))
         field.typeText("Pull")
         app.buttons["workout.name.save"].tap()
-        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Nome salvo", timeout: 5), "No notice after renaming")
+        XCTAssertTrue(waitForToast("Nome salvo", in: app), "No notice after renaming")
         XCTAssertTrue(field.waitForNonExistence(timeout: 10), "Name sheet did not close")
         let card = app.buttons["workouts.card"]
         XCTAssertTrue(waitForLabel(of: card, containing: "Pull"), "Card not renamed: \(card.label)")
@@ -176,7 +176,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertLessThan(confirm.frame.minY, menuFrame.maxY + 300, "Confirmation far from the ⋮ \(menuFrame): \(confirm.frame)")
         attachScreenshot(named: "82-workouts-delete-confirmation", of: app)
         confirm.tap()
-        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Treino excluído", timeout: 5), "No notice after deleting")
+        XCTAssertTrue(waitForToast("Treino excluído", in: app), "No notice after deleting")
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Empty card not shown after deleting")
         XCTAssertFalse(app.buttons["workouts.card"].exists, "Deleted workout still listed")
         XCTAssertTrue(app.staticTexts["0 treinos no plano"].exists, "Subtitle after deleting")

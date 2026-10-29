@@ -39,7 +39,7 @@ final class HomeWeekUITests: IronFlowUITestCase {
         let dayNumber = Calendar(identifier: .gregorian).component(.day, from: .now)
         today(in: app).tap()
         XCTAssertTrue(
-            waitForLabel(of: app.staticTexts["toast"], toBe: "Dia \(dayNumber) marcado como treinado", timeout: 5),
+            waitForToast("Dia \(dayNumber) marcado como treinado", in: app),
             "No notice after marking: \(app.staticTexts["toast"].label)"
         )
         expectCount("1 treino esta semana", in: app)

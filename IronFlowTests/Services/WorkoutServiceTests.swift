@@ -422,7 +422,8 @@ struct WorkoutServiceTests {
         #expect(plannedSet.updatedAt == harness.clock.current)
         #expect(workout.updatedAt == harness.clock.current)
         #expect(harness.context.hasChanges == false)
-        #expect(session.orderedExercises[0].orderedSetLogs.map(\.setType) == [.working, .working])
+        // The session saved its set done, which keeps its type.
+        #expect(session.orderedExercises[0].orderedSetLogs.map(\.setType) == [.working])
 
         // The same type again writes nothing.
         harness.clock.advance(by: 30)

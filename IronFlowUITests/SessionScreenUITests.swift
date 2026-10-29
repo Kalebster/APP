@@ -253,7 +253,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(remove.waitForExistence(timeout: 10), "No Remover after swiping")
         remove.tap()
         XCTAssertTrue(waitForCount(checks(in: app), 5), "Set not removed")
-        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Série removida", timeout: 5), "No notice after removing a set")
+        XCTAssertTrue(waitForToast("Série removida", in: app), "No notice after removing a set")
 
         // A set done asks first.
         checks(in: app).element(boundBy: 0).tap()
@@ -270,8 +270,9 @@ final class SessionScreenUITests: IronFlowUITestCase {
         let removeExercise = app.buttons["Remover exercício"]
         XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover exercício in the ⋯ menu")
         removeExercise.tap()
+        // The notice first: it stays only 2,5 s.
+        XCTAssertTrue(waitForToast("Exercício removido do treino", in: app), "No notice after removing an exercise")
         XCTAssertTrue(app.buttons["Opções de Barra Fixa Pronada"].waitForNonExistence(timeout: 10), "Exercise not removed")
-        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Exercício removido do treino", timeout: 5), "No notice after removing an exercise")
         XCTAssertTrue(waitForCount(checks(in: app), 3), "The other exercise lost sets")
 
         // One with a set done asks first.

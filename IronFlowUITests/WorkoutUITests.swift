@@ -117,6 +117,28 @@ final class WorkoutUITests: IronFlowUITestCase {
         )
     }
 
+    /// Drags the editor's list up by what is visible between its top bar and the keyboard (with its OK
+    /// bar) or the bottom of the screen, or by `distance` when that is less: a drag of the list itself
+    /// keeps the keyboard up, which a swipe over the whole app may not move at all.
+    @MainActor
+    private func dragEditorUp(in app: XCUIApplication, by distance: CGFloat = .greatestFiniteMagnitude) {
+        var top = app.buttons["workout.back"].frame.maxY + 30
+        var bottom = app.windows.firstMatch.frame.maxY - 60
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            bottom = min(bottom, keyboard.frame.minY - 30)
+        }
+        let ok = app.buttons["OK"]
+        if ok.exists {
+            bottom = min(bottom, ok.frame.minY - 30)
+        }
+        top = max(top, bottom - distance)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let x = app.windows.firstMatch.frame.midX
+        origin.withOffset(CGVector(dx: x, dy: bottom))
+            .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: x, dy: top)))
+    }
+
     /// Opens the editor's ⋯ menu and chooses `option`.
     @MainActor
     private func chooseFromEditorMenu(_ option: String, in app: XCUIApplication) {
@@ -147,7 +169,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         field.typeText("Costas e Bíceps")
         XCTAssertTrue(save.isEnabled, "Save disabled with a valid name")
         save.tap()
-        XCTAssertTrue(waitForLabel(of: app.staticTexts["toast"], toBe: "Treino criado", timeout: 5), "No notice after creating")
+        XCTAssertTrue(waitForToast("Treino criado", in: app), "No notice after creating")
 
         // Saving closes the name sheet; the new workout's editor opens once the sheet has closed, with only
         // the empty card: no legend, no dashed button, no "Iniciar".
@@ -551,10 +573,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
         XCTAssertEqual(weight.value as? String, weight.placeholderValue, "The value not saved is still in the field")
 
-        // "Iniciar", the same way.
+        // "Iniciar", the same way: the list is dragged until the button is above the keyboard.
         replaceText(of: weight, with: "1500")
-        scrollToBottom(in: app)
-        app.buttons["workout.start"].tap()
+        let start = app.buttons["workout.start"]
+        for _ in 0..<4 where !(start.exists && start.isHittable) {
+            dragEditorUp(in: app)
+        }
+        XCTAssertTrue(start.exists && start.isHittable, "Iniciar stays below the keyboard")
+        start.tap()
         acceptLoadError(in: app)
         XCTAssertFalse(element("session.name", in: app).exists, "The workout started with a value not saved")
         XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
@@ -618,6 +644,12 @@ final class WorkoutUITests: IronFlowUITestCase {
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
         let minimum = fields("workout.set.min", in: app).element(boundBy: 0)
         let maximum = fields("workout.set.max", in: app).element(boundBy: 0)
+        // With the largest text the title, the legend and the exercise's header can fill the screen: the
+        // list is dragged until the first set is in it.
+        XCTAssertTrue(element("workout.legend", in: app).waitForExistence(timeout: 10), "Editor not shown")
+        for _ in 0..<6 where !(weight.exists && maximum.exists && maximum.isHittable) {
+            dragEditorUp(in: app, by: 250)
+        }
         XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
         let screen = app.windows.firstMatch.frame
         for (name, field) in [("load", weight), ("minimum", minimum), ("maximum", maximum)] {

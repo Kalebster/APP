@@ -75,12 +75,12 @@ struct HistorySessionDetailTests {
         #expect(after.exercises.map(\.name) == ["Rosca Direta"])
         #expect(after.exercises.map(\.muscleGroup) == [.biceps])
         let sets = try #require(after.exercises.first?.sets)
-        #expect(sets.map(\.targetRepsMin) == [10, 8])
-        #expect(sets.map(\.targetRepsMax) == [12, 10])
-        // The second set was not done: its planned load stays a target only.
-        #expect(sets.map(\.weightKg) == [12.5, nil])
-        #expect(sets.map(\.reps) == [11, nil])
-        #expect(sets.map(\.isCompleted) == [true, false])
+        // Only the set done was saved: the second, not done, was not.
+        #expect(sets.map(\.targetRepsMin) == [10])
+        #expect(sets.map(\.targetRepsMax) == [12])
+        #expect(sets.map(\.weightKg) == [12.5])
+        #expect(sets.map(\.reps) == [11])
+        #expect(sets.map(\.isCompleted) == [true])
     }
 
     @Test("Exercises and sets follow their recorded order, and sets are numbered from 1 in that order")
