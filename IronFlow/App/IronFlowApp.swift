@@ -32,7 +32,7 @@ struct IronFlowApp: App {
             }
             // Inter also for the texts that set no font of their own. The system's own parts (tab bar,
             // alerts, menus, confirmations, keyboard) keep the iPhone's font.
-            .font(.custom(InterFont.regular, size: 17, relativeTo: .body))
+            .defaultInterFont()
         }
     }
 

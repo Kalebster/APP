@@ -30,6 +30,18 @@ enum InterFont {
         }
     }
 
+    /// The file of a weight with the iPhone's Bold Text setting on: heavier, as the system font gets
+    /// (regular reads as semibold, semibold and medium as bold, bold as ExtraBold); without it, the
+    /// weight's own file.
+    static func name(for weight: Font.Weight, boldText: Bool) -> String {
+        guard boldText else { return name(for: weight) }
+        switch weight {
+        case .medium, .semibold: return bold
+        case .bold, .heavy, .black: return extraBold
+        default: return semibold
+        }
+    }
+
     /// Registers the files for this process; once is enough, and a second time changes nothing. A file
     /// that cannot be registered is logged, and its texts use the system font: the app goes on. Returns
     /// the names of those files.

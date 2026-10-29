@@ -32,9 +32,10 @@ struct SessionFinishSummary: Identifiable {
     }
 
     /// How long the session lasts when it ends at `end`: up to its last set done (when that end is
-    /// offered) or up to now.
-    func duration(endingAt end: SessionEnd) -> TimeInterval {
-        let endDate = end == .lastCompletedSet ? (suggestedEnd ?? now) : now
+    /// offered) or up to now, `moment` while the sheet stays open (by default, when it opened).
+    func duration(endingAt end: SessionEnd, at moment: Date? = nil) -> TimeInterval {
+        let current = max(now, moment ?? now)
+        let endDate = end == .lastCompletedSet ? (suggestedEnd ?? current) : current
         return max(0, endDate.timeIntervalSince(startedAt))
     }
 
@@ -54,9 +55,9 @@ struct SessionFinishSummary: Identifiable {
     /// load of the working and failure sets; without a load lifted, "Treino salvo · 1 série".
     static func savedText(doneSets: Int, volumeKg: Double) -> String {
         let sets = String(localized: "\(doneSets) séries")
-        let kilograms = SessionFormatting.kilogramsText(volumeKg)
-        guard kilograms != "0" else { return String(localized: "Treino salvo · \(sets)") }
-        return String(localized: "Treino salvo · \(sets) · \(kilograms) kg")
+        // Rounded like the number shown: less than half a kilogram is no load.
+        guard max(0, volumeKg).rounded() >= 1 else { return String(localized: "Treino salvo · \(sets)") }
+        return String(localized: "Treino salvo · \(sets) · \(SessionFormatting.kilogramsText(volumeKg)) kg")
     }
 
     /// "A série não marcada não será salva.", "As 3 séries não marcadas não serão salvas."; `nil` when

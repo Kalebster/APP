@@ -70,6 +70,12 @@ struct SessionFinishSummaryTests {
         )
         #expect(summary.duration(endingAt: .lastCompletedSet) == 3_600)
         #expect(summary.duration(endingAt: .now) == 3 * 3_600)
+        // While the sheet stays open, the duration up to now goes on; the last record stays.
+        let later = start.addingTimeInterval(3 * 3_600 + 600)
+        #expect(summary.duration(endingAt: .now, at: later) == 3 * 3_600 + 600)
+        #expect(summary.duration(endingAt: .lastCompletedSet, at: later) == 3_600)
+        // A clock set back never shortens it.
+        #expect(summary.duration(endingAt: .now, at: start) == 3 * 3_600)
         #expect(SessionFormatting.compactDurationText(summary.duration(endingAt: .lastCompletedSet)) == "1 h")
     }
 

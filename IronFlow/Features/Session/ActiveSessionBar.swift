@@ -108,8 +108,12 @@ private struct PulsingDot: View {
             .frame(width: side, height: side)
             .opacity(isAnimated && isDimmed ? 0.3 : 1)
             .animation(isAnimated ? .easeInOut(duration: 0.9).repeatForever(autoreverses: true) : nil, value: isDimmed)
+            // The pulse starts when the bar appears, and again when Reduce Motion is turned off.
             .onAppear {
-                isDimmed = true
+                isDimmed = isAnimated
+            }
+            .onChange(of: isAnimated) { _, animated in
+                isDimmed = animated
             }
             .accessibilityHidden(true)
     }

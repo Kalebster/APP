@@ -31,4 +31,15 @@ struct InterFontTests {
         #expect(InterFont.name(for: .light) == "Inter-Regular")
         #expect(InterFont.name(for: .black) == "Inter-ExtraBold")
     }
+
+    @Test("With the Bold Text setting, each weight reads heavier, as the system font does")
+    func boldText() {
+        #expect(InterFont.name(for: .regular, boldText: true) == "Inter-SemiBold")
+        #expect(InterFont.name(for: .medium, boldText: true) == "Inter-Bold")
+        #expect(InterFont.name(for: .semibold, boldText: true) == "Inter-Bold")
+        #expect(InterFont.name(for: .bold, boldText: true) == "Inter-ExtraBold")
+        #expect(InterFont.name(for: .heavy, boldText: true) == "Inter-ExtraBold")
+        // Without it, the weight's own file.
+        #expect(InterFont.name(for: .semibold, boldText: false) == "Inter-SemiBold")
+    }
 }

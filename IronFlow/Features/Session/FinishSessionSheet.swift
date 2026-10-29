@@ -89,11 +89,18 @@ struct FinishSessionSheet: View {
     // MARK: - Summary
 
     /// The sets done, the duration and the load lifted, side by side; one below the other with the
-    /// largest text sizes, so no number is cut.
+    /// largest text sizes, so no number is cut. The duration up to now goes on while the sheet stays
+    /// open, as finishing records the moment "Concluir e salvar" is tapped.
     private var boxes: some View {
-        let duration = summary.duration(endingAt: summary.suggestedEnd == nil ? .now : end)
         let layout = dynamicTypeSize >= .accessibility1 ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
-        return layout {
+        return TimelineView(.periodic(from: summary.now, by: 15)) { timeline in
+            let duration = summary.duration(endingAt: summary.suggestedEnd == nil ? .now : end, at: timeline.date)
+            boxRow(layout: layout, duration: duration)
+        }
+    }
+
+    private func boxRow(layout: AnyLayout, duration: TimeInterval) -> some View {
+        layout {
             box(
                 value: summary.setsText,
                 caption: "séries",
@@ -141,7 +148,7 @@ struct FinishSessionSheet: View {
     /// the chosen one in blue.
     private func endChoice(_ suggestedEnd: Date) -> some View {
         let calendar = TrainingDay.calendar
-        let layout = dynamicTypeSize >= .accessibility1 ? AnyLayout(VStackLayout(spacing: 4)) : AnyLayout(HStackLayout(spacing: 4))
+        let layout = dynamicTypeSize >= .accessibility1 ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 4))
         return VStack(alignment: .leading, spacing: 8) {
             Text(verbatim: SessionFormatting.lastRecordQuestion(suggestedEnd, now: summary.now, calendar: calendar))
                 .scaledFont(13)
@@ -156,7 +163,7 @@ struct FinishSessionSheet: View {
                 )
                 endOption(.now, title: String(localized: "Usar agora"), identifier: "finish.end.now")
             }
-            .padding(3)
+            .padding(.horizontal, 3)
             .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
@@ -181,6 +188,8 @@ struct FinishSessionSheet: View {
                             )
                     }
                 }
+                // The 3 points of the block around the segment answer too: 44 points to touch.
+                .padding(.vertical, 3)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
