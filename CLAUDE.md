@@ -5,3 +5,5 @@ All work in this repository must follow the permanent project rules defined in `
 Read and follow them before every task:
 
 @PROJECT_RULES.md
+
+Every screen follows `DESIGN.md` and the approved prototype.

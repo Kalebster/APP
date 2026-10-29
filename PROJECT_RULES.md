@@ -243,6 +243,8 @@ Architecture should remain suitable for future Firebase integration.
 
 ## 9. USER EXPERIENCE
 
+Every screen follows `DESIGN.md` and the approved prototype.
+
 The application should prioritize:
 
 - simplicity;
