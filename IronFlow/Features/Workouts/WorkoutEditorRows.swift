@@ -110,8 +110,9 @@ struct EditorExerciseTile: View {
                     EquipmentIcon(equipment: equipment)
                         .frame(width: iconSide, height: iconSide)
                 } else if let exercise, let initial = exercise.name.first {
+                    // Inter Bold at a size fixed by the tile, which already follows Dynamic Type.
                     Text(verbatim: String(initial).uppercased())
-                        .font(.system(size: iconSide * 0.8, weight: .bold))
+                        .font(.custom(InterFont.bold, fixedSize: iconSide * 0.8))
                 } else {
                     Image(systemName: "dumbbell")
                         .font(.system(size: iconSide * 0.75, weight: .semibold))

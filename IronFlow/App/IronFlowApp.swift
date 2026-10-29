@@ -11,21 +11,28 @@ struct IronFlowApp: App {
     @State private var store: Result<ModelContainer, any Error>
 
     init() {
+        // Before any screen, so the first one already uses Inter.
+        InterFont.register()
         _store = State(initialValue: Self.loadStore())
     }
 
     var body: some Scene {
         WindowGroup {
-            switch store {
-            case .success(let container):
-                RootView()
-                    .modelContainer(container)
-            case .failure(let error):
-                PersistenceErrorView(error: error) {
-                    // Only tries to open the same store again.
-                    store = Self.loadStore()
+            Group {
+                switch store {
+                case .success(let container):
+                    RootView()
+                        .modelContainer(container)
+                case .failure(let error):
+                    PersistenceErrorView(error: error) {
+                        // Only tries to open the same store again.
+                        store = Self.loadStore()
+                    }
                 }
             }
+            // Inter also for the texts that set no font of their own. The system's own parts (tab bar,
+            // alerts, menus, confirmations, keyboard) keep the iPhone's font.
+            .font(.custom(InterFont.regular, size: 17, relativeTo: .body))
         }
     }
 

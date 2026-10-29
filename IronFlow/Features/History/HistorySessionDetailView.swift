@@ -43,7 +43,7 @@ struct HistorySessionDetailView: View {
                     .accessibilityIdentifier("history.detail.duration")
             }
         }
-        .font(.subheadline)
+        .scaledFont(15)
         .foregroundStyle(.secondary)
     }
 }
@@ -56,9 +56,9 @@ private struct HistoryExerciseCard: View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(exercise.name)
-                    .font(.headline)
+                    .scaledFont(17, weight: .semibold)
                 Text(exercise.muscleGroup.displayName)
-                    .font(.subheadline)
+                    .scaledFont(15)
                     .foregroundStyle(.secondary)
             }
 
@@ -95,7 +95,7 @@ private struct HistorySetRow: View {
             }
             // One text, so it wraps instead of truncating with large text sizes.
             Text(record.valuesText)
-                .font(.subheadline)
+                .scaledFont(15)
                 .monospacedDigit()
                 .foregroundStyle(record.isCompleted ? Color.primary : Color.secondary)
         }
@@ -106,7 +106,7 @@ private struct HistorySetRow: View {
 
     private var number: some View {
         Text("Série \(record.number)")
-            .font(.subheadline.weight(.semibold))
+            .scaledFont(15, weight: .semibold)
             .monospacedDigit()
     }
 
@@ -120,6 +120,6 @@ private struct HistorySetRow: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .font(.subheadline.weight(.semibold))
+        .scaledFont(15, weight: .semibold)
     }
 }

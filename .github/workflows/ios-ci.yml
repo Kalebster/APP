@@ -311,6 +311,24 @@ jobs:
           fi
           echo "The Release app is dark only and holds none of the test hooks."
 
+          # The size of the Release app: the bundle as built, and zipped, close to what is downloaded (the
+          # App Store also thins it for each device). The Inter files are counted on their own.
+          app_kb="$(du -sk "$release_app" | cut -f1)"
+          # Outside build/, so the logs artifact does not carry it.
+          ditto -c -k --keepParent "$release_app" "$RUNNER_TEMP/release-app.zip"
+          zip_kb="$(du -sk "$RUNNER_TEMP/release-app.zip" | cut -f1)"
+          fonts_kb=0
+          for font in "$release_app"/Inter-*.ttf; do
+            if [ -f "$font" ]; then
+              fonts_kb=$((fonts_kb + $(du -k "$font" | cut -f1)))
+            fi
+          done
+          echo "Release app size: ${app_kb} KB as built, ${zip_kb} KB zipped; Inter fonts: ${fonts_kb} KB"
+          {
+            echo
+            echo "- Tamanho do app Release: ${app_kb} KB como compilado, ${zip_kb} KB compactado; as fontes Inter ocupam ${fonts_kb} KB"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # Warnings are reported, not treated as errors: they must be reviewed by hand.
       - name: Summarize build warnings
         if: always()

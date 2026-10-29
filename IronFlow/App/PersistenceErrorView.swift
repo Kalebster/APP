@@ -17,7 +17,7 @@ struct PersistenceErrorView: View {
                     .accessibilityHidden(true)
 
                 Text("Não foi possível abrir seus dados")
-                    .font(.title2.bold())
+                    .scaledFont(22, weight: .bold)
                     .multilineTextAlignment(.center)
                     .accessibilityIdentifier("persistence.error.title")
 
@@ -30,7 +30,8 @@ struct PersistenceErrorView: View {
                     .accessibilityIdentifier("persistence.error.retry")
 
                 Text(verbatim: String(describing: error))
-                    .font(.footnote.monospaced())
+                    .scaledFont(13)
+                    .monospaced()
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
