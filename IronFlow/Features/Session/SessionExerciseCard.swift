@@ -132,9 +132,11 @@ struct SessionExerciseCard: View {
             .contentShape(Rectangle())
     }
 
+    /// "+ Adicionar série", the + next to the text as in the editor; the whole row answers, 44 points tall.
     private var addSetRow: some View {
         Button(action: onAddSet) {
             Label("Adicionar série", systemImage: "plus")
+                .labelStyle(TightLabelStyle())
                 .scaledFont(12, weight: .semibold)
                 .foregroundStyle(Theme.Colors.lightAccent)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

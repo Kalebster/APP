@@ -296,13 +296,15 @@ struct PlannedSetRow: View {
     }
 }
 
-/// "+ Adicionar série", the last row of an exercise card: a copy of the last set.
+/// "+ Adicionar série", the last row of an exercise card: a copy of the last set. The + sits next to
+/// the text, and the whole row answers, 44 points tall.
 struct EditorAddSetRow: View {
     let action: @MainActor () -> Void
 
     var body: some View {
         Button(action: action) {
             Label("Adicionar série", systemImage: "plus")
+                .labelStyle(TightLabelStyle())
                 .scaledFont(12, weight: .semibold)
                 .foregroundStyle(Theme.Colors.lightAccent)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

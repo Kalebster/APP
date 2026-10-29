@@ -24,8 +24,18 @@ struct IconTile: View {
     }
 }
 
+/// An icon and its title close together, 4 points apart: the session clock, "+ Adicionar série".
+struct TightLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 4) {
+            configuration.icon
+            configuration.title
+        }
+    }
+}
+
 /// "‹ Treinos": the blue back of the screens that hide the navigation bar for the model's own top row,
-/// the workout editor and the weekly plan.
+/// the workout editor and the weekly plan. Text 15, as in the model.
 struct TextBackButton: View {
     let title: LocalizedStringKey
     let action: () -> Void
@@ -34,9 +44,9 @@ struct TextBackButton: View {
         Button(action: action) {
             HStack(spacing: 4) {
                 Image(systemName: "chevron.left")
-                    .scaledFont(17, weight: .semibold)
+                    .scaledFont(15, weight: .semibold)
                 Text(title)
-                    .scaledFont(17)
+                    .scaledFont(15)
             }
             .foregroundStyle(Theme.Colors.lightAccent)
             .frame(minHeight: 44)
