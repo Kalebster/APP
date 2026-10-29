@@ -7,7 +7,7 @@ import SwiftUI
 struct SessionExerciseCard: View {
     let performed: SessionExercise
     let sets: [SetLog]
-    /// The sets done the last time, the first done set going with set 1.
+    /// The sets done the last time, paired with the sets by type (see `LastPerformance.matched`).
     let previousSets: [PreviousSet]
     let isCurrent: Bool
     let currentSetID: UUID?
@@ -41,8 +41,9 @@ struct SessionExerciseCard: View {
                         .padding(.bottom, 2)
                         .sessionCardRow(.middle, isCurrent: isCurrent)
                 }
+                let previousBySet = LastPerformance.matched(previousSets, to: sets.map(\.setType))
                 ForEach(Array(sets.enumerated()), id: \.element.id) { index, log in
-                    let previous = previousSets.indices.contains(index) ? previousSets[index] : nil
+                    let previous = previousBySet[index]
                     let suggestion = LastPerformance.suggestion(
                         previous: previous,
                         targetWeightKg: log.targetWeightKg,

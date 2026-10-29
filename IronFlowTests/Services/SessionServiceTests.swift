@@ -912,6 +912,31 @@ struct SessionServiceTests {
         #expect(last[curl.id] == [PreviousSet(weightKg: nil, reps: 12)], "Without a load, only the repetitions")
     }
 
+    @Test("The last time keeps the type of each set done, and each set of now gets the one of its own type")
+    func lastTimeKeepsTheSetType() throws {
+        // The first set done as a warm-up, and the second as a working set.
+        try finishedSession { bench, _ in
+            try harness.sessions.setType(.warmup, of: bench[0])
+            try harness.sessions.completeSet(bench[0], weightKg: 10, reps: 15)
+            try harness.sessions.completeSet(bench[1], weightKg: 22.5, reps: 8)
+        }
+        // Now both are working sets, as planned.
+        let current = try harness.sessions.startSession(from: workout)
+
+        let last = try harness.sessions.lastPerformances(for: current)
+
+        let previous = try #require(last[bench.id])
+        #expect(previous == [
+            PreviousSet(weightKg: 10, reps: 15, setType: .warmup),
+            PreviousSet(weightKg: 22.5, reps: 8, setType: .working),
+        ])
+        // The warm-up's values are never offered to a working set.
+        let sets = current.orderedExercises[0].orderedSetLogs
+        #expect(LastPerformance.matched(previous, to: sets.map(\.setType)) == [previous[1], nil])
+        try harness.sessions.setType(.warmup, of: sets[0])
+        #expect(LastPerformance.matched(previous, to: sets.map(\.setType)) == [previous[0], previous[1]])
+    }
+
     @Test("The last time may have fewer sets than now; an exercise never done has none")
     func lastTimeWithFewerSets() throws {
         try finishedSession { bench, _ in
