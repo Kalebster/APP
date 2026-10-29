@@ -21,11 +21,13 @@ struct RootView: View {
     /// The rest between sets of the session in progress. Kept here, so it goes on while the session
     /// screen is minimized; never stored.
     @State private var restTimer = RestTimer()
-    @State private var errorMessage: String?
+    /// The root's errors, its own and those of screens that already closed.
+    @State private var feedback = RootFeedback()
 
     var body: some View {
         // Normally at most one; should there be more, the most recent is shown first.
         let currentSession = activeSessions.first
+        @Bindable var feedback = feedback
 
         TabView(selection: $selectedTab) {
             Tab("Início", systemImage: "house", value: AppTab.home) {
@@ -102,7 +104,8 @@ struct RootView: View {
         } message: {
             Text("Conclua ou descarte o treino atual antes de iniciar outro.")
         }
-        .errorAlert($errorMessage)
+        .errorAlert($feedback.errorMessage)
+        .environment(feedback)
     }
 
     private var sessionActions: SessionActions {
@@ -134,7 +137,7 @@ struct RootView: View {
         } catch SessionError.activeSessionExists {
             isSessionInProgress = true
         } catch {
-            errorMessage = UserFacingError.message(for: error)
+            feedback.errorMessage = UserFacingError.message(for: error)
         }
     }
 }

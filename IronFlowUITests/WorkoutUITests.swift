@@ -4,7 +4,7 @@ import XCTest
 /// with the picker ("NO TREINO" for those already in it), editing loads and repetitions in place and
 /// finding them saved after leaving, the minimum and maximum kept in order, the set types and their
 /// sheet, adding and removing sets, reordering, removing an exercise, renaming, deleting, starting the
-/// workout, going back with a swipe, and large text. Runs on an in-memory store with the built-in
+/// workout, going back with a swipe, a value that cannot be saved, and large text. Runs on an in-memory store with the built-in
 /// library; most tests have their workout ready (`-ui-seed`).
 final class WorkoutUITests: IronFlowUITestCase {
     /// Push with four exercises of the built-in library, like the model.
@@ -531,6 +531,59 @@ final class WorkoutUITests: IronFlowUITestCase {
         // The session starts with the types of the plan.
         let first = app.buttons.matching(identifier: "session.set.type").element(boundBy: 0)
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
+    }
+
+    /// A load that cannot be saved is never lost: "‹ Treinos" and "Iniciar" report it and the editor
+    /// stays, with the stored value back in the field; a swipe back cannot stay, and the root of the app
+    /// reports it over the Treinos list.
+    @MainActor
+    func testAValueThatCannotBeSavedIsReported() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        openWorkout(named: "Push", in: app)
+        let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
+        XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
+
+        // "‹ Treinos" with the keyboard still up.
+        replaceText(of: weight, with: "1500")
+        app.buttons["workout.back"].tap()
+        acceptLoadError(in: app)
+        XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
+        XCTAssertEqual(weight.value as? String, weight.placeholderValue, "The value not saved is still in the field")
+
+        // "Iniciar", the same way.
+        replaceText(of: weight, with: "1500")
+        scrollToBottom(in: app)
+        app.buttons["workout.start"].tap()
+        acceptLoadError(in: app)
+        XCTAssertFalse(element("session.name", in: app).exists, "The workout started with a value not saved")
+        XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
+
+        // A swipe from the left edge closes the editor; the problem is shown over the list.
+        scrollToTop(in: app)
+        replaceText(of: fields("workout.set.weight", in: app).element(boundBy: 0), with: "1500")
+        let window = app.windows.firstMatch
+        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        edge.press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        acceptLoadError(in: app)
+        XCTAssertTrue(app.buttons["workouts.add"].waitForExistence(timeout: 10), "The swipe did not go back to Treinos")
+
+        // Nothing was saved.
+        openWorkout(named: "Push", in: app)
+        let reopened = fields("workout.set.weight", in: app).element(boundBy: 0)
+        XCTAssertTrue(reopened.waitForExistence(timeout: 10), "Sets not shown")
+        XCTAssertEqual(reopened.value as? String, reopened.placeholderValue, "A value not valid was saved")
+    }
+
+    /// Waits for the message of a load over the maximum and closes it with OK.
+    @MainActor
+    private func acceptLoadError(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let alert = app.alerts.firstMatch
+        XCTAssertTrue(alert.waitForExistence(timeout: 10), "The problem was not reported", file: file, line: line)
+        let message = alert.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "A carga pode ser no máximo")).firstMatch
+        XCTAssertTrue(message.exists, "Message: \(alert.staticTexts.allElementsBoundByIndex.map(\.label))", file: file, line: line)
+        alert.buttons["OK"].tap()
+        XCTAssertTrue(alert.waitForNonExistence(timeout: 10), "The message did not close", file: file, line: line)
     }
 
     /// The editor is pushed over the Treinos list, without the tab bar as in the model: a swipe from the

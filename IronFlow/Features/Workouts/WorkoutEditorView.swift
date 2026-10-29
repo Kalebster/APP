@@ -18,6 +18,8 @@ struct WorkoutEditorView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    /// Shows a failure once this screen has closed.
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     /// Typed values not saved yet, by field.
     @State private var drafts: [PlannedSetField: String] = [:]
     @FocusState private var focusedField: PlannedSetField?
@@ -123,6 +125,12 @@ struct WorkoutEditorView: View {
         }
         .onDisappear {
             commitAll()
+            // A swipe back closes the screen before a failure can keep it open: the root of the app
+            // shows it, as this screen's own alert would never be seen.
+            if let errorMessage, let rootFeedback {
+                self.errorMessage = nil
+                rootFeedback.errorMessage = errorMessage
+            }
         }
         .task(id: rangeNotices) {
             guard rangeNotices > 0 else { return }
@@ -409,27 +417,36 @@ struct WorkoutEditorView: View {
 
     /// Saves what was typed in a field, if it changed the set. Invalid values are not saved: the field
     /// shows the stored value again and the problem is reported. A maximum left below the minimum (or the
-    /// other way round) moves the other value and shows a short notice.
-    private func commit(_ field: PlannedSetField) {
-        guard let typed = drafts.removeValue(forKey: field), let plannedSet = plannedSet(withID: field.setID) else { return }
+    /// other way round) moves the other value and shows a short notice. Returns whether nothing failed.
+    @discardableResult
+    private func commit(_ field: PlannedSetField) -> Bool {
+        guard let typed = drafts.removeValue(forKey: field), let plannedSet = plannedSet(withID: field.setID) else { return true }
         let stored = PlannedSetValues(plannedSet)
         do {
             let outcome = try PlannedSetEditing.outcome(editing: field.kind, text: typed, stored: stored)
-            guard outcome.values != stored else { return }
+            guard outcome.values != stored else { return true }
             try service.updatePlannedSet(plannedSet, values: outcome.values)
             if outcome.rangeWasAdjusted {
                 showRangeNotice()
             }
+            return true
         } catch {
             errorMessage = UserFacingError.message(for: error)
+            return false
         }
     }
 
-    /// Saves every typed value.
-    private func commitAll() {
+    /// Saves every typed value. Returns whether nothing failed, so a failure is shown before the
+    /// screen closes or the workout starts.
+    @discardableResult
+    private func commitAll() -> Bool {
+        var succeeded = true
         for field in Array(drafts.keys) {
-            commit(field)
+            if !commit(field) {
+                succeeded = false
+            }
         }
+        return succeeded
     }
 
     private func showRangeNotice() {
@@ -442,15 +459,18 @@ struct WorkoutEditorView: View {
 
     // MARK: - Actions
 
+    /// "‹ Treinos": closes the screen once every typed value is saved; a value that cannot be saved
+    /// is reported and the screen stays.
     private func goBack() {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         dismiss()
     }
 
+    /// "Iniciar": starts the workout once every typed value is saved, so it starts with them.
     private func start() {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         sessionActions.start(workout)
     }
 
