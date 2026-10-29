@@ -146,7 +146,8 @@ struct SessionExerciseCard: View {
         .accessibilityIdentifier("session.addSet")
     }
 
-    /// A finished exercise in one row: the check, its name, what it did, "4/4" and the chevron.
+    /// A finished exercise in one row: the check, its name, what its working and failure sets did, "4/4"
+    /// (all its sets) and the chevron.
     private var closedRow: some View {
         let done = sets.filter(\.isCompleted).count
         let summary = SessionProgress.doneSummary(of: sets)
@@ -154,6 +155,9 @@ struct SessionExerciseCard: View {
             ? String(localized: "\(done) de 1 série")
             : String(localized: "\(done) de \(sets.count) séries")
         let group = String(localized: performed.muscleGroupSnapshot.displayName)
+        // Only warm-up or feeder sets: nothing after the group.
+        let detail = summary.isEmpty ? group : "\(group) · \(summary)"
+        let spoken = summary.isEmpty ? doneText : "\(doneText), \(summary)"
         return Button(action: onOpenOrClose) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark")
@@ -165,7 +169,7 @@ struct SessionExerciseCard: View {
                     Text(performed.exerciseNameSnapshot)
                         .scaledFont(13, weight: .bold)
                         .foregroundStyle(.primary)
-                    Text(verbatim: "\(group) · \(summary)")
+                    Text(verbatim: detail)
                         .scaledFont(10)
                         .foregroundStyle(.secondary)
                 }
@@ -185,7 +189,7 @@ struct SessionExerciseCard: View {
         .buttonStyle(.plain)
         .padding(.bottom, SessionCardSegment.gap)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("\(performed.exerciseNameSnapshot), concluído: \(doneText), \(summary)"))
+        .accessibilityLabel(Text("\(performed.exerciseNameSnapshot), concluído: \(spoken)"))
         .accessibilityHint(Text("Mostra as séries."))
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("session.exercise.done")

@@ -72,12 +72,14 @@ struct SessionProgress: Equatable {
             : String(localized: "meta \(low)–\(high) reps")
     }
 
-    /// What a finished exercise did, in its closed card: "60 kg × 10 · 10 · 9 · 8". A set shows only its
-    /// repetitions when it has the load of the set before it, and only them when it has no load.
+    /// What a finished exercise did, in its closed card: "60 kg × 10 · 10 · 9 · 8", from its working and
+    /// failure sets done; warm-up and feeder sets are left out, and without any of those it is empty. A
+    /// set shows only its repetitions when it has the load of the set before it, and only them when it
+    /// has no load.
     static func doneSummary(of sets: [SetLog]) -> String {
         var parts: [String] = []
         var previousLoad: Double?
-        for log in sets where log.isCompleted {
+        for log in sets where log.isCompleted && log.setType.countsTowardLiftedLoad {
             let reps = log.reps.map { $0.formatted() } ?? "—"
             if let load = log.weightKg, parts.isEmpty || load != previousLoad {
                 parts.append("\(PlannedSetFormatting.weightText(load)) × \(reps)")

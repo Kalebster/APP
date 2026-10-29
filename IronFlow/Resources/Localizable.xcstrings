@@ -28,7 +28,7 @@
     "%@ · o último registro" : {
 
     },
-    "%@, concluído: %@, %@" : {
+    "%@, concluído: %@" : {
 
     },
     "%lld de %lld séries" : {

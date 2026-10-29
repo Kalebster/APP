@@ -203,11 +203,14 @@ private struct WeekGoalRing: View {
             Circle()
                 .inset(by: lineWidth / 2)
                 .stroke(Theme.Colors.ringTrack, lineWidth: lineWidth)
-            Circle()
-                .inset(by: lineWidth / 2)
-                .trim(from: 0, to: goal.progress)
-                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+            // Nothing at 0: a line cut to no length still draws a dot with its round ends.
+            if goal.progress > 0 {
+                Circle()
+                    .inset(by: lineWidth / 2)
+                    .trim(from: 0, to: goal.progress)
+                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
             VStack(spacing: 0) {
                 Text(verbatim: goal.ringText)
                     .scaledFont(22, weight: .heavy)

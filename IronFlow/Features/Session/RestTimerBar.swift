@@ -50,12 +50,16 @@ struct RestTimerBar: View {
     private func clock(remaining: TimeInterval, at now: Date) -> some View {
         HStack(spacing: 10) {
             ZStack {
+                let fractionLeft = timer.fractionLeft(at: now)
                 Circle()
                     .stroke(Theme.Colors.cardBorder, lineWidth: 4)
-                Circle()
-                    .trim(from: 0, to: timer.fractionLeft(at: now))
-                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+                // Nothing at 0: a line cut to no length still draws a dot with its round ends.
+                if fractionLeft > 0 {
+                    Circle()
+                        .trim(from: 0, to: fractionLeft)
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                }
             }
             .padding(2)
             .frame(width: ringSide, height: ringSide)
