@@ -581,6 +581,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         }
         XCTAssertTrue(start.exists && start.isHittable, "Iniciar stays below the keyboard")
         start.tap()
+        // In CI the first tap on a button of the list, while a field of it is being edited, was once
+        // taken by the list: nothing happened and the field stayed in editing. It is recorded, and the
+        // button is tapped once more; the check below is the same either way.
+        let stillEditing = NSPredicate(format: "hasKeyboardFocus == true")
+        if !app.alerts.firstMatch.waitForExistence(timeout: 3) && stillEditing.evaluate(with: weight) {
+            recordMeasurement("Medição: Iniciar com um campo em edição", "o primeiro toque não chegou ao botão; tocado de novo")
+            start.tap()
+        }
         acceptLoadError(in: app)
         XCTAssertFalse(element("session.name", in: app).exists, "The workout started with a value not saved")
         XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")

@@ -351,15 +351,16 @@ struct SessionServiceTests {
         let log = firstLog(of: session)
         try harness.sessions.completeSet(log, weightKg: 20, reps: 10)
         try harness.sessions.finishSession(session)
-        let other = session.orderedExercises[1].orderedSetLogs[0]
 
+        // The finished session saved only that set.
+        #expect(session.exercises.flatMap(\.setLogs).map(\.id) == [log.id])
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.uncompleteSet(log) }
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.updateSetValues(log, weightKg: 30, reps: 5) }
-        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.completeSet(other, weightKg: nil, reps: 12) }
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.completeSet(log, weightKg: 25, reps: 12) }
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.finishSession(session) }
         #expect(log.isCompleted)
         #expect(log.reps == 10)
-        #expect(other.isCompleted == false)
+        #expect(log.weightKg == 20)
     }
 
     // MARK: - Set types
@@ -935,10 +936,11 @@ struct SessionServiceTests {
         try harness.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 20, reps: 10)
         try harness.sessions.finishSession(session)
 
-        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeSet(performed.orderedSetLogs[1]) }
+        // The finished session saved only its set done, of the first exercise.
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeSet(performed.orderedSetLogs[0]) }
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeExercise(performed) }
-        #expect(performed.setLogs.count == 2)
-        #expect(session.exercises.count == 2)
+        #expect(performed.setLogs.count == 1)
+        #expect(session.exercises.count == 1)
         #expect(harness.context.hasChanges == false)
     }
 
