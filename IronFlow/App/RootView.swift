@@ -27,6 +27,7 @@ struct RootView: View {
     var body: some View {
         // Normally at most one; should there be more, the most recent is shown first.
         let currentSession = activeSessions.first
+        let sessionBar = currentSession.map { barStatus(of: $0) }
         @Bindable var feedback = feedback
 
         TabView(selection: $selectedTab) {
@@ -49,7 +50,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.workouts.root")
                         .navigationTitle("Treinos")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(sessionBar) { openSession() }
             }
 
             Tab("Exercícios", systemImage: "dumbbell", value: AppTab.exercises) {
@@ -59,7 +60,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.exercises.root")
                         .navigationTitle("Exercícios")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(sessionBar) { openSession() }
             }
 
             Tab("Histórico", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
@@ -69,7 +70,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.history.root")
                         .navigationTitle("Histórico")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(sessionBar) { openSession() }
             }
 
             Tab("Ajustes", systemImage: "gearshape", value: AppTab.settings) {
@@ -79,7 +80,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.settings.root")
                         .navigationTitle("Ajustes")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(sessionBar) { openSession() }
             }
         }
         .fullScreenCover(item: $openedSession) { session in
@@ -123,6 +124,16 @@ struct RootView: View {
         )
     }
 
+    /// What the "Treino em andamento" bar shows of `session`: its sets done, and its rest while one runs.
+    private func barStatus(of session: Session) -> ActiveSessionBar.Status {
+        ActiveSessionBar.Status(
+            name: SessionFormatting.name(session.workoutNameSnapshot),
+            startedAt: session.startedAt,
+            setsText: SessionProgress(sets: session.orderedExercises.map(\.orderedSetLogs)).setsText,
+            restEndsAt: restTimer.isRunning(for: session.id) ? restTimer.endsAt : nil
+        )
+    }
+
     /// Opens `session` over the tabs, or else the session in progress; nothing happens when there is none.
     private func openSession(_ session: Session? = nil) {
         openedSession = session ?? activeSessions.first
@@ -144,15 +155,11 @@ struct RootView: View {
 }
 
 private extension View {
-    /// The "Treino em andamento" bar above the tab bar, while `session` is in progress.
-    func activeSessionBar(_ session: Session?, open: @escaping @MainActor () -> Void) -> some View {
+    /// The "Treino em andamento" bar above the tab bar, while a session is in progress.
+    func activeSessionBar(_ status: ActiveSessionBar.Status?, open: @escaping @MainActor () -> Void) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
-            if let session {
-                ActiveSessionBar(
-                    name: SessionFormatting.name(session.workoutNameSnapshot),
-                    startedAt: session.startedAt,
-                    onOpen: open
-                )
+            if let status {
+                ActiveSessionBar(status: status, onOpen: open)
             }
         }
     }

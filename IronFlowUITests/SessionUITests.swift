@@ -55,6 +55,9 @@ final class SessionUITests: IronFlowUITestCase {
         app.buttons["session.minimize"].tap()
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        // One button for VoiceOver; the rest started by the second set is still running.
+        XCTAssertTrue(bar.label.hasPrefix("Treino em andamento, Push, Descanso "), "Bar: \(bar.label)")
+        XCTAssertTrue(bar.label.hasSuffix(". Abrir"), "Bar: \(bar.label)")
         attachScreenshot(named: "26-session-bar", of: app)
         openTab("Início", in: app)
         XCTAssertTrue(app.buttons["home.continue"].waitForExistence(timeout: 10), "No Continuar on the Home")
@@ -173,6 +176,9 @@ final class SessionUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "open-session:Push"])
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        // Without a rest: the time since the start and the sets done.
+        XCTAssertTrue(bar.label.hasPrefix("Treino em andamento, Push, 3:0"), "Bar: \(bar.label)")
+        XCTAssertTrue(bar.label.hasSuffix(", 1 de 3 séries. Abrir"), "Bar: \(bar.label)")
         bar.tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened from the bar")
 

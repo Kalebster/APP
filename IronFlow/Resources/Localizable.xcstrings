@@ -34,6 +34,9 @@
     "%@, concluído: %@" : {
 
     },
+    "%@. Abrir" : {
+
+    },
     "%lld de %lld séries" : {
 
     },
@@ -254,6 +257,9 @@
     "Abre o detalhe do treino." : {
 
     },
+    "Abrir" : {
+
+    },
     "Adicionar" : {
 
     },
@@ -435,6 +441,9 @@
 
     },
     "Descanso" : {
+
+    },
+    "Descanso %@" : {
 
     },
     "Descanso hoje" : {
