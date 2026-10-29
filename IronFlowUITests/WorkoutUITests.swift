@@ -139,6 +139,22 @@ final class WorkoutUITests: IronFlowUITestCase {
             .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: x, dy: top)))
     }
 
+    /// Whether the whole element is on screen above the keyboard and its OK bar, when they are shown.
+    @MainActor
+    private func isAboveTheKeyboard(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        guard element.exists, element.isHittable else { return false }
+        var limit = app.windows.firstMatch.frame.maxY
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            limit = min(limit, keyboard.frame.minY)
+        }
+        let ok = app.buttons["OK"]
+        if ok.exists {
+            limit = min(limit, ok.frame.minY)
+        }
+        return element.frame.maxY <= limit
+    }
+
     /// Opens the editor's ⋯ menu and chooses `option`.
     @MainActor
     private func chooseFromEditorMenu(_ option: String, in app: XCUIApplication) {
@@ -573,22 +589,16 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
         XCTAssertEqual(weight.value as? String, weight.placeholderValue, "The value not saved is still in the field")
 
-        // "Iniciar", the same way: the list is dragged until the button is above the keyboard.
+        // "Iniciar", the same way: the list is dragged until the whole button is above the keyboard and
+        // its OK bar. A button partly behind them still reads as hittable, but a tap on its middle lands
+        // on the keyboard (seen in CI).
         replaceText(of: weight, with: "1500")
         let start = app.buttons["workout.start"]
-        for _ in 0..<4 where !(start.exists && start.isHittable) {
-            dragEditorUp(in: app)
+        for _ in 0..<4 where !isAboveTheKeyboard(start, in: app) {
+            dragEditorUp(in: app, by: 200)
         }
-        XCTAssertTrue(start.exists && start.isHittable, "Iniciar stays below the keyboard")
+        XCTAssertTrue(isAboveTheKeyboard(start, in: app), "Iniciar stays behind the keyboard: \(start.frame)")
         start.tap()
-        // In CI the first tap on a button of the list, while a field of it is being edited, was once
-        // taken by the list: nothing happened and the field stayed in editing. It is recorded, and the
-        // button is tapped once more; the check below is the same either way.
-        let stillEditing = NSPredicate(format: "hasKeyboardFocus == true")
-        if !app.alerts.firstMatch.waitForExistence(timeout: 3) && stillEditing.evaluate(with: weight) {
-            recordMeasurement("Medição: Iniciar com um campo em edição", "o primeiro toque não chegou ao botão; tocado de novo")
-            start.tap()
-        }
         acceptLoadError(in: app)
         XCTAssertFalse(element("session.name", in: app).exists, "The workout started with a value not saved")
         XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
