@@ -60,7 +60,7 @@ final class HomeWeekUITests: IronFlowUITestCase {
         continueAfterFailure = false
         let app = launchOnWeekCard()
 
-        // A free workout with one completed set, finished.
+        // A free workout with one completed set, finished; the other two sets of the exercise are left.
         app.buttons["home.startFree"].tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
         app.buttons["session.addExercise"].tap()
@@ -70,8 +70,7 @@ final class HomeWeekUITests: IronFlowUITestCase {
         reps.tap()
         reps.typeText("10")
         app.buttons.matching(identifier: "session.set.check").element(boundBy: 0).tap()
-        app.buttons["session.finish"].tap()
-        XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        finishSessionWithSetsLeft(in: app)
 
         expectCount("1 treino esta semana", in: app)
         XCTAssertTrue(today(in: app).label.contains("hoje, feito no app"), "Today: \(today(in: app).label)")

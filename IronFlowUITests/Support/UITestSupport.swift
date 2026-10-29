@@ -287,6 +287,12 @@ extension XCTestCase {
     @MainActor
     func completeFirstSetAndFinishSession(in app: XCUIApplication) {
         app.buttons.matching(identifier: "session.set.check").element(boundBy: 0).tap()
+        finishSessionWithSetsLeft(in: app)
+    }
+
+    /// In the session on screen, with sets not done: finishes it, confirming the sets left undone.
+    @MainActor
+    func finishSessionWithSetsLeft(in app: XCUIApplication) {
         app.buttons["session.finish"].tap()
         let confirm = app.buttons["Concluir treino"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Finish confirmation not shown")

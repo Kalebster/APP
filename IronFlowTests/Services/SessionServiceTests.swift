@@ -379,8 +379,8 @@ struct SessionServiceTests {
         #expect(firstLog(of: session).setType == .warmup)
     }
 
-    @Test("Sets added during the session are working sets, whatever the type of the set before")
-    func addedSetsAreWorkingSets() throws {
+    @Test("A set added during the session follows the editor's rule: a copy of a warm-up or feeder set is a working set, a failure set stays one")
+    func addedSetsFollowTheEditorRule() throws {
         try harness.workouts.setType(.warmup, of: workout.orderedExercises[0].orderedPlannedSets[1])
         let session = try harness.sessions.startSession(from: workout)
         let performed = session.orderedExercises[0]
@@ -389,9 +389,17 @@ struct SessionServiceTests {
         #expect(performed.orderedSetLogs.map(\.setType) == [.working, .warmup, .working])
         #expect(added.targetWeightKg == 22.25)
 
+        try harness.sessions.setType(.failure, of: added)
+        try harness.sessions.addSetCopyingLast(to: performed)
+        try harness.sessions.setType(.feeder, of: performed.orderedSetLogs[3])
+        try harness.sessions.addSetCopyingLast(to: performed)
+        #expect(performed.orderedSetLogs.map(\.setType) == [.working, .warmup, .failure, .feeder, .working])
+        // As in the editor.
+        #expect([SetType.warmup, .feeder, .working, .failure].map(\.typeOfCopy) == [.working, .working, .working, .failure])
+
         let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
         let newExercise = try #require(try harness.sessions.addExercises([row], to: session).first)
-        #expect(newExercise.orderedSetLogs.map(\.setType) == [.working])
+        #expect(newExercise.orderedSetLogs.map(\.setType) == [.working, .working, .working])
     }
 
     @Test("The type of a set changes during the session, done or not, and only in the session")
@@ -700,7 +708,7 @@ struct SessionServiceTests {
         #expect(try harness.context.fetch(SessionService.activeSessionsDescriptor).map(\.id) == [older.id])
     }
 
-    @Test("Exercises added to a session get one empty set and change only the session")
+    @Test("Exercises added to a session get three empty working sets of 8 to 12, as in a workout, and change only the session")
     func addExercisesToSession() throws {
         let session = try harness.sessions.startSession(from: workout)
         let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
@@ -716,9 +724,11 @@ struct SessionServiceTests {
         #expect(performed.exercise?.id == row.id)
         #expect(performed.muscleGroupSnapshot == .back)
         let sets = performed.orderedSetLogs
-        #expect(sets.count == 1)
-        #expect(sets[0].isCompleted == false)
-        #expect(sets[0].reps == nil && sets[0].weightKg == nil && sets[0].targetRepsMax == nil)
+        #expect(sets.count == 3)
+        #expect(sets.map(\.sortIndex) == [0, 1, 2])
+        #expect(sets.allSatisfy { !$0.isCompleted && $0.reps == nil && $0.weightKg == nil && $0.targetWeightKg == nil })
+        #expect(sets.allSatisfy { $0.targetRepsMin == 8 && $0.targetRepsMax == 12 && $0.setType == .working })
+        #expect(SessionProgress.targetText(of: sets) == "meta 8–12 reps")
         #expect(session.updatedAt == harness.clock.current)
         #expect(try planCounts() == plan)
         #expect(workout.orderedExercises.count == 2)
@@ -792,16 +802,17 @@ struct SessionServiceTests {
             let exercise = try services.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
             let session = try services.sessions.startFreeSession()
             let performed = try #require(try services.sessions.addExercises([exercise], to: session).first)
-            try services.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 40, reps: 10)
+            try services.sessions.completeSet(performed.orderedSetLogs[2], weightKg: 40, reps: 10)
             try services.sessions.addSetCopyingLast(to: performed)
         } read: { context in
             let session = try #require(try SessionService(context: context).activeSession())
             let logs = session.orderedExercises[0].orderedSetLogs
             #expect(session.workout == nil)
             #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Remada"])
-            #expect(logs.map(\.isCompleted) == [true, false])
-            #expect(logs.map(\.weightKg) == [40, 40])
-            #expect(logs.map(\.reps) == [10, nil])
+            #expect(logs.map(\.isCompleted) == [false, false, true, false])
+            #expect(logs.map(\.weightKg) == [nil, nil, 40, 40])
+            #expect(logs.map(\.reps) == [nil, nil, 10, nil])
+            #expect(logs.map(\.targetRepsMax) == [12, 12, 12, 12])
         }
     }
 

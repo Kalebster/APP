@@ -111,19 +111,8 @@ struct SessionService {
             performed.exercise = entry.exercise
 
             for (setIndex, planned) in entry.sets.enumerated() {
-                let log = SetLog(
-                    sortIndex: setIndex,
-                    weightKg: nil,
-                    reps: nil,
-                    targetWeightKg: planned.weightKg,
-                    targetRepsMin: planned.repsMin,
-                    targetRepsMax: planned.repsMax,
-                    setType: planned.setType
-                )
-                log.createdAt = timestamp
-                log.updatedAt = timestamp
-                context.insert(log)
-                log.sessionExercise = performed
+                makeSetLog(sortIndex: setIndex, planned: PlannedSetValues(planned), setType: planned.setType, at: timestamp)
+                    .sessionExercise = performed
             }
         }
 
@@ -145,7 +134,8 @@ struct SessionService {
         return session
     }
 
-    /// Appends exercises to the active session, in the given order, each with one empty working set.
+    /// Appends exercises to the active session, in the given order, each with the sets an exercise added
+    /// to a workout gets (`WorkoutService.defaultPlannedSets`: three working sets of 8 to 12), empty.
     ///
     /// Changes only the session: the planned workout is never touched. An exercise cannot be in
     /// the session twice and an archived exercise cannot be added. All or nothing.
@@ -172,7 +162,9 @@ struct SessionService {
             context.insert(performed)
             performed.session = session
             performed.exercise = exercise
-            makeSetLog(sortIndex: 0, copying: nil, at: timestamp).sessionExercise = performed
+            for (setIndex, values) in WorkoutService.defaultPlannedSets.enumerated() {
+                makeSetLog(sortIndex: setIndex, planned: values, setType: .working, at: timestamp).sessionExercise = performed
+            }
             return performed
         }
         session.updatedAt = timestamp
@@ -180,8 +172,10 @@ struct SessionService {
         return added
     }
 
-    /// Appends a working set to a performed exercise of the active session, with the load and targets
-    /// of its last set and no repetitions. Changes only the session, never the planned workout.
+    /// Appends a set to a performed exercise of the active session, with the load and targets of its last
+    /// set and no repetitions. It follows the editor's rule for its type (`SetType.typeOfCopy`): a copy
+    /// of a failure set is a failure set, and of a warm-up or feeder set a working set. Changes only the
+    /// session, never the planned workout.
     @discardableResult
     func addSetCopyingLast(to performed: SessionExercise) throws -> SetLog {
         guard let session = performed.session, session.isActive else { throw SessionError.sessionNotActive }
@@ -344,7 +338,8 @@ struct SessionService {
         guard try context.fetchCount(descriptor) == 0 else { throw SessionError.activeSessionExists }
     }
 
-    /// A new, not completed working set: the load and targets of `previous` when given, otherwise empty.
+    /// A new, not completed set copying `previous`: its load, its targets and the type of a copy
+    /// (`SetType.typeOfCopy`); an empty working set without one.
     private func makeSetLog(sortIndex: Int, copying previous: SetLog?, at timestamp: Date) -> SetLog {
         let log = SetLog(
             sortIndex: sortIndex,
@@ -352,7 +347,26 @@ struct SessionService {
             reps: nil,
             targetWeightKg: previous?.targetWeightKg,
             targetRepsMin: previous?.targetRepsMin,
-            targetRepsMax: previous?.targetRepsMax
+            targetRepsMax: previous?.targetRepsMax,
+            setType: previous?.setType.typeOfCopy ?? .working
+        )
+        log.createdAt = timestamp
+        log.updatedAt = timestamp
+        context.insert(log)
+        return log
+    }
+
+    /// A new, empty set with the targets of a planned set: the planned load is a target, offered as a
+    /// suggestion, never a value done.
+    private func makeSetLog(sortIndex: Int, planned: PlannedSetValues, setType: SetType, at timestamp: Date) -> SetLog {
+        let log = SetLog(
+            sortIndex: sortIndex,
+            weightKg: nil,
+            reps: nil,
+            targetWeightKg: planned.weightKg,
+            targetRepsMin: planned.repsMin,
+            targetRepsMax: planned.repsMax,
+            setType: setType
         )
         log.createdAt = timestamp
         log.updatedAt = timestamp
