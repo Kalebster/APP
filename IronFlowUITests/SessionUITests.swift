@@ -1,8 +1,8 @@
 import XCTest
 
 /// The session in progress: starting from a workout, checking sets, minimizing and continuing from
-/// the "Treino em andamento" bar, finishing (then the history), finishing a session left open, and
-/// discarding; and the set row with the largest text size.
+/// the "Treino em andamento" bar, finishing with "Concluir treino?" (then the history), finishing a
+/// session left open, "Nenhuma série marcada" and discarding; and the set row with the largest text size.
 /// Runs on an in-memory store with the built-in library; the workout the tests start, and the session
 /// left open, come ready (`-ui-seed`).
 final class SessionUITests: IronFlowUITestCase {
@@ -55,6 +55,9 @@ final class SessionUITests: IronFlowUITestCase {
         app.buttons["session.minimize"].tap()
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        // One button for VoiceOver; the rest started by the second set is still running.
+        XCTAssertTrue(bar.label.hasPrefix("Treino em andamento, Push, Descanso "), "Bar: \(bar.label)")
+        XCTAssertTrue(bar.label.hasSuffix(". Abrir"), "Bar: \(bar.label)")
         attachScreenshot(named: "26-session-bar", of: app)
         openTab("Início", in: app)
         XCTAssertTrue(app.buttons["home.continue"].waitForExistence(timeout: 10), "No Continuar on the Home")
@@ -78,12 +81,26 @@ final class SessionUITests: IronFlowUITestCase {
         firstReps.typeText(XCUIKeyboardKey.delete.rawValue)
         XCTAssertEqual(firstReps.value as? String, "12")
 
-        // Finishing with sets not done asks first; they stay recorded as not done.
+        // "Concluir treino?" shows what the session did and what will not be saved, before saving.
         app.buttons["session.finish"].tap()
-        let confirm = app.buttons["Concluir treino"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Finish confirmation not shown")
-        confirm.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        let save = app.buttons["finish.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10), "Concluir treino? not shown")
+        XCTAssertTrue(app.staticTexts["Concluir treino?"].exists, "No title")
+        XCTAssertEqual(element("finish.sets", in: app).label, "2 de 4 séries feitas")
+        XCTAssertTrue(element("finish.duration", in: app).label.hasPrefix("duração "), "Duration: \(element("finish.duration", in: app).label)")
+        XCTAssertEqual(element("finish.volume", in: app).label, "200 kg levantados")
+        XCTAssertEqual(element("finish.notDone", in: app).label, "As 2 séries não marcadas não serão salvas.")
+        XCTAssertTrue(app.buttons["finish.continue"].exists, "No Continuar treinando")
+        attachScreenshot(named: "91-session-finish", of: app)
+
+        // "Continuar treinando" goes back to the session; "Concluir e salvar" saves it.
+        app.buttons["finish.continue"].tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: 10), "Concluir treino? not closed")
+        XCTAssertTrue(element("session.name", in: app).exists, "Continuar treinando closed the session")
+        saveSessionFromTheFinishSheet(in: app)
+        // Every set done and the load of the working and failure sets.
+        XCTAssertTrue(waitForToast("Treino salvo · 2 séries · 200 kg", in: app), "No notice after finishing")
+        attachScreenshot(named: "93-workout-saved-notice", of: app)
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
 
         openTab("Histórico", in: app)
@@ -106,13 +123,28 @@ final class SessionUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada"])
         startWorkout(named: "Pull", in: app)
 
+        // Without a set done there is nothing to save: the sheet says so.
         app.buttons["session.finish"].tap()
-        let alert = app.alerts.firstMatch
-        XCTAssertTrue(alert.waitForExistence(timeout: 10), "No message when finishing without sets")
-        XCTAssertTrue(alert.staticTexts["Conclua pelo menos uma série ou descarte o treino."].exists)
-        alert.buttons["OK"].tap()
+        let discard = app.buttons["finish.discard"]
+        XCTAssertTrue(discard.waitForExistence(timeout: 10), "Nenhuma série marcada not shown")
+        XCTAssertTrue(app.staticTexts["Nenhuma série marcada"].exists, "No title")
+        XCTAssertTrue(app.staticTexts["Marque pelo menos uma série para salvar o treino."].exists, "No explanation")
+        XCTAssertFalse(app.buttons["finish.save"].exists, "Concluir e salvar offered without a set done")
+        attachScreenshot(named: "92-session-finish-nothing-done", of: app)
+        app.buttons["finish.continue"].tap()
+        XCTAssertTrue(discard.waitForNonExistence(timeout: 10), "Nenhuma série marcada not closed")
+        XCTAssertTrue(element("session.name", in: app).exists, "Continuar treinando closed the session")
 
-        discardSession(in: app)
+        // "Descartar treino" asks the usual question before discarding.
+        app.buttons["session.finish"].tap()
+        XCTAssertTrue(discard.waitForExistence(timeout: 10), "Nenhuma série marcada not shown again")
+        discard.tap()
+        let confirm = app.buttons["Descartar"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Discard confirmation not shown")
+        XCTAssertTrue(app.staticTexts["Descartar este treino?"].exists, "Not the discard question")
+        confirm.tap()
+        XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        XCTAssertTrue(waitForToast("Treino descartado", in: app), "No notice after discarding")
         XCTAssertFalse(app.buttons["session.bar"].exists, "Session bar still shown after discarding")
 
         // The planned workout is kept; nothing reaches the history.
@@ -144,32 +176,46 @@ final class SessionUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "open-session:Push"])
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        // Without a rest: the time since the start and the sets done.
+        XCTAssertTrue(bar.label.hasPrefix("Treino em andamento, Push, 3:0"), "Bar: \(bar.label)")
+        XCTAssertTrue(bar.label.hasSuffix(", 1 de 3 séries. Abrir"), "Bar: \(bar.label)")
         bar.tap()
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened from the bar")
 
-        // Finishing asks once, about the sets left undone and the end: the time of the last record or now.
+        // "Concluir treino?" asks for the end, the time of the last record or now, and the duration
+        // follows the choice: the last record, 1 hour after the start, is chosen first.
         app.buttons["session.finish"].tap()
-        let now = app.buttons["Usar agora"]
-        XCTAssertTrue(now.waitForExistence(timeout: 10), "No question about the end of a session left open")
-        let lastRecord = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Usar ' AND label != 'Usar agora'")).firstMatch
-        XCTAssertTrue(lastRecord.exists, "No button with the time of the last record")
+        let lastRecord = app.buttons["finish.end.lastRecord"]
+        let now = app.buttons["finish.end.now"]
+        XCTAssertTrue(lastRecord.waitForExistence(timeout: 10), "No question about the end of a session left open")
+        XCTAssertEqual(now.label, "Usar agora")
+        XCTAssertTrue(lastRecord.label.hasPrefix("Usar "), "Last record: \(lastRecord.label)")
+        XCTAssertTrue(lastRecord.isSelected, "The last record is not chosen first")
         let time = String(lastRecord.label.dropFirst("Usar ".count))
         // The day is named only when the last record was not today (a run just after midnight).
-        let question = app.descendants(matching: .any).matching(NSPredicate(
-            format: "label CONTAINS %@ AND label CONTAINS %@ AND label CONTAINS %@",
-            "2 séries não foram concluídas", "Seu último registro foi", "às \(time). Usar esse horário como fim?"
-        )).firstMatch
-        XCTAssertTrue(question.exists, "The question does not give the time \(time)")
+        let question = element("finish.question", in: app)
+        XCTAssertTrue(question.label.hasPrefix("Seu último registro foi"), "Question: \(question.label)")
+        XCTAssertTrue(question.label.hasSuffix("às \(time). Usar esse horário como fim?"), "The question does not give the time \(time)")
+        let duration = element("finish.duration", in: app)
+        XCTAssertEqual(duration.label, "duração 1 hora")
+        XCTAssertEqual(element("finish.notDone", in: app).label, "As 2 séries não marcadas não serão salvas.")
         attachScreenshot(named: "28-session-finish-last-record", of: app)
 
-        // Cancelling does not finish.
-        cancelDialog(confirmLabel: "Usar agora", in: app)
-        XCTAssertTrue(element("session.name", in: app).exists, "Cancelling closed the session")
+        // Now: the 3 hours since the start.
+        now.tap()
+        XCTAssertTrue(waitForLabel(of: duration, containing: "3 horas"), "Duration with now: \(duration.label)")
+        XCTAssertTrue(now.isSelected, "Usar agora not chosen")
 
-        // The time of the last record becomes the end: 1 hour after the start.
+        // "Continuar treinando" does not finish.
+        app.buttons["finish.continue"].tap()
+        XCTAssertTrue(lastRecord.waitForNonExistence(timeout: 10), "Concluir treino? not closed")
+        XCTAssertTrue(element("session.name", in: app).exists, "Continuar treinando closed the session")
+
+        // Asked again, the last record is chosen again and becomes the end.
         app.buttons["session.finish"].tap()
         XCTAssertTrue(lastRecord.waitForExistence(timeout: 10), "Question not shown again")
-        lastRecord.tap()
+        XCTAssertTrue(lastRecord.isSelected, "The last record is not chosen first again")
+        app.buttons["finish.save"].tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
 

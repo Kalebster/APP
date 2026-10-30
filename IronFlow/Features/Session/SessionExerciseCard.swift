@@ -7,7 +7,7 @@ import SwiftUI
 struct SessionExerciseCard: View {
     let performed: SessionExercise
     let sets: [SetLog]
-    /// The sets done the last time, the first done set going with set 1.
+    /// The sets done the last time, paired with the sets by type (see `LastPerformance.matched`).
     let previousSets: [PreviousSet]
     let isCurrent: Bool
     let currentSetID: UUID?
@@ -41,8 +41,9 @@ struct SessionExerciseCard: View {
                         .padding(.bottom, 2)
                         .sessionCardRow(.middle, isCurrent: isCurrent)
                 }
+                let previousBySet = LastPerformance.matched(previousSets, to: sets.map(\.setType))
                 ForEach(Array(sets.enumerated()), id: \.element.id) { index, log in
-                    let previous = previousSets.indices.contains(index) ? previousSets[index] : nil
+                    let previous = previousBySet[index]
                     let suggestion = LastPerformance.suggestion(
                         previous: previous,
                         targetWeightKg: log.targetWeightKg,
@@ -131,9 +132,11 @@ struct SessionExerciseCard: View {
             .contentShape(Rectangle())
     }
 
+    /// "+ Adicionar série", the + next to the text as in the editor; the whole row answers, 44 points tall.
     private var addSetRow: some View {
         Button(action: onAddSet) {
             Label("Adicionar série", systemImage: "plus")
+                .labelStyle(TightLabelStyle())
                 .scaledFont(12, weight: .semibold)
                 .foregroundStyle(Theme.Colors.lightAccent)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -145,7 +148,8 @@ struct SessionExerciseCard: View {
         .accessibilityIdentifier("session.addSet")
     }
 
-    /// A finished exercise in one row: the check, its name, what it did, "4/4" and the chevron.
+    /// A finished exercise in one row: the check, its name, what its working and failure sets did, "4/4"
+    /// (all its sets) and the chevron.
     private var closedRow: some View {
         let done = sets.filter(\.isCompleted).count
         let summary = SessionProgress.doneSummary(of: sets)
@@ -153,6 +157,9 @@ struct SessionExerciseCard: View {
             ? String(localized: "\(done) de 1 série")
             : String(localized: "\(done) de \(sets.count) séries")
         let group = String(localized: performed.muscleGroupSnapshot.displayName)
+        // Only warm-up or feeder sets: nothing after the group.
+        let detail = summary.isEmpty ? group : "\(group) · \(summary)"
+        let spoken = summary.isEmpty ? doneText : "\(doneText), \(summary)"
         return Button(action: onOpenOrClose) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark")
@@ -164,7 +171,7 @@ struct SessionExerciseCard: View {
                     Text(performed.exerciseNameSnapshot)
                         .scaledFont(13, weight: .bold)
                         .foregroundStyle(.primary)
-                    Text(verbatim: "\(group) · \(summary)")
+                    Text(verbatim: detail)
                         .scaledFont(10)
                         .foregroundStyle(.secondary)
                 }
@@ -184,7 +191,7 @@ struct SessionExerciseCard: View {
         .buttonStyle(.plain)
         .padding(.bottom, SessionCardSegment.gap)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("\(performed.exerciseNameSnapshot), concluído: \(doneText), \(summary)"))
+        .accessibilityLabel(Text("\(performed.exerciseNameSnapshot), concluído: \(spoken)"))
         .accessibilityHint(Text("Mostra as séries."))
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("session.exercise.done")

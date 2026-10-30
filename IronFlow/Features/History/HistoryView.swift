@@ -52,22 +52,22 @@ private struct HistorySessionCard: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(SessionFormatting.name(session.workoutNameSnapshot))
-                    .font(.headline)
+                    .scaledFont(17, weight: .semibold)
                     .lineLimit(2)
                 Text(SessionFormatting.dateText(session.startedAt))
-                    .font(.subheadline)
+                    .scaledFont(15)
                     .foregroundStyle(.secondary)
                 Text(SessionFormatting.summaryText(
                     duration: session.duration,
                     exercises: completedPerExercise.filter { $0 > 0 }.count,
                     sets: completedPerExercise.reduce(0, +)
                 ))
-                .font(.subheadline)
+                .scaledFont(15)
                 .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
+                .scaledFont(13, weight: .semibold)
                 .foregroundStyle(.tertiary)
                 .accessibilityHidden(true)
         }

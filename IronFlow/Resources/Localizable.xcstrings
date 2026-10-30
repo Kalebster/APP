@@ -4,6 +4,9 @@
     "%@ concluído hoje" : {
 
     },
+    "%@ e %@" : {
+
+    },
     "%@ kcal" : {
 
     },
@@ -28,10 +31,16 @@
     "%@ · o último registro" : {
 
     },
-    "%@, concluído: %@, %@" : {
+    "%@, concluído: %@" : {
+
+    },
+    "%@. Abrir" : {
 
     },
     "%lld de %lld séries" : {
+
+    },
+    "%lld de %lld séries feitas" : {
 
     },
     "%lld de %lld treinos" : {
@@ -41,6 +50,9 @@
 
     },
     "%lld de 1 série" : {
+
+    },
+    "%lld de 1 série feita" : {
 
     },
     "%lld de 1 treino" : {
@@ -80,6 +92,28 @@
         }
       }
     },
+    "%lld exercícios adicionados" : {
+      "localizations" : {
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld exercício adicionado"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld exercícios adicionados"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld h" : {
 
     },
@@ -92,7 +126,13 @@
     "%lld h %lld min" : {
 
     },
+    "%lld horas" : {
+
+    },
     "%lld min" : {
+
+    },
+    "%lld minutos" : {
 
     },
     "%lld repetições" : {
@@ -145,9 +185,6 @@
         }
       }
     },
-    "%lld séries não foram concluídas e ficarão registradas como não feitas." : {
-
-    },
     "%lld treinos em %@" : {
 
     },
@@ -166,10 +203,13 @@
     "1 dia programado" : {
 
     },
-    "1 semana seguida batendo a meta" : {
+    "1 hora" : {
 
     },
-    "1 série não foi concluída e ficará registrada como não feita." : {
+    "1 minuto" : {
+
+    },
+    "1 semana seguida batendo a meta" : {
 
     },
     "1 treino em %@" : {
@@ -199,6 +239,9 @@
     "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
 
     },
+    "A série não marcada não será salva." : {
+
+    },
     "A taxa metabólica basal é o quanto o seu corpo gasta parado. Usamos o seu peso (%@) e a sua altura (%@)." : {
 
     },
@@ -212,6 +255,9 @@
 
     },
     "Abre o detalhe do treino." : {
+
+    },
+    "Abrir" : {
 
     },
     "Adicionar" : {
@@ -260,6 +306,9 @@
 
     },
     "Arquivado" : {
+
+    },
+    "As %lld séries não marcadas não serão salvas." : {
 
     },
     "As opções do app chegarão em breve." : {
@@ -337,10 +386,10 @@
     "Concluir" : {
 
     },
-    "Concluir série %lld" : {
+    "Concluir e salvar" : {
 
     },
-    "Concluir treino" : {
+    "Concluir série %lld" : {
 
     },
     "Concluir treino?" : {
@@ -362,6 +411,9 @@
 
     },
     "Continuar" : {
+
+    },
+    "Continuar treinando" : {
 
     },
     "Continuar treino atual" : {
@@ -391,6 +443,9 @@
     "Descanso" : {
 
     },
+    "Descanso %@" : {
+
+    },
     "Descanso hoje" : {
 
     },
@@ -415,6 +470,9 @@
     "Dia" : {
 
     },
+    "Dia %lld marcado como treinado" : {
+
+    },
     "dia futuro" : {
 
     },
@@ -431,6 +489,12 @@
 
     },
     "Domingo" : {
+
+    },
+    "duração" : {
+
+    },
+    "duração %@" : {
 
     },
     "Duração: %@" : {
@@ -515,6 +579,9 @@
 
     },
     "Exercício removido" : {
+
+    },
+    "Exercício removido do treino" : {
 
     },
     "Exercícios" : {
@@ -622,6 +689,9 @@
     "kg" : {
 
     },
+    "kg levantados" : {
+
+    },
     "Kg na semana" : {
 
     },
@@ -659,6 +729,9 @@
 
     },
     "marcado como feito fora do app" : {
+
+    },
+    "Marque pelo menos uma série para salvar o treino." : {
 
     },
     "Masculino" : {
@@ -806,10 +879,16 @@
     "Nenhum treino realizado" : {
 
     },
+    "Nenhuma série marcada" : {
+
+    },
     "NO TREINO" : {
 
     },
     "Nome do treino" : {
+
+    },
+    "Nome salvo" : {
 
     },
     "Novo treino" : {
@@ -1109,6 +1188,12 @@
     "Série %lld" : {
 
     },
+    "Série removida" : {
+
+    },
+    "séries" : {
+
+    },
     "Só séries válidas e de falha" : {
 
     },
@@ -1145,6 +1230,9 @@
     "TMB · calcular" : {
 
     },
+    "Todas as séries feitas. Toque em Concluir." : {
+
+    },
     "Todos" : {
 
     },
@@ -1157,10 +1245,19 @@
     "Treino" : {
 
     },
+    "Treino criado" : {
+
+    },
     "Treino de hoje" : {
 
     },
+    "Treino descartado" : {
+
+    },
     "Treino em andamento" : {
+
+    },
+    "Treino excluído" : {
 
     },
     "Treino livre" : {
@@ -1170,6 +1267,12 @@
 
     },
     "treino programado" : {
+
+    },
+    "Treino salvo · %@" : {
+
+    },
+    "Treino salvo · %@ · %@ kg" : {
 
     },
     "Treinos" : {

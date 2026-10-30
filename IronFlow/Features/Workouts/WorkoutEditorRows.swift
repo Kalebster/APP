@@ -110,8 +110,9 @@ struct EditorExerciseTile: View {
                     EquipmentIcon(equipment: equipment)
                         .frame(width: iconSide, height: iconSide)
                 } else if let exercise, let initial = exercise.name.first {
+                    // Inter Bold at a size fixed by the tile, which already follows Dynamic Type.
                     Text(verbatim: String(initial).uppercased())
-                        .font(.system(size: iconSide * 0.8, weight: .bold))
+                        .font(.custom(InterFont.bold, fixedSize: iconSide * 0.8))
                 } else {
                     Image(systemName: "dumbbell")
                         .font(.system(size: iconSide * 0.75, weight: .semibold))
@@ -296,13 +297,15 @@ struct PlannedSetRow: View {
     }
 }
 
-/// "+ Adicionar série", the last row of an exercise card: a copy of the last set.
+/// "+ Adicionar série", the last row of an exercise card: a copy of the last set. The + sits next to
+/// the text, and the whole row answers, 44 points tall.
 struct EditorAddSetRow: View {
     let action: @MainActor () -> Void
 
     var body: some View {
         Button(action: action) {
             Label("Adicionar série", systemImage: "plus")
+                .labelStyle(TightLabelStyle())
                 .scaledFont(12, weight: .semibold)
                 .foregroundStyle(Theme.Colors.lightAccent)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

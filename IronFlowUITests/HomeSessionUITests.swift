@@ -22,14 +22,26 @@ final class HomeSessionUITests: IronFlowUITestCase {
 
         app.buttons["session.addExercise"].tap()
         pickExercise("Barra Fixa Pronada", in: app)
+        XCTAssertTrue(waitForToast("1 exercício adicionado", in: app), "No notice after adding")
+        // The exercise comes with three sets, as in a workout.
+        let checks = app.buttons.matching(identifier: "session.set.check")
         let reps = app.textFields.matching(identifier: "session.set.reps").element(boundBy: 0)
         XCTAssertTrue(reps.waitForExistence(timeout: 10), "Added exercise has no set")
+        XCTAssertEqual(checks.count, 3, "Sets of the added exercise")
         reps.tap()
         reps.typeText("10")
-        app.buttons.matching(identifier: "session.set.check").element(boundBy: 0).tap()
+        checks.element(boundBy: 0).tap()
+        checks.element(boundBy: 1).tap()
+        // The last set done says what is next.
+        checks.element(boundBy: 2).tap()
+        XCTAssertTrue(
+            waitForToast("Todas as séries feitas. Toque em Concluir.", in: app),
+            "No notice after the last set"
+        )
 
-        app.buttons["session.finish"].tap()
-        XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
+        // Without a load, the notice gives only the sets.
+        saveSessionFromTheFinishSheet(in: app)
+        XCTAssertTrue(waitForToast("Treino salvo · 3 séries", in: app), "No notice after finishing")
         XCTAssertTrue(startFree.waitForExistence(timeout: 10), "Home actions not back after finishing")
 
         openTab("Histórico", in: app)

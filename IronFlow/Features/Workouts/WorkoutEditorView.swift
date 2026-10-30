@@ -18,6 +18,8 @@ struct WorkoutEditorView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    /// Shows the notices ("Nome salvo"), and a failure once this screen has closed.
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     /// Typed values not saved yet, by field.
     @State private var drafts: [PlannedSetField: String] = [:]
     @FocusState private var focusedField: PlannedSetField?
@@ -29,9 +31,6 @@ struct WorkoutEditorView: View {
     @State private var removal: PendingRemoval?
     /// The planned set whose type sheet is open.
     @State private var typeSheet: TypeSheetTarget?
-    /// Counts the times the range of a set was adjusted, so the notice shows again each time.
-    @State private var rangeNotices = 0
-    @State private var isShowingRangeNotice = false
     /// Set right before the workout is deleted, so the view stops reading it.
     @State private var isDeleted = false
     @State private var errorMessage: String?
@@ -87,11 +86,6 @@ struct WorkoutEditorView: View {
                     .allowsHitTesting(false)
             }
         }
-        .overlay(alignment: .bottom) {
-            if isShowingRangeNotice {
-                rangeNotice
-            }
-        }
         .screenBackground()
         // The navigation bar is hidden for the model's own top row; the swipe back stays. The tab bar is
         // hidden too, as in the model.
@@ -123,17 +117,11 @@ struct WorkoutEditorView: View {
         }
         .onDisappear {
             commitAll()
-        }
-        .task(id: rangeNotices) {
-            guard rangeNotices > 0 else { return }
-            do {
-                try await Task.sleep(for: .seconds(4))
-            } catch {
-                // Cancelled by a newer notice, which hides itself.
-                return
-            }
-            withAnimation {
-                isShowingRangeNotice = false
+            // A swipe back closes the screen before a failure can keep it open: the root of the app
+            // shows it, as this screen's own alert would never be seen.
+            if let errorMessage, let rootFeedback {
+                self.errorMessage = nil
+                rootFeedback.errorMessage = errorMessage
             }
         }
         .sheet(item: $typeSheet) { target in
@@ -153,6 +141,7 @@ struct WorkoutEditorView: View {
         .sheet(isPresented: $isRenaming) {
             WorkoutNameSheet(title: "Renomear treino", initialName: workout.name) { name in
                 try service.rename(workout, to: name)
+                rootFeedback?.show(String(localized: "Nome salvo"))
             }
         }
         .errorAlert($errorMessage)
@@ -364,22 +353,6 @@ struct WorkoutEditorView: View {
         .editorRow(top: 2, bottom: Theme.Metrics.screenPadding)
     }
 
-    /// "O máximo não pode ser menor que o mínimo.", for a few seconds after the range of a set was adjusted.
-    private var rangeNotice: some View {
-        Text("O máximo não pode ser menor que o mínimo.")
-            .scaledFont(13, weight: .semibold)
-            .foregroundStyle(Theme.Colors.brightText)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Theme.Colors.setFieldBackground, in: Capsule())
-            .overlay(Capsule().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
-            .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.bottom, 12)
-            .transition(.opacity)
-            .accessibilityIdentifier("workout.rangeNotice")
-    }
-
     /// Whether the question before removing is open for `item`.
     private func isConfirmingRemoval(of item: WorkoutExercise) -> Binding<Bool> {
         Binding(
@@ -409,48 +382,52 @@ struct WorkoutEditorView: View {
 
     /// Saves what was typed in a field, if it changed the set. Invalid values are not saved: the field
     /// shows the stored value again and the problem is reported. A maximum left below the minimum (or the
-    /// other way round) moves the other value and shows a short notice.
-    private func commit(_ field: PlannedSetField) {
-        guard let typed = drafts.removeValue(forKey: field), let plannedSet = plannedSet(withID: field.setID) else { return }
+    /// other way round) moves the other value and shows a short notice. Returns whether nothing failed.
+    @discardableResult
+    private func commit(_ field: PlannedSetField) -> Bool {
+        guard let typed = drafts.removeValue(forKey: field), let plannedSet = plannedSet(withID: field.setID) else { return true }
         let stored = PlannedSetValues(plannedSet)
         do {
             let outcome = try PlannedSetEditing.outcome(editing: field.kind, text: typed, stored: stored)
-            guard outcome.values != stored else { return }
+            guard outcome.values != stored else { return true }
             try service.updatePlannedSet(plannedSet, values: outcome.values)
             if outcome.rangeWasAdjusted {
-                showRangeNotice()
+                rootFeedback?.show(String(localized: "O máximo não pode ser menor que o mínimo."))
             }
+            return true
         } catch {
             errorMessage = UserFacingError.message(for: error)
+            return false
         }
     }
 
-    /// Saves every typed value.
-    private func commitAll() {
+    /// Saves every typed value. Returns whether nothing failed, so a failure is shown before the
+    /// screen closes or the workout starts.
+    @discardableResult
+    private func commitAll() -> Bool {
+        var succeeded = true
         for field in Array(drafts.keys) {
-            commit(field)
+            if !commit(field) {
+                succeeded = false
+            }
         }
-    }
-
-    private func showRangeNotice() {
-        withAnimation {
-            isShowingRangeNotice = true
-        }
-        rangeNotices += 1
-        AccessibilityNotification.Announcement(String(localized: "O máximo não pode ser menor que o mínimo.")).post()
+        return succeeded
     }
 
     // MARK: - Actions
 
+    /// "‹ Treinos": closes the screen once every typed value is saved; a value that cannot be saved
+    /// is reported and the screen stays.
     private func goBack() {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         dismiss()
     }
 
+    /// "Iniciar": starts the workout once every typed value is saved, so it starts with them.
     private func start() {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         sessionActions.start(workout)
     }
 
@@ -533,6 +510,7 @@ struct WorkoutEditorView: View {
         isDeleted = true
         do {
             try service.delete(workout)
+            rootFeedback?.show(String(localized: "Treino excluído"))
             dismiss()
         } catch {
             isDeleted = false

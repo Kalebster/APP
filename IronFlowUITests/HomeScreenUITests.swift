@@ -28,10 +28,10 @@ final class HomeScreenUITests: IronFlowUITestCase {
         XCTAssertEqual(app.buttons["home.startFree"].label, "Iniciar treino livre")
         XCTAssertTrue(element("home.date", in: app).exists, "No date in the header")
 
-        // The ring: the two workouts of today out of the planned days.
+        // The ring: the days trained out of the planned days; today's two workouts are one day.
         let ring = element("home.week.goal", in: app)
         XCTAssertTrue(ring.exists, "No ring with a weekly plan")
-        XCTAssertTrue(ring.label.hasPrefix("2 de "), "Ring: \(ring.label)")
+        XCTAssertTrue(ring.label.hasPrefix("1 de "), "Ring: \(ring.label)")
         XCTAssertTrue(ring.label.hasSuffix(" treinos programados feitos"), "Ring: \(ring.label)")
         XCTAssertTrue(app.staticTexts["home.week.remaining"].label.hasPrefix("Falta"), "Remaining: \(app.staticTexts["home.week.remaining"].label)")
         XCTAssertTrue(element("home.week.today", in: app).label.contains("hoje, feito no app"), "Today: \(element("home.week.today", in: app).label)")
@@ -136,15 +136,16 @@ final class HomeScreenUITests: IronFlowUITestCase {
     }
 
     @MainActor
-    func testWeekPastTheGoal() throws {
+    func testTwoWorkoutsOnTheSameDayCountOnceForTheGoal() throws {
         continueAfterFailure = false
-        // One planned day and two workouts today: past the goal, the ring stays full.
+        // One planned day and two workouts today: one day trained, so the week is complete. (A week past
+        // its goal is checked by the unit tests.)
         let app = launchOnHome(seed: workouts + ["plan-today:Push", "finished-today:Push", "finished-today:Pull"])
 
         let ring = element("home.week.goal", in: app)
         XCTAssertTrue(ring.waitForExistence(timeout: 10), "No ring with a weekly plan")
-        XCTAssertEqual(ring.label, "2 de 1 treino programado feito")
-        XCTAssertEqual(app.staticTexts["home.week.count"].label, "2 de 1 treino")
+        XCTAssertEqual(ring.label, "1 de 1 treino programado feito")
+        XCTAssertEqual(app.staticTexts["home.week.count"].label, "1 de 1 treino")
         XCTAssertEqual(app.staticTexts["home.week.remaining"].label, "Semana completa")
         attachScreenshot(named: "55-home-week-goal", of: app)
     }

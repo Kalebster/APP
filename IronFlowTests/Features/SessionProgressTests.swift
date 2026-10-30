@@ -153,4 +153,17 @@ struct SessionProgressTests {
         // Without a load, only the repetitions.
         #expect(SessionProgress.doneSummary(of: [set(done: true, reps: 12), set(done: true, reps: 10)]) == "12 · 10")
     }
+
+    @Test("The closed card shows only the working and failure sets done; with neither, nothing")
+    func doneSummaryOfTheWork() {
+        let sets = [
+            set(done: true, weight: 20, reps: 15, type: .warmup),
+            set(done: true, weight: 40, reps: 5, type: .feeder),
+            set(done: true, weight: 60, reps: 10, type: .working),
+            set(done: false, weight: 60, reps: nil, type: .working),
+            set(done: true, weight: 50, reps: 12, type: .failure),
+        ]
+        #expect(SessionProgress.doneSummary(of: sets) == "60 kg × 10 · 50 kg × 12")
+        #expect(SessionProgress.doneSummary(of: Array(sets.prefix(2))) == "")
+    }
 }

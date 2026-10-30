@@ -351,15 +351,16 @@ struct SessionServiceTests {
         let log = firstLog(of: session)
         try harness.sessions.completeSet(log, weightKg: 20, reps: 10)
         try harness.sessions.finishSession(session)
-        let other = session.orderedExercises[1].orderedSetLogs[0]
 
+        // The finished session saved only that set.
+        #expect(session.exercises.flatMap(\.setLogs).map(\.id) == [log.id])
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.uncompleteSet(log) }
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.updateSetValues(log, weightKg: 30, reps: 5) }
-        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.completeSet(other, weightKg: nil, reps: 12) }
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.completeSet(log, weightKg: 25, reps: 12) }
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.finishSession(session) }
         #expect(log.isCompleted)
         #expect(log.reps == 10)
-        #expect(other.isCompleted == false)
+        #expect(log.weightKg == 20)
     }
 
     // MARK: - Set types
@@ -379,8 +380,8 @@ struct SessionServiceTests {
         #expect(firstLog(of: session).setType == .warmup)
     }
 
-    @Test("Sets added during the session are working sets, whatever the type of the set before")
-    func addedSetsAreWorkingSets() throws {
+    @Test("A set added during the session follows the editor's rule: a copy of a warm-up or feeder set is a working set, a failure set stays one")
+    func addedSetsFollowTheEditorRule() throws {
         try harness.workouts.setType(.warmup, of: workout.orderedExercises[0].orderedPlannedSets[1])
         let session = try harness.sessions.startSession(from: workout)
         let performed = session.orderedExercises[0]
@@ -389,9 +390,17 @@ struct SessionServiceTests {
         #expect(performed.orderedSetLogs.map(\.setType) == [.working, .warmup, .working])
         #expect(added.targetWeightKg == 22.25)
 
+        try harness.sessions.setType(.failure, of: added)
+        try harness.sessions.addSetCopyingLast(to: performed)
+        try harness.sessions.setType(.feeder, of: performed.orderedSetLogs[3])
+        try harness.sessions.addSetCopyingLast(to: performed)
+        #expect(performed.orderedSetLogs.map(\.setType) == [.working, .warmup, .failure, .feeder, .working])
+        // As in the editor.
+        #expect([SetType.warmup, .feeder, .working, .failure].map(\.typeOfCopy) == [.working, .working, .working, .failure])
+
         let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
         let newExercise = try #require(try harness.sessions.addExercises([row], to: session).first)
-        #expect(newExercise.orderedSetLogs.map(\.setType) == [.working])
+        #expect(newExercise.orderedSetLogs.map(\.setType) == [.working, .working, .working])
     }
 
     @Test("The type of a set changes during the session, done or not, and only in the session")
@@ -481,17 +490,71 @@ struct SessionServiceTests {
         #expect(try harness.sessions.activeSession() == nil)
     }
 
-    @Test("Finishing keeps the sets that were not completed")
-    func finishKeepsIncompleteSets() throws {
+    @Test("Finishing saves only the sets done: the others are deleted and the sets left are numbered again")
+    func finishSavesOnlyTheSetsDone() throws {
         let session = try harness.sessions.startSession(from: workout)
-        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        let bench = session.orderedExercises[0].orderedSetLogs
+        try harness.sessions.completeSet(bench[1], weightKg: 22.5, reps: 8)
+        try harness.sessions.completeSet(session.orderedExercises[1].orderedSetLogs[0], weightKg: nil, reps: 12)
+        let plan = try planCounts()
 
         try harness.sessions.finishSession(session)
 
-        #expect(try count(SetLog.self, in: harness.context) == 3)
-        let states = session.orderedExercises.flatMap(\.orderedSetLogs).map { ($0.isCompleted, $0.completedAt == nil) }
-        #expect(states.map(\.0) == [true, false, false])
-        #expect(states.map(\.1) == [false, true, true])
+        #expect(try count(SetLog.self, in: harness.context) == 2)
+        let saved = session.orderedExercises.map(\.orderedSetLogs)
+        #expect(saved.map { $0.map(\.id) } == [[bench[1].id], [session.orderedExercises[1].orderedSetLogs[0].id]])
+        #expect(saved.flatMap { $0 }.allSatisfy { $0.isCompleted && $0.completedAt != nil })
+        #expect(saved[0].map(\.sortIndex) == [0])
+        #expect(saved[0].map(\.weightKg) == [22.5])
+        #expect(try planCounts() == plan)
+    }
+
+    @Test("An exercise without any set done is not saved, and the exercises left are numbered again")
+    func finishLeavesOutExercisesNotDone() throws {
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(session.orderedExercises[1].orderedSetLogs[0], weightKg: nil, reps: 12)
+
+        try harness.sessions.finishSession(session)
+
+        #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Rosca Direta"])
+        #expect(session.orderedExercises.map(\.sortIndex) == [0])
+        #expect(try count(SessionExercise.self, in: harness.context) == 1)
+        #expect(try count(SetLog.self, in: harness.context) == 1)
+        // The planned workout keeps both exercises.
+        #expect(workout.orderedExercises.count == 2)
+        #expect(HistorySessionDetail(session).exercises.map(\.name) == ["Rosca Direta"])
+    }
+
+    @Test("A session finished before keeps its sets not done, \"Não concluída\" in its detail, when another is finished")
+    func finishKeepsTheOlderHistory() throws {
+        // Recorded before sets not done stopped being saved: one set done and one not.
+        let old = Session(startedAt: harness.clock.current.addingTimeInterval(-86_400), workoutNameSnapshot: "Push")
+        old.endedAt = old.startedAt.addingTimeInterval(2_700)
+        harness.context.insert(old)
+        let oldExercise = SessionExercise(sortIndex: 0, exerciseNameSnapshot: "Supino Reto", muscleGroupSnapshot: .chest)
+        harness.context.insert(oldExercise)
+        oldExercise.session = old
+        oldExercise.exercise = bench
+        let oldDone = SetLog(sortIndex: 0, weightKg: 20, reps: 10, targetRepsMin: 8, targetRepsMax: 10)
+        oldDone.isCompleted = true
+        oldDone.completedAt = old.startedAt.addingTimeInterval(600)
+        let oldNotDone = SetLog(sortIndex: 1, weightKg: nil, reps: nil, targetRepsMin: 6, targetRepsMax: 8)
+        for log in [oldDone, oldNotDone] {
+            harness.context.insert(log)
+            log.sessionExercise = oldExercise
+        }
+        try harness.context.save()
+        let oldUpdatedAt = old.updatedAt
+
+        let session = try harness.sessions.startSession(from: workout)
+        try harness.sessions.completeSet(firstLog(of: session), weightKg: 20, reps: 10)
+        try harness.sessions.finishSession(session)
+
+        #expect(old.orderedExercises.map { $0.orderedSetLogs.map(\.id) } == [[oldDone.id, oldNotDone.id]])
+        #expect(old.updatedAt == oldUpdatedAt)
+        let sets = try #require(HistorySessionDetail(old).exercises.first).sets
+        #expect(sets.map(\.isCompleted) == [true, false])
+        #expect(sets[1].accessibilityText == "Série 2, Meta: 6–8, Sem carga, Sem repetições, Não concluída")
     }
 
     @Test("A session without any completed set cannot be finished and stays intact")
@@ -631,8 +694,9 @@ struct SessionServiceTests {
 
         #expect(try harness.sessions.activeSession() == nil)
         #expect(try count(Session.self, in: harness.context) == 1)
-        #expect(try count(SessionExercise.self, in: harness.context) == 2)
-        #expect(try count(SetLog.self, in: harness.context) == 3)
+        // What the finished session saved: its only set done, of the first exercise.
+        #expect(try count(SessionExercise.self, in: harness.context) == 1)
+        #expect(try count(SetLog.self, in: harness.context) == 1)
         #expect(finished.endedAt != nil)
         #expect(try count(Workout.self, in: harness.context) == 1)
         #expect(try count(PlannedSet.self, in: harness.context) == 3)
@@ -700,7 +764,7 @@ struct SessionServiceTests {
         #expect(try harness.context.fetch(SessionService.activeSessionsDescriptor).map(\.id) == [older.id])
     }
 
-    @Test("Exercises added to a session get one empty set and change only the session")
+    @Test("Exercises added to a session get three empty working sets of 8 to 12, as in a workout, and change only the session")
     func addExercisesToSession() throws {
         let session = try harness.sessions.startSession(from: workout)
         let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
@@ -716,9 +780,11 @@ struct SessionServiceTests {
         #expect(performed.exercise?.id == row.id)
         #expect(performed.muscleGroupSnapshot == .back)
         let sets = performed.orderedSetLogs
-        #expect(sets.count == 1)
-        #expect(sets[0].isCompleted == false)
-        #expect(sets[0].reps == nil && sets[0].weightKg == nil && sets[0].targetRepsMax == nil)
+        #expect(sets.count == 3)
+        #expect(sets.map(\.sortIndex) == [0, 1, 2])
+        #expect(sets.allSatisfy { !$0.isCompleted && $0.reps == nil && $0.weightKg == nil && $0.targetWeightKg == nil })
+        #expect(sets.allSatisfy { $0.targetRepsMin == 8 && $0.targetRepsMax == 12 && $0.setType == .working })
+        #expect(SessionProgress.targetText(of: sets) == "meta 8–12 reps")
         #expect(session.updatedAt == harness.clock.current)
         #expect(try planCounts() == plan)
         #expect(workout.orderedExercises.count == 2)
@@ -792,16 +858,17 @@ struct SessionServiceTests {
             let exercise = try services.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
             let session = try services.sessions.startFreeSession()
             let performed = try #require(try services.sessions.addExercises([exercise], to: session).first)
-            try services.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 40, reps: 10)
+            try services.sessions.completeSet(performed.orderedSetLogs[2], weightKg: 40, reps: 10)
             try services.sessions.addSetCopyingLast(to: performed)
         } read: { context in
             let session = try #require(try SessionService(context: context).activeSession())
             let logs = session.orderedExercises[0].orderedSetLogs
             #expect(session.workout == nil)
             #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Remada"])
-            #expect(logs.map(\.isCompleted) == [true, false])
-            #expect(logs.map(\.weightKg) == [40, 40])
-            #expect(logs.map(\.reps) == [10, nil])
+            #expect(logs.map(\.isCompleted) == [false, false, true, false])
+            #expect(logs.map(\.weightKg) == [nil, nil, 40, 40])
+            #expect(logs.map(\.reps) == [nil, nil, 10, nil])
+            #expect(logs.map(\.targetRepsMax) == [12, 12, 12, 12])
         }
     }
 
@@ -869,10 +936,11 @@ struct SessionServiceTests {
         try harness.sessions.completeSet(performed.orderedSetLogs[0], weightKg: 20, reps: 10)
         try harness.sessions.finishSession(session)
 
-        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeSet(performed.orderedSetLogs[1]) }
+        // The finished session saved only its set done, of the first exercise.
+        #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeSet(performed.orderedSetLogs[0]) }
         #expect(throws: SessionError.sessionNotActive) { try harness.sessions.removeExercise(performed) }
-        #expect(performed.setLogs.count == 2)
-        #expect(session.exercises.count == 2)
+        #expect(performed.setLogs.count == 1)
+        #expect(session.exercises.count == 1)
         #expect(harness.context.hasChanges == false)
     }
 
@@ -910,6 +978,31 @@ struct SessionServiceTests {
 
         #expect(last[bench.id] == [PreviousSet(weightKg: 25, reps: 7)])
         #expect(last[curl.id] == [PreviousSet(weightKg: nil, reps: 12)], "Without a load, only the repetitions")
+    }
+
+    @Test("The last time keeps the type of each set done, and each set of now gets the one of its own type")
+    func lastTimeKeepsTheSetType() throws {
+        // The first set done as a warm-up, and the second as a working set.
+        try finishedSession { bench, _ in
+            try harness.sessions.setType(.warmup, of: bench[0])
+            try harness.sessions.completeSet(bench[0], weightKg: 10, reps: 15)
+            try harness.sessions.completeSet(bench[1], weightKg: 22.5, reps: 8)
+        }
+        // Now both are working sets, as planned.
+        let current = try harness.sessions.startSession(from: workout)
+
+        let last = try harness.sessions.lastPerformances(for: current)
+
+        let previous = try #require(last[bench.id])
+        #expect(previous == [
+            PreviousSet(weightKg: 10, reps: 15, setType: .warmup),
+            PreviousSet(weightKg: 22.5, reps: 8, setType: .working),
+        ])
+        // The warm-up's values are never offered to a working set.
+        let sets = current.orderedExercises[0].orderedSetLogs
+        #expect(LastPerformance.matched(previous, to: sets.map(\.setType)) == [previous[1], nil])
+        try harness.sessions.setType(.warmup, of: sets[0])
+        #expect(LastPerformance.matched(previous, to: sets.map(\.setType)) == [previous[0], previous[1]])
     }
 
     @Test("The last time may have fewer sets than now; an exercise never done has none")

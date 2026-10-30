@@ -4,7 +4,7 @@ import XCTest
 /// with the picker ("NO TREINO" for those already in it), editing loads and repetitions in place and
 /// finding them saved after leaving, the minimum and maximum kept in order, the set types and their
 /// sheet, adding and removing sets, reordering, removing an exercise, renaming, deleting, starting the
-/// workout, going back with a swipe, and large text. Runs on an in-memory store with the built-in
+/// workout, going back with a swipe, a value that cannot be saved, and large text. Runs on an in-memory store with the built-in
 /// library; most tests have their workout ready (`-ui-seed`).
 final class WorkoutUITests: IronFlowUITestCase {
     /// Push with four exercises of the built-in library, like the model.
@@ -117,6 +117,44 @@ final class WorkoutUITests: IronFlowUITestCase {
         )
     }
 
+    /// Drags the editor's list up by what is visible between its top bar and the keyboard (with its OK
+    /// bar) or the bottom of the screen, or by `distance` when that is less: a drag of the list itself
+    /// keeps the keyboard up, which a swipe over the whole app may not move at all.
+    @MainActor
+    private func dragEditorUp(in app: XCUIApplication, by distance: CGFloat = .greatestFiniteMagnitude) {
+        var top = app.buttons["workout.back"].frame.maxY + 30
+        var bottom = app.windows.firstMatch.frame.maxY - 60
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            bottom = min(bottom, keyboard.frame.minY - 30)
+        }
+        let ok = app.buttons["OK"]
+        if ok.exists {
+            bottom = min(bottom, ok.frame.minY - 30)
+        }
+        top = max(top, bottom - distance)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let x = app.windows.firstMatch.frame.midX
+        origin.withOffset(CGVector(dx: x, dy: bottom))
+            .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: x, dy: top)))
+    }
+
+    /// Whether the whole element is on screen above the keyboard and its OK bar, when they are shown.
+    @MainActor
+    private func isAboveTheKeyboard(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        guard element.exists, element.isHittable else { return false }
+        var limit = app.windows.firstMatch.frame.maxY
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            limit = min(limit, keyboard.frame.minY)
+        }
+        let ok = app.buttons["OK"]
+        if ok.exists {
+            limit = min(limit, ok.frame.minY)
+        }
+        return element.frame.maxY <= limit
+    }
+
     /// Opens the editor's ⋯ menu and chooses `option`.
     @MainActor
     private func chooseFromEditorMenu(_ option: String, in app: XCUIApplication) {
@@ -147,6 +185,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         field.typeText("Costas e Bíceps")
         XCTAssertTrue(save.isEnabled, "Save disabled with a valid name")
         save.tap()
+        XCTAssertTrue(waitForToast("Treino criado", in: app), "No notice after creating")
 
         // Saving closes the name sheet; the new workout's editor opens once the sheet has closed, with only
         // the empty card: no legend, no dashed button, no "Iniciar".
@@ -322,13 +361,12 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "6", "Minimum not saved")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "10", "Maximum not saved")
 
-        // A maximum below the minimum: the minimum follows it, with the notice. The notice shows for a
-        // few seconds, so it is looked for right after OK, before anything else is waited for.
+        // A maximum below the minimum: the minimum follows it, with the notice. A notice stays 2,5 s,
+        // so it is looked for right after OK, before anything else is waited for.
         replaceText(of: fields("workout.set.max", in: app).element(boundBy: 0), with: "4")
         app.buttons["OK"].tap()
-        let notice = element("workout.rangeNotice", in: app)
-        XCTAssertTrue(notice.waitForExistence(timeout: 3), "Notice not shown")
-        XCTAssertEqual(notice.label, "O máximo não pode ser menor que o mínimo.")
+        let notice = app.staticTexts["toast"]
+        XCTAssertTrue(waitForLabel(of: notice, toBe: "O máximo não pode ser menor que o mínimo.", timeout: 5), "Notice not shown")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "4")
@@ -533,6 +571,65 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
     }
 
+    /// A load that cannot be saved is never lost: "‹ Treinos" and "Iniciar" report it and the editor
+    /// stays, with the stored value back in the field; a swipe back cannot stay, and the root of the app
+    /// reports it over the Treinos list.
+    @MainActor
+    func testAValueThatCannotBeSavedIsReported() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        openWorkout(named: "Push", in: app)
+        let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
+        XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
+
+        // "‹ Treinos" with the keyboard still up.
+        replaceText(of: weight, with: "1500")
+        app.buttons["workout.back"].tap()
+        acceptLoadError(in: app)
+        XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
+        XCTAssertEqual(weight.value as? String, weight.placeholderValue, "The value not saved is still in the field")
+
+        // "Iniciar", the same way: the list is dragged until the whole button is above the keyboard and
+        // its OK bar. A button partly behind them still reads as hittable, but a tap on its middle lands
+        // on the keyboard (seen in CI).
+        replaceText(of: weight, with: "1500")
+        let start = app.buttons["workout.start"]
+        for _ in 0..<4 where !isAboveTheKeyboard(start, in: app) {
+            dragEditorUp(in: app, by: 200)
+        }
+        XCTAssertTrue(isAboveTheKeyboard(start, in: app), "Iniciar stays behind the keyboard: \(start.frame)")
+        start.tap()
+        acceptLoadError(in: app)
+        XCTAssertFalse(element("session.name", in: app).exists, "The workout started with a value not saved")
+        XCTAssertTrue(element("workout.title", in: app).exists, "The editor closed with a value not saved")
+
+        // A swipe from the left edge closes the editor; the problem is shown over the list.
+        scrollToTop(in: app)
+        replaceText(of: fields("workout.set.weight", in: app).element(boundBy: 0), with: "1500")
+        let window = app.windows.firstMatch
+        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        edge.press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        acceptLoadError(in: app)
+        XCTAssertTrue(app.buttons["workouts.add"].waitForExistence(timeout: 10), "The swipe did not go back to Treinos")
+
+        // Nothing was saved.
+        openWorkout(named: "Push", in: app)
+        let reopened = fields("workout.set.weight", in: app).element(boundBy: 0)
+        XCTAssertTrue(reopened.waitForExistence(timeout: 10), "Sets not shown")
+        XCTAssertEqual(reopened.value as? String, reopened.placeholderValue, "A value not valid was saved")
+    }
+
+    /// Waits for the message of a load over the maximum and closes it with OK.
+    @MainActor
+    private func acceptLoadError(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let alert = app.alerts.firstMatch
+        XCTAssertTrue(alert.waitForExistence(timeout: 10), "The problem was not reported", file: file, line: line)
+        let message = alert.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "A carga pode ser no máximo")).firstMatch
+        XCTAssertTrue(message.exists, "Message: \(alert.staticTexts.allElementsBoundByIndex.map(\.label))", file: file, line: line)
+        alert.buttons["OK"].tap()
+        XCTAssertTrue(alert.waitForNonExistence(timeout: 10), "The message did not close", file: file, line: line)
+    }
+
     /// The editor is pushed over the Treinos list, without the tab bar as in the model: a swipe from the
     /// left edge goes back, as on any screen.
     @MainActor
@@ -565,6 +662,12 @@ final class WorkoutUITests: IronFlowUITestCase {
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
         let minimum = fields("workout.set.min", in: app).element(boundBy: 0)
         let maximum = fields("workout.set.max", in: app).element(boundBy: 0)
+        // With the largest text the title, the legend and the exercise's header can fill the screen: the
+        // list is dragged until the first set is in it.
+        XCTAssertTrue(element("workout.legend", in: app).waitForExistence(timeout: 10), "Editor not shown")
+        for _ in 0..<6 where !(weight.exists && maximum.exists && maximum.isHittable) {
+            dragEditorUp(in: app, by: 250)
+        }
         XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
         let screen = app.windows.firstMatch.frame
         for (name, field) in [("load", weight), ("minimum", minimum), ("maximum", maximum)] {

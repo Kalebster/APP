@@ -1,9 +1,11 @@
 import Foundation
 
-/// A set done the last time an exercise was performed: its load (`nil` without one) and repetitions.
+/// A set done the last time an exercise was performed: its load (`nil` without one), repetitions and
+/// type (a set recorded before set types existed is a working set).
 struct PreviousSet: Equatable, Sendable {
     var weightKg: Double?
     var reps: Int
+    var setType: SetType = .working
 }
 
 /// The values offered, in gray, in the empty fields of a set; checking the set records them.
@@ -21,8 +23,8 @@ enum LastPerformance {
     ///
     /// For each exercise, the most recently started session that is finished, is not
     /// `excludedSessionID`, and has at least one set of that exercise done (the exercise is matched by
-    /// its relationship, so a deleted exercise has none). Its done sets are kept in set order: the
-    /// first done set goes with set 1, and so on. Exercises never done are left out.
+    /// its relationship, so a deleted exercise has none). Its done sets are kept in set order, with
+    /// their type; `matched(_:to:)` pairs them with the sets of now. Exercises never done are left out.
     static func previousSets(
         for exerciseIDs: Set<UUID>,
         in sessions: [Session],
@@ -39,7 +41,7 @@ enum LastPerformance {
                 guard let id = performed.exercise?.id, exerciseIDs.contains(id), found[id] == nil else { continue }
                 let done = performed.orderedSetLogs.compactMap { log -> PreviousSet? in
                     guard log.isCompleted, let reps = log.reps else { return nil }
-                    return PreviousSet(weightKg: log.weightKg, reps: reps)
+                    return PreviousSet(weightKg: log.weightKg, reps: reps, setType: log.setType)
                 }
                 if !done.isEmpty {
                     found[id] = done
@@ -51,6 +53,24 @@ enum LastPerformance {
             }
         }
         return found
+    }
+
+    /// The set done the last time that goes with each set of now, whose types are `types`, in order.
+    /// The sets are paired by type and by their order within the type: the first warm-up set with the
+    /// first warm-up set done, the second working set with the second working set done, and so on. A
+    /// set without a pair gets `nil`: "—" and the suggestion of the plan.
+    static func matched(_ previous: [PreviousSet], to types: [SetType]) -> [PreviousSet?] {
+        var previousByType: [SetType: [PreviousSet]] = [:]
+        for done in previous {
+            previousByType[done.setType, default: []].append(done)
+        }
+        var countByType: [SetType: Int] = [:]
+        return types.map { type in
+            let position = countByType[type, default: 0]
+            countByType[type] = position + 1
+            guard let sets = previousByType[type], sets.indices.contains(position) else { return nil }
+            return sets[position]
+        }
     }
 
     /// The "ÚLTIMA" column: "22 × 10", "22,5 × 8", only the repetitions without a load, "—" without one.
@@ -68,7 +88,7 @@ enum LastPerformance {
         return String(localized: "Última vez: \(PlannedSetFormatting.weightText(weightKg)), \(reps)")
     }
 
-    /// The suggestion for a set: its values the last time, when there is a set done in that position;
+    /// The suggestion for a set: its values the last time, when it has a set done to pair with;
     /// otherwise the plan (the planned load, and the maximum of the target repetitions, or the minimum).
     static func suggestion(
         previous: PreviousSet?,

@@ -130,7 +130,8 @@ struct SummaryIndicatorLoader {
     }
 
     /// The weeks in a row that reached `goal`, read `streakBatchWeeks` at a time from the current week
-    /// back, each counted like the week's ring, and only until the first week below the goal.
+    /// back, each counted like the week's ring (the days with a workout, each once), and only until the
+    /// first week below the goal.
     private func streakWeeks(goal: Int) throws -> Int {
         var counts: [Int] = []
         // The Monday of the most recent week of the next group to read.
@@ -139,12 +140,13 @@ struct SummaryIndicatorLoader {
             guard let oldestMonday = calendar.date(byAdding: .weekOfYear, value: 1 - Self.streakBatchWeeks, to: newestMonday),
                   let end = calendar.date(byAdding: .weekOfYear, value: 1, to: newestMonday) else { break }
             let sessions = try finishedSessions(from: oldestMonday, to: end)
-            let marked = Set(try markedDays(from: oldestMonday, to: end))
+            // The days of the group with a workout in the app or marked outside it.
+            let trainedDays = Set(sessions.map { TrainingDay.key(for: $0.startedAt, calendar: calendar) })
+                .union(try markedDays(from: oldestMonday, to: end))
             for offset in 0..<Self.streakBatchWeeks {
                 guard let monday = calendar.date(byAdding: .weekOfYear, value: -offset, to: newestMonday) else { break }
                 let week = WeekSummary.week(containing: monday, calendar: calendar)
-                let sessionCount = sessions.count(where: { $0.startedAt >= week.start && $0.startedAt < week.end })
-                counts.append(sessionCount + marked.intersection(week.keys).count)
+                counts.append(week.keys.count { trainedDays.contains($0) })
                 if !SummaryIndicators.streakContinues(weekCounts: counts, goal: goal) {
                     return SummaryIndicators.streak(weekCounts: counts, goal: goal)
                 }

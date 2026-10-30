@@ -114,9 +114,10 @@ enum WeekSummary {
         }
     }
 
-    /// The week's goal: the workouts done against the days of the weekly plan.
+    /// The week's goal: the days trained against the days of the weekly plan.
     struct Goal: Equatable, Sendable {
-        /// Finished sessions plus days marked as trained outside the app; it can go past `total`.
+        /// Days with a workout, finished in the app or marked outside it, each once; it can go past
+        /// `total`.
         let done: Int
         /// Days of the weekly plan with a workout; more than zero.
         let total: Int
@@ -232,15 +233,23 @@ enum WeekSummary {
         }
     }
 
-    /// Finished sessions of the week plus the days marked as trained outside the app.
+    /// Finished sessions of the week plus the days marked as trained outside the app: what the card
+    /// counts without a weekly plan, every workout once.
     static func workoutCount(of days: [Day]) -> Int {
         days.reduce(0) { $0 + $1.appWorkouts + ($1.isMarked ? 1 : 0) }
     }
 
-    /// The week's goal: every workout of the week (`workoutCount(of:)`) against the days of the weekly
-    /// plan with a workout. `nil` without a plan: then the card shows the count only.
+    /// The days of the week with a workout, finished in the app or marked outside it. A day counts once
+    /// however many it has: two workouts on one day, or a day marked with a workout in the app too.
+    static func trainedDayCount(of days: [Day]) -> Int {
+        days.count(where: \.isTrained)
+    }
+
+    /// The week's goal: the days trained (`trainedDayCount(of:)`) against the days of the weekly plan
+    /// with a workout, as the weekly plan explains it ("Cada dia com treino conta 1."). `nil` without a
+    /// plan: then the card shows the count only.
     static func goal(of days: [Day], plannedDays: Int) -> Goal? {
-        plannedDays > 0 ? Goal(done: workoutCount(of: days), total: plannedDays) : nil
+        plannedDays > 0 ? Goal(done: trainedDayCount(of: days), total: plannedDays) : nil
     }
 
     /// "0 treinos esta semana", "1 treino esta semana", "2 treinos esta semana". The singular is chosen

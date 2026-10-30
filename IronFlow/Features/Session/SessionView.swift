@@ -20,6 +20,10 @@ struct SessionView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
+    /// Shows "Treino salvo" and "Treino descartado" once the screen has closed.
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
+    /// The notice of the last change on this screen ("Série removida").
+    @State private var toast: ToastMessage?
     /// Typed values not saved yet, by set id.
     @State private var drafts: [UUID: SetDraft] = [:]
     @FocusState private var focusedField: SetField?
@@ -31,11 +35,10 @@ struct SessionView: View {
     /// Rests that reached zero on screen, for the vibration.
     @State private var restsEnded = 0
     @State private var isPickingExercises = false
-    @State private var isConfirmingFinish = false
-    /// Sets not completed when "Concluir" was tapped, for the confirmation message.
-    @State private var notCompletedCount = 0
-    /// The end offered when "Concluir" was tapped on a session left open (see `SessionService.suggestedEnd`).
-    @State private var suggestedEnd: Date?
+    /// "Concluir treino?", with what the session did when "Concluir" was tapped.
+    @State private var finishSummary: SessionFinishSummary?
+    /// What a button of "Concluir treino?" asked for, done once the sheet has closed.
+    @State private var afterFinishSheet: FinishSheetAction?
     @State private var isConfirmingDiscard = false
     /// A set already done that is about to be removed, waiting for the confirmation.
     @State private var setPendingRemoval: SetLog?
@@ -54,6 +57,11 @@ struct SessionView: View {
         let id: UUID
         let number: Int
         let type: SetType
+    }
+
+    private enum FinishSheetAction {
+        case finish(SessionEnd)
+        case discard
     }
 
     private var service: SessionService {
@@ -99,6 +107,8 @@ struct SessionView: View {
             .scrollContentBackground(.hidden)
             .environment(\.defaultMinListRowHeight, 0)
             .scrollDismissesKeyboard(.interactively)
+            // Below the header, which keeps "Concluir" in sight.
+            .toast($toast)
             // The header and the rest bar stay in place, so, like the system's bars, they stop growing at
             // the first accessibility text size: with the largest ones they would leave the sets no room.
             .safeAreaInset(edge: .top, spacing: 0) {
@@ -163,22 +173,12 @@ struct SessionView: View {
                 await endRestWhenOver()
             }
             .sensoryFeedback(.success, trigger: restsEnded)
-            .confirmationDialog("Concluir treino?", isPresented: $isConfirmingFinish, titleVisibility: .visible) {
-                if let suggestedEnd {
-                    Button("Usar \(SessionFormatting.timeText(suggestedEnd, calendar: TrainingDay.calendar))") {
-                        finish(endingAt: .lastCompletedSet)
-                    }
-                    Button("Usar agora") {
-                        finish(endingAt: .now)
-                    }
-                } else {
-                    Button("Concluir treino") {
-                        finish(endingAt: .now)
-                    }
-                }
-                Button("Cancelar", role: .cancel) {}
-            } message: {
-                Text(verbatim: finishMessage)
+            .sheet(item: $finishSummary, onDismiss: actAfterFinishSheet) { summary in
+                FinishSessionSheet(
+                    summary: summary,
+                    onFinish: { (end: SessionEnd) in afterFinishSheet = .finish(end) },
+                    onDiscard: { afterFinishSheet = .discard }
+                )
             }
             .confirmationDialog("Descartar este treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
                 Button("Descartar", role: .destructive, action: discard)
@@ -219,7 +219,8 @@ struct SessionView: View {
             }
             .fullScreenCover(isPresented: $isPickingExercises) {
                 ExercisePickerView(workoutExerciseIDs: Set(session.exercises.compactMap { $0.exercise?.id })) { exercises in
-                    try service.addExercises(exercises, to: session)
+                    let added = try service.addExercises(exercises, to: session)
+                    toast = ToastMessage(String(localized: "\(added.count) exercícios adicionados"))
                 }
             }
             .errorAlert($errorMessage)
@@ -351,7 +352,7 @@ struct SessionView: View {
             lastPerformances = try service.lastPerformances(for: session)
         } catch {
             lastPerformances = [:]
-            sessionLogger.error("Última vez could not be read: \(String(describing: error), privacy: .public)")
+            sessionLogger.error("Última vez could not be read: \(String(describing: error), privacy: .private)")
         }
     }
 
@@ -401,6 +402,9 @@ struct SessionView: View {
                 focusedField = nil
             }
             restTimer.start(for: session.id, at: .now)
+            if session.exercises.allSatisfy({ $0.setLogs.allSatisfy(\.isCompleted) }) {
+                toast = ToastMessage(String(localized: "Todas as séries feitas. Toque em Concluir."))
+            }
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -467,6 +471,7 @@ struct SessionView: View {
         }
         do {
             try service.removeSet(log)
+            toast = ToastMessage(String(localized: "Série removida"))
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -490,6 +495,7 @@ struct SessionView: View {
         openedFinished.remove(performed.id)
         do {
             try service.removeExercise(performed)
+            toast = ToastMessage(String(localized: "Exercício removido do treino"))
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
@@ -501,43 +507,44 @@ struct SessionView: View {
         onClose()
     }
 
+    /// "Concluir": saves what was typed, then shows "Concluir treino?" with what the session did, or
+    /// "Nenhuma série marcada" without any set done. Nothing is saved before its "Concluir e salvar".
     private func requestFinish() {
         focusedField = nil
         guard commitAll() else { return }
-        let logs = session.exercises.flatMap(\.setLogs)
-        guard logs.contains(where: \.isCompleted) else {
-            errorMessage = UserFacingError.message(for: SessionError.noCompletedSets)
-            return
-        }
-        notCompletedCount = logs.filter { !$0.isCompleted }.count
-        suggestedEnd = service.suggestedEnd(for: session)
-        if notCompletedCount > 0 || suggestedEnd != nil {
-            isConfirmingFinish = true
-        } else {
-            finish(endingAt: .now)
-        }
+        finishSummary = SessionFinishSummary(
+            sets: session.exercises.flatMap(\.setLogs),
+            startedAt: session.startedAt,
+            now: .now,
+            suggestedEnd: service.suggestedEnd(for: session)
+        )
     }
 
-    /// The finish confirmation's message: the sets left undone, and the question about the end when
-    /// the session was probably left open. Both are asked in one dialog.
-    private var finishMessage: String {
-        var sentences: [String] = []
-        if notCompletedCount == 1 {
-            sentences.append(String(localized: "1 série não foi concluída e ficará registrada como não feita."))
-        } else if notCompletedCount > 1 {
-            sentences.append(String(localized: "\(notCompletedCount) séries não foram concluídas e ficarão registradas como não feitas."))
+    /// Finishes or discards once "Concluir treino?" has closed, as its button asked; a confirmation
+    /// cannot show while the sheet closes.
+    private func actAfterFinishSheet() {
+        guard let action = afterFinishSheet else { return }
+        afterFinishSheet = nil
+        switch action {
+        case .finish(let end):
+            finish(endingAt: end)
+        case .discard:
+            isConfirmingDiscard = true
         }
-        if let suggestedEnd {
-            sentences.append(SessionFormatting.lastRecordQuestion(suggestedEnd, calendar: TrainingDay.calendar))
-        }
-        return sentences.joined(separator: " ")
     }
 
     private func finish(endingAt end: SessionEnd) {
+        // Read before finishing, which keeps only the sets done.
+        let sets = session.exercises.flatMap(\.setLogs)
+        let saved = SessionFinishSummary.savedText(
+            doneSets: sets.filter(\.isCompleted).count,
+            volumeKg: SessionProgress.volumeKg(of: sets)
+        )
         do {
             try service.finishSession(session, endingAt: end)
             isClosed = true
             restTimer.stop()
+            rootFeedback?.show(saved)
             onClose()
         } catch {
             errorMessage = UserFacingError.message(for: error)
@@ -550,6 +557,7 @@ struct SessionView: View {
             try service.discardSession(session)
             drafts = [:]
             restTimer.stop()
+            rootFeedback?.show(String(localized: "Treino descartado"))
             onClose()
         } catch {
             isClosed = false

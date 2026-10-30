@@ -276,6 +276,7 @@ struct WorkoutServiceTests {
         try harness.workouts.addExercises([bench, row], to: workout)
         let session = try harness.sessions.startSession(from: workout)
         try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: 40, reps: 10)
+        try harness.sessions.completeSet(session.orderedExercises[1].orderedSetLogs[0], weightKg: 30, reps: 12)
         try harness.sessions.finishSession(session)
 
         try harness.workouts.delete(workout)
@@ -284,8 +285,9 @@ struct WorkoutServiceTests {
         #expect(try count(WorkoutExercise.self, in: harness.context) == 0)
         #expect(try count(PlannedSet.self, in: harness.context) == 0)
         #expect(try count(Session.self, in: harness.context) == 1)
+        // Only the sets done were saved.
         #expect(try count(SessionExercise.self, in: harness.context) == 2)
-        #expect(try count(SetLog.self, in: harness.context) == 6)
+        #expect(try count(SetLog.self, in: harness.context) == 2)
         #expect(session.workout == nil)
         #expect(session.workoutNameSnapshot == "Push")
     }
@@ -420,7 +422,8 @@ struct WorkoutServiceTests {
         #expect(plannedSet.updatedAt == harness.clock.current)
         #expect(workout.updatedAt == harness.clock.current)
         #expect(harness.context.hasChanges == false)
-        #expect(session.orderedExercises[0].orderedSetLogs.map(\.setType) == [.working, .working])
+        // The session saved its set done, which keeps its type.
+        #expect(session.orderedExercises[0].orderedSetLogs.map(\.setType) == [.working])
 
         // The same type again writes nothing.
         harness.clock.advance(by: 30)
@@ -472,7 +475,8 @@ struct WorkoutServiceTests {
         try harness.workouts.removePlannedSet(item.orderedPlannedSets[1])
 
         #expect(history() == before)
-        #expect(session.orderedExercises[0].setLogs.count == 2)
+        // Only the set done was saved.
+        #expect(session.orderedExercises[0].setLogs.count == 1)
     }
 
     @Test("Removing a planned set renumbers; the last one cannot be removed")
@@ -565,7 +569,8 @@ struct WorkoutServiceTests {
         #expect(try count(Exercise.self, in: harness.context) == 3)
         #expect(try count(Session.self, in: harness.context) == 1)
         #expect(try count(SessionExercise.self, in: harness.context) == 1)
-        #expect(try count(SetLog.self, in: harness.context) == 2)
+        // Only the set done was saved.
+        #expect(try count(SetLog.self, in: harness.context) == 1)
         #expect(session.workout == nil)
         #expect(session.workoutNameSnapshot == "Push")
     }

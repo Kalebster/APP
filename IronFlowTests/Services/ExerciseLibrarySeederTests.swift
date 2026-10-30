@@ -175,7 +175,10 @@ struct ExerciseLibrarySeederTests {
             (pullUp, [.reps(6, 8)]), (deadlift, [.reps(5, 5, kg: 100)]), (custom, [.reps(8, 10)]),
         ])
         let session = try harness.sessions.startSession(from: workout)
-        try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: nil, reps: 8)
+        // A set of each exercise done, so the history keeps all three.
+        for (performed, reps) in zip(session.orderedExercises, [8, 5, 10]) {
+            try harness.sessions.completeSet(performed.orderedSetLogs[0], weightKg: nil, reps: reps)
+        }
         try harness.sessions.finishSession(session)
         harness.clock.advance(by: 3_600)
 

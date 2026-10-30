@@ -262,7 +262,7 @@ struct MetricEditorSheet: View {
     private func recordValue(_ row: HomeSummary.WeightRecordRow) -> some View {
         HStack(spacing: 8) {
             Text(verbatim: row.valueText)
-                .fontWeight(.bold)
+                .scaledFont(14, weight: .bold)
                 .foregroundStyle(Theme.Colors.brightText)
             Text(verbatim: row.changeText ?? "")
                 .scaledFont(11)

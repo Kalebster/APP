@@ -132,6 +132,22 @@ extension XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
     }
 
+    /// Waits for the notice at the top of the screen to read `text`, looking every tenth of a second: a
+    /// notice stays 2,5 s, which the usual waits, about a second apart, can miss after a sheet closes or
+    /// a screen changes.
+    @MainActor
+    func waitForToast(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 5) -> Bool {
+        let toast = app.staticTexts["toast"]
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if toast.exists && toast.label == text {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        } while Date() < deadline
+        return false
+    }
+
     /// Waits until the element's label is exactly `label`.
     @MainActor
     func waitForLabel(of element: XCUIElement, toBe label: String, timeout: TimeInterval = 10) -> Bool {
@@ -283,14 +299,21 @@ extension XCTestCase {
         XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
     }
 
-    /// In the session on screen: completes the first set and finishes it, confirming the sets left undone.
+    /// In the session on screen: completes the first set and finishes it with "Concluir e salvar"; the
+    /// sets left undone are not saved.
     @MainActor
     func completeFirstSetAndFinishSession(in app: XCUIApplication) {
         app.buttons.matching(identifier: "session.set.check").element(boundBy: 0).tap()
+        saveSessionFromTheFinishSheet(in: app)
+    }
+
+    /// In the session on screen, with a set done: "Concluir", then "Concluir e salvar" in "Concluir treino?".
+    @MainActor
+    func saveSessionFromTheFinishSheet(in app: XCUIApplication) {
         app.buttons["session.finish"].tap()
-        let confirm = app.buttons["Concluir treino"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Finish confirmation not shown")
-        confirm.tap()
+        let save = app.buttons["finish.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10), "Concluir treino? not shown")
+        save.tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
     }
 

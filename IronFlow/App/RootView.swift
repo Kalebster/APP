@@ -21,11 +21,13 @@ struct RootView: View {
     /// The rest between sets of the session in progress. Kept here, so it goes on while the session
     /// screen is minimized; never stored.
     @State private var restTimer = RestTimer()
-    @State private var errorMessage: String?
+    /// The notices over every tab, and the root's errors, its own and those of screens that already closed.
+    @State private var feedback = RootFeedback()
 
     var body: some View {
         // Normally at most one; should there be more, the most recent is shown first.
         let currentSession = activeSessions.first
+        @Bindable var feedback = feedback
 
         TabView(selection: $selectedTab) {
             Tab("Início", systemImage: "house", value: AppTab.home) {
@@ -47,7 +49,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.workouts.root")
                         .navigationTitle("Treinos")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
 
             Tab("Exercícios", systemImage: "dumbbell", value: AppTab.exercises) {
@@ -57,7 +59,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.exercises.root")
                         .navigationTitle("Exercícios")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
 
             Tab("Histórico", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
@@ -67,7 +69,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.history.root")
                         .navigationTitle("Histórico")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
 
             Tab("Ajustes", systemImage: "gearshape", value: AppTab.settings) {
@@ -77,7 +79,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.settings.root")
                         .navigationTitle("Ajustes")
                 }
-                .activeSessionBar(currentSession) { openSession() }
+                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
         }
         .fullScreenCover(item: $openedSession) { session in
@@ -102,7 +104,9 @@ struct RootView: View {
         } message: {
             Text("Conclua ou descarte o treino atual antes de iniciar outro.")
         }
-        .errorAlert($errorMessage)
+        .toast($feedback.toast)
+        .errorAlert($feedback.errorMessage)
+        .environment(feedback)
     }
 
     private var sessionActions: SessionActions {
@@ -134,22 +138,46 @@ struct RootView: View {
         } catch SessionError.activeSessionExists {
             isSessionInProgress = true
         } catch {
-            errorMessage = UserFacingError.message(for: error)
+            feedback.errorMessage = UserFacingError.message(for: error)
         }
     }
 }
 
 private extension View {
     /// The "Treino em andamento" bar above the tab bar, while `session` is in progress.
-    func activeSessionBar(_ session: Session?, open: @escaping @MainActor () -> Void) -> some View {
+    func activeSessionBar(
+        _ session: Session?,
+        restTimer: Binding<RestTimer>,
+        open: @escaping @MainActor () -> Void
+    ) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             if let session {
-                ActiveSessionBar(
+                ActiveSessionBarHost(session: session, restTimer: restTimer, onOpen: open)
+            }
+        }
+    }
+}
+
+/// Reads what the "Treino em andamento" bar shows of the session in progress: its sets done, and its
+/// rest while one runs. A view of its own, so a set or a rest that changes draws only the bar again,
+/// never the tabs. A session just discarded is never read: the bar goes before the list of sessions
+/// in progress catches up.
+private struct ActiveSessionBarHost: View {
+    let session: Session
+    @Binding var restTimer: RestTimer
+    let onOpen: @MainActor () -> Void
+
+    var body: some View {
+        if !session.isDeleted, session.modelContext != nil {
+            ActiveSessionBar(
+                status: ActiveSessionBar.Status(
                     name: SessionFormatting.name(session.workoutNameSnapshot),
                     startedAt: session.startedAt,
-                    onOpen: open
-                )
-            }
+                    setsText: SessionProgress(sets: session.orderedExercises.map(\.orderedSetLogs)).setsText,
+                    restEndsAt: restTimer.isRunning(for: session.id) ? restTimer.endsAt : nil
+                ),
+                onOpen: onOpen
+            )
         }
     }
 }

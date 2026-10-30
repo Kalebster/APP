@@ -1,9 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// The Home "Sua semana" card: the week's goal (a ring with the workouts done against the days of the
-/// weekly plan) or, without a plan, the week's count, and its seven days. Tapping a day marks it as
-/// trained outside the app; a marked day is unmarked after a confirmation.
+/// The Home "Sua semana" card: the week's goal (a ring with the days trained against the days of the
+/// weekly plan) or, without a plan, the week's count of workouts, and its seven days. Tapping a day
+/// marks it as trained outside the app; a marked day is unmarked after a confirmation.
 ///
 /// The card reads only `week`: its queries are built from the week's limits when the card is
 /// created. `HomeView` gives the card the week's start as its identity, so a new week creates a new
@@ -26,6 +26,8 @@ struct WeekCard: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// Shows "Dia 13 marcado como treinado".
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     @State private var dayToUnmark: WeekSummary.Day?
     @State private var errorMessage: String?
 
@@ -171,6 +173,7 @@ struct WeekCard: View {
         case .mark:
             do {
                 try ExternalWorkoutService(context: context, calendar: calendar).mark(day.date)
+                rootFeedback?.show(String(localized: "Dia \(day.number) marcado como treinado"))
             } catch {
                 errorMessage = UserFacingError.message(for: error)
             }
@@ -203,11 +206,14 @@ private struct WeekGoalRing: View {
             Circle()
                 .inset(by: lineWidth / 2)
                 .stroke(Theme.Colors.ringTrack, lineWidth: lineWidth)
-            Circle()
-                .inset(by: lineWidth / 2)
-                .trim(from: 0, to: goal.progress)
-                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+            // Nothing at 0: a line cut to no length still draws a dot with its round ends.
+            if goal.progress > 0 {
+                Circle()
+                    .inset(by: lineWidth / 2)
+                    .trim(from: 0, to: goal.progress)
+                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
             VStack(spacing: 0) {
                 Text(verbatim: goal.ringText)
                     .scaledFont(22, weight: .heavy)

@@ -224,10 +224,11 @@ struct SummaryIndicatorsTests {
         #expect(values[.monthWorkouts]?.line == "5 treinos em outubro")
     }
 
-    @Test("The sequence reads back week by week, past a group of weeks, and stops at the first one below the goal")
+    @Test("The sequence reads back week by week, past a group of weeks, counts each day with a workout once, and stops at the first week below the goal")
     func streakFromTheStore() throws {
-        // A goal of 2: the current week has 1 so far, which does not break the sequence; the ten weeks
-        // before it have 2 each (one of them with a day marked outside the app); the one before has 1.
+        // A goal of 2: the current week has 1 day so far, which does not break the sequence; the ten
+        // weeks before it have 2 days each (one of them with a day marked outside the app); the one
+        // before has 1, and the one before that 1 too: two workouts on the same day.
         let currentMonday = Self.moment(2026, 10, 26, 0, 0)
         finished("Hoje", at: Self.moment(2026, 10, 27, 7, 0))
         for weeksBack in 1...10 {
@@ -249,8 +250,13 @@ struct SummaryIndicatorsTests {
         let known = SummaryIndicatorLoader.Known(latestWeightKg: nil, profile: nil, planGoal: 2)
         #expect(try loader().values(for: [.streak], known: known)[.streak]?.value == "10 sem.")
 
-        // The current week reaches the goal: it counts too.
+        // A second workout today is the same day: the current week does not reach the goal yet.
         finished("Hoje 2", at: Self.moment(2026, 10, 27, 9, 0))
+        try context.save()
+        #expect(try loader().values(for: [.streak], known: known)[.streak]?.value == "10 sem.")
+
+        // Another day of the current week reaches the goal: it counts too.
+        finished("Ontem", at: Self.moment(2026, 10, 26, 18, 0))
         try context.save()
         #expect(try loader().values(for: [.streak], known: known)[.streak]?.value == "11 sem.")
 

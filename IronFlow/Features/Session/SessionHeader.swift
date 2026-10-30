@@ -162,13 +162,3 @@ struct SessionHeader: View {
         .accessibilityIdentifier("session.finish")
     }
 }
-
-/// An icon and its title close together, for the session clock.
-private struct TightLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
-            configuration.icon
-            configuration.title
-        }
-    }
-}
