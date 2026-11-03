@@ -15,6 +15,8 @@ struct SessionView: View {
     let session: Session
     /// The rest between sets. Kept by the root view, so it goes on while the session is minimized.
     @Binding var restTimer: RestTimer
+    /// Once the session is finished and saved, before the screen closes: the app goes to the Início.
+    let onFinish: @MainActor () -> Void
     /// Closes the screen (minimized, finished or discarded).
     let onClose: @MainActor () -> Void
 
@@ -562,6 +564,7 @@ struct SessionView: View {
             isClosed = true
             restTimer.stop()
             rootFeedback?.show(saved)
+            onFinish()
             onClose()
         } catch {
             errorMessage = UserFacingError.message(for: error)

@@ -233,14 +233,9 @@ enum WeekSummary {
         }
     }
 
-    /// Finished sessions of the week plus the days marked as trained outside the app: what the card
-    /// counts without a weekly plan, every workout once.
-    static func workoutCount(of days: [Day]) -> Int {
-        days.reduce(0) { $0 + $1.appWorkouts + ($1.isMarked ? 1 : 0) }
-    }
-
     /// The days of the week with a workout, finished in the app or marked outside it. A day counts once
-    /// however many it has: two workouts on one day, or a day marked with a workout in the app too.
+    /// however many it has: two workouts on one day, or a day marked with a workout in the app too. The
+    /// week's goal counts these, and so does "N treinos esta semana" without a weekly plan.
     static func trainedDayCount(of days: [Day]) -> Int {
         days.count(where: \.isTrained)
     }

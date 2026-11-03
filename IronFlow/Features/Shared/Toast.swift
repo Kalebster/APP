@@ -8,6 +8,12 @@ struct ToastMessage: Equatable {
     init(_ text: String) {
         self.text = text
     }
+
+    /// How long the notice stays on screen: 2,5 s, or 4 s for a text of more than 40 characters, which
+    /// takes longer to read.
+    var duration: Duration {
+        text.count > 40 ? .seconds(4) : .seconds(2.5)
+    }
 }
 
 extension View {
@@ -21,9 +27,6 @@ extension View {
 
 private struct ToastModifier: ViewModifier {
     @Binding var message: ToastMessage?
-
-    /// How long a notice stays on screen.
-    private static let duration: Duration = .seconds(2.5)
 
     func body(content: Content) -> some View {
         content
@@ -49,7 +52,7 @@ private struct ToastModifier: ViewModifier {
                 guard let current = message else { return }
                 AccessibilityNotification.Announcement(current.text).post()
                 do {
-                    try await Task.sleep(for: Self.duration)
+                    try await Task.sleep(for: current.duration)
                 } catch {
                     // A newer notice replaced it and is cleared by its own task.
                     return

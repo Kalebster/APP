@@ -56,11 +56,15 @@ struct SheetSectionTitle: View {
 }
 
 /// A sheet's full-width button: blue for the action ("Salvar", "Pronto"), gray for leaving
-/// ("Cancelar", "Fechar").
+/// ("Cancelar", "Fechar"), and gray with red text for a dangerous one ("Descartar treino").
 struct SheetButton: View {
     enum Kind {
+        /// The action: white on the accent.
         case primary
+        /// Leaving: light text on gray.
         case secondary
+        /// A dangerous action, such as discarding: red text on gray.
+        case destructive
     }
 
     let title: Text
@@ -80,7 +84,7 @@ struct SheetButton: View {
         Button(action: action) {
             title
                 .scaledFont(15, weight: .bold)
-                .foregroundStyle(kind == .primary ? Color.white : Theme.Colors.brightText)
+                .foregroundStyle(foreground)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 12)
                 .frame(maxWidth: .infinity, minHeight: height)
@@ -92,6 +96,14 @@ struct SheetButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    private var foreground: Color {
+        switch kind {
+        case .primary: .white
+        case .secondary: Theme.Colors.brightText
+        case .destructive: Theme.Colors.failureSet
+        }
     }
 }
 

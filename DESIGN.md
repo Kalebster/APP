@@ -178,7 +178,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `IconTile` | Ícone do protótipo (catálogo `Icons`) num quadradinho | Decorativo: escondido do VoiceOver |
 | `TextBackButton` | "‹ Treinos", "‹ Início" | Seta e texto em `lightAccent`, 44 pt de toque |
 | `CapsuleBadge` | "Programado", "HOJE" | Fundo `highlightBadge`, texto `highlightText` |
-| `SheetHeader`, `SheetSectionTitle`, `SheetButton`, `FittedSheet` | Folhas | Folha com a altura do conteúdo; botão azul para a ação e cinza para sair; desabilitado = opacidade 0,4 |
+| `SheetHeader`, `SheetSectionTitle`, `SheetButton`, `FittedSheet` | Folhas | Folha com a altura do conteúdo; botão azul para a ação, cinza para sair e cinza com texto vermelho (`failureSet`) para a ação perigosa; desabilitado = opacidade 0,4 |
 | `toast(_:)` (`ToastMessage`) | Aviso curto de confirmação | No alto da tela, some em 2,5 s (em 4 s quando o texto tem mais de 40 caracteres), não bloqueia toques, não cobre o que mudou, o VoiceOver lê |
 | `GroupFilterChip`, `EquipmentFilterChip`, `FilterChipRow` | Filtros da tela Exercícios e do seletor | |
 | `FlowLayout` | Chips que quebram a linha | |

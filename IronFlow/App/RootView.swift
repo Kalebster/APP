@@ -23,6 +23,8 @@ struct RootView: View {
     @State private var restTimer = RestTimer()
     /// The notices over every tab, and the root's errors, its own and those of screens that already closed.
     @State private var feedback = RootFeedback()
+    /// Changed to show the Início from its top, with nothing open over it.
+    @State private var homeStackID = UUID()
 
     var body: some View {
         // Normally at most one; should there be more, the most recent is shown first.
@@ -38,6 +40,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.home.root")
                         .navigationTitle("Início")
                 }
+                .id(homeStackID)
             }
 
             Tab("Treinos", image: "tab-workouts", value: AppTab.workouts) {
@@ -83,7 +86,7 @@ struct RootView: View {
             }
         }
         .fullScreenCover(item: $openedSession) { session in
-            SessionView(session: session, restTimer: $restTimer) {
+            SessionView(session: session, restTimer: $restTimer, onFinish: showHomeAfterFinishing) {
                 openedSession = nil
             }
         }
@@ -121,6 +124,13 @@ struct RootView: View {
                 openSession()
             }
         )
+    }
+
+    /// After a session is finished and saved: the Início, from its top, with "Concluído hoje" and the week
+    /// updated, and the "Treino salvo" notice above. The weekly plan or a sheet left open there is closed.
+    private func showHomeAfterFinishing() {
+        homeStackID = UUID()
+        selectedTab = .home
     }
 
     /// Opens `session` over the tabs, or else the session in progress; nothing happens when there is none.

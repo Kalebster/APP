@@ -52,7 +52,7 @@ struct FinishSessionSheet: View {
                     dismiss()
                 }
                 .accessibilityIdentifier("finish.save")
-                continueButton
+                continueButton(kind: .secondary)
             }
             .sheetButtonBar()
         }
@@ -68,8 +68,9 @@ struct FinishSessionSheet: View {
             .sheetContentPadding()
         } bottom: {
             VStack(spacing: 10) {
-                continueButton
-                SheetButton(Text("Descartar treino"), kind: .secondary) {
+                // Nothing to save: going on with the workout is the action, discarding the danger.
+                continueButton(kind: .primary)
+                SheetButton(Text("Descartar treino"), kind: .destructive) {
                     onDiscard()
                     dismiss()
                 }
@@ -79,8 +80,8 @@ struct FinishSessionSheet: View {
         }
     }
 
-    private var continueButton: some View {
-        SheetButton(Text("Continuar treinando"), kind: .secondary) {
+    private func continueButton(kind: SheetButton.Kind) -> some View {
+        SheetButton(Text("Continuar treinando"), kind: kind) {
             dismiss()
         }
         .accessibilityIdentifier("finish.continue")

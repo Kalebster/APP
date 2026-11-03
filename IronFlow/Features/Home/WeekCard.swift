@@ -70,7 +70,7 @@ struct WeekCard: View {
             if let goal = WeekSummary.goal(of: days, plannedDays: plannedWeekdays.count) {
                 goalSummary(goal)
             } else {
-                countSummary(WeekSummary.workoutCount(of: days))
+                countSummary(WeekSummary.trainedDayCount(of: days))
             }
 
             HStack(spacing: 3) {
