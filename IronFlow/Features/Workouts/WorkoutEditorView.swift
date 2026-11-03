@@ -73,7 +73,6 @@ struct WorkoutEditorView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 0)
-        .environment(\.editMode, .constant(isOrdering ? .active : .inactive))
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .top, spacing: 0) {
             topBar(canReorder: items.count > 1)
@@ -156,8 +155,9 @@ struct WorkoutEditorView: View {
         titleRow(items: items, setCount: setsByItem.reduce(0) { $0 + $1.count })
 
         if isOrdering {
-            ForEach(items) { (item: WorkoutExercise) in
-                orderingRow(item)
+            // Outside edit mode, so no drag handle: a touch and hold on a row drags it, and ↑ ↓ move it.
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                orderingRow(item, at: index, count: items.count)
             }
             .onMove(perform: moveExercises)
         } else if items.isEmpty {
@@ -229,7 +229,7 @@ struct WorkoutEditorView: View {
                     isPresented: $isConfirmingDelete,
                     titleVisibility: .visible
                 ) {
-                    Button("Excluir", role: .destructive, action: deleteWorkout)
+                    Button("Excluir treino", role: .destructive, action: deleteWorkout)
                     Button("Cancelar", role: .cancel) {}
                 } message: {
                     Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
@@ -295,22 +295,28 @@ struct WorkoutEditorView: View {
         }
     }
 
-    /// An exercise while reordering: a card of its own with the list's drag handle inside it.
-    private func orderingRow(_ item: WorkoutExercise) -> some View {
-        EditorOrderingRow(item: item)
-            .listRowInsets(EdgeInsets(
-                top: 6,
-                leading: Theme.Metrics.screenPadding + 12,
-                bottom: 6,
-                trailing: Theme.Metrics.screenPadding + 4
-            ))
-            .listRowSeparator(.hidden)
-            .listRowBackground(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .fill(Theme.Colors.cardBackground)
-                    .padding(.horizontal, Theme.Metrics.screenPadding)
-                    .padding(.vertical, 6)
-            )
+    /// An exercise while reordering: a card of its own, with ↑ ↓ inside it.
+    private func orderingRow(_ item: WorkoutExercise, at index: Int, count: Int) -> some View {
+        EditorOrderingRow(
+            item: item,
+            canMoveUp: index > 0,
+            canMoveDown: index < count - 1,
+            onMoveUp: { moveExercise(at: index, by: -1) },
+            onMoveDown: { moveExercise(at: index, by: 1) }
+        )
+        .listRowInsets(EdgeInsets(
+            top: 6,
+            leading: Theme.Metrics.screenPadding + 12,
+            bottom: 6,
+            trailing: Theme.Metrics.screenPadding + 8
+        ))
+        .listRowSeparator(.hidden)
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .fill(Theme.Colors.cardBackground)
+                .padding(.horizontal, Theme.Metrics.screenPadding)
+                .padding(.vertical, 6)
+        )
     }
 
     /// "Adicionar exercícios", dashed, and "▶ Iniciar <nome>".
@@ -495,6 +501,15 @@ struct WorkoutEditorView: View {
             try service.removeExercise(item)
         } catch {
             errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// ↑ or ↓: the exercise at `index` one place up (`offset` −1) or down (+1).
+    private func moveExercise(at index: Int, by offset: Int) {
+        // As in a drag: the exercise goes before the one at the destination, counted before it moves.
+        let destination = offset < 0 ? index - 1 : index + 2
+        withAnimation {
+            moveExercises(from: IndexSet(integer: index), to: destination)
         }
     }
 

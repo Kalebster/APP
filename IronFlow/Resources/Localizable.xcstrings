@@ -236,9 +236,6 @@
     "A série de trabalho. Conta nos kg levantados." : {
 
     },
-    "A série já foi feita. Ela será apagada deste treino; o treino planejado não muda." : {
-
-    },
     "A série não marcada não será salva." : {
 
     },
@@ -326,7 +323,10 @@
     "As repetições podem ser no máximo %lld." : {
 
     },
-    "As séries já feitas dele serão apagadas deste treino; o treino planejado não muda." : {
+    "As séries deste treino não serão salvas. Não dá para desfazer." : {
+
+    },
+    "As séries já feitas dele saem deste treino. O treino planejado não muda." : {
 
     },
     "As séries planejadas dele também saem deste treino. O histórico não muda." : {
@@ -449,13 +449,13 @@
     "Descanso hoje" : {
 
     },
-    "Descartar" : {
-
-    },
-    "Descartar este treino?" : {
-
-    },
     "Descartar treino" : {
+
+    },
+    "Descartar treino?" : {
+
+    },
+    "Descer %@" : {
 
     },
     "Desmarcar" : {
@@ -504,6 +504,9 @@
 
     },
     "Editar treino" : {
+
+    },
+    "Ela já foi feita. A carga e as repetições dela saem deste treino." : {
 
     },
     "Elástico" : {
@@ -555,9 +558,6 @@
 
     },
     "Este treino já foi encerrado." : {
-
-    },
-    "Excluir" : {
 
     },
     "Excluir treino" : {
@@ -1068,22 +1068,16 @@
     "Remover %@?" : {
 
     },
+    "Remover a série %lld?" : {
+
+    },
     "Remover do treino" : {
-
-    },
-    "Remover esta série?" : {
-
-    },
-    "Remover este exercício?" : {
 
     },
     "Remover exercício" : {
 
     },
     "Remover série" : {
-
-    },
-    "Renomear" : {
 
     },
     "Renomear treino" : {
@@ -1180,6 +1174,9 @@
 
     },
     "Sua semana" : {
+
+    },
+    "Subir %@" : {
 
     },
     "Sábado" : {
@@ -1299,9 +1296,6 @@
     "Tríceps" : {
 
     },
-    "Tudo o que foi registrado neste treino será apagado. O treino planejado não muda." : {
-
-    },
     "Um exercício deste treino está sem séries." : {
 
     },
@@ -1336,6 +1330,9 @@
 
     },
     "Você já tem um treino em andamento." : {
+
+    },
+    "Voltar ao treino" : {
 
     },
     "Válida" : {

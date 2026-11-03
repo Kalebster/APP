@@ -139,9 +139,8 @@ final class SessionUITests: IronFlowUITestCase {
         app.buttons["session.finish"].tap()
         XCTAssertTrue(discard.waitForExistence(timeout: 10), "Nenhuma série marcada not shown again")
         discard.tap()
-        let confirm = app.buttons["Descartar"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Discard confirmation not shown")
-        XCTAssertTrue(app.staticTexts["Descartar este treino?"].exists, "Not the discard question")
+        let confirm = confirmationButton("Descartar treino", title: "Descartar treino?", in: app)
+        XCTAssertTrue(app.staticTexts["As séries deste treino não serão salvas. Não dá para desfazer."].exists, "Not the discard message")
         confirm.tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
         XCTAssertTrue(waitForToast("Treino descartado", in: app), "No notice after discarding")

@@ -42,8 +42,12 @@ struct SessionView: View {
     @State private var isConfirmingDiscard = false
     /// A set already done that is about to be removed, waiting for the confirmation.
     @State private var setPendingRemoval: SetLog?
+    /// The number of the set asked about, kept while the confirmation goes away.
+    @State private var setRemovalNumber = 1
     /// An exercise with sets done that is about to be removed, waiting for the confirmation.
     @State private var exercisePendingRemoval: SessionExercise?
+    /// The name of the exercise asked about, kept while the confirmation goes away.
+    @State private var exerciseRemovalName = ""
     /// The set whose type sheet is open.
     @State private var typeSheet: TypeSheetTarget?
     /// The set "Remover série" of the type sheet asked to remove, removed once the sheet has closed (a
@@ -180,13 +184,17 @@ struct SessionView: View {
                     onDiscard: { afterFinishSheet = .discard }
                 )
             }
-            .confirmationDialog("Descartar este treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
-                Button("Descartar", role: .destructive, action: discard)
-                Button("Cancelar", role: .cancel) {}
+            .confirmationDialog("Descartar treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
+                Button("Descartar treino", role: .destructive, action: discard)
+                Button("Voltar ao treino", role: .cancel) {}
             } message: {
-                Text("Tudo o que foi registrado neste treino será apagado. O treino planejado não muda.")
+                Text("As séries deste treino não serão salvas. Não dá para desfazer.")
             }
-            .confirmationDialog("Remover esta série?", isPresented: isConfirmingSetRemoval, titleVisibility: .visible) {
+            .confirmationDialog(
+                Text("Remover a série \(setRemovalNumber)?"),
+                isPresented: isConfirmingSetRemoval,
+                titleVisibility: .visible
+            ) {
                 Button("Remover série", role: .destructive) {
                     if let log = setPendingRemoval {
                         setPendingRemoval = nil
@@ -195,9 +203,13 @@ struct SessionView: View {
                 }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                Text("A série já foi feita. Ela será apagada deste treino; o treino planejado não muda.")
+                Text("Ela já foi feita. A carga e as repetições dela saem deste treino.")
             }
-            .confirmationDialog("Remover este exercício?", isPresented: isConfirmingExerciseRemoval, titleVisibility: .visible) {
+            .confirmationDialog(
+                Text("Remover \(exerciseRemovalName)?"),
+                isPresented: isConfirmingExerciseRemoval,
+                titleVisibility: .visible
+            ) {
                 Button("Remover exercício", role: .destructive) {
                     if let performed = exercisePendingRemoval {
                         exercisePendingRemoval = nil
@@ -206,7 +218,7 @@ struct SessionView: View {
                 }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                Text("As séries já feitas dele serão apagadas deste treino; o treino planejado não muda.")
+                Text("As séries já feitas dele saem deste treino. O treino planejado não muda.")
             }
             .sheet(item: $typeSheet, onDismiss: removeAfterTypeSheet) { target in
                 SetTypeSheet(
@@ -461,6 +473,7 @@ struct SessionView: View {
     /// Removes a set; one already done is removed only after a confirmation.
     private func requestRemoval(of log: SetLog) {
         if log.isCompleted {
+            setRemovalNumber = (log.sessionExercise?.orderedSetLogs.firstIndex(where: { $0.id == log.id }) ?? 0) + 1
             setPendingRemoval = log
         } else {
             remove(log)
@@ -483,6 +496,7 @@ struct SessionView: View {
     /// Removes an exercise; one with sets done is removed only after a confirmation.
     private func requestRemoval(of performed: SessionExercise) {
         if performed.setLogs.contains(where: \.isCompleted) {
+            exerciseRemovalName = performed.exerciseNameSnapshot
             exercisePendingRemoval = performed
         } else {
             remove(performed)

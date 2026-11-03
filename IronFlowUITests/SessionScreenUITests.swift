@@ -260,15 +260,15 @@ final class SessionScreenUITests: IronFlowUITestCase {
         firstRow.swipeLeft()
         XCTAssertTrue(remove.waitForExistence(timeout: 10), "No Remover after swiping a set done")
         remove.tap()
-        let confirmSet = app.buttons["Remover série"]
-        XCTAssertTrue(confirmSet.waitForExistence(timeout: 10), "No confirmation for a set done")
+        let confirmSet = confirmationButton("Remover série", title: "Remover a série 1?", in: app)
+        XCTAssertTrue(app.staticTexts["Ela já foi feita. A carga e as repetições dela saem deste treino."].exists, "Set removal message")
         confirmSet.tap()
         XCTAssertTrue(waitForCount(checks(in: app), 4), "Set done not removed")
 
         // An exercise without sets done goes at once.
         app.buttons["Opções de Barra Fixa Pronada"].tap()
-        let removeExercise = app.buttons["Remover exercício"]
-        XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover exercício in the ⋯ menu")
+        let removeExercise = app.buttons["Remover do treino"]
+        XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover do treino in the ⋯ menu")
         removeExercise.tap()
         // The notice first: it stays only 2,5 s.
         XCTAssertTrue(waitForToast("Exercício removido do treino", in: app), "No notice after removing an exercise")
@@ -278,10 +278,11 @@ final class SessionScreenUITests: IronFlowUITestCase {
         // One with a set done asks first.
         checks(in: app).element(boundBy: 0).tap()
         app.buttons["Opções de Rosca Direta com Barra"].tap()
-        XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover exercício in the ⋯ menu")
+        XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover do treino in the ⋯ menu")
         removeExercise.tap()
-        XCTAssertTrue(app.staticTexts["Remover este exercício?"].waitForExistence(timeout: 10), "No confirmation for an exercise with sets done")
-        app.buttons["Remover exercício"].tap()
+        let confirmExercise = confirmationButton("Remover exercício", title: "Remover Rosca Direta com Barra?", in: app)
+        XCTAssertTrue(app.staticTexts["As séries já feitas dele saem deste treino. O treino planejado não muda."].exists, "Exercise removal message")
+        confirmExercise.tap()
         XCTAssertTrue(element("session.empty", in: app).waitForExistence(timeout: 10), "Exercise with sets done not removed")
         XCTAssertEqual(element("session.progress", in: app).label, "0 de 0 séries")
     }

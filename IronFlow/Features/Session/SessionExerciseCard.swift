@@ -112,7 +112,7 @@ struct SessionExerciseCard: View {
             }
 
             Menu {
-                Button("Remover exercício", systemImage: "trash", role: .destructive, action: onRemoveExercise)
+                Button("Remover do treino", systemImage: "trash", role: .destructive, action: onRemoveExercise)
             } label: {
                 roundIcon(.more, size: 16, color: Theme.Colors.secondaryText)
             }

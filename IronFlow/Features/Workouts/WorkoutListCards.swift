@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A workout in the "Meus treinos" grid: name, what it holds and its muscle groups, a start button (▶)
-/// and an options menu (⋮) with "Editar treino", "Renomear" and "Excluir". The workout planned for today is highlighted, with "HOJE". The card opens
+/// and an options menu (⋮) with "Editar treino", "Renomear treino" and "Excluir treino". The workout planned for today is highlighted, with "HOJE". The card opens
 /// the workout's editor; the other two controls sit over it, not inside its button, so each one is its
 /// own accessibility element. The card fills the height it is given, so the cards of a row match.
 struct WorkoutGridCard: View {
@@ -14,9 +14,9 @@ struct WorkoutGridCard: View {
     let onEdit: @MainActor () -> Void
     let onStart: @MainActor () -> Void
     let onRename: @MainActor () -> Void
-    /// "Excluir" in the menu: asks for the confirmation.
+    /// "Excluir treino" in the menu: asks for the confirmation.
     let onDelete: @MainActor () -> Void
-    /// "Excluir" in the confirmation: deletes the workout.
+    /// "Excluir treino" in the confirmation: deletes the workout.
     let onConfirmDelete: @MainActor () -> Void
 
     /// The card's minimum height, 128 points at the default text size, without its padding.
@@ -97,8 +97,8 @@ struct WorkoutGridCard: View {
     private var optionsMenu: some View {
         Menu {
             Button("Editar treino", systemImage: "slider.horizontal.3", action: onEdit)
-            Button("Renomear", systemImage: "pencil", action: onRename)
-            Button("Excluir", systemImage: "trash", role: .destructive, action: onDelete)
+            Button("Renomear treino", systemImage: "pencil", action: onRename)
+            Button("Excluir treino", systemImage: "trash", role: .destructive, action: onDelete)
         } label: {
             AppIcon(.moreVertical, size: 15)
                 // A fixed gray, so the accent color of the menu does not tint the dots.
@@ -119,7 +119,7 @@ struct WorkoutGridCard: View {
             ),
             titleVisibility: .visible
         ) {
-            Button("Excluir", role: .destructive, action: onConfirmDelete)
+            Button("Excluir treino", role: .destructive, action: onConfirmDelete)
             Button("Cancelar", role: .cancel) {}
         } message: {
             Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")

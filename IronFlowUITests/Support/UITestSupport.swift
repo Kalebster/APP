@@ -155,6 +155,23 @@ extension XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
+    /// The button `label` of the confirmation whose title starts with `title`, once that confirmation is
+    /// up and the menu item or sheet button that opened it, which often has the same name, is gone.
+    @MainActor
+    func confirmationButton(
+        _ label: String,
+        title: String,
+        in app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> XCUIElement {
+        XCTAssertTrue(element(labelStartingWith: title, in: app).waitForExistence(timeout: 10), "Confirmation “\(title)” not shown", file: file, line: line)
+        let buttons = app.buttons.matching(NSPredicate(format: "label == %@", label))
+        let single = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 1"), object: buttons)
+        XCTAssertEqual(XCTWaiter().wait(for: [single], timeout: 10), .completed, "Not one “\(label)” button: \(buttons.count)", file: file, line: line)
+        return buttons.firstMatch
+    }
+
     /// Closes a confirmation dialog without confirming it. Depending on the system layout the dialog has a
     /// "Cancelar" button or is dismissed by tapping outside it.
     @MainActor
@@ -252,9 +269,7 @@ extension XCTestCase {
         let delete = app.buttons["Excluir treino"]
         XCTAssertTrue(delete.waitForExistence(timeout: 10), "Delete option not found")
         delete.tap()
-        let confirm = app.buttons["Excluir"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Delete confirmation not shown")
-        confirm.tap()
+        confirmationButton("Excluir treino", title: "Excluir “", in: app).tap()
     }
 
     /// Chooses one exercise in the exercise picker on screen (the one of a workout or of a session),
@@ -324,9 +339,7 @@ extension XCTestCase {
         let option = app.buttons["Descartar treino"]
         XCTAssertTrue(option.waitForExistence(timeout: 10), "No Descartar treino in the ⋯ menu")
         option.tap()
-        let discard = app.buttons["Descartar"]
-        XCTAssertTrue(discard.waitForExistence(timeout: 10), "Discard confirmation not shown")
-        discard.tap()
+        confirmationButton("Descartar treino", title: "Descartar treino?", in: app).tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
     }
 

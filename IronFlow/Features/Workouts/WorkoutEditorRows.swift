@@ -322,32 +322,98 @@ struct EditorAddSetRow: View {
     }
 }
 
-/// An exercise while the exercises are reordered: its icon, its name and how many sets it has. The
-/// list draws the drag handle.
+/// An exercise while the exercises are reordered: its icon, its name, how many sets it has, and ↑ ↓,
+/// as in the model. The ↑ of the first and the ↓ of the last are unavailable. The list also moves the
+/// row with a touch and hold anywhere on it, without the iOS drag handle.
 struct EditorOrderingRow: View {
     let item: WorkoutExercise
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let onMoveUp: @MainActor () -> Void
+    let onMoveDown: @MainActor () -> Void
 
     var body: some View {
         let exercise = item.exercise
-        HStack(spacing: 12) {
-            EditorExerciseTile(
-                exercise: exercise,
-                equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment
-            )
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: EditorExerciseInfo.name(of: exercise))
-                    .scaledFont(14, weight: .heavy)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(verbatim: EditorExerciseInfo.setCountText(item.plannedSets.count))
-                    .scaledFont(12)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+        let name = EditorExerciseInfo.name(of: exercise)
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                EditorExerciseTile(
+                    exercise: exercise,
+                    equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: name)
+                        .scaledFont(14, weight: .heavy)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: EditorExerciseInfo.setCountText(item.plannedSets.count))
+                        .scaledFont(11)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: "\(name), \(EditorExerciseInfo.setCountText(item.plannedSets.count))"))
+            .accessibilityIdentifier("workout.ordering.exercise")
+
+            EditorOrderingButton(
+                icon: .menuArrowUp,
+                label: Text("Subir \(name)"),
+                identifier: "workout.ordering.up",
+                isEnabled: canMoveUp,
+                action: onMoveUp
+            )
+            EditorOrderingButton(
+                icon: .menuArrowDown,
+                label: Text("Descer \(name)"),
+                identifier: "workout.ordering.down",
+                isEnabled: canMoveDown,
+                action: onMoveDown
+            )
         }
-        .padding(.vertical, 12)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(EditorExerciseInfo.name(of: exercise)), \(EditorExerciseInfo.setCountText(item.plannedSets.count))"))
-        .accessibilityIdentifier("workout.ordering.exercise")
+        .padding(.vertical, 8)
+    }
+}
+
+/// ↑ or ↓ of an exercise being reordered: a 36-point square, its 18-point arrow, answering on 44 points.
+/// It grows with the text up to the largest standard size, like the exercise's tile.
+private struct EditorOrderingButton: View {
+    let icon: ImageResource
+    let label: Text
+    let identifier: String
+    let isEnabled: Bool
+    let action: @MainActor () -> Void
+
+    var body: some View {
+        Square(icon: icon, label: label, identifier: identifier, isEnabled: isEnabled, action: action)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    private struct Square: View {
+        let icon: ImageResource
+        let label: Text
+        let identifier: String
+        let isEnabled: Bool
+        let action: @MainActor () -> Void
+
+        @ScaledMetric(relativeTo: .body) private var side: CGFloat = 36
+
+        var body: some View {
+            let touchExtra = max(0, 44 - side) / 2
+            Button(action: action) {
+                AppIcon(icon, size: 18, relativeTo: .body)
+                    .foregroundStyle(Theme.Colors.mediumText)
+                    .frame(width: side, height: side)
+                    .background(Theme.Colors.unplannedDayBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .opacity(isEnabled ? 1 : 0.35)
+                    .padding(touchExtra)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!isEnabled)
+            .padding(-touchExtra)
+            .accessibilityLabel(label)
+            .accessibilityIdentifier(identifier)
+        }
     }
 }
 
