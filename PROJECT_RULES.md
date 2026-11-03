@@ -408,3 +408,26 @@ A task is complete only when:
 - no known critical issue remains.
 
 Never report a task as complete simply because the code was written or compiled.
+
+---
+
+## 18. Decisões pequenas sem pedir aprovação
+
+Depois que o plano da etapa foi aprovado, o Claude Code pode decidir sozinho, sem parar para perguntar:
+
+- corrigir testes que quebraram por causa das mudanças da própria etapa;
+- corrigir bugs que o /code-review achar no código do próprio PR, desde que a correção não mude o design nem a funcionalidade aprovados;
+- organizar o código dos arquivos que a etapa já altera, sem mudar o comportamento do app;
+- mudar números dos screenshots, comentários e nomes internos;
+- rodar o CI de novo quando o GitHub cancelar por falta de máquina.
+
+Continua obrigatório parar e pedir aprovação para:
+
+- qualquer mudança de design (visual, medidas, cores, textos, telas) ou de funcionalidade (o que o app faz) que não esteja exatamente no protótipo aprovado e no prompt da etapa. Se o protótipo e o código divergirem, pergunte;
+- banco de dados, migrações ou apagar dados;
+- dependências novas, custos, permissões do iPhone e segurança;
+- mudanças no CI e nas configurações do repositório;
+- aumentar o escopo da etapa;
+- merge, sempre.
+
+Todo relatório final tem a parte "O que decidi sozinho", com cada uma dessas decisões.
