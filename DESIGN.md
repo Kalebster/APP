@@ -174,6 +174,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `cardStyle()` / `cardStyle(padding:cornerRadius:)` | Cartão com borda de 1 pt | Fundo `cardBackground`, borda `cardBorder` |
 | `highlightStyle(padding:cornerRadius:)` | Destaque azul-escuro | Só para o treino de hoje, o treino em andamento e a meta da semana |
 | `SectionTitle` / `SectionHeader` | Rótulo de seção e rótulo com ação à direita | A ação tem 44 pt de toque |
+| `AppIcon` | Ícone do protótipo (catálogo `Icons`) | No tamanho do protótipo, crescendo com o texto; a cor vem de `foregroundStyle`; decorativo: escondido do VoiceOver |
 | `IconTile` | Ícone do protótipo (catálogo `Icons`) num quadradinho | Decorativo: escondido do VoiceOver |
 | `TextBackButton` | "‹ Treinos", "‹ Início" | Seta e texto em `lightAccent`, 44 pt de toque |
 | `CapsuleBadge` | "Programado", "HOJE" | Fundo `highlightBadge`, texto `highlightText` |

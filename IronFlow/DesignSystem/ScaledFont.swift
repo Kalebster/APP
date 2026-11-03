@@ -10,7 +10,7 @@ private struct ScaledFont: ViewModifier {
     @Environment(\.legibilityWeight) private var legibilityWeight
 
     init(size: CGFloat, weight: Font.Weight) {
-        _size = ScaledMetric(wrappedValue: size, relativeTo: Self.textStyle(for: size))
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .closest(toPoints: size))
         self.weight = weight
     }
 
@@ -20,10 +20,13 @@ private struct ScaledFont: ViewModifier {
         let name = InterFont.name(for: weight, boldText: legibilityWeight == .bold)
         return content.font(.custom(name, fixedSize: size))
     }
+}
 
-    /// The text style whose default size is closest, so the font grows at the same rate as it.
-    private static func textStyle(for size: CGFloat) -> Font.TextStyle {
-        switch size {
+extension Font.TextStyle {
+    /// The text style whose default size is closest to `points`, so what is sized in points of the
+    /// default text size (a font, an icon) grows at the same rate as that text.
+    static func closest(toPoints points: CGFloat) -> Font.TextStyle {
+        switch points {
         case ..<11.5: .caption2
         case ..<12.5: .caption
         case ..<14: .footnote
