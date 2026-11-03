@@ -92,7 +92,7 @@ struct SessionExerciseCard: View {
                     .scaledFont(14, weight: .heavy)
                 Text(verbatim: subtitle)
                     .scaledFont(10)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
@@ -141,7 +141,7 @@ struct SessionExerciseCard: View {
             } icon: {
                 AppIcon(.plus, size: 12)
             }
-            .labelStyle(TightLabelStyle())
+            .labelStyle(TightLabelStyle(spacing: 6))
             .scaledFont(12, weight: .semibold)
             .foregroundStyle(Theme.Colors.lightAccent)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -174,10 +174,10 @@ struct SessionExerciseCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(performed.exerciseNameSnapshot)
                         .scaledFont(13, weight: .bold)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Theme.Colors.brightText)
                     Text(verbatim: detail)
                         .scaledFont(10)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text(verbatim: "\(done)/\(sets.count)")

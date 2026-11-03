@@ -43,9 +43,9 @@ struct ExerciseListView: View {
                 }
                 cards(shown)
                     .padding(.horizontal, Theme.Metrics.screenPadding)
-                    .padding(.top, isFiltering ? 8 : 14)
+                    .padding(.top, 14)
             }
-            .padding(.top, 21)
+            .padding(.top, 16)
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
         .scrollDismissesKeyboard(.immediately)

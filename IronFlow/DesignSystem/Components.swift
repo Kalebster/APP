@@ -39,10 +39,12 @@ struct IconTile: View {
     }
 }
 
-/// An icon and its title close together, 4 points apart: the session clock, "+ Adicionar série".
+/// An icon and its title close together: 4 points apart for the session clock, 6 for "+ Adicionar série".
 struct TightLabelStyle: LabelStyle {
+    var spacing: CGFloat = 4
+
     func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: spacing) {
             configuration.icon
             configuration.title
         }
@@ -79,15 +81,18 @@ struct CapsuleBadge: View {
     let padding: EdgeInsets
     /// In points of the default text size: 10, or 9 on the rows of the sheets.
     var size: CGFloat = 10
+    /// Light blue on blue; "NO TREINO" of the exercise picker is gray on gray.
+    var foreground = Theme.Colors.highlightText
+    var background = Theme.Colors.highlightBadge
 
     var body: some View {
         Text(verbatim: text)
             .scaledFont(size, weight: weight)
             .tracking(tracking)
-            .foregroundStyle(Theme.Colors.highlightText)
+            .foregroundStyle(foreground)
             .lineLimit(1)
             .padding(padding)
-            .background(Theme.Colors.highlightBadge, in: Capsule())
+            .background(background, in: Capsule())
     }
 }
 

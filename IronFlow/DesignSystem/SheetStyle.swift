@@ -24,7 +24,7 @@ struct SheetHeader: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             title
                 .scaledFont(17, weight: .heavy)
                 .foregroundStyle(Theme.Colors.brightText)
@@ -52,6 +52,8 @@ struct SheetSectionTitle: View {
     var body: some View {
         SectionTitle(title, size: 10, tracking: 1.8)
             .foregroundStyle(Theme.Colors.secondaryText)
+            // 2 points in from the blocks below it, as in the model.
+            .padding(.horizontal, 2)
     }
 }
 

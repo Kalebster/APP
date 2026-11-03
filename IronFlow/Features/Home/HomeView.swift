@@ -89,7 +89,7 @@ struct HomeView: View {
                     if metrics.isEmpty {
                         Text("Escolha até \(HomeSummary.maxVisibleMetrics) indicadores em Personalizar.")
                             .scaledFont(12)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.secondaryText)
                     } else {
                         // A new week is a new section, so its queries are built again for the new limits.
                         SummaryCards(
@@ -169,7 +169,7 @@ struct HomeView: View {
 
     /// The app's mark and name, and today's date.
     private func header(calendar: Calendar) -> some View {
-        let brand = HStack(spacing: 12) {
+        let brand = HStack(spacing: 10) {
             AppIcon(.logo, size: 19, relativeTo: .headline)
                 .foregroundStyle(.white)
                 .frame(width: logoSide, height: logoSide)
@@ -185,7 +185,7 @@ struct HomeView: View {
 
         let date = Text(verbatim: SessionFormatting.weekdayDateText(now, now: now, calendar: calendar))
             .scaledFont(12)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.secondaryText)
             .accessibilityLabel(Text(verbatim: SessionFormatting.longDateText(now, calendar: calendar)))
             .accessibilityIdentifier("home.date")
 
@@ -342,7 +342,7 @@ private struct TodayWorkoutCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(verbatim: content.title)
                         .scaledFont(26, weight: .heavy)
-                        .foregroundStyle(Theme.Colors.highlightText)
+                        .foregroundStyle(Theme.Colors.brightText)
                     Text(verbatim: content.subtitle)
                         .scaledFont(13)
                         .foregroundStyle(Theme.Colors.highlightSecondaryText)
@@ -367,6 +367,7 @@ private struct TodayWorkoutCard: View {
 
             if let main = state.mainAction {
                 actionButton(main, isMain: true)
+                    .padding(.top, 2)
             }
             secondaryButtons
         }
@@ -418,7 +419,7 @@ private struct TodayWorkoutCard: View {
         let button = Button {
             onAction(action)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: 9) {
                 if let icon = label.icon {
                     AppIcon(icon, size: 14)
                 }

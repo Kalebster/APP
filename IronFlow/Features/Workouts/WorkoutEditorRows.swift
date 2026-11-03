@@ -28,7 +28,7 @@ struct EditorExerciseHeader: View {
         let entry = EditorExerciseInfo.libraryEntry(of: exercise)
         HStack(spacing: 10) {
             EditorExerciseTile(exercise: exercise, equipment: entry?.equipment)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: EditorExerciseInfo.name(of: exercise))
                     .scaledFont(14, weight: .heavy)
                     .fixedSize(horizontal: false, vertical: true)
@@ -310,7 +310,7 @@ struct EditorAddSetRow: View {
             } icon: {
                 AppIcon(.plus, size: 12)
             }
-            .labelStyle(TightLabelStyle())
+            .labelStyle(TightLabelStyle(spacing: 6))
             .scaledFont(12, weight: .semibold)
             .foregroundStyle(Theme.Colors.lightAccent)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -433,22 +433,24 @@ struct EditorEmptyCard: View {
                     AppIcon(.plus, size: 12)
                     Text("Adicionar exercícios")
                 }
-                .scaledFont(14, weight: .bold)
+                .scaledFont(13, weight: .bold)
                 .foregroundStyle(.white)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 18)
                 .frame(minHeight: 40)
                 .background(Color.accentColor, in: Capsule())
                 .padding(.vertical, 2)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.top, 10)
+            // 8 below the text, as in the model, with the 2 points of the 44-point touch area.
+            .padding(.top, 6)
             .accessibilityIdentifier("workout.addExercises")
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .padding(.horizontal, 14)
+        .padding(.top, 22)
+        .padding(.bottom, 18)
+        .padding(.horizontal, 16)
         .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("workout.empty")

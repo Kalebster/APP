@@ -28,14 +28,14 @@ struct ActiveSessionBar: View {
     var body: some View {
         TimelineView(.periodic(from: status.startedAt, by: 1)) { timeline in
             Button(action: onOpen) {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     PulsingDot(isAnimated: !reduceMotion)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(verbatim: status.name)
-                            .scaledFont(14, weight: .bold)
-                            .foregroundStyle(Theme.Colors.highlightText)
+                            .scaledFont(14, weight: .heavy)
+                            .foregroundStyle(Theme.Colors.brightText)
                         Text(verbatim: Self.detailText(status, at: timeline.date))
-                            .scaledFont(12)
+                            .scaledFont(11)
                             .monospacedDigit()
                             .foregroundStyle(Theme.Colors.highlightSecondaryText)
                     }
@@ -45,13 +45,13 @@ struct ActiveSessionBar: View {
                         Text("Abrir")
                         AppIcon(.chevronUp, size: 12)
                     }
-                    .scaledFont(13, weight: .semibold)
+                    .scaledFont(12, weight: .bold)
                     .foregroundStyle(Theme.Colors.highlightText)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 11)
                     .frame(minHeight: openHeight)
                     .background(Theme.Colors.highlightBadge, in: Capsule())
                 }
-                .highlightStyle(padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 10), cornerRadius: 15)
+                .highlightStyle(padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 10), cornerRadius: 18)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

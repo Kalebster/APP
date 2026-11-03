@@ -164,10 +164,11 @@ struct WorkoutEditorView: View {
             EditorEmptyCard {
                 isPickingExercises = true
             }
-            .editorRow(top: 2, bottom: 0)
+            .editorRow(top: 0, bottom: 0)
         } else {
+            // 14 below the title and above the cards, the gap between the blocks of the model's editor.
             SetTypeLegend()
-                .editorRow(top: 12, bottom: 14)
+                .editorRow(top: 0, bottom: 14)
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 exerciseCard(item, sets: setsByItem[index], canReorder: items.count > 1)
             }
@@ -188,9 +189,9 @@ struct WorkoutEditorView: View {
                     }
                 } label: {
                     Text("Concluir")
-                        .scaledFont(15, weight: .bold)
+                        .scaledFont(13, weight: .bold)
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 14)
                         .frame(minHeight: 32)
                         .background(Color.accentColor, in: Capsule())
                         .padding(.vertical, 6)
@@ -237,6 +238,8 @@ struct WorkoutEditorView: View {
             }
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
+        // The model's 8 above its 36-point top row, with the 44-point controls centered on it.
+        .padding(.top, 4)
         .background(Theme.Colors.screenBackground)
     }
 
@@ -257,7 +260,8 @@ struct WorkoutEditorView: View {
                 .accessibilityIdentifier("workout.summary")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .editorRow(top: 6, bottom: 14)
+        // 8 below the top row and 14 above the next block, as in the model.
+        .editorRow(top: 4, bottom: 14)
     }
 
     /// The rows of one exercise, drawn as one card: its header, the set columns, the sets and
@@ -322,7 +326,7 @@ struct WorkoutEditorView: View {
     /// "Adicionar exercícios", dashed, and "▶ Iniciar <nome>".
     private var bottomButtons: some View {
         let dashed = RoundedRectangle(cornerRadius: 13, style: .continuous)
-        return VStack(spacing: 10) {
+        return VStack(spacing: 14) {
             Button {
                 focusedField = nil
                 isPickingExercises = true
@@ -334,7 +338,7 @@ struct WorkoutEditorView: View {
                 .scaledFont(13, weight: .bold)
                 .foregroundStyle(Theme.Colors.lightAccent)
                 .frame(maxWidth: .infinity, minHeight: addExercisesHeight)
-                .overlay(dashed.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+                .overlay(dashed.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
                 .contentShape(dashed)
             }
             .buttonStyle(.plain)

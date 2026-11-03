@@ -57,11 +57,11 @@ final class AppearanceUITests: IronFlowUITestCase {
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Add workout button not found")
         add.tap()
 
-        // The sheet: a point of its navigation bar, between "Cancelar" and the title.
-        let bar = app.navigationBars["Novo treino"]
-        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Name sheet not shown")
+        // The sheet: a point of its background, right of its title.
+        let title = app.staticTexts["Novo treino"]
+        XCTAssertTrue(title.waitForExistence(timeout: 10), "Name sheet not shown")
         let sheet = try XCTUnwrap(
-            brightness(of: app, atX: bar.frame.minX + bar.frame.width * 0.3, y: bar.frame.midY),
+            brightness(of: app, atX: title.frame.maxX + 30, y: title.frame.midY),
             "Could not measure the sheet"
         )
         recordMeasurement("Medição: brilho da folha", String(format: "%.3f (limite %.2f)", sheet, darkBrightnessLimit))

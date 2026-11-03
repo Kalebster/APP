@@ -272,9 +272,6 @@
     "Adicionar série" : {
 
     },
-    "Adicione exercícios para começar." : {
-
-    },
     "Adicione os exercícios deste treino." : {
 
     },
@@ -558,6 +555,9 @@
 
     },
     "Este treino já foi encerrado." : {
+
+    },
+    "Ex.: Costas e Bíceps" : {
 
     },
     "Excluir treino" : {
@@ -1231,6 +1231,9 @@
 
     },
     "Todos" : {
+
+    },
+    "Toque em Adicionar exercício para escolher na lista." : {
 
     },
     "Treinando" : {

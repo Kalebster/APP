@@ -14,19 +14,21 @@ struct SetTypeSheet: View {
     let onRemove: @MainActor () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @ScaledMetric(relativeTo: .body) private var removeHeight: CGFloat = 50
+    @ScaledMetric(relativeTo: .subheadline) private var removeHeight: CGFloat = 46
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            // 8 between the blocks, as in the model's sheets.
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Tipo da série \(number)")
-                    .scaledFont(20, weight: .heavy)
+                    .scaledFont(17, weight: .heavy)
+                    .foregroundStyle(Theme.Colors.brightText)
                     .accessibilityAddTraits(.isHeader)
                 types
                 removeButton
                 if let removalUnavailableReason {
                     Text(verbatim: removalUnavailableReason)
-                        .scaledFont(12)
+                        .scaledFont(13)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
@@ -34,7 +36,7 @@ struct SetTypeSheet: View {
                 }
             }
             .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
+            .padding(.top, SheetStyle.topPadding)
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
         .scrollBounceBehavior(.basedOnSize)
@@ -55,8 +57,8 @@ struct SetTypeSheet: View {
                 typeRow(type)
             }
         }
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func typeRow(_ type: SetType) -> some View {
@@ -67,9 +69,9 @@ struct SetTypeSheet: View {
                 onChoose(type)
             }
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 SetNumberSquare(number: number, type: type, side: 28, fontSize: 13)
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(type.displayName)
                         .scaledFont(15, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
@@ -79,13 +81,14 @@ struct SetTypeSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if isSelected {
-                    AppIcon(.check, size: 13)
-                        .foregroundStyle(Theme.Colors.lightAccent)
-                }
+                AppIcon(.check, size: 13)
+                    .foregroundStyle(Theme.Colors.lightAccent)
+                    .opacity(isSelected ? 1 : 0)
+                    .frame(width: 20)
             }
-            .padding(.vertical, 14)
+            .padding(.vertical, 11)
             .padding(.horizontal, 14)
+            .frame(minHeight: 48)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -18,10 +18,10 @@ struct SessionHeader: View {
     @ScaledMetric(relativeTo: .body) private var buttonSide: CGFloat = 32
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             // Side by side when they fit; with the largest text sizes the name goes below the buttons.
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 10) {
+                HStack(alignment: .center, spacing: 8) {
                     minimizeButton
                     titles
                     Spacer(minLength: 4)
@@ -29,7 +29,7 @@ struct SessionHeader: View {
                     finishButton
                 }
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         minimizeButton
                         Spacer(minLength: 4)
                         moreMenu
@@ -41,7 +41,7 @@ struct SessionHeader: View {
             progressView
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
-        .padding(.top, 8)
+        .padding(.top, 10)
         .padding(.bottom, 14)
         .background(Theme.Colors.screenBackground, ignoresSafeAreaEdges: .top)
     }
@@ -63,12 +63,12 @@ struct SessionHeader: View {
                     .labelStyle(TightLabelStyle())
                     .scaledFont(11, weight: .bold)
                     .monospacedDigit()
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.Colors.brightText)
                 }
                 .accessibilityIdentifier("session.elapsed")
                 Text(verbatim: SessionFormatting.volumeText(volumeKg))
                     .scaledFont(10)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
                     .accessibilityIdentifier("session.volume")
             }
         }
@@ -95,7 +95,7 @@ struct SessionHeader: View {
                 }
             }
             .scaledFont(10)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.secondaryText)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [progress.setsText, progress.exerciseText].compactMap { $0 }.joined(separator: ", ")))

@@ -63,8 +63,8 @@ struct WorkoutPickerSheet: View {
                 .accessibilityIdentifier("workoutPicker.workout")
             }
         }
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func choose(_ workout: Workout) {
@@ -97,7 +97,7 @@ private struct WorkoutPickerRow: View {
                             text: String(localized: "HOJE"),
                             weight: .bold,
                             tracking: 0.9,
-                            padding: EdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6),
+                            padding: EdgeInsets(top: 2, leading: 7, bottom: 2, trailing: 7),
                             size: 9
                         )
                     }
@@ -117,7 +117,8 @@ private struct WorkoutPickerRow: View {
             }
         }
         .padding(.vertical, 12)
-        .padding(.horizontal, 14)
+        .padding(.leading, 14)
+        .padding(.trailing, 12)
         .opacity(isEmpty ? 0.45 : 1)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)

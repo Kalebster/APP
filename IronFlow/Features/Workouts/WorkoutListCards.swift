@@ -28,22 +28,27 @@ struct WorkoutGridCard: View {
 
         ZStack {
             Button(action: onOpen) {
-                let content = VStack(alignment: .leading, spacing: 6) {
-                    if isToday {
-                        CapsuleBadge(
-                            text: String(localized: "HOJE"),
-                            weight: .bold,
-                            tracking: 0.9,
-                            padding: EdgeInsets(top: 3, leading: 7, bottom: 3, trailing: 7)
-                        )
+                // 9 between the blocks, as in the model; "HOJE" 5 above the name.
+                let content = VStack(alignment: .leading, spacing: 9) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        if isToday {
+                            CapsuleBadge(
+                                text: String(localized: "HOJE"),
+                                weight: .bold,
+                                tracking: 0.9,
+                                padding: EdgeInsets(top: 3, leading: 7, bottom: 3, trailing: 7)
+                            )
+                        }
+                        Text(workout.name)
+                            .scaledFont(15, weight: .heavy)
+                            .foregroundStyle(Theme.Colors.brightText)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            // 3 points down beside the ⋮, as in the model, when there is no "HOJE" above.
+                            .padding(.top, isToday ? 0 : 3)
+                            // The room of the ⋮ menu, which sits over the top corner.
+                            .padding(.trailing, 26)
                     }
-                    Text(workout.name)
-                        .scaledFont(15, weight: .heavy)
-                        .foregroundStyle(isToday ? Theme.Colors.highlightText : Color.primary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        // The room of the ⋮ menu, which sits over the top corner.
-                        .padding(.trailing, 26)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(summary)
                         if !groups.isEmpty {
@@ -51,7 +56,7 @@ struct WorkoutGridCard: View {
                         }
                     }
                     .scaledFont(11)
-                    .foregroundStyle(isToday ? Theme.Colors.highlightSecondaryText : Color.secondary)
+                    .foregroundStyle(isToday ? Theme.Colors.highlightSecondaryText : Theme.Colors.secondaryText)
                     .multilineTextAlignment(.leading)
                     // The room of the start button, which sits over the bottom corner.
                     Color.clear.frame(height: 34)
@@ -161,14 +166,14 @@ struct FreeWorkoutCard: View {
                         .scaledFont(14, weight: .bold)
                     Text("Escolha os exercícios na hora e registre suas séries")
                         .scaledFont(12)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
                 AppIcon(.chevronRight, size: 12)
                     .foregroundStyle(Theme.Colors.dimText)
             }
-            .cardStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 14), cornerRadius: 17)
+            .cardStyle(padding: EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14), cornerRadius: 17)
             .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -183,7 +188,7 @@ struct RecentSessionRow: View {
 
     var body: some View {
         let name = SessionFormatting.name(session.workoutNameSnapshot)
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(name)
                     .scaledFont(14, weight: .bold)
@@ -191,7 +196,7 @@ struct RecentSessionRow: View {
                     .multilineTextAlignment(.leading)
                 Text(verbatim: "\(SessionFormatting.weekdayDateText(session.startedAt)) · \(SessionFormatting.timeText(session.startedAt))")
                     .scaledFont(12)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
             Spacer(minLength: 8)
             if let duration = session.duration {
@@ -227,7 +232,7 @@ struct EmptyWorkoutsCard: View {
                 .scaledFont(14, weight: .bold)
             Text("Seus treinos aparecerão aqui.")
                 .scaledFont(12)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
             Button(action: onCreate) {
                 Text("Criar treino")
                     .scaledFont(13, weight: .bold)

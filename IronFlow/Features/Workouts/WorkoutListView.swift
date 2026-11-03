@@ -65,7 +65,7 @@ struct WorkoutListView: View {
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isCreating, onDismiss: openCreatedWorkout) {
-            WorkoutNameSheet(title: "Novo treino") { name in
+            WorkoutNameSheet(title: "Novo treino", saveTitle: "Criar treino") { name in
                 createdWorkout = try WorkoutService(context: context).createWorkout(name: name)
                 rootFeedback?.show(String(localized: "Treino criado"))
             }
@@ -93,19 +93,19 @@ struct WorkoutListView: View {
 
     /// The title, how many workouts are in the plan, and the button that creates one.
     private var header: some View {
-        let titles = VStack(alignment: .leading, spacing: 2) {
+        let titles = VStack(alignment: .leading, spacing: 3) {
             Text("Treinos")
                 .scaledFont(29, weight: .heavy)
                 .tracking(-0.5)
                 .accessibilityAddTraits(.isHeader)
             Text(WorkoutListSummary.planSubtitle(workouts.count))
                 .scaledFont(13)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
         }
         let createButton = Button {
             isCreating = true
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 AppIcon(.plus, size: 14)
                 Text("Criar treino")
                     .scaledFont(13, weight: .bold)
@@ -124,7 +124,7 @@ struct WorkoutListView: View {
         // Side by side when they fit, the button aligned with the bottom of the titles; with the
         // largest text sizes the button goes below the title.
         return ViewThatFits(in: .horizontal) {
-            HStack(alignment: .bottom, spacing: 12) {
+            HStack(alignment: .bottom, spacing: 10) {
                 titles
                 Spacer(minLength: 8)
                 createButton
@@ -151,7 +151,7 @@ struct WorkoutListView: View {
 
     /// The grid; the workout planned for today (`todayID`) is highlighted.
     private func myWorkouts(todayID: UUID?) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             SectionTitle("Meus treinos")
             if workouts.isEmpty {
                 EmptyWorkoutsCard {
@@ -179,7 +179,7 @@ struct WorkoutListView: View {
     }
 
     private var freeWorkout: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             SectionTitle("Treino livre")
             FreeWorkoutCard {
                 sessionActions.startFree()
@@ -189,7 +189,7 @@ struct WorkoutListView: View {
 
     /// The latest finished sessions in one card, a line between them; "Ver tudo" opens the Histórico.
     private var recent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "Treinos recentes", actionTitle: "Ver tudo", actionIdentifier: "workouts.recent.all") {
                 onShowHistory()
             }
@@ -275,7 +275,7 @@ private struct WeeklyPlanRow: View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 12) {
                 icon
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 5) {
                     title
                     days
                 }
@@ -296,7 +296,7 @@ private struct WeeklyPlanRow: View {
                 dayCount
             }
         }
-        .cardStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 14), cornerRadius: 17)
+        .cardStyle(padding: EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14), cornerRadius: 17)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: "Programação semanal")), \(WeeklyPlanSummary.summaryText(plannedWeekdays.count))"))
     }
@@ -319,7 +319,7 @@ private struct WeeklyPlanRow: View {
     private var dayCount: some View {
         Text(WeeklyPlanSummary.dayCountText(plannedWeekdays.count))
             .scaledFont(11)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.secondaryText)
     }
 
     private var chevron: some View {

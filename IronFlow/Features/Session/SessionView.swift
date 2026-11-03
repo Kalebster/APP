@@ -44,6 +44,8 @@ struct SessionView: View {
     @State private var isConfirmingDiscard = false
     /// A set already done that is about to be removed, waiting for the confirmation.
     @State private var setPendingRemoval: SetLog?
+    /// "+ Adicionar exercício", 38 points tall at the default text size, as in the model.
+    @ScaledMetric(relativeTo: .caption) private var addExerciseHeight: CGFloat = 38
     /// The number of the set asked about, kept while the confirmation goes away.
     @State private var setRemovalNumber = 1
     /// An exercise with sets done that is about to be removed, waiting for the confirmation.
@@ -90,12 +92,23 @@ struct SessionView: View {
         return NavigationStack {
             List {
                 if exercises.isEmpty {
-                    Text("Adicione exercícios para começar.")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 24)
-                        .accessibilityIdentifier("session.empty")
-                        .cardListRow()
+                    // As in the model: what is missing and where to add it, on a card.
+                    VStack(spacing: 6) {
+                        Text("Nenhum exercício ainda")
+                            .scaledFont(14, weight: .bold)
+                            .foregroundStyle(Theme.Colors.brightText)
+                        Text("Toque em Adicionar exercício para escolher na lista.")
+                            .scaledFont(12)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 14)
+                    .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("session.empty")
+                    .cardListRow()
                 }
 
                 ForEach(Array(exercises.enumerated()), id: \.element.id) { index, performed in
@@ -113,8 +126,8 @@ struct SessionView: View {
             .scrollContentBackground(.hidden)
             .environment(\.defaultMinListRowHeight, 0)
             .scrollDismissesKeyboard(.interactively)
-            // Below the header, which keeps "Concluir" in sight.
-            .toast($toast)
+            // Right below the header, which keeps "Concluir" in sight.
+            .toast($toast, top: 8)
             // The header and the rest bar stay in place, so, like the system's bars, they stop growing at
             // the first accessibility text size: with the largest ones they would leave the sets no room.
             .safeAreaInset(edge: .top, spacing: 0) {
@@ -268,7 +281,7 @@ struct SessionView: View {
 
     /// "+ Adicionar exercício", a dashed outline after the last card.
     private var addExerciseButton: some View {
-        let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
         return Button {
             isPickingExercises = true
         } label: {
@@ -276,13 +289,16 @@ struct SessionView: View {
                 AppIcon(.plus, size: 14)
                 Text("Adicionar exercício")
             }
-            .scaledFont(14, weight: .semibold)
+            .scaledFont(12, weight: .bold)
             .foregroundStyle(Theme.Colors.lightAccent)
-            .frame(maxWidth: .infinity, minHeight: 46)
-            .overlay(shape.strokeBorder(Theme.Colors.controlBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-            .contentShape(shape)
+            .frame(maxWidth: .infinity, minHeight: addExerciseHeight)
+            .overlay(shape.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
+            // 3 more points above and below respond to touches, for a 44-point touch area.
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(.vertical, -3)
         .accessibilityIdentifier("session.addExercise")
         .listRowInsets(EdgeInsets(
             top: 0,

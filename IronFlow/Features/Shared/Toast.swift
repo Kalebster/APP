@@ -19,14 +19,16 @@ struct ToastMessage: Equatable {
 extension View {
     /// Shows `message` at the top of the screen for a moment and then clears it. The notice draws over
     /// the top of the screen, away from the cards and rows that change below, never takes a touch, and
-    /// VoiceOver reads it as an announcement.
-    func toast(_ message: Binding<ToastMessage?>) -> some View {
-        modifier(ToastModifier(message: message))
+    /// VoiceOver reads it as an announcement. It sits `top` points below the top of the view (of its
+    /// safe area): 14, as in the model, unless the screen keeps it closer to a header of its own.
+    func toast(_ message: Binding<ToastMessage?>, top: CGFloat = 14) -> some View {
+        modifier(ToastModifier(message: message, top: top))
     }
 }
 
 private struct ToastModifier: ViewModifier {
     @Binding var message: ToastMessage?
+    let top: CGFloat
 
     func body(content: Content) -> some View {
         content
@@ -41,7 +43,7 @@ private struct ToastModifier: ViewModifier {
                         .background(Theme.Colors.setFieldBackground, in: Capsule())
                         .overlay(Capsule().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
                         .padding(.horizontal, Theme.Metrics.screenPadding)
-                        .padding(.top, 8)
+                        .padding(.top, top)
                         .transition(.opacity)
                         .allowsHitTesting(false)
                         .accessibilityIdentifier("toast")

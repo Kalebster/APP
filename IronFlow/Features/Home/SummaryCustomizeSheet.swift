@@ -28,6 +28,7 @@ struct SummaryCustomizeSheet: View {
                     Text("Personalizar resumo"),
                     explanation: Text("Escolha até \(HomeSummary.maxVisibleMetrics). Eles aparecem no Início na ordem em que você marcar.")
                 )
+                .padding(.bottom, 6)
                 if let errorMessage {
                     Text(verbatim: errorMessage)
                         .scaledFont(12)
@@ -35,7 +36,7 @@ struct SummaryCustomizeSheet: View {
                         .accessibilityIdentifier("customize.error")
                 }
                 ForEach(SummaryMetric.Category.allCases, id: \.self) { category in
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
                         SheetSectionTitle(LocalizedStringKey(String(localized: category.title)))
                         rows(SummaryMetric.allCases.filter { $0.category == category }, selection: selection)
                     }
@@ -64,8 +65,8 @@ struct SummaryCustomizeSheet: View {
                 row(metric, selection: selection)
             }
         }
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func row(_ metric: SummaryMetric, selection: [SummaryMetric]) -> some View {
@@ -114,7 +115,7 @@ struct SummaryCustomizeSheet: View {
                 .background(Color.accentColor, in: Circle())
         } else {
             Circle()
-                .strokeBorder(Theme.Colors.controlBorder, lineWidth: 2)
+                .strokeBorder(Theme.Colors.dashedBorder, lineWidth: 1.5)
                 .frame(width: badgeSide, height: badgeSide)
         }
     }

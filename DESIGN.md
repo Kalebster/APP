@@ -136,7 +136,7 @@ Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(
 | `screenPadding` | 16 | Margem lateral das telas e das folhas |
 | `cardSpacing` | 12 | Entre cartões |
 | `cardPadding` | 16 | Dentro dos cartões das telas antigas |
-| Cartões do Início e de Treinos | 12 em cima, embaixo e à esquerda; 14 à direita | `cardStyle(padding:cornerRadius:)` |
+| Cartões do Início e de Treinos | Linhas (Programação, Treino livre, recentes): 12 em cima e embaixo, 14 dos lados; grade de Treinos: 12 em cima, 9 à direita, 10 embaixo, 12 à esquerda; resumo: 12 e 10 | `cardStyle(padding:cornerRadius:)` |
 | Folhas | 20 acima do título; 12 abaixo do conteúdo; 8 em volta dos botões | `SheetStyle`, `sheetContentPadding()`, `sheetButtonBar()` |
 
 Espaços internos comuns: 4, 6, 8, 10 e 12.

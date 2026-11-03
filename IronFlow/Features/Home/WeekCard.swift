@@ -85,7 +85,7 @@ struct WeekCard: View {
 
             Text("Treinou fora do app? Toque no dia para marcar.")
                 .scaledFont(11)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
         }
         .cardStyle(padding: EdgeInsets(top: 15, leading: 12, bottom: 14, trailing: 12), cornerRadius: 17)
         .accessibilityElement(children: .contain)
@@ -113,55 +113,60 @@ struct WeekCard: View {
     /// is left to close the week.
     @ViewBuilder
     private func goalSummary(_ goal: WeekSummary.Goal) -> some View {
-        let texts = VStack(alignment: .leading, spacing: 4) {
+        let texts = VStack(alignment: .leading, spacing: 3) {
             Text(verbatim: goal.titleText)
                 .scaledFont(19, weight: .heavy)
                 .accessibilityIdentifier("home.week.count")
             Text(verbatim: goal.remainingText)
                 .scaledFont(12)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
                 .accessibilityIdentifier("home.week.remaining")
         }
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 12) {
-                WeekGoalRing(goal: goal)
-                texts
-            }
-        } else {
-            HStack(alignment: .center, spacing: 16) {
-                WeekGoalRing(goal: goal)
-                texts
-                Spacer(minLength: 0)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) {
+                    WeekGoalRing(goal: goal)
+                    texts
+                }
+            } else {
+                HStack(alignment: .center, spacing: 15) {
+                    WeekGoalRing(goal: goal)
+                    texts
+                    Spacer(minLength: 0)
+                }
             }
         }
+        .padding(.horizontal, 3)
     }
 
     /// Without a weekly plan: the week's count and an invitation to plan the week, which opens the plan
     /// when there are workouts to plan.
     private func countSummary(_ count: Int) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(verbatim: WeekSummary.workoutsText(count))
                 .scaledFont(19, weight: .heavy)
                 .accessibilityIdentifier("home.week.count")
             if hasWorkouts {
                 Text("Programe a semana para acompanhar sua meta.")
                     .scaledFont(12)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
                 Button(action: onPlan) {
                     Text("Programar semana")
-                        .scaledFont(13, weight: .semibold)
+                        .scaledFont(14, weight: .semibold)
                         .foregroundStyle(Theme.Colors.lightAccent)
                         .frame(minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                // The touch area stays 44 points tall while the link takes less room.
+                // The touch area stays 44 points tall while the link takes less room, 5 points below
+                // the text above it.
                 .padding(.vertical, -8)
+                .padding(.top, 5)
                 .accessibilityIdentifier("home.week.plan")
             } else {
                 Text("Crie um treino para programar a semana.")
                     .scaledFont(12)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
     }
@@ -200,16 +205,18 @@ private struct WeekGoalRing: View {
 
     var body: some View {
         let side = min(size, 120)
-        let lineWidth: CGFloat = 8
+        // As in the model's ring, drawn on 96 × 96: a line 10 wide on a circle of radius 40.
+        let lineWidth = side * 10 / 96
+        let inset = side * 8 / 96
 
         ZStack {
             Circle()
-                .inset(by: lineWidth / 2)
+                .inset(by: inset)
                 .stroke(Theme.Colors.ringTrack, lineWidth: lineWidth)
             // Nothing at 0: a line cut to no length still draws a dot with its round ends.
             if goal.progress > 0 {
                 Circle()
-                    .inset(by: lineWidth / 2)
+                    .inset(by: inset)
                     .trim(from: 0, to: goal.progress)
                     .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .rotationEffect(.degrees(-90))
@@ -220,11 +227,11 @@ private struct WeekGoalRing: View {
                     .monospacedDigit()
                 Text(verbatim: goal.ringCaption)
                     .scaledFont(10)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            .padding(lineWidth + 4)
+            .padding(inset + lineWidth / 2 + 4)
         }
         .frame(width: side, height: side)
         .accessibilityElement(children: .ignore)
@@ -271,10 +278,10 @@ private struct WeekDayCell: View {
         // Never wider than a column of the smallest iPhone.
         let size = min(circleSize, 36)
 
-        return VStack(spacing: 6) {
+        return VStack(spacing: 7) {
             Text(verbatim: day.letter)
                 .scaledFont(10, weight: day.isToday ? .bold : .semibold)
-                .foregroundStyle(day.isToday ? Theme.Colors.brightText : Color.secondary)
+                .foregroundStyle(day.isToday ? Theme.Colors.brightText : Theme.Colors.secondaryText)
 
             Text(day.number.formatted())
                 .scaledFont(13, weight: numberWeight)
@@ -286,7 +293,7 @@ private struct WeekDayCell: View {
                 .background { circle }
                 .overlay {
                     if day.isToday {
-                        Circle().strokeBorder(Theme.Colors.brightText, lineWidth: 2)
+                        todayRing
                     }
                 }
 
@@ -302,6 +309,21 @@ private struct WeekDayCell: View {
         .frame(minHeight: 44)
         .contentShape(Rectangle())
         .accessibilityShowsLargeContentViewer()
+    }
+
+    /// Today: a light ring inside the empty circle; around a filled one, 2 points out with the screen's
+    /// color between, so the fill stays whole.
+    @ViewBuilder
+    private var todayRing: some View {
+        switch day.appearance {
+        case .trainedInApp, .markedOutside:
+            ZStack {
+                Circle().stroke(Theme.Colors.screenBackground, lineWidth: 2).padding(-1)
+                Circle().stroke(Theme.Colors.brightText, lineWidth: 1.5).padding(-2.75)
+            }
+        default:
+            Circle().strokeBorder(Theme.Colors.brightText, lineWidth: 2)
+        }
     }
 
     @ViewBuilder

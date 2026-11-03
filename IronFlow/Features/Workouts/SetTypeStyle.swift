@@ -70,6 +70,7 @@ struct SetTypeLegend: View {
                 }
             }
         }
+        .padding(.horizontal, 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilityText))
         .accessibilityIdentifier("workout.legend")
