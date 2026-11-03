@@ -134,13 +134,14 @@ extension XCTestCase {
 
     /// Waits for the notice at the top of the screen to read `text`, looking every tenth of a second: a
     /// notice stays 2,5 s, which the usual waits, about a second apart, can miss after a sheet closes or
-    /// a screen changes.
+    /// a screen changes. The notice and its text are one query: reading the label after `exists` fails the
+    /// test when the notice leaves in between, which a slow machine makes likely.
     @MainActor
     func waitForToast(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 5) -> Bool {
-        let toast = app.staticTexts["toast"]
+        let toast = app.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "toast", text)).firstMatch
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
-            if toast.exists && toast.label == text {
+            if toast.exists {
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
