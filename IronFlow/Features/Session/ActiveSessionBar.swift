@@ -43,7 +43,7 @@ struct ActiveSessionBar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     HStack(spacing: 4) {
                         Text("Abrir")
-                        Image(systemName: "chevron.up")
+                        AppIcon(.chevronUp, size: 12)
                     }
                     .scaledFont(13, weight: .semibold)
                     .foregroundStyle(Theme.Colors.highlightText)

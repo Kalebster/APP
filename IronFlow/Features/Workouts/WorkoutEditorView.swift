@@ -212,8 +212,7 @@ struct WorkoutEditorView: View {
                         isConfirmingDelete = true
                     }
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .scaledFont(14, weight: .bold)
+                    AppIcon(.more, size: 16)
                         .foregroundStyle(Theme.Colors.mediumText)
                         .frame(width: menuSide, height: menuSide)
                         .background(Theme.Colors.cardBackground, in: Circle())
@@ -322,21 +321,23 @@ struct WorkoutEditorView: View {
                 focusedField = nil
                 isPickingExercises = true
             } label: {
-                Label("Adicionar exercícios", systemImage: "plus")
-                    .scaledFont(13, weight: .bold)
-                    .foregroundStyle(Theme.Colors.lightAccent)
-                    .frame(maxWidth: .infinity, minHeight: addExercisesHeight)
-                    .overlay(dashed.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-                    .contentShape(dashed)
+                HStack(spacing: 6) {
+                    AppIcon(.plus, size: 14)
+                    Text("Adicionar exercícios")
+                }
+                .scaledFont(13, weight: .bold)
+                .foregroundStyle(Theme.Colors.lightAccent)
+                .frame(maxWidth: .infinity, minHeight: addExercisesHeight)
+                .overlay(dashed.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+                .contentShape(dashed)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("workout.addExercises")
 
             Button(action: start) {
-                Label {
+                HStack(spacing: 9) {
+                    AppIcon(.playHero, size: 14)
                     Text("Iniciar \(workout.name)")
-                } icon: {
-                    Image(systemName: "play.fill")
                 }
                 .scaledFont(15, weight: .bold)
                 .foregroundStyle(Theme.Colors.screenBackground)

@@ -53,8 +53,7 @@ struct EditorExerciseHeader: View {
                 }
                 Button("Remover do treino", systemImage: "trash", role: .destructive, action: onRemove)
             } label: {
-                Image(systemName: "ellipsis")
-                    .scaledFont(13, weight: .bold)
+                AppIcon(.more, size: 16)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .frame(width: menuSide, height: menuSide)
                     .frame(width: max(44, menuSide), height: max(44, menuSide))
@@ -82,8 +81,8 @@ struct EditorExerciseHeader: View {
     }
 }
 
-/// The equipment icon in light blue on the dark blue square, the initial of a custom exercise, or a
-/// dumbbell for an exercise that no longer exists. 32 points at the default text size; it grows with the
+/// The equipment icon in light blue on the dark blue square, the initial of a custom exercise, or the
+/// dumbbells for an exercise that no longer exists. 32 points at the default text size; it grows with the
 /// text up to the largest standard size and stops there, so with the accessibility sizes the exercise's
 /// name keeps the room it needs beside it.
 struct EditorExerciseTile: View {
@@ -114,8 +113,10 @@ struct EditorExerciseTile: View {
                     Text(verbatim: String(initial).uppercased())
                         .font(.custom(InterFont.bold, fixedSize: iconSide * 0.8))
                 } else {
-                    Image(systemName: "dumbbell")
-                        .font(.system(size: iconSide * 0.75, weight: .semibold))
+                    Image(.eqHalteres)
+                        .renderingMode(.template)
+                        .resizable()
+                        .frame(width: iconSide, height: iconSide)
                 }
             }
             .foregroundStyle(Theme.Colors.lightAccent)
@@ -304,12 +305,16 @@ struct EditorAddSetRow: View {
 
     var body: some View {
         Button(action: action) {
-            Label("Adicionar série", systemImage: "plus")
-                .labelStyle(TightLabelStyle())
-                .scaledFont(12, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                .contentShape(Rectangle())
+            Label {
+                Text("Adicionar série")
+            } icon: {
+                AppIcon(.plus, size: 12)
+            }
+            .labelStyle(TightLabelStyle())
+            .scaledFont(12, weight: .semibold)
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .padding(.bottom, editorCardGap)
@@ -358,14 +363,17 @@ struct EditorEmptyCard: View {
                 .scaledFont(12)
                 .foregroundStyle(Theme.Colors.secondaryText)
             Button(action: onAdd) {
-                Label("Adicionar exercícios", systemImage: "plus")
-                    .scaledFont(14, weight: .bold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 40)
-                    .background(Color.accentColor, in: Capsule())
-                    .padding(.vertical, 2)
-                    .contentShape(Rectangle())
+                HStack(spacing: 6) {
+                    AppIcon(.plus, size: 12)
+                    Text("Adicionar exercícios")
+                }
+                .scaledFont(14, weight: .bold)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 20)
+                .frame(minHeight: 40)
+                .background(Color.accentColor, in: Capsule())
+                .padding(.vertical, 2)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .padding(.top, 10)

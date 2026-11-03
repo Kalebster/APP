@@ -30,7 +30,7 @@ struct RootView: View {
         @Bindable var feedback = feedback
 
         TabView(selection: $selectedTab) {
-            Tab("Início", systemImage: "house", value: AppTab.home) {
+            Tab("Início", image: "tab-home", value: AppTab.home) {
                 // No bar here: the "Treino de hoje" card offers "Continuar" instead.
                 NavigationStack {
                     HomeView(sessionActions: sessionActions)
@@ -40,7 +40,7 @@ struct RootView: View {
                 }
             }
 
-            Tab("Treinos", systemImage: "list.bullet.rectangle", value: AppTab.workouts) {
+            Tab("Treinos", image: "tab-workouts", value: AppTab.workouts) {
                 NavigationStack {
                     WorkoutListView(sessionActions: sessionActions) {
                         selectedTab = .history
@@ -52,7 +52,7 @@ struct RootView: View {
                 .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
 
-            Tab("Exercícios", systemImage: "dumbbell", value: AppTab.exercises) {
+            Tab("Exercícios", image: "tab-exercises", value: AppTab.exercises) {
                 NavigationStack {
                     ExerciseListView()
                         .accessibilityElement(children: .contain)
@@ -62,7 +62,7 @@ struct RootView: View {
                 .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
 
-            Tab("Histórico", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
+            Tab("Histórico", image: "tab-history", value: AppTab.history) {
                 NavigationStack {
                     HistoryView()
                         .accessibilityElement(children: .contain)
@@ -72,7 +72,7 @@ struct RootView: View {
                 .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
             }
 
-            Tab("Ajustes", systemImage: "gearshape", value: AppTab.settings) {
+            Tab("Ajustes", image: "tab-settings", value: AppTab.settings) {
                 NavigationStack {
                     SettingsView()
                         .accessibilityElement(children: .contain)

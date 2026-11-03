@@ -58,7 +58,7 @@ struct SessionHeader: View {
                     Label {
                         Text(verbatim: SessionFormatting.elapsedText(from: startedAt, to: timeline.date))
                     } icon: {
-                        Image(systemName: "stopwatch")
+                        AppIcon(.clock, size: 12)
                     }
                     .labelStyle(TightLabelStyle())
                     .scaledFont(11, weight: .bold)
@@ -103,10 +103,9 @@ struct SessionHeader: View {
     }
 
     /// A round 32-point button on the card fill with the card border; it answers on 44 points.
-    private func roundButton(_ systemImage: String) -> some View {
-        Image(systemName: systemImage)
-            .scaledFont(13, weight: .bold)
-            .foregroundStyle(.primary)
+    private func roundButton(_ icon: ImageResource, color: Color) -> some View {
+        AppIcon(icon, size: 16)
+            .foregroundStyle(color)
             .frame(width: buttonSide, height: buttonSide)
             .background(Theme.Colors.cardBackground, in: Circle())
             .overlay(Circle().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
@@ -121,7 +120,7 @@ struct SessionHeader: View {
 
     private var minimizeButton: some View {
         Button(action: onMinimize) {
-            roundButton("chevron.down")
+            roundButton(.chevronDown, color: Theme.Colors.brightText)
         }
         .buttonStyle(.plain)
         .padding(-touchExtra)
@@ -135,7 +134,7 @@ struct SessionHeader: View {
             Button("Descartar treino", systemImage: "trash", role: .destructive, action: onDiscard)
                 .accessibilityIdentifier("session.discard")
         } label: {
-            roundButton("ellipsis")
+            roundButton(.more, color: Theme.Colors.mediumText)
         }
         .padding(-touchExtra)
         .accessibilityShowsLargeContentViewer()

@@ -76,7 +76,7 @@ struct SummaryCustomizeSheet: View {
             storedMetrics = HomeSummary.storedValue(for: HomeSummary.toggled(metric, in: selection))
         } label: {
             HStack(spacing: 12) {
-                IconTile(systemImage: metric.systemImage, side: 32, cornerRadius: 9)
+                IconTile(metric.icon, iconSize: 16, side: 32, cornerRadius: 9)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(metric.title)
                         .scaledFont(15, weight: .bold)

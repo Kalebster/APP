@@ -211,8 +211,7 @@ struct BMRCalculatorSheet: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.down")
-                    .scaledFont(12, weight: .bold)
+                AppIcon(.chevronDown, size: 12)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
             .padding(.horizontal, 12)
@@ -260,8 +259,7 @@ struct BMRCalculatorSheet: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if isSelected {
-                    Image(systemName: "checkmark")
-                        .scaledFont(13, weight: .bold)
+                    AppIcon(.check, size: 13)
                         .foregroundStyle(Theme.Colors.lightAccent)
                 }
             }

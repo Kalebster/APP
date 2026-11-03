@@ -258,12 +258,15 @@ struct SessionView: View {
         return Button {
             isPickingExercises = true
         } label: {
-            Label("Adicionar exercício", systemImage: "plus")
-                .scaledFont(14, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity, minHeight: 46)
-                .overlay(shape.strokeBorder(Theme.Colors.controlBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-                .contentShape(shape)
+            HStack(spacing: 6) {
+                AppIcon(.plus, size: 14)
+                Text("Adicionar exercício")
+            }
+            .scaledFont(14, weight: .semibold)
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .overlay(shape.strokeBorder(Theme.Colors.controlBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+            .contentShape(shape)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("session.addExercise")

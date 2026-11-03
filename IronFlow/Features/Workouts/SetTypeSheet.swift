@@ -80,8 +80,7 @@ struct SetTypeSheet: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if isSelected {
-                    Image(systemName: "checkmark")
-                        .scaledFont(14, weight: .bold)
+                    AppIcon(.check, size: 13)
                         .foregroundStyle(Theme.Colors.lightAccent)
                 }
             }
@@ -103,13 +102,16 @@ struct SetTypeSheet: View {
             dismiss()
             onRemove()
         } label: {
-            Label("Remover série", systemImage: "xmark")
-                .scaledFont(15, weight: .bold)
-                .foregroundStyle(Theme.Colors.failureSet)
-                .frame(maxWidth: .infinity, minHeight: removeHeight)
-                .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .opacity(isEnabled ? 1 : 0.4)
-                .contentShape(Rectangle())
+            HStack(spacing: 8) {
+                AppIcon(.menuClose, size: 18)
+                Text("Remover série")
+            }
+            .scaledFont(15, weight: .bold)
+            .foregroundStyle(Theme.Colors.failureSet)
+            .frame(maxWidth: .infinity, minHeight: removeHeight)
+            .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+            .opacity(isEnabled ? 1 : 0.4)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)

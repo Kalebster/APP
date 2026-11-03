@@ -134,7 +134,7 @@ private struct SummaryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            IconTile(systemImage: metric.systemImage, side: 29, cornerRadius: 9)
+            IconTile(metric.icon, iconSize: 15, side: 29, cornerRadius: 9)
             VStack(alignment: .leading, spacing: 2) {
                 if let number = value?.value {
                     HStack(alignment: .firstTextBaseline, spacing: 3) {
@@ -181,5 +181,23 @@ private struct SummaryCard: View {
             text += ", \(String(localized: "calcular"))"
         }
         return text
+    }
+}
+
+extension SummaryMetric {
+    /// The indicator's icon in the model: on its card of the "Resumo rápido" and in Personalizar.
+    var icon: ImageResource {
+        switch self {
+        case .monthWorkouts: .calendar
+        case .streak: .metricStreak
+        case .weekVolume: .eqHalteres
+        case .weekTime: .metricWtime
+        case .lastWorkout: .metricLast
+        case .bodyWeight: .metricWeight
+        case .height: .metricHeight
+        case .dailyCalorieGoal: .metricKcal
+        case .bmr: .metricBmr
+        case .weightChange: .metricWdelta
+        }
     }
 }

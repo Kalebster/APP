@@ -87,8 +87,7 @@ struct ExerciseCard: View {
         ZStack {
             if isSelected {
                 Circle().fill(Color.accentColor)
-                Image(systemName: "checkmark")
-                    .font(.system(size: circleSide * 0.46, weight: .bold))
+                AppIcon(.check, size: 12, relativeTo: .body)
                     .foregroundStyle(.white)
             } else {
                 Circle().strokeBorder(Theme.Colors.controlBorder, lineWidth: 1.5)

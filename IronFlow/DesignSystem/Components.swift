@@ -1,25 +1,40 @@
 import SwiftUI
 
-/// An SF Symbol in light blue on a dark blue rounded square: the icons of the Início summary cards and
-/// of the Treinos rows. Decorative: the text next to it says what it is.
+/// An icon of the model on a rounded square, light blue on dark blue unless told otherwise: the icons
+/// of the Início summary cards, of Personalizar and of the Treinos rows. Decorative: the text next to
+/// it says what it is.
 struct IconTile: View {
-    let systemImage: String
+    let icon: ImageResource
+    let iconSize: CGFloat
     let cornerRadius: CGFloat
+    let foreground: Color
+    let background: Color
     /// The side of the square; set in points of the default text size, it grows with the text.
     @ScaledMetric private var side: CGFloat
 
-    init(systemImage: String, side: CGFloat, cornerRadius: CGFloat) {
-        self.systemImage = systemImage
+    /// `iconSize` and `side` in points of the default text size, as in the model; both grow at the
+    /// same rate, so the icon keeps its place in the square.
+    init(
+        _ icon: ImageResource,
+        iconSize: CGFloat,
+        side: CGFloat,
+        cornerRadius: CGFloat,
+        foreground: Color = Theme.Colors.lightAccent,
+        background: Color = Theme.Colors.iconTileBackground
+    ) {
+        self.icon = icon
+        self.iconSize = iconSize
         self.cornerRadius = cornerRadius
+        self.foreground = foreground
+        self.background = background
         _side = ScaledMetric(wrappedValue: side, relativeTo: .body)
     }
 
     var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: side * 0.48, weight: .semibold))
-            .foregroundStyle(Theme.Colors.lightAccent)
+        AppIcon(icon, size: iconSize, relativeTo: .body)
+            .foregroundStyle(foreground)
             .frame(width: side, height: side)
-            .background(Theme.Colors.iconTileBackground, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .background(background, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .accessibilityHidden(true)
     }
 }
@@ -43,8 +58,7 @@ struct TextBackButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Image(systemName: "chevron.left")
-                    .scaledFont(15, weight: .semibold)
+                AppIcon(.chevronLeft, size: 16)
                 Text(title)
                     .scaledFont(15)
             }

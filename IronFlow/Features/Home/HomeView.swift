@@ -170,9 +170,7 @@ struct HomeView: View {
     /// The app's mark and name, and today's date.
     private func header(calendar: Calendar) -> some View {
         let brand = HStack(spacing: 12) {
-            Image(systemName: "dumbbell.fill")
-                .font(.system(size: logoSide * 0.47, weight: .semibold))
-                .rotationEffect(.degrees(45))
+            AppIcon(.logo, size: 19, relativeTo: .headline)
                 .foregroundStyle(.white)
                 .frame(width: logoSide, height: logoSide)
                 .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -422,9 +420,7 @@ private struct TodayWorkoutCard: View {
         } label: {
             HStack(spacing: 8) {
                 if let icon = label.icon {
-                    Image(systemName: icon)
-                        .scaledFont(13, weight: .bold)
-                        .accessibilityHidden(true)
+                    AppIcon(icon, size: 14)
                 }
                 Text(verbatim: label.title)
             }
@@ -440,23 +436,23 @@ private struct TodayWorkoutCard: View {
 
     /// What a button shows and what VoiceOver reads. The outlined buttons are short ("Escolher outro",
     /// "Treino livre"); VoiceOver reads what they do.
-    private func buttonLabel(of action: TodayWorkoutAction, isMain: Bool) -> (title: String, accessibilityTitle: String, icon: String?) {
+    private func buttonLabel(of action: TodayWorkoutAction, isMain: Bool) -> (title: String, accessibilityTitle: String, icon: ImageResource?) {
         switch action {
         case .continueSession:
             let title = String(localized: "Continuar")
-            return (title, title, "play.fill")
+            return (title, title, .playHero)
         case .startScheduledWorkout:
             let title = String(localized: "Iniciar \(content.title)")
-            return (title, title, "play.fill")
+            return (title, title, .playHero)
         case .chooseWorkout:
             if isMain {
                 let title = String(localized: "Escolher treino")
-                return (title, title, "play.fill")
+                return (title, title, .playHero)
             }
             return (String(localized: "Escolher outro"), String(localized: "Escolher outro treino"), nil)
         case .startFreeWorkout:
             let full = String(localized: "Iniciar treino livre")
-            return isMain ? (full, full, "play.fill") : (String(localized: "Treino livre"), full, nil)
+            return isMain ? (full, full, .playHero) : (String(localized: "Treino livre"), full, nil)
         }
     }
 

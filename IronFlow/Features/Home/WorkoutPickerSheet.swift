@@ -109,8 +109,7 @@ private struct WorkoutPickerRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if !isEmpty {
-                Image(systemName: "play.fill")
-                    .font(.system(size: playSide * 0.33, weight: .bold))
+                AppIcon(.play, size: 12, relativeTo: .subheadline)
                     .foregroundStyle(isToday ? Theme.Colors.screenBackground : Color.white)
                     .frame(width: playSide, height: playSide)
                     .background(isToday ? Color.white : Color.accentColor, in: Circle())

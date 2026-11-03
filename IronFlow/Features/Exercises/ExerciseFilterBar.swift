@@ -105,10 +105,8 @@ struct ExerciseSearchField: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
         HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: iconSide, weight: .medium))
+            AppIcon(.search, size: 15, relativeTo: .subheadline)
                 .foregroundStyle(Theme.Colors.secondaryText)
-                .accessibilityHidden(true)
             TextField("Buscar exercício", text: $text, prompt: Text("Buscar exercício").foregroundStyle(Theme.Colors.dimText))
                 .scaledFont(14)
                 .autocorrectionDisabled()

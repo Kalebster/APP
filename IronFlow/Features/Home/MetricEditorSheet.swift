@@ -139,7 +139,7 @@ struct MetricEditorSheet: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// A round − or +: one step (0,1 kg, 1 cm or 50 kcal), unavailable at the limit.
+    /// A round − or +, in text as in the model: one step (0,1 kg, 1 cm or 50 kcal), unavailable at the limit.
     private func stepButton(_ direction: MetricEditing.Direction) -> some View {
         let isEnabled = MetricEditing.canStep(base, metric: metric, direction: direction)
         let stepText = "\(HomeSummary.number(MetricEditing.step(of: metric))) \(metric.unit)"
@@ -148,8 +148,8 @@ struct MetricEditorSheet: View {
         return Button {
             text = HomeSummary.fieldText(MetricEditing.stepped(base, metric: metric, direction: direction), for: metric)
         } label: {
-            Image(systemName: direction == .up ? "plus" : "minus")
-                .font(.system(size: side * 0.5, weight: .semibold))
+            Text(verbatim: direction == .up ? "+" : "\u{2212}")
+                .scaledFont(26, weight: .medium)
                 .foregroundStyle(Theme.Colors.brightText)
                 .frame(width: side, height: side)
                 .background(Theme.Colors.setFieldBackground, in: Circle())
@@ -190,11 +190,14 @@ struct MetricEditorSheet: View {
             calculatedGoal = nil
             isCalculating = true
         } label: {
-            Text("Calcular pela minha TMB")
-                .scaledFont(15, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
+            HStack(spacing: 6) {
+                AppIcon(.calculator, size: 14)
+                Text("Calcular pela minha TMB")
+                    .scaledFont(15, weight: .semibold)
+            }
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("metric.editor.bmr")

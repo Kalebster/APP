@@ -126,7 +126,14 @@ struct WeeklyPlanView: View {
     /// "Meta da semana: 4 treinos" on blue, with what it means.
     private func goalCard(plannedDays: Int) -> some View {
         HStack(spacing: 12) {
-            IconTile(systemImage: "target", side: 36, cornerRadius: 10)
+            IconTile(
+                .target,
+                iconSize: 16,
+                side: 36,
+                cornerRadius: 10,
+                foreground: Theme.Colors.highlightText,
+                background: Theme.Colors.highlightBadge
+            )
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: WeeklyPlanSummary.goalText(plannedDays: plannedDays))
                     .scaledFont(15, weight: .heavy)
@@ -199,8 +206,7 @@ private struct WeeklyPlanDayRow: View {
                     .lineLimit(lineLimit)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "chevron.right")
-                .scaledFont(12, weight: .semibold)
+            AppIcon(.chevronRight, size: 12)
                 .foregroundStyle(Theme.Colors.dimText)
         }
         .padding(.vertical, 10)
@@ -338,8 +344,7 @@ struct WeeklyPlanDaySheet: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if isSelected {
-                    Image(systemName: "checkmark")
-                        .scaledFont(13, weight: .bold)
+                    AppIcon(.check, size: 13)
                         .foregroundStyle(Theme.Colors.lightAccent)
                 }
             }

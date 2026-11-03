@@ -106,9 +106,7 @@ struct WorkoutListView: View {
             isCreating = true
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: "plus")
-                    .scaledFont(13, weight: .bold)
-                    .accessibilityHidden(true)
+                AppIcon(.plus, size: 14)
                 Text("Criar treino")
                     .scaledFont(13, weight: .bold)
             }
@@ -304,7 +302,7 @@ private struct WeeklyPlanRow: View {
     }
 
     private var icon: some View {
-        IconTile(systemImage: "calendar", side: 36, cornerRadius: 10)
+        IconTile(.calendar, iconSize: 17, side: 36, cornerRadius: 10)
     }
 
     private var title: some View {
@@ -325,9 +323,8 @@ private struct WeeklyPlanRow: View {
     }
 
     private var chevron: some View {
-        Image(systemName: "chevron.right")
-            .scaledFont(12, weight: .semibold)
-            .foregroundStyle(.tertiary)
+        AppIcon(.chevronRight, size: 12)
+            .foregroundStyle(Theme.Colors.dimText)
     }
 }
 

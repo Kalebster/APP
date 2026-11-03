@@ -100,11 +100,9 @@ struct WorkoutGridCard: View {
             Button("Renomear", systemImage: "pencil", action: onRename)
             Button("Excluir", systemImage: "trash", role: .destructive, action: onDelete)
         } label: {
-            Image(systemName: "ellipsis")
-                .rotationEffect(.degrees(90))
-                .scaledFont(15, weight: .bold)
+            AppIcon(.moreVertical, size: 15)
                 // A fixed gray, so the accent color of the menu does not tint the dots.
-                .foregroundStyle(Color.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
                 .frame(width: 27, height: 27)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
@@ -132,8 +130,7 @@ struct WorkoutGridCard: View {
     /// White on today's workout, accent on the others.
     private func startButton(isEnabled: Bool) -> some View {
         Button(action: onStart) {
-            Image(systemName: "play.fill")
-                .scaledFont(13, weight: .bold)
+            AppIcon(.play, size: 13)
                 .foregroundStyle(isToday ? Theme.Colors.screenBackground : Color.white)
                 .frame(width: 34, height: 34)
                 .background(isToday ? Color.white : Color.accentColor, in: Circle())
@@ -158,7 +155,7 @@ struct FreeWorkoutCard: View {
     var body: some View {
         Button(action: onStart) {
             HStack(spacing: 12) {
-                IconTile(systemImage: "bolt.fill", side: 36, cornerRadius: 10)
+                IconTile(.bolt, iconSize: 17, side: 36, cornerRadius: 10)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Treino livre")
                         .scaledFont(14, weight: .bold)
@@ -168,10 +165,8 @@ struct FreeWorkoutCard: View {
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .scaledFont(12, weight: .semibold)
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
+                AppIcon(.chevronRight, size: 12)
+                    .foregroundStyle(Theme.Colors.dimText)
             }
             .cardStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 14), cornerRadius: 17)
             .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
@@ -204,9 +199,8 @@ struct RecentSessionRow: View {
                     .scaledFont(12, weight: .semibold)
                     .foregroundStyle(Theme.Colors.mediumText)
             }
-            Image(systemName: "chevron.right")
-                .scaledFont(12, weight: .semibold)
-                .foregroundStyle(.tertiary)
+            AppIcon(.chevronRight, size: 12)
+                .foregroundStyle(Theme.Colors.dimText)
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
@@ -228,7 +222,7 @@ struct EmptyWorkoutsCard: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            IconTile(systemImage: "list.bullet.rectangle", side: 36, cornerRadius: 10)
+            IconTile(.tabWorkouts, iconSize: 17, side: 36, cornerRadius: 10)
             Text("Nenhum treino ainda")
                 .scaledFont(14, weight: .bold)
             Text("Seus treinos aparecerão aqui.")
