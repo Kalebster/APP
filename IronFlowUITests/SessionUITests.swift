@@ -101,11 +101,12 @@ final class SessionUITests: IronFlowUITestCase {
         saveSessionFromTheFinishSheet(in: app)
         // Every set done and the load of the working and failure sets.
         XCTAssertTrue(waitForToast("Treino salvo · 2 séries · 200 kg", in: app), "No notice after finishing")
+        // Taken at once, while the notice of 2.5 s is still on the Início.
+        attachScreenshot(named: "93-workout-saved-notice", of: app)
         // Opened from Exercícios, finished: the app goes to the Início, where today's workout is done and
         // the week counts it.
         XCTAssertTrue(app.tabBars.buttons["Início"].isSelected, "Not on the Início after finishing")
         XCTAssertTrue(waitForLabel(of: element("home.today", in: app), containing: "Push concluído hoje"), "Today: \(element("home.today", in: app).label)")
-        attachScreenshot(named: "93-workout-saved-notice", of: app)
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
 
         openTab("Histórico", in: app)
