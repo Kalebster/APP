@@ -52,14 +52,15 @@ struct TightLabelStyle: LabelStyle {
 }
 
 /// "‹ Treinos": the blue back of the screens that hide the navigation bar for the model's own top row,
-/// the workout editor and the weekly plan. Text 15, as in the model.
+/// the workout editor and the weekly plan. Text 15, 3 after the ‹, and 4 to the left of the margin so
+/// the drawn ‹ lines up with the content below, as in the model.
 struct TextBackButton: View {
     let title: LocalizedStringKey
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 AppIcon(.chevronLeft, size: 16)
                 Text(title)
                     .scaledFont(15)
@@ -69,6 +70,7 @@ struct TextBackButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(.leading, -4)
     }
 }
 
