@@ -260,8 +260,9 @@ struct WorkoutEditorView: View {
                 .accessibilityIdentifier("workout.summary")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // 8 below the top row and 14 above the next block, as in the model.
-        .editorRow(top: 4, bottom: 14)
+        // 8 below the top row and 14 above the next block, as in the model; while reordering, the rows
+        // keep 6 of their own above each card.
+        .editorRow(top: 4, bottom: isOrdering ? 8 : 14)
     }
 
     /// The rows of one exercise, drawn as one card: its header, the set columns, the sets and

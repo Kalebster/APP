@@ -202,8 +202,9 @@ struct PlannedSetColumns: View {
         .textCase(.uppercase)
         .foregroundStyle(Theme.Colors.futureDayText)
         .lineLimit(1)
-        .padding(.top, 8)
-        .padding(.bottom, 2)
+        // 7 below the exercise's header and 6 above the first field, as in the model.
+        .padding(.top, 7)
+        .padding(.bottom, 3)
         .accessibilityHidden(true)
     }
 }
@@ -245,7 +246,10 @@ struct PlannedSetRow: View {
                 }
             }
         }
-        .padding(.vertical, 4)
+        // 39 from one set to the next, as in the model: the field of 32, 2 above and below it, and the 3
+        // between the rows of the card.
+        .padding(.top, 3)
+        .padding(.bottom, 4)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("workout.set")
     }
@@ -299,7 +303,8 @@ struct PlannedSetRow: View {
 }
 
 /// "+ Adicionar série", the last row of an exercise card: a copy of the last set. The + sits next to
-/// the text, and the whole row answers, 44 points tall.
+/// the text, and the whole row answers, 44 points tall: the card ends 41 below the last set, as in the
+/// model, and the touch area goes on 3 points into the space below the card.
 struct EditorAddSetRow: View {
     let action: @MainActor () -> Void
 
@@ -313,11 +318,14 @@ struct EditorAddSetRow: View {
             .labelStyle(TightLabelStyle(spacing: 6))
             .scaledFont(12, weight: .semibold)
             .foregroundStyle(Theme.Colors.lightAccent)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            // The text 23 below the last set's field and the card's end 22 below the text's middle.
+            .frame(maxWidth: .infinity, minHeight: 38, alignment: .leading)
+            .padding(.bottom, 6)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.bottom, editorCardGap)
+        // The card ends 3 points above the touch area's end.
+        .padding(.bottom, editorCardGap - 3)
         .accessibilityIdentifier("workout.addSet")
     }
 }

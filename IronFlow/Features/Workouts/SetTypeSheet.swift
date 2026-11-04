@@ -17,7 +17,8 @@ struct SetTypeSheet: View {
     @ScaledMetric(relativeTo: .subheadline) private var removeHeight: CGFloat = 46
 
     var body: some View {
-        ScrollView {
+        // As tall as what it shows, as the other sheets.
+        FittedSheet {
             // 8 between the blocks, as in the model's sheets.
             VStack(alignment: .leading, spacing: 8) {
                 Text("Tipo da série \(number)")
@@ -39,10 +40,6 @@ struct SetTypeSheet: View {
             .padding(.top, SheetStyle.topPadding)
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     /// The four types in one block, a line between them.
