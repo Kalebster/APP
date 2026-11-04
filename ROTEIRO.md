@@ -29,6 +29,7 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 
 ### S4-C — Exercícios próprios
 - Exercícios próprios: + Novo, detalhe do exercício, editar e arquivar, e equipamento dos exercícios próprios (precisa de modelo aprovado).
+- O › no fim de cada linha de Exercícios (13, `dimText`, como no protótipo), quando a linha passar a abrir o exercício.
 - Remover um exercício próprio que tem histórico arquiva o exercício, mas ele continua nos treinos. Decidir no modelo se o app pergunta se quer tirar dos treinos também.
 
 ### S4-F — Descanso

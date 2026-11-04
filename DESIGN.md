@@ -8,7 +8,8 @@ Este guia diz como o Iron Flow deve parecer e se comportar. Ele vale para toda t
 2. **1 px do protótipo = 1 pt no app**, no tamanho de texto padrão do iPhone. Os prints do CI usam o iPhone 17 (402 × 874 pt).
 3. **O prompt de cada etapa traz as medidas exatas das telas daquela etapa.** Este guia traz o que é comum a todas: cores, fonte, tamanhos de texto, espaçamentos, cantos e componentes.
 4. **Nada de valores soltos.** Use sempre `Theme.Colors`, `Theme.Metrics`, `scaledFont` e os componentes da seção 6. Uma cor ou um componente novo entra primeiro aqui e no `DesignSystem/`, e só depois na tela.
-5. **Mudanças neste guia só com a aprovação do dono do projeto.**
+5. **As notas do protótipo não entram no app.** As frases cinzas no pé das telas do protótipo (10, `--faint`), como "Protótipo · os números são exemplos" ou "Toque no ✓ para marcar a série · …", são notas para quem testa o protótipo e nunca entram no app.
+6. **Mudanças neste guia só com a aprovação do dono do projeto.**
 
 ## 2. Princípios
 
@@ -35,7 +36,7 @@ Todas ficam em `Resources/Assets.xcassets` e são lidas por `Theme.Colors` (ou `
 | `brightText` | #F2F3F5 | `--fg` | Texto principal |
 | `mediumText` | #C9CBD1 | `--dim` | Texto entre o principal e o secundário (durações, contagens) |
 | `secondaryText` | #9A9CA3 | `--muted` | Texto secundário, explicações, rótulos |
-| `dimText` | #888B91 | `--faint` | Texto apagado: rodapés, letras de dia sem treino |
+| `dimText` | #888B91 | `--faint` | Texto apagado: setas ›, datas, letras de dia sem treino |
 | `futureDayText` | #7E8186 | `--future` | Dias que ainda vão chegar |
 | `Color.accentColor` | #4472D8 | `--accent` | Botões principais, ▶, anel da semana, série atual |
 | `lightAccent` | #7FA3F2 | `--accent-soft` | Links, ícones, "‹ Voltar" |
@@ -125,7 +126,6 @@ Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(
 | Rótulo de seção (folha) | 10 heavy | caixa alta, espaçamento 1,8, `secondaryText` | "ÚLTIMOS REGISTROS" (`SheetSectionTitle`) |
 | Rótulo do destaque | 10 bold | caixa alta, espaçamento 1,7, `highlightLabel` | "TREINO DE HOJE" |
 | Cápsula | 10 semibold | "HOJE": 10 bold, espaçamento 0,9; nas folhas, 9 | "Programado" |
-| Rodapé | 10 regular | `dimText` | Notas no fim da tela |
 
 ## 5. Espaçamentos, cantos e tamanhos
 
