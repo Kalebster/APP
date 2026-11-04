@@ -174,13 +174,25 @@ final class WorkoutUITests: IronFlowUITestCase {
         app.buttons["workouts.empty.create"].tap()
         let field = app.textFields["workout.name.field"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Name field not found")
+        // The blue button always answers: with the name empty it saves nothing, says what is missing and
+        // keeps the keyboard in the field; the message leaves as the name is typed.
         let save = app.buttons["workout.name.save"]
-        XCTAssertFalse(save.isEnabled, "Save enabled with an empty name")
-        field.tap()
+        XCTAssertTrue(save.isEnabled, "Save unavailable with an empty name")
+        save.tap()
+        let error = element("workout.name.error", in: app)
+        XCTAssertTrue(error.waitForExistence(timeout: 10), "No message for an empty name")
+        XCTAssertEqual(error.label, "Digite um nome para o treino.")
+        XCTAssertTrue(field.exists, "The name sheet closed with an empty name")
+        attachScreenshot(named: "94-workout-name-empty", of: app)
+        // Typed without tapping the field: the keyboard is still in it.
         field.typeText("   ")
-        XCTAssertFalse(save.isEnabled, "Save enabled with a blank name")
+        XCTAssertTrue(error.waitForNonExistence(timeout: 10), "Message kept after typing")
+        // The keyboard's Done does what the blue button does: a blank name is not saved either.
+        field.typeText("\n")
+        XCTAssertTrue(error.waitForExistence(timeout: 10), "No message for a blank name")
+        XCTAssertTrue(field.exists, "The name sheet closed with a blank name")
         field.typeText("Costas e Bíceps")
-        XCTAssertTrue(save.isEnabled, "Save disabled with a valid name")
+        XCTAssertTrue(error.waitForNonExistence(timeout: 10), "Message kept after typing the name")
         save.tap()
         XCTAssertTrue(waitForToast("Treino criado", in: app), "No notice after creating")
 
@@ -524,8 +536,13 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(field.value as? String, "Push")
         field.tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Push".count))
-        XCTAssertFalse(app.buttons["workout.name.save"].isEnabled, "Save enabled with an empty name")
+        // An emptied name is not saved: the message shows and the workout keeps its name.
+        app.buttons["workout.name.save"].tap()
+        let error = element("workout.name.error", in: app)
+        XCTAssertTrue(error.waitForExistence(timeout: 10), "No message for an empty name")
+        XCTAssertTrue(field.exists, "The name sheet closed with an empty name")
         field.typeText("Peito e Tríceps")
+        XCTAssertTrue(error.waitForNonExistence(timeout: 10), "Message kept after typing the name")
         app.buttons["workout.name.save"].tap()
 
         XCTAssertTrue(waitForLabel(of: element("workout.title", in: app), toBe: "Peito e Tríceps"), "Title not renamed")

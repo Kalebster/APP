@@ -1,9 +1,11 @@
 import SwiftUI
 
 /// Asks for a workout name, to create or rename a workout, as in the model: the title, the name field,
-/// and the blue button ("Criar treino", "Salvar") above "Cancelar". The button is unavailable while the
-/// name is blank. `onSave` receives the typed name; when it throws, the sheet stays open and shows the
-/// error below the field.
+/// and the blue button ("Criar treino", "Salvar") above "Cancelar". The button always answers: with the
+/// name blank it saves nothing, says "Digite um nome para o treino." below the field and puts the
+/// keyboard back in it; the keyboard's Done does the same. `onSave` receives the typed name; when it
+/// throws, the sheet stays open and shows the error below the field. A message leaves as the name is
+/// typed, and VoiceOver reads it when it appears.
 struct WorkoutNameSheet: View {
     let title: LocalizedStringKey
     let initialName: String
@@ -32,10 +34,6 @@ struct WorkoutNameSheet: View {
         _name = State(initialValue: initialName)
     }
 
-    private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
     var body: some View {
         FittedSheet {
             VStack(alignment: .leading, spacing: 8) {
@@ -55,7 +53,6 @@ struct WorkoutNameSheet: View {
         } bottom: {
             VStack(spacing: 8) {
                 SheetButton(Text(saveTitle), kind: .primary, action: save)
-                    .disabled(!canSave)
                     .accessibilityIdentifier("workout.name.save")
                 SheetButton(Text("Cancelar"), kind: .secondary) {
                     dismiss()
@@ -96,9 +93,15 @@ struct WorkoutNameSheet: View {
     }
 
     private func save() {
-        guard canSave, !isSaved else { return }
+        guard !isSaved else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            show(String(localized: "Digite um nome para o treino."))
+            isNameFocused = true
+            return
+        }
         // An unchanged name (renaming) needs no write.
-        guard name.trimmingCharacters(in: .whitespacesAndNewlines) != initialName else {
+        guard trimmed != initialName else {
             dismiss()
             return
         }
@@ -107,7 +110,13 @@ struct WorkoutNameSheet: View {
             isSaved = true
             dismiss()
         } catch {
-            errorMessage = UserFacingError.message(for: error)
+            show(UserFacingError.message(for: error))
         }
+    }
+
+    /// Shows `message` below the field and has VoiceOver read it.
+    private func show(_ message: String) {
+        errorMessage = message
+        AccessibilityNotification.Announcement(message).post()
     }
 }
