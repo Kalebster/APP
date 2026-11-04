@@ -118,7 +118,7 @@ Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(
 | Nome de treino em cartão | 15 heavy | | Grade de Treinos |
 | Botão | 15 bold | | Botões das folhas e "Iniciar" do destaque |
 | Título de linha | 14 bold | | Linhas de lista |
-| Subtítulo de linha | 12 (Início) / 11 (Treinos e folhas) | `secondaryText` | "5 exercícios · 55 min" |
+| Subtítulo de linha | 12 (Início) / 11 (Treinos e folhas) | `secondaryText`; altura de linha 1,35 nos cartões de Treinos | "5 exercícios · 55 min" |
 | Link / ação de seção | 13 semibold | `lightAccent` | "Personalizar", "Ver tudo" |
 | Botão de contorno | 13 semibold | | Botões secundários do destaque |
 | Aviso (toast) | 13 semibold | altura de linha 1,35 | "Peso salvo" |

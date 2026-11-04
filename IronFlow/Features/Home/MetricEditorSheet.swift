@@ -34,7 +34,8 @@ struct MetricEditorSheet: View {
 
     @ScaledMetric(relativeTo: .body) private var stepSide: CGFloat = 52
     @ScaledMetric(relativeTo: .body) private var fieldWidth: CGFloat = 136
-    @ScaledMetric(relativeTo: .caption) private var messageHeight: CGFloat = 32
+    /// Two lines of the message: 12 points at the model's line height of 1,4.
+    @ScaledMetric(relativeTo: .caption) private var messageHeight: CGFloat = 34
     @ScaledMetric(relativeTo: .caption2) private var changeWidth: CGFloat = 46
 
     init(
