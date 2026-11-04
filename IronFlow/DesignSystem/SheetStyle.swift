@@ -32,7 +32,7 @@ struct SheetHeader: View {
                 .accessibilityAddTraits(.isHeader)
             if let explanation {
                 explanation
-                    .scaledFont(13)
+                    .scaledFont(13, lineHeight: 1.4)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier(explanationIdentifier ?? "")

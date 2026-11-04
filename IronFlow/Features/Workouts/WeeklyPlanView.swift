@@ -40,7 +40,7 @@ struct WeeklyPlanView: View {
             VStack(alignment: .leading, spacing: 8) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Programação semanal")
-                        .scaledFont(29, weight: .heavy)
+                        .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                         .tracking(-0.5)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
@@ -141,7 +141,7 @@ struct WeeklyPlanView: View {
                     .scaledFont(15, weight: .heavy)
                     .foregroundStyle(Theme.Colors.brightText)
                 Text("É o anel da semana no Início. Cada dia com treino conta 1.")
-                    .scaledFont(11)
+                    .scaledFont(11, lineHeight: 1.35)
                     .foregroundStyle(Theme.Colors.highlightSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }

@@ -49,7 +49,7 @@ struct SessionHeader: View {
     private var titles: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(verbatim: name)
-                .scaledFont(20, weight: .heavy)
+                .scaledFont(20, weight: .heavy, lineHeight: 1.05)
                 .lineLimit(2)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("session.name")

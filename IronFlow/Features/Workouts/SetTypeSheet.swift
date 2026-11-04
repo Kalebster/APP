@@ -28,7 +28,7 @@ struct SetTypeSheet: View {
                 removeButton
                 if let removalUnavailableReason {
                     Text(verbatim: removalUnavailableReason)
-                        .scaledFont(13)
+                        .scaledFont(13, lineHeight: 1.4)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
@@ -76,7 +76,7 @@ struct SetTypeSheet: View {
                         .scaledFont(15, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(type.explanation)
-                        .scaledFont(11)
+                        .scaledFont(11, lineHeight: 1.35)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }

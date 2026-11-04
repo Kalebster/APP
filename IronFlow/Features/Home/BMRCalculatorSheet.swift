@@ -379,7 +379,7 @@ struct BMRCalculatorSheet: View {
     private var closing: some View {
         VStack(spacing: 8) {
             Text("É uma estimativa pela fórmula de Mifflin-St Jeor. Para um plano sob medida, procure um nutricionista.")
-                .scaledFont(11)
+                .scaledFont(11, lineHeight: 1.4)
                 .foregroundStyle(Theme.Colors.dimText)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

@@ -223,7 +223,7 @@ private struct WeekGoalRing: View {
             }
             VStack(spacing: 0) {
                 Text(verbatim: goal.ringText)
-                    .scaledFont(22, weight: .heavy)
+                    .scaledFont(22, weight: .heavy, lineHeight: 1)
                     .monospacedDigit()
                 Text(verbatim: goal.ringCaption)
                     .scaledFont(10)

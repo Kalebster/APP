@@ -98,7 +98,7 @@ struct SessionView: View {
                             .scaledFont(14, weight: .bold)
                             .foregroundStyle(Theme.Colors.brightText)
                         Text("Toque em Adicionar exercício para escolher na lista.")
-                            .scaledFont(12)
+                            .scaledFont(12, lineHeight: 1.4)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                     .multilineTextAlignment(.center)

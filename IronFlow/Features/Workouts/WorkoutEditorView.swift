@@ -247,7 +247,7 @@ struct WorkoutEditorView: View {
     private func titleRow(items: [WorkoutExercise], setCount: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(workout.name)
-                .scaledFont(29, weight: .heavy)
+                .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                 .tracking(-0.5)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)

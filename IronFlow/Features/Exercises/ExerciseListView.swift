@@ -70,7 +70,7 @@ struct ExerciseListView: View {
     private func header(total: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text("Exercícios")
-                .scaledFont(29, weight: .heavy)
+                .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                 .tracking(-0.5)
                 .accessibilityAddTraits(.isHeader)
             Text(verbatim: ExerciseCatalog.countText(total))

@@ -41,7 +41,7 @@ struct WorkoutNameSheet: View {
                 field
                 if let errorMessage {
                     Text(errorMessage)
-                        .scaledFont(11)
+                        .scaledFont(11, lineHeight: 1.4)
                         .foregroundStyle(Theme.Colors.failureSet)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 2)

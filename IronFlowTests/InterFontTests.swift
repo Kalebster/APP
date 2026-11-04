@@ -20,6 +20,16 @@ struct InterFontTests {
         #expect(Bundle.main.url(forResource: "OFL", withExtension: "txt") != nil, "OFL.txt not in the app")
     }
 
+    @Test("A line of Inter is about 1,21 times its size in the five files, the ratio the line heights start from")
+    func lineHeightRatio() throws {
+        #expect(abs(InterFont.lineHeightRatio - 1.21) < 0.001)
+        for name in InterFont.allNames {
+            let font = try #require(UIFont(name: name, size: 100))
+            // What iOS gives a line of the file, rounded to its pixels at most.
+            #expect(abs(font.lineHeight - 100 * InterFont.lineHeightRatio) < 0.5, "\(name): \(font.lineHeight)")
+        }
+    }
+
     @Test("Each weight of the app has its file: regular, medium, semibold, bold and heavy (ExtraBold)")
     func weights() {
         #expect(InterFont.name(for: .regular) == "Inter-Regular")

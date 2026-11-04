@@ -95,7 +95,7 @@ struct WorkoutListView: View {
     private var header: some View {
         let titles = VStack(alignment: .leading, spacing: 3) {
             Text("Treinos")
-                .scaledFont(29, weight: .heavy)
+                .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                 .tracking(-0.5)
                 .accessibilityAddTraits(.isHeader)
             Text(WorkoutListSummary.planSubtitle(workouts.count))

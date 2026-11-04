@@ -49,13 +49,15 @@ struct WorkoutGridCard: View {
                             // The room of the ⋮ menu, which sits over the top corner.
                             .padding(.trailing, 26)
                     }
-                    VStack(alignment: .leading, spacing: 2) {
+                    // One line under the other, 1,35 times the size each, as the model's two lines.
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(summary)
+                            .scaledFont(11, lineHeight: 1.35)
                         if !groups.isEmpty {
                             Text(verbatim: groups)
+                                .scaledFont(11, lineHeight: 1.35)
                         }
                     }
-                    .scaledFont(11)
                     .foregroundStyle(isToday ? Theme.Colors.highlightSecondaryText : Theme.Colors.secondaryText)
                     .multilineTextAlignment(.leading)
                     // The room of the start button, which sits over the bottom corner.

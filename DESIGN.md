@@ -102,7 +102,7 @@ Inter (licença SIL OFL 1.1), só nestes cinco pesos:
 | `.bold` | Inter Bold | 700 |
 | `.heavy` | Inter ExtraBold | 800 |
 
-Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(.system(...))` ou tamanho fixo. Os ícones não são texto: vêm do catálogo `Icons` pelo `AppIcon`, no tamanho do protótipo, e crescem com o texto (seção 6, Ícones).
+Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(.system(...))` ou tamanho fixo. Os textos que têm `line-height` próprio no CSS do protótipo passam o mesmo valor em `scaledFont(tamanho, weight:, lineHeight:)`: 1,05 nos títulos grandes, 1 no número do anel da semana, 1,4 nos textos das folhas e no treino sem exercícios, 1,35 no aviso e nos textos pequenos das linhas de Treinos, da meta e do tipo da série. Os outros ficam com a altura da própria Inter (o `normal` do CSS, cerca de 1,21). Os ícones não são texto: vêm do catálogo `Icons` pelo `AppIcon`, no tamanho do protótipo, e crescem com o texto (seção 6, Ícones).
 
 ### Papéis de texto (tamanho em pt no texto padrão)
 
@@ -114,14 +114,14 @@ Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(
 | Número de cartão | 19 heavy | unidade em 12 semibold `secondaryText` | Resumo do Início, "3 de 4 treinos" |
 | Marca | 17 heavy | espaçamento 0,5 | "Iron Flow" no topo do Início |
 | Título de folha | 17 heavy | `brightText` | "Concluir treino?" |
-| Texto de folha | 13 regular | `secondaryText` | Explicação abaixo do título |
+| Texto de folha | 13 regular | `secondaryText`; altura de linha 1,4 | Explicação abaixo do título |
 | Nome de treino em cartão | 15 heavy | | Grade de Treinos |
 | Botão | 15 bold | | Botões das folhas e "Iniciar" do destaque |
 | Título de linha | 14 bold | | Linhas de lista |
 | Subtítulo de linha | 12 (Início) / 11 (Treinos e folhas) | `secondaryText` | "5 exercícios · 55 min" |
 | Link / ação de seção | 13 semibold | `lightAccent` | "Personalizar", "Ver tudo" |
 | Botão de contorno | 13 semibold | | Botões secundários do destaque |
-| Aviso (toast) | 13 semibold | | "Peso salvo" |
+| Aviso (toast) | 13 semibold | altura de linha 1,35 | "Peso salvo" |
 | Rótulo de seção (tela) | 11 heavy | caixa alta, espaçamento 2,1 | "SUA SEMANA" (`SectionTitle`) |
 | Rótulo de seção (folha) | 10 heavy | caixa alta, espaçamento 1,8, `secondaryText` | "ÚLTIMOS REGISTROS" (`SheetSectionTitle`) |
 | Rótulo do destaque | 10 bold | caixa alta, espaçamento 1,7, `highlightLabel` | "TREINO DE HOJE" |

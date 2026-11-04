@@ -341,7 +341,7 @@ private struct TodayWorkoutCard: View {
             VStack(alignment: .leading, spacing: 11) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(verbatim: content.title)
-                        .scaledFont(26, weight: .heavy)
+                        .scaledFont(26, weight: .heavy, lineHeight: 1.05)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(verbatim: content.subtitle)
                         .scaledFont(13)

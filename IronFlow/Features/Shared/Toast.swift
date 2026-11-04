@@ -35,7 +35,7 @@ private struct ToastModifier: ViewModifier {
             .overlay(alignment: .top) {
                 if let message {
                     Text(verbatim: message.text)
-                        .scaledFont(13, weight: .semibold)
+                        .scaledFont(13, weight: .semibold, lineHeight: 1.35)
                         .foregroundStyle(Theme.Colors.brightText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)

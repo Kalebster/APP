@@ -182,7 +182,7 @@ struct MetricEditorSheet: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
-        .scaledFont(12)
+        .scaledFont(12, lineHeight: 1.4)
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, minHeight: messageHeight, alignment: .top)

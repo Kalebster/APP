@@ -37,7 +37,7 @@ struct FinishSessionSheet: View {
                 boxes
                 if let notDoneText = summary.notDoneText {
                     Text(verbatim: notDoneText)
-                        .scaledFont(13)
+                        .scaledFont(13, lineHeight: 1.4)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("finish.notDone")
