@@ -135,3 +135,4 @@ Depois da S10 (lançamento).
 - Sem assinatura, o app fica bloqueado, mas os dados nunca são apagados. Exportar os dados continua liberado.
 - A conta é opcional e vem depois do lançamento. Ao criar a conta, os dados do aparelho são enviados para ela, nunca apagados.
 - Sem calculadora de anilhas.
+- O app pede o iOS 26.0 ou mais novo (app e alvos de teste): ele só é testado e medido no iOS 26.
