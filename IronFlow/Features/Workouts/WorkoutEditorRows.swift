@@ -306,13 +306,28 @@ struct PlannedSetRow: View {
     }
 }
 
-/// "+ Adicionar série", the last row of an exercise card: a copy of the last set. The + sits next to
-/// the text, and the whole row answers, 44 points tall: the card ends 41 below the last set, as in the
-/// model, and the touch area goes on 3 points into the space below the card.
+/// The last row of an exercise card: "+ Adicionar série", a copy of the last set, and on the right the
+/// exercise's rest ("Descanso 1:30"), which opens "Descanso entre séries". The + sits next to the text,
+/// and both answer 44 points tall: the card ends 41 below the last set, as in the model, and the touch
+/// area goes on 3 points into the space below the card.
 struct EditorAddSetRow: View {
+    let restSeconds: Int
+    /// Whether the rest was just chosen: its capsule shows a light blue outline for a moment.
+    let isRestHighlighted: Bool
+    let onRest: @MainActor () -> Void
     let action: @MainActor () -> Void
 
     var body: some View {
+        HStack(spacing: 8) {
+            addButton
+            RestCapsuleButton(seconds: restSeconds, isHighlighted: isRestHighlighted, action: onRest)
+                .padding(.bottom, 6)
+        }
+        // The card ends 3 points above the touch area's end.
+        .padding(.bottom, editorCardGap - 3)
+    }
+
+    private var addButton: some View {
         Button(action: action) {
             Label {
                 Text("Adicionar série")
@@ -328,9 +343,53 @@ struct EditorAddSetRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        // The card ends 3 points above the touch area's end.
-        .padding(.bottom, editorCardGap - 3)
         .accessibilityIdentifier("workout.addSet")
+    }
+}
+
+/// "⏱ Descanso 1:30" (or "Sem timer" in gray), a capsule 28 points tall at the default text size that
+/// answers on 44. After a new rest is chosen it shows a light blue outline for 0,9 s (set by the editor;
+/// without the fade when Reduce Motion is on).
+struct RestCapsuleButton: View {
+    let seconds: Int
+    let isHighlighted: Bool
+    let action: @MainActor () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .caption) private var height: CGFloat = 28
+
+    var body: some View {
+        let hasTimer = seconds > 0
+        Button(action: action) {
+            Label {
+                Text(verbatim: hasTimer
+                    ? String(localized: "Descanso \(RestDuration.text(seconds))")
+                    : RestDuration.text(seconds))
+            } icon: {
+                AppIcon(.clock, size: 12)
+            }
+            .labelStyle(TightLabelStyle(spacing: 5))
+            .scaledFont(12, weight: .bold)
+            .monospacedDigit()
+            .foregroundStyle(hasTimer ? Theme.Colors.mediumText : Theme.Colors.dimText)
+            .padding(.horizontal, 11)
+            .frame(minHeight: height)
+            .background(Theme.Colors.unplannedDayBackground, in: Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(Theme.Colors.lightAccent, lineWidth: 1)
+                    .opacity(isHighlighted ? 1 : 0)
+            )
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: isHighlighted)
+            .padding(.vertical, max(0, 44 - height) / 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, -max(0, 44 - height) / 2)
+        .fixedSize()
+        .accessibilityLabel(Text(verbatim: String(localized: "Descanso entre séries: \(RestDuration.spokenText(seconds))")))
+        .accessibilityHint(Text("Toque para mudar"))
+        .accessibilityIdentifier("workout.rest")
     }
 }
 
