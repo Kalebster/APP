@@ -188,6 +188,8 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `toast(_:)` (`ToastMessage`) | Aviso curto de confirmação | No alto da tela, some em 2,5 s (em 4 s quando o texto tem mais de 40 caracteres), não bloqueia toques, não cobre o que mudou, o VoiceOver lê |
 | `GroupFilterChip`, `EquipmentFilterChip`, `FilterChipRow` | Filtros da tela Exercícios e do seletor | |
 | `FlowLayout` | Chips que quebram a linha | |
+| `OptionGroup`, `OptionRow`, `OptionToggle` | Linhas de opções numa folha ("Opções do treino") | Grupo com fundo `screenBackground`, cantos 14 e linha `rowSeparator` entre as linhas; cada linha com 11 em cima e embaixo e 14 dos lados, título 14 bold, explicação 11 `secondaryText` que quebra linha, e à direita o `Toggle` do iOS na cor de destaque (rótulo lido pelo VoiceOver, não mostrado) ou um link em `lightAccent` com 44 pt de toque |
+| `RestCapsuleButton` | "⏱ Descanso 1:30" do editor | 28 de altura, 44 de toque; texto 12 bold com números de largura fixa em `mediumText` ("Sem timer" em `dimText`), fundo `unplannedDayBackground`; contorno `lightAccent` por 0,9 s depois de escolher |
 
 ### Ícones
 
@@ -211,7 +213,8 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 - **Telas das abas:** título grande próprio ou o topo do modelo; a barra de abas é a do iOS.
 - **Telas empilhadas (editor, Programação):** "‹ Treinos" ou "‹ Início" no alto, à esquerda, sem barra de navegação do sistema, e o gesto de voltar deslizando da borda continua funcionando.
 - **Folhas:** título, explicação, conteúdo e botões no pé. Os botões ficam fixos no fim quando o conteúdo rola.
-- **Menu ⋯ (ou ⋮):** abre o menu do próprio iOS (`Menu`), com SF Symbols e os textos do protótipo.
+- **Menu ⋯ (ou ⋮):** abre o menu do próprio iOS (`Menu`), com SF Symbols e os textos do protótipo. A exceção é o ⋯ do treino em andamento, que abre a folha "Opções do treino" (as opções e "Descartar treino"), como no protótipo.
+- **Grade de escolhas numa folha ("Descanso entre séries"):** 3 colunas com 8 entre elas, cada opção com 48 de altura, cantos 12, texto 16 bold em `mediumText` sobre `screenBackground`; a escolhida em `highlightText` sobre `highlightBadge` com contorno de 1 pt `highlightLine`.
 - **Confirmação de apagar:** o `confirmationDialog` do iOS (o balão que sai do botão), com os textos do protótipo: o título diz o que sai ("Excluir “Push”?"), a mensagem explica, e a opção perigosa fica em vermelho (`role: .destructive`), com o botão de voltar ("Cancelar", ou "Voltar ao treino" ao descartar um treino).
 - **Ordenar:** botões ↑ ↓ (quadrados de 36, ícones de 18, toque de 44; o ↑ do primeiro e o ↓ do último ficam desativados) e também tocar, segurar e arrastar o exercício para qualquer posição, sem a alça ≡ do iOS.
 
@@ -226,7 +229,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 
 - As transições padrão do iOS: empurrar a tela, abrir a folha, fade do aviso.
 - O ponto azul pulsando da barra do treino em andamento é a única animação contínua, e para quando "Reduzir movimento" estiver ligado.
-- Nada de animação em cada toque. Vibração só onde o protótipo ou o prompt da etapa pedir.
+- Nada de animação em cada toque. Vibração só onde o protótipo ou o prompt da etapa pedir: hoje, uma vibração leve, sem som, no fim do descanso.
 
 ## 9. Acessibilidade
 

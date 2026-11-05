@@ -333,12 +333,12 @@ extension XCTestCase {
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
     }
 
-    /// Discards the session on screen from its ⋯ menu, confirming the question.
+    /// Discards the session on screen from "Opções do treino" (its ⋯), confirming the question.
     @MainActor
     func discardSession(in app: XCUIApplication) {
         app.buttons["session.more"].tap()
         let option = app.buttons["Descartar treino"]
-        XCTAssertTrue(option.waitForExistence(timeout: 10), "No Descartar treino in the ⋯ menu")
+        XCTAssertTrue(option.waitForExistence(timeout: 10), "No Descartar treino in Opções do treino")
         option.tap()
         confirmationButton("Descartar treino", title: "Descartar treino?", in: app).tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
