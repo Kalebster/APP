@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias WorkoutExercise = SchemaV5.WorkoutExercise
+typealias WorkoutExercise = SchemaV7.WorkoutExercise
 
-extension SchemaV5 {
+extension SchemaV7 {
     /// An exercise inside a planned workout, with its planned sets.
     @Model
     final class WorkoutExercise {
@@ -12,6 +12,9 @@ extension SchemaV5 {
         var updatedAt: Date = Date.now
         /// Position inside the workout; the plan order is defined by this value only.
         var sortIndex: Int = 0
+        /// The rest between sets, in seconds, copied to the session when it starts; 0 is "Sem timer".
+        /// Added in version 7; the exercises of older stores are migrated with the default, 1 min 30 s.
+        var restSeconds: Int = RestDuration.defaultSeconds
 
         var workout: Workout?
         var exercise: Exercise?

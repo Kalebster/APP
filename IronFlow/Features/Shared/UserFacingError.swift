@@ -63,6 +63,8 @@ enum UserFacingError {
             String(localized: "Digite uma altura entre \(HomeSummary.number(Double(Validation.heightRangeCm.lowerBound))) e \(HomeSummary.number(Double(Validation.heightRangeCm.upperBound))) cm.")
         case .invalidCalorieGoal:
             String(localized: "Digite uma meta entre \(HomeSummary.number(Double(Validation.dailyCalorieGoalRangeKcal.lowerBound))) e \(HomeSummary.number(Double(Validation.dailyCalorieGoalRangeKcal.upperBound))) kcal.")
+        case .invalidRest:
+            String(localized: "Escolha um descanso de até 1 hora.")
         }
     }
 

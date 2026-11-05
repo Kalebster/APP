@@ -40,7 +40,7 @@ enum ModelContainerFactory {
 
     /// The current schema version. Stores of older versions are migrated by `IronFlowMigrationPlan`.
     static var schema: Schema {
-        Schema(versionedSchema: SchemaV6.self)
+        Schema(versionedSchema: SchemaV7.self)
     }
 
     private static func makeContainer(_ configuration: ModelConfiguration) throws -> ModelContainer {

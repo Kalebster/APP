@@ -8,10 +8,11 @@ import Testing
 /// are checked against the frozen ones first, so they are the stores those versions really wrote.
 /// Every set of versions 1 to 4 becomes a working set: the type added by version 5. Every profile of
 /// versions 2 to 5 gets the defaults of the choices added by version 6: no sex or date of birth, a
-/// moderate activity level and the goal of keeping the weight.
+/// moderate activity level and the goal of keeping the weight. Every exercise of versions 1 to 6 rests
+/// 1 min 30 s: the rest added by version 7.
 @MainActor
 struct MigrationTests {
-    @Test("A version 1 store migrates to version 6, keeps every value and relationship, and its sets become working sets")
+    @Test("A version 1 store migrates to version 7, keeps every value and relationship, and its sets become working sets")
     func v1StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -51,7 +52,7 @@ struct MigrationTests {
             // The new type also updated the set and its workout: the store reopened must keep that too.
             history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v6, "Store not migrated to version 6")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v7, "Store not migrated to version 7")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -63,7 +64,7 @@ struct MigrationTests {
         try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
     }
 
-    @Test("A version 2 store, with body data, migrates to version 6, keeps every value, and its sets become working sets")
+    @Test("A version 2 store, with body data, migrates to version 7, keeps every value, and its sets become working sets")
     func v2StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -110,7 +111,7 @@ struct MigrationTests {
             // The new type also updated the set and its workout: the store reopened must keep that too.
             history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v6, "Store not migrated to version 6")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v7, "Store not migrated to version 7")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -121,7 +122,7 @@ struct MigrationTests {
         try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
     }
 
-    @Test("A version 3 store, with body data and a day trained outside the app, migrates to version 6, keeps every value, and its sets become working sets")
+    @Test("A version 3 store, with body data and a day trained outside the app, migrates to version 7, keeps every value, and its sets become working sets")
     func v3StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -167,7 +168,7 @@ struct MigrationTests {
             // The new type also updated the set and its workout: the store reopened must keep that too.
             history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v6, "Store not migrated to version 6")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v7, "Store not migrated to version 7")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -178,7 +179,7 @@ struct MigrationTests {
         try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
     }
 
-    @Test("A version 4 store, with body data, a day trained outside the app and a weekly plan, migrates to version 6, keeps every value, and its sets become working sets")
+    @Test("A version 4 store, with body data, a day trained outside the app and a weekly plan, migrates to version 7, keeps every value, and its sets become working sets")
     func v4StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -228,7 +229,7 @@ struct MigrationTests {
             // The new type also updated the set and its workout: the store reopened must keep that too.
             history = try historySnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v6, "Store not migrated to version 6")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v7, "Store not migrated to version 7")
 
         // Closed and opened again: nothing was lost and the new data stays.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -239,7 +240,7 @@ struct MigrationTests {
         try expectFirstPlannedSetIsAWarmUp(in: reopened.mainContext)
     }
 
-    @Test("A version 5 store, with every kind of record, migrates to version 6, keeps every value and set type, and its profile gets the calculator's defaults")
+    @Test("A version 5 store, with every kind of record, migrates to version 7, keeps every value and set type, and its profile gets the calculator's defaults")
     func v5StoreMigrates() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -253,15 +254,15 @@ struct MigrationTests {
         var sessionID = UUID()
 
         do {
-            // The main models of version 5 are still the app's, so `SampleGraph` writes them. Its profile
-            // is the one of version 2.
+            // Written by the frozen main models of version 5 (`FrozenV5Graph`). Its profile is the one of
+            // version 2.
             let container = try makeStore(of: SchemaV5.self, at: storeURL)
             let context = container.mainContext
-            let graph = SampleGraph.insert(into: context)
-            graph.completedSet.setType = .failure
-            graph.notCompletedSet.setType = .warmup
-            for planned in try context.fetch(FetchDescriptor<PlannedSet>()) where planned.weightKg == 20 {
-                planned.setType = .warmup
+            let graph = FrozenV5Graph.insert(into: context)
+            graph.completedSet.setTypeRaw = SetType.failure.rawValue
+            graph.notCompletedSet.setTypeRaw = SetType.warmup.rawValue
+            for planned in try context.fetch(FetchDescriptor<SchemaV5.PlannedSet>()) where planned.weightKg == 20 {
+                planned.setTypeRaw = SetType.warmup.rawValue
             }
             context.insert(BodyWeightEntry(weightKg: 81.25, measuredAt: SampleGraph.sessionStart))
             context.insert(BodyWeightEntry(weightKg: 80.5, measuredAt: SampleGraph.sessionEnd))
@@ -273,8 +274,8 @@ struct MigrationTests {
             context.insert(WeeklyPlanDay(weekday: 3, workoutID: graph.workout.id))
             try context.save()
             sessionID = graph.session.id
-            history = try historySnapshot(context)
-            setTypes = try allSetTypeKeys(context)
+            history = try frozenV5HistorySnapshot(context)
+            setTypes = try allFrozenV5SetTypeKeys(context)
             bodyData = try legacyBodyDataSnapshot(context)
             markedDays = try externalWorkoutDaySnapshot(context)
             plan = try weeklyPlanSnapshot(context)
@@ -308,7 +309,7 @@ struct MigrationTests {
             bodyData = try bodyDataSnapshot(context)
             choices = try profileChoicesSnapshot(context)
         }
-        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v6, "Store not migrated to version 6")
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v7, "Store not migrated to version 7")
 
         // Closed and opened again: nothing was lost and the new choices stay.
         let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
@@ -326,6 +327,109 @@ struct MigrationTests {
         #expect(profile.birthDate == BirthDate(day: 30, month: 4, year: 1990))
         #expect(profile.activityLevel == .intense)
         #expect(profile.weightGoal == .lose)
+    }
+
+    @Test("A version 6 store, with plans, finished sessions and a session in progress, migrates to version 7, keeps every value, and every exercise rests 1 min 30 s")
+    func v6StoreMigrates() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { removeTemporaryDirectory(directory) }
+        let storeURL = directory.appending(path: "IronFlow.store")
+        var history: [String] = []
+        var setTypes: [String] = []
+        var bodyData: [String] = []
+        var choices: [String] = []
+        var markedDays: [String] = []
+        var plan: [String] = []
+        var finishedID = UUID()
+        var activeID = UUID()
+        var workoutID = UUID()
+
+        do {
+            // Written by the frozen main models of version 5 and the profile of version 6, as version 6 did.
+            let container = try makeStore(of: SchemaV6.self, at: storeURL)
+            let context = container.mainContext
+            let graph = FrozenV5Graph.insert(into: context)
+            graph.completedSet.setTypeRaw = SetType.failure.rawValue
+            let bench = try context.fetch(FetchDescriptor<SchemaV5.Exercise>()).first { $0.libraryKey == "bench-press" }
+            let active = FrozenV5Graph.insertSessionInProgress(of: graph.workout, exercise: bench, into: context)
+            context.insert(BodyWeightEntry(weightKg: 81.25, measuredAt: SampleGraph.sessionStart))
+            let profile = SchemaV6.UserProfile()
+            profile.heightCm = 180
+            profile.dailyCalorieGoalKcal = 2_300
+            profile.sex = .female
+            profile.activityLevel = .intense
+            context.insert(profile)
+            context.insert(ExternalWorkoutDay(day: Self.markedDay))
+            context.insert(WeeklyPlanDay(weekday: 3, workoutID: graph.workout.id))
+            try context.save()
+            finishedID = graph.session.id
+            activeID = active.id
+            workoutID = graph.workout.id
+            history = try frozenV5HistorySnapshot(context)
+            setTypes = try allFrozenV5SetTypeKeys(context)
+            bodyData = try bodyDataSnapshot(context)
+            choices = try profileChoicesSnapshot(context)
+            markedDays = try externalWorkoutDaySnapshot(context)
+            plan = try weeklyPlanSnapshot(context)
+        }
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v6, "Not a version 6 store")
+
+        var rests: [String] = []
+        do {
+            let migrated = try ModelContainerFactory.makePersistent(at: storeURL)
+            let context = migrated.mainContext
+            #expect(try historySnapshot(context) == history)
+            #expect(try allSetTypeKeys(context) == setTypes)
+            #expect(try bodyDataSnapshot(context) == bodyData)
+            #expect(try profileChoicesSnapshot(context) == choices)
+            #expect(try externalWorkoutDaySnapshot(context) == markedDays)
+            #expect(try weeklyPlanSnapshot(context) == plan)
+            // Every planned and performed exercise, the session in progress included, rests 1 min 30 s.
+            rests = try restSecondsSnapshot(context)
+            #expect(rests.count == 5)
+            #expect(rests.allSatisfy { $0.hasSuffix("rest=90") }, "\(rests)")
+
+            // The session in progress is still in progress, with its set done and the one typed.
+            let active = try #require(try fetchSession(id: activeID, in: context))
+            #expect(active.isActive)
+            let sets = try #require(active.orderedExercises.first).orderedSetLogs
+            #expect(sets.map(\.isCompleted) == [true, false])
+            #expect(sets.map(\.weightKg) == [40, 50])
+            #expect(sets.map(\.reps) == [15, 6])
+            let finished = try #require(try fetchSession(id: finishedID, in: context))
+            #expect(!finished.isActive)
+            #expect(finished.orderedExercises.map(\.exerciseNameSnapshot) == ["Supino Reto", "Rosca Direta"])
+
+            // The rest of version 7 works in the migrated store: "Sem timer" and 2 min.
+            let workout = try #require(try context.fetch(FetchDescriptor<Workout>()).first { $0.id == workoutID })
+            let service = WorkoutService(context: context, now: { SampleGraph.sessionEnd })
+            try service.setRestSeconds(RestDuration.noTimer, of: workout.orderedExercises[0])
+            try service.setRestSeconds(120, of: workout.orderedExercises[1])
+            history = try historySnapshot(context)
+            rests = try restSecondsSnapshot(context)
+        }
+        #expect(try storeFingerprint(at: storeURL) == FrozenSchemaFingerprints.v7, "Store not migrated to version 7")
+
+        // Closed and opened again: nothing was lost and the new rests stay.
+        let reopened = try ModelContainerFactory.makePersistent(at: storeURL)
+        let context = reopened.mainContext
+        #expect(try historySnapshot(context) == history)
+        #expect(try allSetTypeKeys(context) == setTypes)
+        #expect(try bodyDataSnapshot(context) == bodyData)
+        #expect(try profileChoicesSnapshot(context) == choices)
+        #expect(try externalWorkoutDaySnapshot(context) == markedDays)
+        #expect(try weeklyPlanSnapshot(context) == plan)
+        #expect(try restSecondsSnapshot(context) == rests)
+        let workout = try #require(try context.fetch(FetchDescriptor<Workout>()).first { $0.id == workoutID })
+        #expect(workout.orderedExercises.map(\.restSeconds) == [0, 120])
+        #expect(try fetchSession(id: activeID, in: context)?.isActive == true)
+    }
+
+    /// The same lines as `allSetTypeKeys`, read with the frozen version 5 classes from a store of
+    /// versions 5 and 6.
+    private func allFrozenV5SetTypeKeys(_ context: ModelContext) throws -> [String] {
+        let keys = try frozenV5SetTypeKeys(context)
+        return (keys.planned.map { "planned \($0)" } + keys.performed.map { "performed \($0)" }).sorted()
     }
 
     /// The stored type key of every set, each with its kind, sorted: the set types a version 5 store

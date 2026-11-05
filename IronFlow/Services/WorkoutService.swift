@@ -157,6 +157,19 @@ struct WorkoutService {
         try context.saveOrRollback()
     }
 
+    /// Changes the rest between sets of an exercise of the workout, in seconds (0 is "Sem timer").
+    /// Sessions started before keep the rest they copied.
+    func setRestSeconds(_ seconds: Int, of item: WorkoutExercise) throws {
+        guard RestDuration.isValid(seconds) else { throw ValidationError.invalidRest }
+        guard item.restSeconds != seconds else { return }
+
+        let timestamp = now()
+        item.restSeconds = seconds
+        item.updatedAt = timestamp
+        item.workout?.updatedAt = timestamp
+        try context.saveOrRollback()
+    }
+
     /// Removes a planned set and renumbers the others. The last set cannot be removed:
     /// remove the whole exercise from the workout instead.
     func removePlannedSet(_ plannedSet: PlannedSet) throws {

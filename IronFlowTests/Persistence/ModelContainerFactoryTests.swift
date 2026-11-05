@@ -5,8 +5,8 @@ import Testing
 
 @MainActor
 struct ModelContainerFactoryTests {
-    @Test("Store uses schema V6: the seven main models with the set type, the body data with the calculator's choices, the days trained outside the app and the weekly plan")
-    func schemaV6() throws {
+    @Test("Store uses schema V7: the seven main models with the set type and the rest between sets, the body data with the calculator's choices, the days trained outside the app and the weekly plan")
+    func schemaV7() throws {
         let container = try ModelContainerFactory.makeInMemory()
 
         let entityNames = Set(container.schema.entities.map(\.name))
@@ -21,6 +21,11 @@ struct ModelContainerFactoryTests {
         #expect(setEntities.count == 2)
         for entity in setEntities {
             #expect(entity.attributes.contains { $0.name == "setTypeRaw" }, "\(entity.name) has no set type")
+        }
+        let exerciseEntities = container.schema.entities.filter { ["WorkoutExercise", "SessionExercise"].contains($0.name) }
+        #expect(exerciseEntities.count == 2)
+        for entity in exerciseEntities {
+            #expect(entity.attributes.contains { $0.name == "restSeconds" }, "\(entity.name) has no rest")
         }
         let profile = try #require(container.schema.entities.first { $0.name == "UserProfile" })
         let profileAttributes = Set(profile.attributes.map(\.name))
@@ -45,10 +50,19 @@ struct ModelContainerFactoryTests {
         #expect(v6.subtracting(v5) == [ObjectIdentifier(SchemaV6.UserProfile.self)])
         #expect(SchemaV6.models.count == 11)
         #expect(ObjectIdentifier(UserProfile.self) == ObjectIdentifier(SchemaV6.UserProfile.self))
-        // The app's main models are the version 5 ones.
-        #expect(ObjectIdentifier(PlannedSet.self) == ObjectIdentifier(SchemaV5.PlannedSet.self))
-        #expect(ObjectIdentifier(SetLog.self) == ObjectIdentifier(SchemaV5.SetLog.self))
-        #expect(ObjectIdentifier(Workout.self) == ObjectIdentifier(SchemaV5.Workout.self))
+        // Version 7 redeclares the seven main models and reuses the four other models of version 6.
+        let v7 = Set(SchemaV7.models.map { ObjectIdentifier($0) })
+        let reusedBy7: [any PersistentModel.Type] = [
+            SchemaV2.BodyWeightEntry.self, SchemaV6.UserProfile.self, SchemaV3.ExternalWorkoutDay.self, SchemaV4.WeeklyPlanDay.self,
+        ]
+        #expect(v6.intersection(v7) == Set(reusedBy7.map { ObjectIdentifier($0) }))
+        #expect(SchemaV7.models.count == 11)
+        // The app's main models are the version 7 ones.
+        #expect(ObjectIdentifier(PlannedSet.self) == ObjectIdentifier(SchemaV7.PlannedSet.self))
+        #expect(ObjectIdentifier(SetLog.self) == ObjectIdentifier(SchemaV7.SetLog.self))
+        #expect(ObjectIdentifier(Workout.self) == ObjectIdentifier(SchemaV7.Workout.self))
+        #expect(ObjectIdentifier(WorkoutExercise.self) == ObjectIdentifier(SchemaV7.WorkoutExercise.self))
+        #expect(ObjectIdentifier(SessionExercise.self) == ObjectIdentifier(SchemaV7.SessionExercise.self))
 
         #expect(SchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
         #expect(SchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
@@ -56,11 +70,13 @@ struct ModelContainerFactoryTests {
         #expect(SchemaV4.versionIdentifier == Schema.Version(4, 0, 0))
         #expect(SchemaV5.versionIdentifier == Schema.Version(5, 0, 0))
         #expect(SchemaV6.versionIdentifier == Schema.Version(6, 0, 0))
+        #expect(SchemaV7.versionIdentifier == Schema.Version(7, 0, 0))
         #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [
             ObjectIdentifier(SchemaV1.self), ObjectIdentifier(SchemaV2.self), ObjectIdentifier(SchemaV3.self),
             ObjectIdentifier(SchemaV4.self), ObjectIdentifier(SchemaV5.self), ObjectIdentifier(SchemaV6.self),
+            ObjectIdentifier(SchemaV7.self),
         ])
-        #expect(IronFlowMigrationPlan.stages.count == 5)
+        #expect(IronFlowMigrationPlan.stages.count == 6)
     }
 
     @Test("In-memory stores are isolated from each other")

@@ -574,4 +574,30 @@ struct WorkoutServiceTests {
         #expect(session.workout == nil)
         #expect(session.workoutNameSnapshot == "Push")
     }
+
+    // MARK: - Rest
+
+    @Test("An exercise rests 1 min 30 s until changed; the rest changes, \"Sem timer\" stores 0, and an invalid one changes nothing")
+    func restBetweenSets() throws {
+        let workout = try harness.workouts.createWorkout(name: "Push")
+        let item = try #require(try harness.workouts.addExercises([bench], to: workout).first)
+        #expect(item.restSeconds == RestDuration.defaultSeconds)
+        #expect(RestDuration.defaultSeconds == 90)
+
+        harness.clock.advance(by: 60)
+        try harness.workouts.setRestSeconds(120, of: item)
+        #expect(item.restSeconds == 120)
+        #expect(item.updatedAt == harness.clock.current)
+        #expect(workout.updatedAt == harness.clock.current)
+
+        try harness.workouts.setRestSeconds(RestDuration.noTimer, of: item)
+        #expect(item.restSeconds == 0)
+
+        for invalid in [-1, RestDuration.maximumSeconds + 1] {
+            #expect(throws: ValidationError.invalidRest) {
+                try harness.workouts.setRestSeconds(invalid, of: item)
+            }
+        }
+        #expect(item.restSeconds == 0)
+    }
 }

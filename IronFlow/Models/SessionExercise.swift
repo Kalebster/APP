@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias SessionExercise = SchemaV5.SessionExercise
+typealias SessionExercise = SchemaV7.SessionExercise
 
-extension SchemaV5 {
+extension SchemaV7 {
     /// An exercise performed in a session. Keeps snapshots so the history stays
     /// readable after the original exercise is renamed, archived or deleted.
     @Model
@@ -17,6 +17,10 @@ extension SchemaV5 {
         var exerciseNameSnapshot: String = ""
         /// Stable storage key of the muscle group when it was performed.
         var muscleGroupSnapshotRaw: String = MuscleGroup.other.rawValue
+        /// The rest between sets, in seconds, copied from the plan when the session started (1 min 30 s
+        /// for an exercise added during it); 0 is "Sem timer". Added in version 7; the exercises of older
+        /// stores are migrated with the default.
+        var restSeconds: Int = RestDuration.defaultSeconds
 
         var session: Session?
         /// The library exercise; `nil` once that exercise is deleted.

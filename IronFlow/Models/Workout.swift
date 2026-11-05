@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Workout = SchemaV5.Workout
+typealias Workout = SchemaV7.Workout
 
-extension SchemaV5 {
+extension SchemaV7 {
     /// A planned workout (template).
     @Model
     final class Workout {
