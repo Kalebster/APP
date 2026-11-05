@@ -124,9 +124,11 @@ struct RestControllerTests {
 
         rest.add(-15, for: session)
         #expect(!rest.timer.isRunning(for: session))
+        // The session changed during "Pronto": the rest of 15 s has the new next set.
+        rest.updateNextSet("Próxima: Supino Reto com Barra · série 3 de 5", for: session)
         rest.add(15, for: session)
         #expect(rest.timer.endsAt == clock.current.addingTimeInterval(15))
-        #expect(center.scheduled?.body == next)
+        #expect(center.scheduled?.body == "Próxima: Supino Reto com Barra · série 3 de 5")
     }
 
     // MARK: - The end
@@ -235,6 +237,18 @@ struct RestControllerTests {
         #expect(!rest.isAlertOn)
         #expect(!rest.shouldOfferAlert)
         #expect(center.scheduled == nil)
+    }
+
+    @Test("Before the permission is read, the notice already scheduled stays, and turning the option on reads it first")
+    func beforeThePermissionIsRead() async {
+        center.status = .notDetermined
+        let rest = RestController(settings: SessionSettings(store: store), center: center, store: store, now: clock.now)
+        rest.start(for: session, seconds: 90, nextSet: next)
+        #expect(center.cancels == 0, "The notice of before was cancelled before the permission was read")
+        await rest.setAlertWanted(true)
+        #expect(center.questions == 1, "The question was not asked")
+        #expect(rest.isAlertOn)
+        #expect(center.scheduled?.body == next)
     }
 
     @Test("Turning the notice on before the question asks it; off cancels it; the choice is kept")

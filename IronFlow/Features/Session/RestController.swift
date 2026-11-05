@@ -43,6 +43,9 @@ final class RestController {
     private(set) var authorization: RestAlertAuthorization?
     /// The last rest that ended with the app on screen.
     private(set) var lastEnd: RestEnd?
+    /// Whether the app is on screen (active or inactive, not in the background). Kept by `RootView`, so
+    /// the end of a rest reads the scene's phase of now, not of when the rest started.
+    @ObservationIgnored var isOnScreen = true
 
     let settings: SessionSettings
     private let center: any RestAlertCenter
@@ -118,10 +121,13 @@ final class RestController {
 
     /// The session changed during the rest (a set or an exercise added or removed): the notice is
     /// written again with the next set.
+    /// Also after the rest ended ("Pronto"), so a "+15" then has the right next set.
     func updateNextSet(_ text: String?, for sessionID: UUID) {
-        guard timer.isRunning(for: sessionID), text != nextSet else { return }
+        guard text != nextSet, timer.sessionID == nil || timer.sessionID == sessionID else { return }
         nextSet = text
-        changed()
+        if timer.isRunning(for: sessionID) {
+            changed()
+        }
     }
 
     /// Ends the rest once its end has come. Shown and felt only when the app is on screen and the end
@@ -166,13 +172,11 @@ final class RestController {
         let granted = await center.requestAuthorization()
         if granted {
             authorization = .authorized
+            settings.setRestAlertWanted(true)
         } else {
             let status = await center.authorization()
             // Refused at the question: never asked again.
             authorization = status == .notDetermined ? .denied : status
-        }
-        if granted {
-            settings.setRestAlertWanted(true)
         }
         scheduleAlert()
         return granted
@@ -180,6 +184,9 @@ final class RestController {
 
     /// "Aviso do fim do descanso" turned on or off. On, before the question was asked, it asks it.
     func setAlertWanted(_ wanted: Bool) async {
+        if authorization == nil {
+            await refreshAuthorization()
+        }
         if wanted, authorization == .notDetermined {
             await requestAlert()
             return
@@ -197,6 +204,8 @@ final class RestController {
 
     /// Schedules the notice for the running rest, or cancels it when there is none to give.
     private func scheduleAlert() {
+        // Until the permission is read, the notice already scheduled (before the app was closed) stays.
+        guard authorization != nil else { return }
         guard isAlertOn, let endsAt = timer.endsAt, endsAt > now(), let nextSet else {
             center.cancel()
             return

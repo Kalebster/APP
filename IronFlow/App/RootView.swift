@@ -118,7 +118,9 @@ struct RootView: View {
             feedback.show(RestAlertText.notice(nextSet: end.nextSet))
         }
         .sensoryFeedback(.impact(weight: .light), trigger: restsEndedElsewhere)
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            // On screen, even inactive (Control Center, the iPhone's question): the end is shown there.
+            rest.isOnScreen = phase != .background
             updateIdleTimer()
             if phase == .active {
                 // A rest that ended while the app was away just goes; the permission may have changed in
@@ -157,20 +159,20 @@ struct RootView: View {
         UIApplication.shared.isIdleTimerDisabled = rest.settings.keepScreenOn && !activeSessions.isEmpty && scenePhase == .active
     }
 
-    /// Waits until the rest's end and ends it, shown and felt when the app is on screen.
+    /// Waits until the rest's end and ends it, shown and felt when the app is on screen. Should the
+    /// wait end a moment before the end time (a clock change), it waits the rest of the way.
     private func endRestWhenOver() async {
         guard let endsAt = rest.timer.endsAt else { return }
-        let wait = endsAt.timeIntervalSinceNow
-        if wait > 0 {
+        while rest.timer.endsAt == endsAt, endsAt.timeIntervalSinceNow > 0 {
             do {
-                try await Task.sleep(for: .seconds(wait))
+                try await Task.sleep(for: .seconds(endsAt.timeIntervalSinceNow))
             } catch {
                 // Cancelled: the rest changed.
                 return
             }
         }
         guard rest.timer.endsAt == endsAt else { return }
-        rest.endIfOver(isActive: scenePhase == .active)
+        rest.endIfOver(isActive: rest.isOnScreen)
     }
 
     private var sessionActions: SessionActions {
