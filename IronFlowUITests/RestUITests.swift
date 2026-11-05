@@ -169,7 +169,13 @@ final class RestUITests: IronFlowUITestCase {
         XCTAssertTrue(settings.waitForExistence(timeout: 10), "No Ajustes after refusing")
         XCTAssertFalse(app.switches["options.restAlert"].exists, "The switch is still there")
         XCTAssertTrue(app.staticTexts["Desligado nos Ajustes do iPhone"].exists, "Not the text of the notice refused")
-        XCTAssertGreaterThanOrEqual(settings.frame.height, 44, "Ajustes answers on less than 44 points")
+        // The sheet, which does not take the whole screen, is drawn at the scale iOS 26 gives it (about
+        // 0,957): "Descartar treino" spans the screen minus the margins of 16, at that scale. The 44 points
+        // of Ajustes are measured at the same scale.
+        let discard = app.buttons["session.discard"]
+        let scale = discard.frame.width / (app.windows.firstMatch.frame.width - 32)
+        XCTAssertTrue((0.94...1.0).contains(scale), "Unexpected sheet scale \(scale): \(discard.frame)")
+        XCTAssertGreaterThanOrEqual(settings.frame.height, 44 * scale - 0.5, "Ajustes answers on less than 44 points (scale \(scale))")
         attachScreenshot(named: "102-session-options-refused", of: app)
         app.buttons["options.cancel"].tap()
     }
@@ -221,7 +227,9 @@ final class RestUITests: IronFlowUITestCase {
         app.buttons["session.rest.minus"].tap()
 
         // At zero: "Próxima série", "Pronto", then the bar goes.
-        XCTAssertTrue(waitForLabel(of: time, containing: "Pronto"), "No Pronto at the end: \(time.label)")
+        // Up to 15 s left after −15, with room to spare.
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Pronto"), object: time)
+        XCTAssertEqual(XCTWaiter().wait(for: [ready], timeout: 25), .completed, "No Pronto at the end: \(time.label)")
         XCTAssertTrue(time.label.contains("Próxima série"), "Rest: \(time.label)")
         attachScreenshot(named: "100-rest-ready", of: app)
         XCTAssertTrue(time.waitForNonExistence(timeout: 10), "Pronto did not go")
