@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The top of the session screen, kept in place while the sets scroll: minimize, the workout's name
-/// with its clock and the load lifted, the ⋯ menu (with "Descartar treino") and "Concluir"; then the
+/// with its clock and the load lifted, the ⋯ (which opens "Opções do treino") and "Concluir"; then the
 /// progress bar with the sets done and the current exercise.
 ///
 /// Like the system's bars, the session screen keeps it from growing past the first accessibility text
@@ -12,7 +12,8 @@ struct SessionHeader: View {
     let volumeKg: Double
     let progress: SessionProgress
     let onMinimize: @MainActor () -> Void
-    let onDiscard: @MainActor () -> Void
+    /// Opens "Opções do treino".
+    let onOptions: @MainActor () -> Void
     let onFinish: @MainActor () -> Void
 
     @ScaledMetric(relativeTo: .body) private var buttonSide: CGFloat = 32
@@ -130,12 +131,10 @@ struct SessionHeader: View {
     }
 
     private var moreMenu: some View {
-        Menu {
-            Button("Descartar treino", systemImage: "trash", role: .destructive, action: onDiscard)
-                .accessibilityIdentifier("session.discard")
-        } label: {
+        Button(action: onOptions) {
             roundButton(.more, color: Theme.Colors.mediumText)
         }
+        .buttonStyle(.plain)
         .padding(-touchExtra)
         .accessibilityShowsLargeContentViewer()
         .accessibilityLabel(Text("Mais opções do treino"))

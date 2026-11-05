@@ -1,14 +1,12 @@
 import Foundation
 
-/// The rest between sets: it starts when a set is checked and counts down from 1 min 30 s.
+/// The rest between sets: it starts when a set is checked and counts down from the exercise's rest.
 ///
 /// It keeps the moment the rest ends, not a count: the time left is always that moment minus now, so
-/// it stays right while the app is in the background or the session is minimized. Kept in memory only
-/// (never in the store); a rest belongs to one session and never carries over to another.
-/// Pure logic: every change takes the current time.
-struct RestTimer: Equatable, Sendable {
-    /// How long a rest lasts when it starts.
-    static let duration: TimeInterval = 90
+/// it stays right while the app is in the background, the session is minimized or the app was closed.
+/// Kept in the preferences by `RestController` (never in the store); a rest belongs to one session and
+/// never carries over to another. Pure logic: every change takes the current time.
+struct RestTimer: Equatable, Sendable, Codable {
     /// What "−15" and "+15" take away and add.
     static let step: TimeInterval = 15
 
@@ -43,9 +41,9 @@ struct RestTimer: Equatable, Sendable {
     }
 
     /// Starts a rest of `duration` for `sessionID`; a rest already running starts over.
-    mutating func start(for sessionID: UUID, at now: Date) {
-        endsAt = now.addingTimeInterval(Self.duration)
-        length = Self.duration
+    mutating func start(for sessionID: UUID, duration: TimeInterval, at now: Date) {
+        endsAt = now.addingTimeInterval(duration)
+        length = duration
         self.sessionID = sessionID
     }
 
@@ -59,7 +57,7 @@ struct RestTimer: Equatable, Sendable {
         length = max(newLeft, length + (newLeft - left))
     }
 
-    /// Ends the rest ("Pular", or when it reaches zero).
+    /// Ends the rest ("Pular", when it reaches zero, when the session ends).
     mutating func stop() {
         endsAt = nil
         length = 0

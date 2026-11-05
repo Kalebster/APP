@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// The app's main navigation: five tabs.
 ///
@@ -18,9 +19,16 @@ struct RootView: View {
     /// The session shown over the tabs; `nil` while it is minimized or when none is in progress.
     @State private var openedSession: Session?
     @State private var isSessionInProgress = false
-    /// The rest between sets of the session in progress. Kept here, so it goes on while the session
-    /// screen is minimized; never stored.
-    @State private var restTimer = RestTimer()
+    /// The rest between sets of the session in progress and its notice. Kept here, so it goes on while
+    /// the session screen is minimized; its end time is kept in the preferences, never in the store.
+    @State private var rest = RestController(
+        settings: SessionSettings(store: AppPreferences.store),
+        center: RestAlertCenterFactory.make(),
+        store: AppPreferences.store
+    )
+    @Environment(\.scenePhase) private var scenePhase
+    /// Rests that reached zero while the session screen was not open, for the vibration.
+    @State private var restsEndedElsewhere = 0
     /// The notices over every tab, and the root's errors, its own and those of screens that already closed.
     @State private var feedback = RootFeedback()
     /// Changed to show the Início from its top, with nothing open over it.
@@ -52,7 +60,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.workouts.root")
                         .navigationTitle("Treinos")
                 }
-                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
+                .activeSessionBar(currentSession, rest: rest) { openSession() }
             }
 
             Tab("Exercícios", image: "tab-exercises", value: AppTab.exercises) {
@@ -62,7 +70,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.exercises.root")
                         .navigationTitle("Exercícios")
                 }
-                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
+                .activeSessionBar(currentSession, rest: rest) { openSession() }
             }
 
             Tab("Histórico", image: "tab-history", value: AppTab.history) {
@@ -72,7 +80,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.history.root")
                         .navigationTitle("Histórico")
                 }
-                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
+                .activeSessionBar(currentSession, rest: rest) { openSession() }
             }
 
             Tab("Ajustes", image: "tab-settings", value: AppTab.settings) {
@@ -82,11 +90,11 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.settings.root")
                         .navigationTitle("Ajustes")
                 }
-                .activeSessionBar(currentSession, restTimer: $restTimer) { openSession() }
+                .activeSessionBar(currentSession, rest: rest) { openSession() }
             }
         }
         .fullScreenCover(item: $openedSession) { session in
-            SessionView(session: session, restTimer: $restTimer, onFinish: showHomeAfterFinishing) {
+            SessionView(session: session, rest: rest, onFinish: showHomeAfterFinishing) {
                 openedSession = nil
             }
         }
@@ -95,9 +103,40 @@ struct RootView: View {
             if let openedSession, !activeIDs.contains(openedSession.id) {
                 self.openedSession = nil
             }
-            if let restSessionID = restTimer.sessionID, !activeIDs.contains(restSessionID) {
-                restTimer.stop()
+            rest.stopUnless(inProgress: activeIDs)
+            updateIdleTimer()
+        }
+        // The end of the rest, wherever the app is: one wait until the end time, made again when it
+        // changes. Nothing runs without a rest.
+        .task(id: rest.timer.endsAt) {
+            await endRestWhenOver()
+        }
+        // With the session screen closed, the end of the rest is a notice at the top, with a vibration.
+        .onChange(of: rest.lastEnd) { _, end in
+            guard let end, openedSession == nil, activeSessions.contains(where: { $0.id == end.sessionID }) else { return }
+            restsEndedElsewhere += 1
+            feedback.show(RestAlertText.notice(nextSet: end.nextSet))
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: restsEndedElsewhere)
+        .onChange(of: scenePhase) { _, phase in
+            updateIdleTimer()
+            if phase == .active {
+                // A rest that ended while the app was away just goes; the permission may have changed in
+                // the iPhone's Settings.
+                rest.endIfOver(isActive: false)
+                Task { await rest.refreshAuthorization() }
             }
+        }
+        .onChange(of: rest.settings.keepScreenOn) {
+            updateIdleTimer()
+        }
+        .task {
+            // The rest kept from before the app was closed: gone if its session is no longer in progress,
+            // and just over if it ended meanwhile.
+            rest.stopUnless(inProgress: activeSessions.map(\.id))
+            rest.endIfOver(isActive: false)
+            await rest.refreshAuthorization()
+            updateIdleTimer()
         }
         .alert("Você já tem um treino em andamento.", isPresented: $isSessionInProgress) {
             Button("Continuar treino atual") {
@@ -110,6 +149,28 @@ struct RootView: View {
         .toast($feedback.toast)
         .errorAlert($feedback.errorMessage)
         .environment(feedback)
+    }
+
+    /// "Manter a tela ligada": the screen does not dim while a session is in progress and the app is on
+    /// screen; otherwise it goes back to normal.
+    private func updateIdleTimer() {
+        UIApplication.shared.isIdleTimerDisabled = rest.settings.keepScreenOn && !activeSessions.isEmpty && scenePhase == .active
+    }
+
+    /// Waits until the rest's end and ends it, shown and felt when the app is on screen.
+    private func endRestWhenOver() async {
+        guard let endsAt = rest.timer.endsAt else { return }
+        let wait = endsAt.timeIntervalSinceNow
+        if wait > 0 {
+            do {
+                try await Task.sleep(for: .seconds(wait))
+            } catch {
+                // Cancelled: the rest changed.
+                return
+            }
+        }
+        guard rest.timer.endsAt == endsAt else { return }
+        rest.endIfOver(isActive: scenePhase == .active)
     }
 
     private var sessionActions: SessionActions {
@@ -157,12 +218,12 @@ private extension View {
     /// The "Treino em andamento" bar above the tab bar, while `session` is in progress.
     func activeSessionBar(
         _ session: Session?,
-        restTimer: Binding<RestTimer>,
+        rest: RestController,
         open: @escaping @MainActor () -> Void
     ) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             if let session {
-                ActiveSessionBarHost(session: session, restTimer: restTimer, onOpen: open)
+                ActiveSessionBarHost(session: session, rest: rest, onOpen: open)
             }
         }
     }
@@ -174,7 +235,7 @@ private extension View {
 /// in progress catches up.
 private struct ActiveSessionBarHost: View {
     let session: Session
-    @Binding var restTimer: RestTimer
+    let rest: RestController
     let onOpen: @MainActor () -> Void
 
     var body: some View {
@@ -184,7 +245,7 @@ private struct ActiveSessionBarHost: View {
                     name: SessionFormatting.name(session.workoutNameSnapshot),
                     startedAt: session.startedAt,
                     setsText: SessionProgress(sets: session.orderedExercises.map(\.orderedSetLogs)).setsText,
-                    restEndsAt: restTimer.isRunning(for: session.id) ? restTimer.endsAt : nil
+                    restEndsAt: rest.timer.isRunning(for: session.id) ? rest.timer.endsAt : nil
                 ),
                 onOpen: onOpen
             )

@@ -1,12 +1,15 @@
 import SwiftUI
 
 /// The floating rest bar, above the bottom of the session screen while a rest runs: a ring with the
-/// time left, "−15", "+15" and "Pular". Its clock ticks once a second only while the bar is on screen.
-/// Ending the rest when it reaches zero is the session screen's job, so it happens on time even when
-/// the bar is hidden. Like the session header, the screen keeps it from growing past the first
+/// time left, "−15", "+15" and "Pular". Its clock ticks once a second only while the bar is on screen
+/// and the rest runs. When the rest reaches zero it shows "PRÓXIMA SÉRIE" and "Pronto" for a moment
+/// (`isReady`), with the ring empty and the same buttons. Ending the rest when it reaches zero is the
+/// root's job (`RestController`), so it happens on time even when the bar is hidden. Like the session header, the screen keeps it from growing past the first
 /// accessibility text size; a long press on a button shows it larger (Large Content Viewer).
 struct RestTimerBar: View {
     let timer: RestTimer
+    /// The rest just reached zero: "Próxima série", "Pronto".
+    var isReady = false
     let onAdd: @MainActor (TimeInterval) -> Void
     let onSkip: @MainActor () -> Void
 
@@ -16,9 +19,15 @@ struct RestTimerBar: View {
 
     var body: some View {
         // Ticks on the seconds of the end, so the time shown changes right on each second.
-        let ticks = (timer.endsAt ?? .now).addingTimeInterval(-86_400)
-        TimelineView(.periodic(from: ticks, by: 1)) { context in
-            bar(at: context.date)
+        Group {
+            if isReady {
+                bar(at: .now)
+            } else {
+                let ticks = (timer.endsAt ?? .now).addingTimeInterval(-86_400)
+                TimelineView(.periodic(from: ticks, by: 1)) { context in
+                    bar(at: context.date)
+                }
+            }
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
         // 20 above the bottom of the safe area, as in the model.
@@ -27,7 +36,7 @@ struct RestTimerBar: View {
     }
 
     private func bar(at now: Date) -> some View {
-        let remaining = timer.remaining(at: now)
+        let remaining = isReady ? 0 : timer.remaining(at: now)
         let shape = RoundedRectangle(cornerRadius: 17, style: .continuous)
         return ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) {
@@ -53,7 +62,7 @@ struct RestTimerBar: View {
         let lineWidth = ringSide * 4 / 40
         return HStack(spacing: 8) {
             ZStack {
-                let fractionLeft = timer.fractionLeft(at: now)
+                let fractionLeft = isReady ? 0 : timer.fractionLeft(at: now)
                 Circle()
                     .stroke(Theme.Colors.cardBorder, lineWidth: lineWidth)
                 // Nothing at 0: a line cut to no length still draws a dot with its round ends.
@@ -69,12 +78,12 @@ struct RestTimerBar: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Descanso")
+                (isReady ? Text("Próxima série") : Text("Descanso"))
                     .scaledFont(8, weight: .bold)
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Theme.Colors.secondaryText)
-                Text(verbatim: SessionFormatting.restText(remaining))
+                Text(verbatim: isReady ? String(localized: "Pronto") : SessionFormatting.restText(remaining))
                     .scaledFont(16, weight: .heavy)
                     .monospacedDigit()
             }

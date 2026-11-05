@@ -375,11 +375,11 @@ struct RestCapsuleButton: View {
             .padding(.horizontal, 11)
             .frame(minHeight: height)
             .background(Theme.Colors.unplannedDayBackground, in: Capsule())
-            .overlay(
+            .overlay {
                 Capsule()
                     .strokeBorder(Theme.Colors.lightAccent, lineWidth: 1)
                     .opacity(isHighlighted ? 1 : 0)
-            )
+            }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: isHighlighted)
             .padding(.vertical, max(0, 44 - height) / 2)
             .contentShape(Rectangle())

@@ -13,8 +13,9 @@ private let sessionLogger = Logger(subsystem: "com.ironflow.app", category: "ses
 /// here (`drafts`), never in a row, so one that scrolls out of sight is still saved.
 struct SessionView: View {
     let session: Session
-    /// The rest between sets. Kept by the root view, so it goes on while the session is minimized.
-    @Binding var restTimer: RestTimer
+    /// The rest between sets and its notice. Kept by the root view, so it goes on while the session is
+    /// minimized.
+    let rest: RestController
     /// Once the session is finished and saved, before the screen closes: the app goes to the Início.
     let onFinish: @MainActor () -> Void
     /// Closes the screen (minimized, finished or discarded).
@@ -36,6 +37,16 @@ struct SessionView: View {
     @State private var openedFinished: Set<UUID> = []
     /// Rests that reached zero on screen, for the vibration.
     @State private var restsEnded = 0
+    /// The rest that just reached zero: the bar shows "Pronto" for 2,5 s.
+    @State private var readyRest: RestEnd?
+    /// "Opções do treino".
+    @State private var isShowingOptions = false
+    /// What "Opções do treino" asked for, done once the sheet has closed.
+    @State private var afterOptions: OptionsAction?
+    /// "Avisar quando o descanso acabar?".
+    @State private var isOfferingAlert = false
+    /// Whether "Ativar aviso" was tapped, for the iPhone's question once the sheet has closed.
+    @State private var alertAccepted = false
     @State private var isPickingExercises = false
     /// "Concluir treino?", with what the session did when "Concluir" was tapped.
     @State private var finishSummary: SessionFinishSummary?
@@ -67,6 +78,10 @@ struct SessionView: View {
         let type: SetType
     }
 
+    private enum OptionsAction {
+        case discard
+    }
+
     private enum FinishSheetAction {
         case finish(SessionEnd)
         case discard
@@ -88,6 +103,7 @@ struct SessionView: View {
         let exercises = session.orderedExercises
         let setsByExercise = exercises.map(\.orderedSetLogs)
         let progress = SessionProgress(sets: setsByExercise)
+        let nextSet = Self.nextSetText(exercises: exercises, sets: setsByExercise)
 
         return NavigationStack {
             List {
@@ -137,9 +153,9 @@ struct SessionView: View {
                     volumeKg: SessionProgress.volumeKg(of: setsByExercise.flatMap { $0 }),
                     progress: progress,
                     onMinimize: minimize,
-                    onDiscard: {
+                    onOptions: {
                         focusedField = nil
-                        isConfirmingDiscard = true
+                        isShowingOptions = true
                     },
                     onFinish: requestFinish
                 )
@@ -154,11 +170,12 @@ struct SessionView: View {
                     Color.clear
                         .frame(height: 16)
                         .allowsHitTesting(false)
-                } else if restTimer.isRunning(for: session.id) {
+                } else if rest.timer.isRunning(for: session.id) || readyRest != nil {
                     RestTimerBar(
-                        timer: restTimer,
-                        onAdd: { seconds in restTimer.add(seconds, at: .now) },
-                        onSkip: { restTimer.stop() }
+                        timer: rest.timer,
+                        isReady: !rest.timer.isRunning(for: session.id),
+                        onAdd: addRest,
+                        onSkip: skipRest
                     )
                     .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     .accessibilityElement(children: .contain)
@@ -188,10 +205,37 @@ struct SessionView: View {
             .task(id: exerciseIDs) {
                 loadLastPerformances()
             }
-            .task(id: restTimer.endsAt) {
-                await endRestWhenOver()
+            // The session changed during the rest: its notice is written again with the next set.
+            .onChange(of: nextSet, initial: true) { _, text in
+                rest.updateNextSet(text, for: session.id)
             }
-            .sensoryFeedback(.success, trigger: restsEnded)
+            // The rest reached zero on screen: "Pronto" for 2,5 s, a light vibration and the announcement.
+            .onChange(of: rest.lastEnd) { _, end in
+                guard let end, end.sessionID == session.id else { return }
+                readyRest = end
+                restsEnded += 1
+                AccessibilityNotification.Announcement(RestAlertText.title).post()
+            }
+            .task(id: readyRest?.id) {
+                guard readyRest != nil else { return }
+                do {
+                    try await Task.sleep(for: .seconds(2.5))
+                } catch {
+                    return
+                }
+                readyRest = nil
+            }
+            .sensoryFeedback(.impact(weight: .light), trigger: restsEnded)
+            .sheet(isPresented: $isShowingOptions, onDismiss: actAfterOptions) {
+                SessionOptionsSheet(rest: rest) {
+                    afterOptions = .discard
+                }
+            }
+            .sheet(isPresented: $isOfferingAlert, onDismiss: actAfterAlertOffer) {
+                RestAlertOfferSheet(nextSet: rest.nextSet) {
+                    alertAccepted = true
+                }
+            }
             .sheet(item: $finishSummary, onDismiss: actAfterFinishSheet) { summary in
                 FinishSessionSheet(
                     summary: summary,
@@ -391,24 +435,68 @@ struct SessionView: View {
 
     // MARK: - Rest
 
-    /// Ends the rest when it reaches zero, with a vibration. A rest that ended while the app was away
-    /// (or the session minimized) just goes, without one.
-    private func endRestWhenOver() async {
-        guard restTimer.isRunning(for: session.id), let endsAt = restTimer.endsAt else { return }
-        let wait = endsAt.timeIntervalSinceNow
-        if wait > 0 {
-            do {
-                try await Task.sleep(for: .seconds(wait))
-            } catch {
-                // Cancelled: the rest changed, or the screen closed.
-                return
-            }
+    /// "Próxima: Supino Reto com Barra · série 2 de 5", for the end-of-rest notice.
+    private static func nextSetText(exercises: [SessionExercise], sets: [[SetLog]]) -> String? {
+        RestAlertText.nextSet(
+            names: exercises.map(\.exerciseNameSnapshot),
+            done: sets.map { $0.map(\.isCompleted) }
+        )
+    }
+
+    /// Starts the rest of the exercise of the set just checked, unless it is "Sem timer" or every set of
+    /// the session is done, which end a rest already running. The first rest offers the notice.
+    private func startRest(after performed: SessionExercise) {
+        readyRest = nil
+        let exercises = session.orderedExercises
+        let nextSet = Self.nextSetText(exercises: exercises, sets: exercises.map(\.orderedSetLogs))
+        rest.start(for: session.id, seconds: performed.restSeconds, nextSet: nextSet)
+        if rest.timer.isRunning(for: session.id), rest.shouldOfferAlert {
+            rest.markOfferShown()
+            isOfferingAlert = true
         }
-        guard restTimer.endsAt == endsAt else { return }
-        if endsAt.timeIntervalSinceNow > -2 {
-            restsEnded += 1
+    }
+
+    /// "−15" and "+15"; on "Pronto", "+15" starts a rest of 15 s and "−15" does nothing.
+    private func addRest(_ seconds: TimeInterval) {
+        if readyRest != nil, !rest.timer.isRunning(for: session.id) {
+            guard seconds > 0 else { return }
+            readyRest = nil
         }
-        restTimer.stop()
+        rest.add(seconds, for: session.id)
+    }
+
+    /// "Pular": ends the rest, or hides "Pronto".
+    private func skipRest() {
+        if rest.timer.isRunning(for: session.id) {
+            rest.stop()
+        }
+        readyRest = nil
+    }
+
+    /// Once "Avisar quando o descanso acabar?" has closed: "Ativar aviso" asks the iPhone's question;
+    /// "Agora não", or the sheet closed otherwise, says where to turn it on later.
+    private func actAfterAlertOffer() {
+        guard alertAccepted else {
+            toast = ToastMessage(String(localized: "Dá para ligar depois no ⋯ do treino"))
+            return
+        }
+        alertAccepted = false
+        Task {
+            let granted = await rest.requestAlert()
+            toast = ToastMessage(granted
+                ? String(localized: "Aviso do descanso ligado")
+                : String(localized: "Sem aviso: o descanso continua aparecendo na tela"))
+        }
+    }
+
+    /// Once "Opções do treino" has closed: "Descartar treino" asks the usual question.
+    private func actAfterOptions() {
+        guard let action = afterOptions else { return }
+        afterOptions = nil
+        switch action {
+        case .discard:
+            isConfirmingDiscard = true
+        }
     }
 
     // MARK: - Actions
@@ -434,7 +522,7 @@ struct SessionView: View {
             if focusedField?.logID == log.id {
                 focusedField = nil
             }
-            restTimer.start(for: session.id, at: .now)
+            startRest(after: performed)
             if session.exercises.allSatisfy({ $0.setLogs.allSatisfy(\.isCompleted) }) {
                 toast = ToastMessage(String(localized: "Todas as séries feitas. Toque em Concluir."))
             }
@@ -578,7 +666,7 @@ struct SessionView: View {
         do {
             try service.finishSession(session, endingAt: end)
             isClosed = true
-            restTimer.stop()
+            rest.stop()
             rootFeedback?.show(saved)
             onFinish()
             onClose()
@@ -592,7 +680,7 @@ struct SessionView: View {
         do {
             try service.discardSession(session)
             drafts = [:]
-            restTimer.stop()
+            rest.stop()
             rootFeedback?.show(String(localized: "Treino descartado"))
             onClose()
         } catch {
