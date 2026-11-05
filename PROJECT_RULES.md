@@ -408,3 +408,60 @@ A task is complete only when:
 - no known critical issue remains.
 
 Never report a task as complete simply because the code was written or compiled.
+
+---
+
+## 18. Decisões pequenas sem pedir aprovação
+
+Depois que o plano da etapa foi aprovado, o Claude Code pode decidir sozinho, sem parar para perguntar:
+
+- corrigir testes que quebraram por causa das mudanças da própria etapa;
+- corrigir bugs que o /code-review achar no código do próprio PR, desde que a correção não mude o design nem a funcionalidade aprovados;
+- organizar o código dos arquivos que a etapa já altera, sem mudar o comportamento do app;
+- mudar números dos screenshots, comentários e nomes internos;
+- rodar o CI de novo quando o GitHub cancelar por falta de máquina.
+
+Continua obrigatório parar e pedir aprovação para:
+
+- qualquer mudança de design (visual, medidas, cores, textos, telas) ou de funcionalidade (o que o app faz) que não esteja exatamente no protótipo aprovado e no prompt da etapa. Se o protótipo e o código divergirem, pergunte;
+- banco de dados, migrações ou apagar dados;
+- dependências novas, custos, permissões do iPhone e segurança;
+- mudanças no CI e nas configurações do repositório;
+- aumentar o escopo da etapa;
+- merge, sempre.
+
+Todo relatório final tem a parte "O que decidi sozinho", com cada uma dessas decisões.
+
+---
+
+## 19. Como trabalhamos neste projeto
+
+Etapas e Git
+- Uma etapa por vez: uma branch e um PR por etapa, com commit e push a cada parte.
+- Plano primeiro; merge só com a aprovação do dono.
+- Nunca force-push, reescrever o histórico ou apagar branches com trabalho não integrado.
+
+Repositório público
+- Nunca colocar senhas, chaves, tokens, dados pessoais ou e-mail pessoal no código, nos commits, nos screenshots ou nos relatórios.
+- Os commits usam o e-mail noreply do GitHub.
+
+CI e testes
+- Se o CI falhar, descobrir a causa antes de rodar de novo. Só repetir sem correção quando a falha não for do código (por exemplo, o GitHub cancelou por falta de máquina).
+- Teste instável se corrige; nunca se desliga um teste para o CI passar.
+
+Revisões
+- O /code-review roda uma vez no fim de cada PR e olha só o que o PR mudou.
+- O app inteiro é revisado só em dois momentos: antes do TestFlight e antes do lançamento.
+
+Protótipo e medidas
+- 1 px do protótipo = 1 pt no app, no texto padrão.
+- Comparar os screenshots com o protótipo no mesmo tamanho, com o protótipo começando no fim da área segura e renderizado com a mesma Inter do app.
+- Diferença aceitável: até 1 pt.
+
+Relatório final de cada etapa
+- O que foi feito, com os commits.
+- Resultado do CI, com o link do run.
+- Screenshots novos e que mudaram.
+- Achados do /code-review e o que foi feito com cada um.
+- "O que decidi sozinho" (seção 18).
+- "Para o dono decidir": cada divergência entre o protótipo e o código, sem mudar nada antes da resposta.

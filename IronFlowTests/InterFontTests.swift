@@ -20,6 +20,37 @@ struct InterFontTests {
         #expect(Bundle.main.url(forResource: "OFL", withExtension: "txt") != nil, "OFL.txt not in the app")
     }
 
+    @Test("A line of Inter is about 1,21 times its size in the five files, the ratio the line heights start from")
+    func lineHeightRatio() throws {
+        #expect(abs(InterFont.lineHeightRatio - 1.21) < 0.001)
+        for name in InterFont.allNames {
+            let font = try #require(UIFont(name: name, size: 100))
+            // What iOS gives a line of the file, rounded to its pixels at most.
+            #expect(abs(font.lineHeight - 100 * InterFont.lineHeightRatio) < 0.5, "\(name): \(font.lineHeight)")
+        }
+    }
+
+    @Test("A title of 29 at the model's 1,05 loses half of the difference above and below, no line spacing")
+    func tightLineHeight() {
+        // Inter's line of 29 is 35,09, laid out as 35,33 on a 3x screen; the model's is 30,45.
+        let metrics = LineHeightMetrics(size: 29, lineHeight: 1.05, displayScale: 3)
+        #expect(abs(metrics.edgePadding - (30.45 - 106.0 / 3) / 2) < 0.001)
+        #expect(metrics.lineSpacing == 0)
+    }
+
+    @Test("A sheet text of 13 at the model's 1,4 gains half above and below, and all of it between lines")
+    func looseLineHeight() {
+        // Inter's line of 13 is 15,73, laid out as 16 on a 3x screen; the model's is 18,2.
+        let metrics = LineHeightMetrics(size: 13, lineHeight: 1.4, displayScale: 3)
+        #expect(abs(metrics.edgePadding - (18.2 - 16) / 2) < 0.001)
+        #expect(abs(metrics.lineSpacing - 13 * (1.4 - InterFont.lineHeightRatio)) < 0.001)
+        // A line of the wrapped text is the model's: Inter's own line and the spacing.
+        #expect(abs(13 * InterFont.lineHeightRatio + metrics.lineSpacing - 18.2) < 0.001)
+        // On a 2x screen the line is rounded to its half points instead.
+        let twoX = LineHeightMetrics(size: 13, lineHeight: 1.4, displayScale: 2)
+        #expect(abs(twoX.edgePadding - (18.2 - 16) / 2) < 0.001)
+    }
+
     @Test("Each weight of the app has its file: regular, medium, semibold, bold and heavy (ExtraBold)")
     func weights() {
         #expect(InterFont.name(for: .regular) == "Inter-Regular")

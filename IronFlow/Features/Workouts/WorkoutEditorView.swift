@@ -73,7 +73,6 @@ struct WorkoutEditorView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 0)
-        .environment(\.editMode, .constant(isOrdering ? .active : .inactive))
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .top, spacing: 0) {
             topBar(canReorder: items.count > 1)
@@ -156,18 +155,20 @@ struct WorkoutEditorView: View {
         titleRow(items: items, setCount: setsByItem.reduce(0) { $0 + $1.count })
 
         if isOrdering {
-            ForEach(items) { (item: WorkoutExercise) in
-                orderingRow(item)
+            // Outside edit mode, so no drag handle: a touch and hold on a row drags it, and ↑ ↓ move it.
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                orderingRow(item, at: index, count: items.count)
             }
             .onMove(perform: moveExercises)
         } else if items.isEmpty {
             EditorEmptyCard {
                 isPickingExercises = true
             }
-            .editorRow(top: 2, bottom: 0)
+            .editorRow(top: 0, bottom: 0)
         } else {
+            // 14 below the title and above the cards, the gap between the blocks of the model's editor.
             SetTypeLegend()
-                .editorRow(top: 12, bottom: 14)
+                .editorRow(top: 0, bottom: 14)
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 exerciseCard(item, sets: setsByItem[index], canReorder: items.count > 1)
             }
@@ -188,9 +189,9 @@ struct WorkoutEditorView: View {
                     }
                 } label: {
                     Text("Concluir")
-                        .scaledFont(15, weight: .bold)
+                        .scaledFont(13, weight: .bold)
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 14)
                         .frame(minHeight: 32)
                         .background(Color.accentColor, in: Capsule())
                         .padding(.vertical, 6)
@@ -212,8 +213,7 @@ struct WorkoutEditorView: View {
                         isConfirmingDelete = true
                     }
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .scaledFont(14, weight: .bold)
+                    AppIcon(.more, size: 16)
                         .foregroundStyle(Theme.Colors.mediumText)
                         .frame(width: menuSide, height: menuSide)
                         .background(Theme.Colors.cardBackground, in: Circle())
@@ -230,7 +230,7 @@ struct WorkoutEditorView: View {
                     isPresented: $isConfirmingDelete,
                     titleVisibility: .visible
                 ) {
-                    Button("Excluir", role: .destructive, action: deleteWorkout)
+                    Button("Excluir treino", role: .destructive, action: deleteWorkout)
                     Button("Cancelar", role: .cancel) {}
                 } message: {
                     Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
@@ -238,6 +238,8 @@ struct WorkoutEditorView: View {
             }
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
+        // The model's 8 above its 36-point top row, with the 44-point controls centered on it.
+        .padding(.top, 4)
         .background(Theme.Colors.screenBackground)
     }
 
@@ -245,7 +247,7 @@ struct WorkoutEditorView: View {
     private func titleRow(items: [WorkoutExercise], setCount: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(workout.name)
-                .scaledFont(29, weight: .heavy)
+                .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                 .tracking(-0.5)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
@@ -258,7 +260,9 @@ struct WorkoutEditorView: View {
                 .accessibilityIdentifier("workout.summary")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .editorRow(top: 6, bottom: 14)
+        // 8 below the top row and 14 above the next block, as in the model; while reordering, the rows
+        // keep 6 of their own above each card.
+        .editorRow(top: 4, bottom: isOrdering ? 8 : 14)
     }
 
     /// The rows of one exercise, drawn as one card: its header, the set columns, the sets and
@@ -296,47 +300,55 @@ struct WorkoutEditorView: View {
         }
     }
 
-    /// An exercise while reordering: a card of its own with the list's drag handle inside it.
-    private func orderingRow(_ item: WorkoutExercise) -> some View {
-        EditorOrderingRow(item: item)
-            .listRowInsets(EdgeInsets(
-                top: 6,
-                leading: Theme.Metrics.screenPadding + 12,
-                bottom: 6,
-                trailing: Theme.Metrics.screenPadding + 4
-            ))
-            .listRowSeparator(.hidden)
-            .listRowBackground(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .fill(Theme.Colors.cardBackground)
-                    .padding(.horizontal, Theme.Metrics.screenPadding)
-                    .padding(.vertical, 6)
-            )
+    /// An exercise while reordering: a card of its own, with ↑ ↓ inside it.
+    private func orderingRow(_ item: WorkoutExercise, at index: Int, count: Int) -> some View {
+        EditorOrderingRow(
+            item: item,
+            canMoveUp: index > 0,
+            canMoveDown: index < count - 1,
+            onMoveUp: { moveExercise(at: index, by: -1) },
+            onMoveDown: { moveExercise(at: index, by: 1) }
+        )
+        .listRowInsets(EdgeInsets(
+            top: 6,
+            leading: Theme.Metrics.screenPadding + 12,
+            bottom: 6,
+            trailing: Theme.Metrics.screenPadding + 8
+        ))
+        .listRowSeparator(.hidden)
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .fill(Theme.Colors.cardBackground)
+                .padding(.horizontal, Theme.Metrics.screenPadding)
+                .padding(.vertical, 6)
+        )
     }
 
     /// "Adicionar exercícios", dashed, and "▶ Iniciar <nome>".
     private var bottomButtons: some View {
         let dashed = RoundedRectangle(cornerRadius: 13, style: .continuous)
-        return VStack(spacing: 10) {
+        return VStack(spacing: 14) {
             Button {
                 focusedField = nil
                 isPickingExercises = true
             } label: {
-                Label("Adicionar exercícios", systemImage: "plus")
-                    .scaledFont(13, weight: .bold)
-                    .foregroundStyle(Theme.Colors.lightAccent)
-                    .frame(maxWidth: .infinity, minHeight: addExercisesHeight)
-                    .overlay(dashed.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-                    .contentShape(dashed)
+                HStack(spacing: 6) {
+                    AppIcon(.plus, size: 14)
+                    Text("Adicionar exercícios")
+                }
+                .scaledFont(13, weight: .bold)
+                .foregroundStyle(Theme.Colors.lightAccent)
+                .frame(maxWidth: .infinity, minHeight: addExercisesHeight)
+                .overlay(dashed.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
+                .contentShape(dashed)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("workout.addExercises")
 
             Button(action: start) {
-                Label {
+                HStack(spacing: 9) {
+                    AppIcon(.playHero, size: 14)
                     Text("Iniciar \(workout.name)")
-                } icon: {
-                    Image(systemName: "play.fill")
                 }
                 .scaledFont(15, weight: .bold)
                 .foregroundStyle(Theme.Colors.screenBackground)
@@ -494,6 +506,15 @@ struct WorkoutEditorView: View {
             try service.removeExercise(item)
         } catch {
             errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// ↑ or ↓: the exercise at `index` one place up (`offset` −1) or down (+1).
+    private func moveExercise(at index: Int, by offset: Int) {
+        // As in a drag: the exercise goes before the one at the destination, counted before it moves.
+        let destination = offset < 0 ? index - 1 : index + 2
+        withAnimation {
+            moveExercises(from: IndexSet(integer: index), to: destination)
         }
     }
 

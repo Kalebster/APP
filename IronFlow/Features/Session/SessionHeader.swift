@@ -18,10 +18,10 @@ struct SessionHeader: View {
     @ScaledMetric(relativeTo: .body) private var buttonSide: CGFloat = 32
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             // Side by side when they fit; with the largest text sizes the name goes below the buttons.
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 10) {
+                HStack(alignment: .center, spacing: 8) {
                     minimizeButton
                     titles
                     Spacer(minLength: 4)
@@ -29,7 +29,7 @@ struct SessionHeader: View {
                     finishButton
                 }
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         minimizeButton
                         Spacer(minLength: 4)
                         moreMenu
@@ -41,7 +41,7 @@ struct SessionHeader: View {
             progressView
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
-        .padding(.top, 8)
+        .padding(.top, 10)
         .padding(.bottom, 14)
         .background(Theme.Colors.screenBackground, ignoresSafeAreaEdges: .top)
     }
@@ -49,7 +49,7 @@ struct SessionHeader: View {
     private var titles: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(verbatim: name)
-                .scaledFont(20, weight: .heavy)
+                .scaledFont(20, weight: .heavy, lineHeight: 1.05)
                 .lineLimit(2)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("session.name")
@@ -58,17 +58,17 @@ struct SessionHeader: View {
                     Label {
                         Text(verbatim: SessionFormatting.elapsedText(from: startedAt, to: timeline.date))
                     } icon: {
-                        Image(systemName: "stopwatch")
+                        AppIcon(.clock, size: 12)
                     }
                     .labelStyle(TightLabelStyle())
                     .scaledFont(11, weight: .bold)
                     .monospacedDigit()
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.Colors.brightText)
                 }
                 .accessibilityIdentifier("session.elapsed")
                 Text(verbatim: SessionFormatting.volumeText(volumeKg))
                     .scaledFont(10)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
                     .accessibilityIdentifier("session.volume")
             }
         }
@@ -95,7 +95,7 @@ struct SessionHeader: View {
                 }
             }
             .scaledFont(10)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.secondaryText)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [progress.setsText, progress.exerciseText].compactMap { $0 }.joined(separator: ", ")))
@@ -103,10 +103,9 @@ struct SessionHeader: View {
     }
 
     /// A round 32-point button on the card fill with the card border; it answers on 44 points.
-    private func roundButton(_ systemImage: String) -> some View {
-        Image(systemName: systemImage)
-            .scaledFont(13, weight: .bold)
-            .foregroundStyle(.primary)
+    private func roundButton(_ icon: ImageResource, color: Color) -> some View {
+        AppIcon(icon, size: 16)
+            .foregroundStyle(color)
             .frame(width: buttonSide, height: buttonSide)
             .background(Theme.Colors.cardBackground, in: Circle())
             .overlay(Circle().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
@@ -121,7 +120,7 @@ struct SessionHeader: View {
 
     private var minimizeButton: some View {
         Button(action: onMinimize) {
-            roundButton("chevron.down")
+            roundButton(.chevronDown, color: Theme.Colors.brightText)
         }
         .buttonStyle(.plain)
         .padding(-touchExtra)
@@ -135,7 +134,7 @@ struct SessionHeader: View {
             Button("Descartar treino", systemImage: "trash", role: .destructive, action: onDiscard)
                 .accessibilityIdentifier("session.discard")
         } label: {
-            roundButton("ellipsis")
+            roundButton(.more, color: Theme.Colors.mediumText)
         }
         .padding(-touchExtra)
         .accessibilityShowsLargeContentViewer()

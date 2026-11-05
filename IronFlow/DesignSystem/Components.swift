@@ -1,33 +1,50 @@
 import SwiftUI
 
-/// An SF Symbol in light blue on a dark blue rounded square: the icons of the Início summary cards and
-/// of the Treinos rows. Decorative: the text next to it says what it is.
+/// An icon of the model on a rounded square, light blue on dark blue unless told otherwise: the icons
+/// of the Início summary cards, of Personalizar and of the Treinos rows. Decorative: the text next to
+/// it says what it is.
 struct IconTile: View {
-    let systemImage: String
+    let icon: ImageResource
+    let iconSize: CGFloat
     let cornerRadius: CGFloat
+    let foreground: Color
+    let background: Color
     /// The side of the square; set in points of the default text size, it grows with the text.
     @ScaledMetric private var side: CGFloat
 
-    init(systemImage: String, side: CGFloat, cornerRadius: CGFloat) {
-        self.systemImage = systemImage
+    /// `iconSize` and `side` in points of the default text size, as in the model; both grow at the
+    /// same rate, so the icon keeps its place in the square.
+    init(
+        _ icon: ImageResource,
+        iconSize: CGFloat,
+        side: CGFloat,
+        cornerRadius: CGFloat,
+        foreground: Color = Theme.Colors.lightAccent,
+        background: Color = Theme.Colors.iconTileBackground
+    ) {
+        self.icon = icon
+        self.iconSize = iconSize
         self.cornerRadius = cornerRadius
+        self.foreground = foreground
+        self.background = background
         _side = ScaledMetric(wrappedValue: side, relativeTo: .body)
     }
 
     var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: side * 0.48, weight: .semibold))
-            .foregroundStyle(Theme.Colors.lightAccent)
+        AppIcon(icon, size: iconSize, relativeTo: .body)
+            .foregroundStyle(foreground)
             .frame(width: side, height: side)
-            .background(Theme.Colors.iconTileBackground, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .background(background, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .accessibilityHidden(true)
     }
 }
 
-/// An icon and its title close together, 4 points apart: the session clock, "+ Adicionar série".
+/// An icon and its title close together: 4 points apart for the session clock, 6 for "+ Adicionar série".
 struct TightLabelStyle: LabelStyle {
+    var spacing: CGFloat = 4
+
     func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: spacing) {
             configuration.icon
             configuration.title
         }
@@ -35,16 +52,16 @@ struct TightLabelStyle: LabelStyle {
 }
 
 /// "‹ Treinos": the blue back of the screens that hide the navigation bar for the model's own top row,
-/// the workout editor and the weekly plan. Text 15, as in the model.
+/// the workout editor and the weekly plan. Text 15, 3 after the ‹, and 4 to the left of the margin so
+/// the drawn ‹ lines up with the content below, as in the model.
 struct TextBackButton: View {
     let title: LocalizedStringKey
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: "chevron.left")
-                    .scaledFont(15, weight: .semibold)
+            HStack(spacing: 3) {
+                AppIcon(.chevronLeft, size: 16)
                 Text(title)
                     .scaledFont(15)
             }
@@ -53,6 +70,7 @@ struct TextBackButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(.leading, -4)
     }
 }
 
@@ -65,15 +83,18 @@ struct CapsuleBadge: View {
     let padding: EdgeInsets
     /// In points of the default text size: 10, or 9 on the rows of the sheets.
     var size: CGFloat = 10
+    /// Light blue on blue; "NO TREINO" of the exercise picker is gray on gray.
+    var foreground = Theme.Colors.highlightText
+    var background = Theme.Colors.highlightBadge
 
     var body: some View {
         Text(verbatim: text)
             .scaledFont(size, weight: weight)
             .tracking(tracking)
-            .foregroundStyle(Theme.Colors.highlightText)
+            .foregroundStyle(foreground)
             .lineLimit(1)
             .padding(padding)
-            .background(Theme.Colors.highlightBadge, in: Capsule())
+            .background(background, in: Capsule())
     }
 }
 

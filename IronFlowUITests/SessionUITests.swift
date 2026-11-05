@@ -24,7 +24,8 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testStartCheckMinimizeContinueAndFinish() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        // Planned for today, so the Início says it was done once the session is saved.
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "plan-today:Push"])
         startWorkout(named: "Push", in: app)
 
         XCTAssertEqual(element("session.name", in: app).label, "Push")
@@ -100,7 +101,12 @@ final class SessionUITests: IronFlowUITestCase {
         saveSessionFromTheFinishSheet(in: app)
         // Every set done and the load of the working and failure sets.
         XCTAssertTrue(waitForToast("Treino salvo · 2 séries · 200 kg", in: app), "No notice after finishing")
+        // Taken at once, while the notice of 2.5 s is still on the Início.
         attachScreenshot(named: "93-workout-saved-notice", of: app)
+        // Opened from Exercícios, finished: the app goes to the Início, where today's workout is done and
+        // the week counts it.
+        XCTAssertTrue(app.tabBars.buttons["Início"].isSelected, "Not on the Início after finishing")
+        XCTAssertTrue(waitForLabel(of: element("home.today", in: app), containing: "Push concluído hoje"), "Today: \(element("home.today", in: app).label)")
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
 
         openTab("Histórico", in: app)
@@ -139,9 +145,8 @@ final class SessionUITests: IronFlowUITestCase {
         app.buttons["session.finish"].tap()
         XCTAssertTrue(discard.waitForExistence(timeout: 10), "Nenhuma série marcada not shown again")
         discard.tap()
-        let confirm = app.buttons["Descartar"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Discard confirmation not shown")
-        XCTAssertTrue(app.staticTexts["Descartar este treino?"].exists, "Not the discard question")
+        let confirm = confirmationButton("Descartar treino", title: "Descartar treino?", in: app)
+        XCTAssertTrue(app.staticTexts["As séries deste treino não serão salvas. Não dá para desfazer."].exists, "Not the discard message")
         confirm.tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
         XCTAssertTrue(waitForToast("Treino descartado", in: app), "No notice after discarding")
@@ -217,9 +222,13 @@ final class SessionUITests: IronFlowUITestCase {
         XCTAssertTrue(lastRecord.isSelected, "The last record is not chosen first again")
         app.buttons["finish.save"].tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
-        XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
+        // Opened from Treinos, finished: the app goes to the Início.
+        XCTAssertTrue(element("home.header", in: app).waitForExistence(timeout: 10), "Not on the Início after finishing")
+        XCTAssertTrue(app.tabBars.buttons["Início"].isSelected, "Início not the selected tab")
 
         // Treinos recentes and the history show that duration.
+        openTab("Treinos", in: app)
+        XCTAssertFalse(bar.exists, "Session bar still shown after finishing")
         let recent = app.buttons["workouts.recent"].firstMatch
         XCTAssertTrue(recent.waitForExistence(timeout: 10), "The finished session is not a recent session")
         XCTAssertTrue(recent.label.hasSuffix(", 1 h"), "Recent session: \(recent.label)")

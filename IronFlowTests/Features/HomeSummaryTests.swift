@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import IronFlow
 
@@ -23,7 +24,7 @@ struct HomeSummaryTests {
         #expect(SummaryMetric.allCases.filter { $0.category == .training } == [.monthWorkouts, .streak, .weekVolume, .weekTime, .lastWorkout])
         #expect(SummaryMetric.allCases.filter { $0.category == .body } == [.bodyWeight, .height, .dailyCalorieGoal, .bmr, .weightChange])
         #expect(SummaryMetric.Category.allCases.map { String(localized: $0.title) } == ["Treino", "Corpo"])
-        #expect(Set(SummaryMetric.allCases.map(\.systemImage)).count == 10)
+        #expect(Set(SummaryMetric.allCases.map(\.icon)).count == 10)
         // A choice saved before the new indicators is still read as it was.
         #expect(HomeSummary.metrics(fromStored: "height,dailyCalorieGoal") == [.height, .dailyCalorieGoal])
         #expect(HomeSummary.metrics(fromStored: "bmr,streak,bodyWeight") == [.bmr, .streak, .bodyWeight])

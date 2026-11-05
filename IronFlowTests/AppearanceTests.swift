@@ -26,7 +26,7 @@ struct AppearanceTests {
             ("ScreenBackground", [0x0D, 0x0E, 0x11]),
             ("CardBackground", [0x17, 0x18, 0x1C]),
             ("CardBorder", [0x2A, 0x2C, 0x31]),
-            ("AccentColor", [0x4A, 0x7B, 0xEA]),
+            ("AccentColor", [0x44, 0x72, 0xD8]),
             // The Início and Treinos models.
             ("HighlightBackground", [0x15, 0x21, 0x3D]),
             ("HighlightBorder", [0x2A, 0x3D, 0x6A]),
@@ -43,7 +43,7 @@ struct AppearanceTests {
             ("PlannedDayBackground", [0x22, 0x35, 0x5F]),
             ("PlannedDayLetter", [0xCF, 0xDC, 0xFA]),
             ("UnplannedDayBackground", [0x22, 0x24, 0x2A]),
-            ("DimText", [0x7E, 0x81, 0x87]),
+            ("DimText", [0x88, 0x8B, 0x91]),
             ("FutureDayText", [0x7E, 0x81, 0x86]),
             ("MediumText", [0xC9, 0xCB, 0xD1]),
             ("RowSeparator", [0x24, 0x26, 0x2C]),
@@ -63,7 +63,7 @@ struct AppearanceTests {
             ("DashedBorder", [0x3A, 0x3D, 0x44]),
             ("WarmupSet", [0xF5, 0xB8, 0x3D]),
             ("FeederSet", [0xA9, 0x8B, 0xF5]),
-            ("FailureSet", [0xF2, 0x55, 0x5A]),
+            ("FailureSet", [0xF3, 0x63, 0x67]),
         ]
         for (name, rgb) in expected {
             let dark = try components(of: name, style: .dark)

@@ -18,6 +18,11 @@ enum InterFont {
 
     static let allNames = [regular, medium, semibold, bold, extraBold]
 
+    /// The height of a line of Inter for each point of its size, the same in the five files: the ascent
+    /// (1984) and descent (494) of their 2048 units, with no gap between lines. It is the model's
+    /// `line-height: normal`, about 1,21.
+    static let lineHeightRatio: CGFloat = (1984 + 494) / 2048
+
     /// The file of a weight. The app uses regular, medium, semibold, bold and heavy; a lighter weight
     /// reads as Regular, and black as ExtraBold, the heaviest file.
     static func name(for weight: Font.Weight) -> String {

@@ -38,9 +38,9 @@ struct WeeklyPlanView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 8) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("Programação semanal")
-                        .scaledFont(29, weight: .heavy)
+                        .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                         .tracking(-0.5)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
@@ -50,7 +50,7 @@ struct WeeklyPlanView: View {
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .accessibilityIdentifier("plan.header")
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, 6)
 
                 goalCard(plannedDays: plannedDays)
                     .padding(.bottom, 6)
@@ -93,6 +93,8 @@ struct WeeklyPlanView: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, Theme.Metrics.screenPadding)
+            // The model's 8 above its 36-point top row, with the 44-point back button centered on it.
+            .padding(.top, 4)
             .background(Theme.Colors.screenBackground)
         }
         .screenBackground()
@@ -126,19 +128,26 @@ struct WeeklyPlanView: View {
     /// "Meta da semana: 4 treinos" on blue, with what it means.
     private func goalCard(plannedDays: Int) -> some View {
         HStack(spacing: 12) {
-            IconTile(systemImage: "target", side: 36, cornerRadius: 10)
+            IconTile(
+                .target,
+                iconSize: 16,
+                side: 36,
+                cornerRadius: 10,
+                foreground: Theme.Colors.highlightText,
+                background: Theme.Colors.highlightBadge
+            )
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: WeeklyPlanSummary.goalText(plannedDays: plannedDays))
                     .scaledFont(15, weight: .heavy)
-                    .foregroundStyle(Theme.Colors.highlightText)
+                    .foregroundStyle(Theme.Colors.brightText)
                 Text("É o anel da semana no Início. Cada dia com treino conta 1.")
-                    .scaledFont(11)
+                    .scaledFont(11, lineHeight: 1.35)
                     .foregroundStyle(Theme.Colors.highlightSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .highlightStyle(padding: EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14), cornerRadius: 15)
+        .highlightStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12), cornerRadius: 15)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("plan.goal")
     }
@@ -177,10 +186,10 @@ private struct WeeklyPlanDayRow: View {
         let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
         HStack(spacing: 12) {
             dateSquare
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(verbatim: row.choiceText)
-                        .scaledFont(15, weight: .bold)
+                        .scaledFont(15, weight: workout == nil ? .semibold : .bold)
                         .foregroundStyle(workout == nil ? Theme.Colors.secondaryText : Theme.Colors.brightText)
                         .lineLimit(lineLimit)
                     if row.isToday {
@@ -188,7 +197,7 @@ private struct WeeklyPlanDayRow: View {
                             text: String(localized: "HOJE"),
                             weight: .bold,
                             tracking: 0.9,
-                            padding: EdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6),
+                            padding: EdgeInsets(top: 2, leading: 7, bottom: 2, trailing: 7),
                             size: 9
                         )
                         .accessibilityHidden(true)
@@ -199,15 +208,16 @@ private struct WeeklyPlanDayRow: View {
                     .lineLimit(lineLimit)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "chevron.right")
-                .scaledFont(12, weight: .semibold)
+            AppIcon(.chevronRight, size: 12)
                 .foregroundStyle(Theme.Colors.dimText)
         }
         .padding(.vertical, 10)
-        .padding(.horizontal, 12)
+        .padding(.leading, 10)
+        .padding(.trailing, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(row.isToday ? Theme.Colors.highlightBackground : Theme.Colors.cardBackground, in: shape)
-        .overlay(shape.strokeBorder(row.isToday ? Theme.Colors.highlightBorder : Theme.Colors.cardBorder, lineWidth: 1))
+        // Only today's row has a border, as in the model.
+        .overlay(shape.strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1).opacity(row.isToday ? 1 : 0))
         .overlay(shape.strokeBorder(Color.accentColor, lineWidth: 2).opacity(isChanged ? 1 : 0))
         .contentShape(shape)
     }
@@ -219,14 +229,14 @@ private struct WeeklyPlanDayRow: View {
 
     /// "SEG" over "12", blue on a day with a workout.
     private var dateSquare: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 1) {
             Text(verbatim: WeeklyPlanSummary.dayAbbreviation(row.weekday))
                 .scaledFont(11, weight: .heavy)
                 .tracking(0.8)
             Text(verbatim: "\(dayNumber)")
                 .scaledFont(15, weight: .heavy)
         }
-        .foregroundStyle(workout == nil ? Theme.Colors.secondaryText : Theme.Colors.plannedDayLetter)
+        .foregroundStyle(workout == nil ? Theme.Colors.dimText : Theme.Colors.plannedDayLetter)
         .frame(width: dateSide, height: dateSide)
         .background(
             workout == nil ? Theme.Colors.unplannedDayBackground : Theme.Colors.plannedDayBackground,
@@ -313,8 +323,8 @@ struct WeeklyPlanDaySheet: View {
                 }
             }
         }
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func option(
@@ -326,10 +336,10 @@ struct WeeklyPlanDaySheet: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: title)
-                        .scaledFont(15, weight: .bold)
+                        .scaledFont(14, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(detail)
                         .scaledFont(11)
@@ -337,13 +347,12 @@ struct WeeklyPlanDaySheet: View {
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .scaledFont(13, weight: .bold)
-                        .foregroundStyle(Theme.Colors.lightAccent)
-                }
+                AppIcon(.check, size: 13)
+                    .foregroundStyle(Theme.Colors.lightAccent)
+                    .opacity(isSelected ? 1 : 0)
+                    .frame(width: 20)
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .padding(.horizontal, 14)
             .contentShape(Rectangle())
         }

@@ -31,12 +31,14 @@ struct BMRCalculatorSheet: View {
         let estimate = BMRCalculator.estimate(inputs, now: now, calendar: calendar)
 
         FittedSheet {
-            VStack(alignment: .leading, spacing: 18) {
+            // As in the model's sheet: 8 between the blocks and 6 more above each section's title.
+            VStack(alignment: .leading, spacing: 14) {
                 SheetHeader(
                     Text("Calcular TMB"),
                     explanation: Text(verbatim: Self.introduction(weightKg: inputs.weightKg, heightCm: inputs.heightCm)),
                     explanationIdentifier: "bmr.intro"
                 )
+                .padding(.bottom, 6)
 
                 section("Sexo") {
                     segments(BiologicalSex.allCases, selected: inputs.sex, name: \.displayName, identifier: { "bmr.sex.\($0.rawValue)" }) { sex in
@@ -58,6 +60,7 @@ struct BMRCalculatorSheet: View {
                     result(estimate, goal: inputs.weightGoal)
                 }
                 closing
+                    .padding(.top, -6)
             }
             .sheetContentPadding()
         }
@@ -82,7 +85,7 @@ struct BMRCalculatorSheet: View {
     // MARK: - Choices
 
     private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             SheetSectionTitle(title)
             content()
         }
@@ -128,7 +131,7 @@ struct BMRCalculatorSheet: View {
                 .accessibilityIdentifier(identifier(option))
             }
         }
-        .padding(3)
+        .padding(4)
         .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -211,11 +214,11 @@ struct BMRCalculatorSheet: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.down")
-                    .scaledFont(12, weight: .bold)
+                AppIcon(.chevronDown, size: 12)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
-            .padding(.horizontal, 12)
+            .padding(.leading, 12)
+            .padding(.trailing, 10)
             .frame(maxWidth: .infinity, minHeight: menuHeight)
             .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
@@ -238,8 +241,8 @@ struct BMRCalculatorSheet: View {
                 activityRow(level, isSelected: level == selected)
             }
         }
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func activityRow(_ level: ActivityLevel, isSelected: Bool) -> some View {
@@ -248,7 +251,7 @@ struct BMRCalculatorSheet: View {
                 save { try $0.setActivityLevel(level) }
             }
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(level.displayName)
                         .scaledFont(14, weight: .bold)
@@ -259,11 +262,10 @@ struct BMRCalculatorSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .scaledFont(13, weight: .bold)
-                        .foregroundStyle(Theme.Colors.lightAccent)
-                }
+                AppIcon(.check, size: 13)
+                    .foregroundStyle(Theme.Colors.lightAccent)
+                    .opacity(isSelected ? 1 : 0)
+                    .frame(width: 20)
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 14)
@@ -282,39 +284,39 @@ struct BMRCalculatorSheet: View {
     /// meta"; or, without a result, what is missing.
     @ViewBuilder
     private func result(_ estimate: Result<BMRCalculator.Estimate, BMRCalculator.Missing>, goal: WeightGoal) -> some View {
-        VStack(spacing: 12) {
-            Group {
-                switch estimate {
-                case .success(let values):
-                    VStack(spacing: 10) {
-                        ViewThatFits(in: .horizontal) {
-                            // The three boxes share the height of the tallest one.
-                            HStack(spacing: 8) { resultBoxes(values) }
-                                .fixedSize(horizontal: false, vertical: true)
-                            VStack(spacing: 8) { resultBoxes(values) }
-                        }
-                        Text(Self.resultNote(for: goal))
-                            .scaledFont(12)
-                            .foregroundStyle(Theme.Colors.highlightSecondaryText)
-                            .multilineTextAlignment(.center)
+        VStack(spacing: 8) {
+            switch estimate {
+            case .success(let values):
+                VStack(spacing: 10) {
+                    ViewThatFits(in: .horizontal) {
+                        // The three boxes share the height of the tallest one.
+                        HStack(spacing: 8) { resultBoxes(values) }
                             .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityIdentifier("bmr.note")
+                        VStack(spacing: 8) { resultBoxes(values) }
                     }
-                case .failure(let missing):
-                    Text(missing.message)
-                        .scaledFont(13)
+                    Text(Self.resultNote(for: goal))
+                        .scaledFont(12)
                         .foregroundStyle(Theme.Colors.highlightSecondaryText)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .accessibilityIdentifier("bmr.message")
+                        .accessibilityIdentifier("bmr.note")
                 }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.highlightBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1))
+            case .failure(let missing):
+                // What is missing, on the dark of the blocks, as in the model.
+                Text(missing.message)
+                    .scaledFont(12)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                    .padding(14)
+                    .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityIdentifier("bmr.message")
             }
-            .padding(12)
-            .frame(maxWidth: .infinity)
-            .background(Theme.Colors.highlightBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1))
 
             if let errorMessage {
                 Text(verbatim: errorMessage)
@@ -355,10 +357,10 @@ struct BMRCalculatorSheet: View {
                 .foregroundStyle(Theme.Colors.highlightSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
+        .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.Colors.selectedCardBackground, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        // The screen's dark at 45% over the blue of the result, as in the model.
+        .background(Theme.Colors.screenBackground.opacity(0.45), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: label)): \(number) kcal"))
         .accessibilityIdentifier(identifier)
@@ -375,10 +377,10 @@ struct BMRCalculatorSheet: View {
 
     /// The note on the estimate and "Fechar".
     private var closing: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             Text("É uma estimativa pela fórmula de Mifflin-St Jeor. Para um plano sob medida, procure um nutricionista.")
-                .scaledFont(11)
-                .foregroundStyle(Theme.Colors.secondaryText)
+                .scaledFont(11, lineHeight: 1.4)
+                .foregroundStyle(Theme.Colors.dimText)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity)

@@ -21,7 +21,8 @@ struct RestTimerBar: View {
             bar(at: context.date)
         }
         .padding(.horizontal, Theme.Metrics.screenPadding)
-        .padding(.bottom, 8)
+        // 20 above the bottom of the safe area, as in the model.
+        .padding(.bottom, 20)
         .padding(.top, 4)
     }
 
@@ -29,9 +30,9 @@ struct RestTimerBar: View {
         let remaining = timer.remaining(at: now)
         let shape = RoundedRectangle(cornerRadius: 17, style: .continuous)
         return ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 clock(remaining: remaining, at: now)
-                Spacer(minLength: 6)
+                Spacer(minLength: 0)
                 buttons
             }
             // With the largest text sizes, the buttons go below the time; the bar keeps the full width.
@@ -48,20 +49,22 @@ struct RestTimerBar: View {
     }
 
     private func clock(remaining: TimeInterval, at now: Date) -> some View {
-        HStack(spacing: 10) {
+        // As in the model's ring, drawn on 40 × 40: a line 4 wide on a circle of radius 16.
+        let lineWidth = ringSide * 4 / 40
+        return HStack(spacing: 8) {
             ZStack {
                 let fractionLeft = timer.fractionLeft(at: now)
                 Circle()
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 4)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: lineWidth)
                 // Nothing at 0: a line cut to no length still draws a dot with its round ends.
                 if fractionLeft > 0 {
                     Circle()
                         .trim(from: 0, to: fractionLeft)
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                 }
             }
-            .padding(2)
+            .padding(ringSide * 4 / 40)
             .frame(width: ringSide, height: ringSide)
             .accessibilityHidden(true)
 
@@ -70,7 +73,7 @@ struct RestTimerBar: View {
                     .scaledFont(8, weight: .bold)
                     .tracking(1.5)
                     .textCase(.uppercase)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
                 Text(verbatim: SessionFormatting.restText(remaining))
                     .scaledFont(16, weight: .heavy)
                     .monospacedDigit()
@@ -87,7 +90,7 @@ struct RestTimerBar: View {
     }
 
     private var buttons: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             stepButton("−15", label: Text("Menos 15 segundos"), identifier: "session.rest.minus") {
                 onAdd(-RestTimer.step)
             }
@@ -98,7 +101,7 @@ struct RestTimerBar: View {
                 Text("Pular")
                     .scaledFont(11, weight: .bold)
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 9)
                     .frame(minWidth: buttonMinWidth, minHeight: buttonHeight)
                     .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .padding(.vertical, touchExtra)
@@ -123,7 +126,7 @@ struct RestTimerBar: View {
                 .scaledFont(11, weight: .bold)
                 .monospacedDigit()
                 .foregroundStyle(Theme.Colors.mediumText)
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 9)
                 .frame(minWidth: buttonMinWidth, minHeight: buttonHeight)
                 .background(Theme.Colors.cardBorder, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .padding(.vertical, touchExtra)

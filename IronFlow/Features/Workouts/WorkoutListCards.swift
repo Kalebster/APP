@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A workout in the "Meus treinos" grid: name, what it holds and its muscle groups, a start button (▶)
-/// and an options menu (⋮) with "Editar treino", "Renomear" and "Excluir". The workout planned for today is highlighted, with "HOJE". The card opens
+/// and an options menu (⋮) with "Editar treino", "Renomear treino" and "Excluir treino". The workout planned for today is highlighted, with "HOJE". The card opens
 /// the workout's editor; the other two controls sit over it, not inside its button, so each one is its
 /// own accessibility element. The card fills the height it is given, so the cards of a row match.
 struct WorkoutGridCard: View {
@@ -14,9 +14,9 @@ struct WorkoutGridCard: View {
     let onEdit: @MainActor () -> Void
     let onStart: @MainActor () -> Void
     let onRename: @MainActor () -> Void
-    /// "Excluir" in the menu: asks for the confirmation.
+    /// "Excluir treino" in the menu: asks for the confirmation.
     let onDelete: @MainActor () -> Void
-    /// "Excluir" in the confirmation: deletes the workout.
+    /// "Excluir treino" in the confirmation: deletes the workout.
     let onConfirmDelete: @MainActor () -> Void
 
     /// The card's minimum height, 128 points at the default text size, without its padding.
@@ -28,30 +28,37 @@ struct WorkoutGridCard: View {
 
         ZStack {
             Button(action: onOpen) {
-                let content = VStack(alignment: .leading, spacing: 6) {
-                    if isToday {
-                        CapsuleBadge(
-                            text: String(localized: "HOJE"),
-                            weight: .bold,
-                            tracking: 0.9,
-                            padding: EdgeInsets(top: 3, leading: 7, bottom: 3, trailing: 7)
-                        )
+                // 9 between the blocks, as in the model; "HOJE" 5 above the name.
+                let content = VStack(alignment: .leading, spacing: 9) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        if isToday {
+                            CapsuleBadge(
+                                text: String(localized: "HOJE"),
+                                weight: .bold,
+                                tracking: 0.9,
+                                padding: EdgeInsets(top: 3, leading: 7, bottom: 3, trailing: 7)
+                            )
+                        }
+                        Text(workout.name)
+                            .scaledFont(15, weight: .heavy)
+                            .foregroundStyle(Theme.Colors.brightText)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            // 3 points down beside the ⋮, as in the model, when there is no "HOJE" above.
+                            .padding(.top, isToday ? 0 : 3)
+                            // The room of the ⋮ menu, which sits over the top corner.
+                            .padding(.trailing, 26)
                     }
-                    Text(workout.name)
-                        .scaledFont(15, weight: .heavy)
-                        .foregroundStyle(isToday ? Theme.Colors.highlightText : Color.primary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        // The room of the ⋮ menu, which sits over the top corner.
-                        .padding(.trailing, 26)
-                    VStack(alignment: .leading, spacing: 2) {
+                    // One line under the other, 1,35 times the size each, as the model's two lines.
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(summary)
+                            .scaledFont(11, lineHeight: 1.35)
                         if !groups.isEmpty {
                             Text(verbatim: groups)
+                                .scaledFont(11, lineHeight: 1.35)
                         }
                     }
-                    .scaledFont(11)
-                    .foregroundStyle(isToday ? Theme.Colors.highlightSecondaryText : Color.secondary)
+                    .foregroundStyle(isToday ? Theme.Colors.highlightSecondaryText : Theme.Colors.secondaryText)
                     .multilineTextAlignment(.leading)
                     // The room of the start button, which sits over the bottom corner.
                     Color.clear.frame(height: 34)
@@ -97,14 +104,12 @@ struct WorkoutGridCard: View {
     private var optionsMenu: some View {
         Menu {
             Button("Editar treino", systemImage: "slider.horizontal.3", action: onEdit)
-            Button("Renomear", systemImage: "pencil", action: onRename)
-            Button("Excluir", systemImage: "trash", role: .destructive, action: onDelete)
+            Button("Renomear treino", systemImage: "pencil", action: onRename)
+            Button("Excluir treino", systemImage: "trash", role: .destructive, action: onDelete)
         } label: {
-            Image(systemName: "ellipsis")
-                .rotationEffect(.degrees(90))
-                .scaledFont(15, weight: .bold)
+            AppIcon(.moreVertical, size: 15)
                 // A fixed gray, so the accent color of the menu does not tint the dots.
-                .foregroundStyle(Color.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
                 .frame(width: 27, height: 27)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
@@ -121,7 +126,7 @@ struct WorkoutGridCard: View {
             ),
             titleVisibility: .visible
         ) {
-            Button("Excluir", role: .destructive, action: onConfirmDelete)
+            Button("Excluir treino", role: .destructive, action: onConfirmDelete)
             Button("Cancelar", role: .cancel) {}
         } message: {
             Text("O histórico dos treinos já feitos continua salvo. Não dá para desfazer.")
@@ -132,8 +137,7 @@ struct WorkoutGridCard: View {
     /// White on today's workout, accent on the others.
     private func startButton(isEnabled: Bool) -> some View {
         Button(action: onStart) {
-            Image(systemName: "play.fill")
-                .scaledFont(13, weight: .bold)
+            AppIcon(.play, size: 13)
                 .foregroundStyle(isToday ? Theme.Colors.screenBackground : Color.white)
                 .frame(width: 34, height: 34)
                 .background(isToday ? Color.white : Color.accentColor, in: Circle())
@@ -158,22 +162,20 @@ struct FreeWorkoutCard: View {
     var body: some View {
         Button(action: onStart) {
             HStack(spacing: 12) {
-                IconTile(systemImage: "bolt.fill", side: 36, cornerRadius: 10)
+                IconTile(.bolt, iconSize: 17, side: 36, cornerRadius: 10)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Treino livre")
                         .scaledFont(14, weight: .bold)
                     Text("Escolha os exercícios na hora e registre suas séries")
                         .scaledFont(12)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .scaledFont(12, weight: .semibold)
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
+                AppIcon(.chevronRight, size: 12)
+                    .foregroundStyle(Theme.Colors.dimText)
             }
-            .cardStyle(padding: EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 14), cornerRadius: 17)
+            .cardStyle(padding: EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14), cornerRadius: 17)
             .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -188,7 +190,7 @@ struct RecentSessionRow: View {
 
     var body: some View {
         let name = SessionFormatting.name(session.workoutNameSnapshot)
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(name)
                     .scaledFont(14, weight: .bold)
@@ -196,7 +198,7 @@ struct RecentSessionRow: View {
                     .multilineTextAlignment(.leading)
                 Text(verbatim: "\(SessionFormatting.weekdayDateText(session.startedAt)) · \(SessionFormatting.timeText(session.startedAt))")
                     .scaledFont(12)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
             Spacer(minLength: 8)
             if let duration = session.duration {
@@ -204,9 +206,8 @@ struct RecentSessionRow: View {
                     .scaledFont(12, weight: .semibold)
                     .foregroundStyle(Theme.Colors.mediumText)
             }
-            Image(systemName: "chevron.right")
-                .scaledFont(12, weight: .semibold)
-                .foregroundStyle(.tertiary)
+            AppIcon(.chevronRight, size: 12)
+                .foregroundStyle(Theme.Colors.dimText)
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
@@ -228,12 +229,12 @@ struct EmptyWorkoutsCard: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            IconTile(systemImage: "list.bullet.rectangle", side: 36, cornerRadius: 10)
+            IconTile(.tabWorkouts, iconSize: 17, side: 36, cornerRadius: 10)
             Text("Nenhum treino ainda")
                 .scaledFont(14, weight: .bold)
             Text("Seus treinos aparecerão aqui.")
                 .scaledFont(12)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
             Button(action: onCreate) {
                 Text("Criar treino")
                     .scaledFont(13, weight: .bold)

@@ -98,20 +98,17 @@ final class WorkoutUITests: IronFlowUITestCase {
         return query.count == expected
     }
 
-    /// While reordering three exercises: drags the first one by its handle below the last one, slowly
-    /// and held a moment over its new place, so the list follows the drag on a busy simulator too.
+    /// While reordering three exercises: touches and holds the first one on its name, then drags it below
+    /// the last one, slowly and held a moment over its new place, so the list follows the drag on a busy
+    /// simulator too. There is no drag handle: the row itself is dragged.
     @MainActor
     private func dragFirstExerciseBelowTheLast(in app: XCUIApplication) {
-        let cells = app.cells.containing(.any, identifier: "workout.ordering.exercise")
-        let first = cells.element(boundBy: 0)
-        let last = cells.element(boundBy: 2)
-        let handle = first.buttons.firstMatch
-        let start = handle.exists
-            ? handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-            : first.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
-        start.press(
+        let rows = app.descendants(matching: .any).matching(identifier: "workout.ordering.exercise")
+        let first = rows.element(boundBy: 0)
+        let last = rows.element(boundBy: 2)
+        first.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
             forDuration: 0.8,
-            thenDragTo: last.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.9)),
+            thenDragTo: last.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)),
             withVelocity: XCUIGestureVelocity(rawValue: 150),
             thenHoldForDuration: 0.6
         )
@@ -177,13 +174,25 @@ final class WorkoutUITests: IronFlowUITestCase {
         app.buttons["workouts.empty.create"].tap()
         let field = app.textFields["workout.name.field"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Name field not found")
+        // The blue button always answers: with the name empty it saves nothing, says what is missing and
+        // keeps the keyboard in the field; the message leaves as the name is typed.
         let save = app.buttons["workout.name.save"]
-        XCTAssertFalse(save.isEnabled, "Save enabled with an empty name")
-        field.tap()
+        XCTAssertTrue(save.isEnabled, "Save unavailable with an empty name")
+        save.tap()
+        let error = element("workout.name.error", in: app)
+        XCTAssertTrue(error.waitForExistence(timeout: 10), "No message for an empty name")
+        XCTAssertEqual(error.label, "Digite um nome para o treino.")
+        XCTAssertTrue(field.exists, "The name sheet closed with an empty name")
+        attachScreenshot(named: "94-workout-name-empty", of: app)
+        // Typed without tapping the field: the keyboard is still in it.
         field.typeText("   ")
-        XCTAssertFalse(save.isEnabled, "Save enabled with a blank name")
+        XCTAssertTrue(error.waitForNonExistence(timeout: 10), "Message kept after typing")
+        // The keyboard's Done does what the blue button does: a blank name is not saved either.
+        field.typeText("\n")
+        XCTAssertTrue(error.waitForExistence(timeout: 10), "No message for a blank name")
+        XCTAssertTrue(field.exists, "The name sheet closed with a blank name")
         field.typeText("Costas e Bíceps")
-        XCTAssertTrue(save.isEnabled, "Save disabled with a valid name")
+        XCTAssertTrue(error.waitForNonExistence(timeout: 10), "Message kept after typing the name")
         save.tap()
         XCTAssertTrue(waitForToast("Treino criado", in: app), "No notice after creating")
 
@@ -438,10 +447,16 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(app.buttons["workout.ordering.done"].exists, "Concluir not shown")
         XCTAssertFalse(app.buttons["workout.menu"].exists, "The ⋯ menu is still shown")
         XCTAssertEqual(rows.element(boundBy: 0).label, "Supino Reto com Barra, 3 séries")
+        // ↑ ↓ on each row, without the iOS drag handle; the ↑ of the first and the ↓ of the last do nothing.
+        XCTAssertEqual(app.buttons.matching(identifier: "workout.ordering.up").count, 3)
+        XCTAssertEqual(app.buttons.matching(identifier: "workout.ordering.down").count, 3)
+        XCTAssertFalse(app.buttons["Subir Supino Reto com Barra"].isEnabled, "↑ of the first exercise available")
+        XCTAssertTrue(app.buttons["Descer Supino Reto com Barra"].isEnabled, "↓ of the first exercise unavailable")
+        XCTAssertFalse(app.buttons["Descer Tríceps na Polia com Corda"].isEnabled, "↓ of the last exercise available")
         attachScreenshot(named: "78-workout-reorder", of: app)
 
-        // The first exercise dragged by its handle below the last one. A drag the list did not follow at
-        // all (seen on a busy CI machine: the order unchanged) is made once more; the new order is
+        // The first exercise touched, held and dragged below the last one. A drag the list did not follow
+        // at all (seen on a busy CI machine: the order unchanged) is made once more; the new order is
         // checked either way.
         let moved = "Supino Reto com Barra, 3 séries"
         dragFirstExerciseBelowTheLast(in: app)
@@ -450,15 +465,23 @@ final class WorkoutUITests: IronFlowUITestCase {
         }
         XCTAssertTrue(waitForLabel(of: rows.element(boundBy: 2), toBe: moved), "Not reordered: \(rows.element(boundBy: 2).label)")
 
+        // ↑ brings it back one place: Barra Fixa, Supino, Tríceps.
+        app.buttons["Subir Supino Reto com Barra"].tap()
+        XCTAssertTrue(waitForLabel(of: rows.element(boundBy: 1), toBe: moved), "↑ did not move it: \(rows.element(boundBy: 1).label)")
+        XCTAssertTrue(app.buttons["Descer Tríceps na Polia com Corda"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["Descer Tríceps na Polia com Corda"].isEnabled, "↓ of the new last exercise available")
+
         app.buttons["workout.ordering.done"].tap()
         XCTAssertTrue(app.buttons["workout.menu"].waitForExistence(timeout: 10), "Reorder mode not left")
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Barra Fixa Pronada,"), "First: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 1).label.hasPrefix("Supino Reto com Barra,"), "Second: \(headers.element(boundBy: 1).label)")
 
         // Kept after leaving.
         goBackFromEditor(in: app)
         openWorkout(named: "Push", in: app)
         XCTAssertTrue(exerciseHeaders(in: app).element(boundBy: 0).label.hasPrefix("Barra Fixa Pronada,"), "Order not saved")
+        XCTAssertTrue(exerciseHeaders(in: app).element(boundBy: 1).label.hasPrefix("Supino Reto com Barra,"), "Order not saved")
 
         // The exercise's ⋯ menu also starts reordering.
         app.buttons.matching(identifier: "workout.exercise.menu").element(boundBy: 0).tap()
@@ -513,8 +536,13 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(field.value as? String, "Push")
         field.tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Push".count))
-        XCTAssertFalse(app.buttons["workout.name.save"].isEnabled, "Save enabled with an empty name")
+        // An emptied name is not saved: the message shows and the workout keeps its name.
+        app.buttons["workout.name.save"].tap()
+        let error = element("workout.name.error", in: app)
+        XCTAssertTrue(error.waitForExistence(timeout: 10), "No message for an empty name")
+        XCTAssertTrue(field.exists, "The name sheet closed with an empty name")
         field.typeText("Peito e Tríceps")
+        XCTAssertTrue(error.waitForNonExistence(timeout: 10), "Message kept after typing the name")
         app.buttons["workout.name.save"].tap()
 
         XCTAssertTrue(waitForLabel(of: element("workout.title", in: app), toBe: "Peito e Tríceps"), "Title not renamed")
@@ -537,17 +565,15 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(element(labelStartingWith: "Excluir “Push”", in: app).waitForExistence(timeout: 10), "Delete confirmation not shown")
         XCTAssertTrue(app.staticTexts["O histórico dos treinos já feitos continua salvo. Não dá para desfazer."].exists, "Delete message")
         // The confirmation points to the ⋯ it came from: it opens right below it.
-        let confirmationFrame = app.buttons["Excluir"].frame
+        let confirmationFrame = confirmationButton("Excluir treino", title: "Excluir “Push”", in: app).frame
         XCTAssertGreaterThan(confirmationFrame.minY, menuFrame.maxY, "Confirmation not below the ⋯ \(menuFrame): \(confirmationFrame)")
         XCTAssertLessThan(confirmationFrame.minY, menuFrame.maxY + 300, "Confirmation far from the ⋯ \(menuFrame): \(confirmationFrame)")
         attachScreenshot(named: "15-workout-delete-confirmation", of: app)
-        cancelDialog(confirmLabel: "Excluir", in: app)
+        cancelDialog(confirmLabel: "Excluir treino", in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.title", in: app), toBe: "Push"), "Cancel left the editor")
 
         chooseFromEditorMenu("Excluir treino", in: app)
-        let confirm = app.buttons["Excluir"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Delete confirmation not shown")
-        confirm.tap()
+        confirmationButton("Excluir treino", title: "Excluir “Push”", in: app).tap()
 
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "List not shown empty after deleting")
         XCTAssertFalse(app.buttons["workouts.card"].exists, "Deleted workout still listed")

@@ -171,7 +171,7 @@ struct SessionSetRow: View {
 
     private func numberColor(_ type: SetType) -> Color {
         if type == .working {
-            return isCurrent ? Color.white : isDone ? Theme.Colors.lightAccent : Color.secondary
+            return isCurrent ? Color.white : isDone ? Theme.Colors.lightAccent : Theme.Colors.secondaryText
         }
         return isCurrent ? Theme.Colors.screenBackground : type.numberColor
     }
@@ -253,14 +253,13 @@ struct SessionSetRow: View {
                 } else {
                     Circle().strokeBorder(isCurrent ? Color.accentColor : Theme.Colors.controlBorder, lineWidth: 1.5)
                 }
-                Image(systemName: "checkmark")
-                    .scaledFont(12, weight: .bold)
+                AppIcon(.check, size: 13)
                     .foregroundStyle(isDone ? Color.white : isCurrent ? Theme.Colors.lightAccent : Theme.Colors.dimText)
             }
             .frame(width: checkSide, height: checkSide)
             .frame(width: checkWidth + 12, height: rowHeight)
             .contentShape(Rectangle())
-            // The checkmark symbol reads as "selected" on its own, even on a set not done: the button says
+            // The check would read as "selected" on its own, even on a set not done: the button says
             // what it does, and is selected only once the set is done.
             .accessibilityHidden(true)
         }
@@ -303,7 +302,7 @@ private struct SetFieldStyle: ViewModifier {
             .scaledFont(14, weight: .bold)
             .monospacedDigit()
             .multilineTextAlignment(.center)
-            .foregroundStyle(.primary)
+            .foregroundStyle(Theme.Colors.brightText)
             .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, minHeight: height)
             .background(fill, in: shape)

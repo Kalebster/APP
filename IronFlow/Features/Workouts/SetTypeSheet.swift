@@ -14,19 +14,22 @@ struct SetTypeSheet: View {
     let onRemove: @MainActor () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @ScaledMetric(relativeTo: .body) private var removeHeight: CGFloat = 50
+    @ScaledMetric(relativeTo: .subheadline) private var removeHeight: CGFloat = 46
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+        // As tall as what it shows, as the other sheets.
+        FittedSheet {
+            // 8 between the blocks, as in the model's sheets.
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Tipo da série \(number)")
-                    .scaledFont(20, weight: .heavy)
+                    .scaledFont(17, weight: .heavy)
+                    .foregroundStyle(Theme.Colors.brightText)
                     .accessibilityAddTraits(.isHeader)
                 types
                 removeButton
                 if let removalUnavailableReason {
                     Text(verbatim: removalUnavailableReason)
-                        .scaledFont(12)
+                        .scaledFont(13, lineHeight: 1.4)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
@@ -34,13 +37,9 @@ struct SetTypeSheet: View {
                 }
             }
             .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.top, 24)
+            .padding(.top, SheetStyle.topPadding)
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     /// The four types in one block, a line between them.
@@ -55,8 +54,8 @@ struct SetTypeSheet: View {
                 typeRow(type)
             }
         }
-        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func typeRow(_ type: SetType) -> some View {
@@ -67,26 +66,26 @@ struct SetTypeSheet: View {
                 onChoose(type)
             }
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 SetNumberSquare(number: number, type: type, side: 28, fontSize: 13)
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(type.displayName)
                         .scaledFont(15, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text(type.explanation)
-                        .scaledFont(11)
+                        .scaledFont(11, lineHeight: 1.35)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .scaledFont(14, weight: .bold)
-                        .foregroundStyle(Theme.Colors.lightAccent)
-                }
+                AppIcon(.check, size: 13)
+                    .foregroundStyle(Theme.Colors.lightAccent)
+                    .opacity(isSelected ? 1 : 0)
+                    .frame(width: 20)
             }
-            .padding(.vertical, 14)
+            .padding(.vertical, 11)
             .padding(.horizontal, 14)
+            .frame(minHeight: 48)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -103,13 +102,16 @@ struct SetTypeSheet: View {
             dismiss()
             onRemove()
         } label: {
-            Label("Remover série", systemImage: "xmark")
-                .scaledFont(15, weight: .bold)
-                .foregroundStyle(Theme.Colors.failureSet)
-                .frame(maxWidth: .infinity, minHeight: removeHeight)
-                .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .opacity(isEnabled ? 1 : 0.4)
-                .contentShape(Rectangle())
+            HStack(spacing: 8) {
+                AppIcon(.menuClose, size: 18)
+                Text("Remover série")
+            }
+            .scaledFont(15, weight: .bold)
+            .foregroundStyle(Theme.Colors.failureSet)
+            .frame(maxWidth: .infinity, minHeight: removeHeight)
+            .background(Theme.Colors.setFieldBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+            .opacity(isEnabled ? 1 : 0.4)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)

@@ -99,7 +99,7 @@ struct ExercisePickerView: View {
         HStack(spacing: 8) {
             cancelButton
             Text("Adicionar exercícios")
-                .scaledFont(16, weight: .bold)
+                .scaledFont(16, weight: .heavy)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
                 .accessibilityAddTraits(.isHeader)
@@ -153,7 +153,8 @@ struct ExercisePickerView: View {
             .disabled(!isEnabled)
             .accessibilityIdentifier("picker.add")
             .padding(.horizontal, Theme.Metrics.screenPadding)
-            .padding(.vertical, 10)
+            .padding(.top, 10)
+            .padding(.bottom, 14)
         }
         // Opaque, so the list never shows through the button.
         .background(Theme.Colors.screenBackground)

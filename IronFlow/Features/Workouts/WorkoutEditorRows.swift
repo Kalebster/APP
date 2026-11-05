@@ -28,7 +28,7 @@ struct EditorExerciseHeader: View {
         let entry = EditorExerciseInfo.libraryEntry(of: exercise)
         HStack(spacing: 10) {
             EditorExerciseTile(exercise: exercise, equipment: entry?.equipment)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: EditorExerciseInfo.name(of: exercise))
                     .scaledFont(14, weight: .heavy)
                     .fixedSize(horizontal: false, vertical: true)
@@ -53,8 +53,7 @@ struct EditorExerciseHeader: View {
                 }
                 Button("Remover do treino", systemImage: "trash", role: .destructive, action: onRemove)
             } label: {
-                Image(systemName: "ellipsis")
-                    .scaledFont(13, weight: .bold)
+                AppIcon(.more, size: 16)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .frame(width: menuSide, height: menuSide)
                     .frame(width: max(44, menuSide), height: max(44, menuSide))
@@ -82,8 +81,8 @@ struct EditorExerciseHeader: View {
     }
 }
 
-/// The equipment icon in light blue on the dark blue square, the initial of a custom exercise, or a
-/// dumbbell for an exercise that no longer exists. 32 points at the default text size; it grows with the
+/// The equipment icon in light blue on the dark blue square, the initial of a custom exercise, or the
+/// dumbbells for an exercise that no longer exists. 32 points at the default text size; it grows with the
 /// text up to the largest standard size and stops there, so with the accessibility sizes the exercise's
 /// name keeps the room it needs beside it.
 struct EditorExerciseTile: View {
@@ -114,8 +113,10 @@ struct EditorExerciseTile: View {
                     Text(verbatim: String(initial).uppercased())
                         .font(.custom(InterFont.bold, fixedSize: iconSide * 0.8))
                 } else {
-                    Image(systemName: "dumbbell")
-                        .font(.system(size: iconSide * 0.75, weight: .semibold))
+                    Image(.eqHalteres)
+                        .renderingMode(.template)
+                        .resizable()
+                        .frame(width: iconSide, height: iconSide)
                 }
             }
             .foregroundStyle(Theme.Colors.lightAccent)
@@ -201,8 +202,9 @@ struct PlannedSetColumns: View {
         .textCase(.uppercase)
         .foregroundStyle(Theme.Colors.futureDayText)
         .lineLimit(1)
-        .padding(.top, 8)
-        .padding(.bottom, 2)
+        // 7 below the exercise's header and 6 above the first field, as in the model.
+        .padding(.top, 7)
+        .padding(.bottom, 3)
         .accessibilityHidden(true)
     }
 }
@@ -244,7 +246,10 @@ struct PlannedSetRow: View {
                 }
             }
         }
-        .padding(.vertical, 4)
+        // 39 from one set to the next, as in the model: the field of 32, 2 above and below it, and the 3
+        // between the rows of the card.
+        .padding(.top, 3)
+        .padding(.bottom, 4)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("workout.set")
     }
@@ -298,51 +303,125 @@ struct PlannedSetRow: View {
 }
 
 /// "+ Adicionar série", the last row of an exercise card: a copy of the last set. The + sits next to
-/// the text, and the whole row answers, 44 points tall.
+/// the text, and the whole row answers, 44 points tall: the card ends 41 below the last set, as in the
+/// model, and the touch area goes on 3 points into the space below the card.
 struct EditorAddSetRow: View {
     let action: @MainActor () -> Void
 
     var body: some View {
         Button(action: action) {
-            Label("Adicionar série", systemImage: "plus")
-                .labelStyle(TightLabelStyle())
-                .scaledFont(12, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                .contentShape(Rectangle())
+            Label {
+                Text("Adicionar série")
+            } icon: {
+                AppIcon(.plus, size: 12)
+            }
+            .labelStyle(TightLabelStyle(spacing: 6))
+            .scaledFont(12, weight: .semibold)
+            .foregroundStyle(Theme.Colors.lightAccent)
+            // The text 23 below the last set's field and the card's end 22 below the text's middle.
+            .frame(maxWidth: .infinity, minHeight: 38, alignment: .leading)
+            .padding(.bottom, 6)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.bottom, editorCardGap)
+        // The card ends 3 points above the touch area's end.
+        .padding(.bottom, editorCardGap - 3)
         .accessibilityIdentifier("workout.addSet")
     }
 }
 
-/// An exercise while the exercises are reordered: its icon, its name and how many sets it has. The
-/// list draws the drag handle.
+/// An exercise while the exercises are reordered: its icon, its name, how many sets it has, and ↑ ↓,
+/// as in the model. The ↑ of the first and the ↓ of the last are unavailable. The list also moves the
+/// row with a touch and hold anywhere on it, without the iOS drag handle.
 struct EditorOrderingRow: View {
     let item: WorkoutExercise
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let onMoveUp: @MainActor () -> Void
+    let onMoveDown: @MainActor () -> Void
 
     var body: some View {
         let exercise = item.exercise
-        HStack(spacing: 12) {
-            EditorExerciseTile(
-                exercise: exercise,
-                equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment
-            )
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: EditorExerciseInfo.name(of: exercise))
-                    .scaledFont(14, weight: .heavy)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(verbatim: EditorExerciseInfo.setCountText(item.plannedSets.count))
-                    .scaledFont(12)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+        let name = EditorExerciseInfo.name(of: exercise)
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                EditorExerciseTile(
+                    exercise: exercise,
+                    equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: name)
+                        .scaledFont(14, weight: .heavy)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: EditorExerciseInfo.setCountText(item.plannedSets.count))
+                        .scaledFont(11)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: "\(name), \(EditorExerciseInfo.setCountText(item.plannedSets.count))"))
+            .accessibilityIdentifier("workout.ordering.exercise")
+
+            EditorOrderingButton(
+                icon: .menuArrowUp,
+                label: Text("Subir \(name)"),
+                identifier: "workout.ordering.up",
+                isEnabled: canMoveUp,
+                action: onMoveUp
+            )
+            EditorOrderingButton(
+                icon: .menuArrowDown,
+                label: Text("Descer \(name)"),
+                identifier: "workout.ordering.down",
+                isEnabled: canMoveDown,
+                action: onMoveDown
+            )
         }
-        .padding(.vertical, 12)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(EditorExerciseInfo.name(of: exercise)), \(EditorExerciseInfo.setCountText(item.plannedSets.count))"))
-        .accessibilityIdentifier("workout.ordering.exercise")
+        .padding(.vertical, 8)
+    }
+}
+
+/// ↑ or ↓ of an exercise being reordered: a 36-point square, its 18-point arrow, answering on 44 points.
+/// It grows with the text up to the largest standard size, like the exercise's tile.
+private struct EditorOrderingButton: View {
+    let icon: ImageResource
+    let label: Text
+    let identifier: String
+    let isEnabled: Bool
+    let action: @MainActor () -> Void
+
+    var body: some View {
+        Square(icon: icon, label: label, identifier: identifier, isEnabled: isEnabled, action: action)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    private struct Square: View {
+        let icon: ImageResource
+        let label: Text
+        let identifier: String
+        let isEnabled: Bool
+        let action: @MainActor () -> Void
+
+        @ScaledMetric(relativeTo: .body) private var side: CGFloat = 36
+
+        var body: some View {
+            let touchExtra = max(0, 44 - side) / 2
+            Button(action: action) {
+                AppIcon(icon, size: 18, relativeTo: .body)
+                    .foregroundStyle(Theme.Colors.mediumText)
+                    .frame(width: side, height: side)
+                    .background(Theme.Colors.unplannedDayBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .opacity(isEnabled ? 1 : 0.35)
+                    .padding(touchExtra)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!isEnabled)
+            .padding(-touchExtra)
+            .accessibilityLabel(label)
+            .accessibilityIdentifier(identifier)
+        }
     }
 }
 
@@ -358,23 +437,28 @@ struct EditorEmptyCard: View {
                 .scaledFont(12)
                 .foregroundStyle(Theme.Colors.secondaryText)
             Button(action: onAdd) {
-                Label("Adicionar exercícios", systemImage: "plus")
-                    .scaledFont(14, weight: .bold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 40)
-                    .background(Color.accentColor, in: Capsule())
-                    .padding(.vertical, 2)
-                    .contentShape(Rectangle())
+                HStack(spacing: 6) {
+                    AppIcon(.plus, size: 12)
+                    Text("Adicionar exercícios")
+                }
+                .scaledFont(13, weight: .bold)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 18)
+                .frame(minHeight: 40)
+                .background(Color.accentColor, in: Capsule())
+                .padding(.vertical, 2)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.top, 10)
+            // 8 below the text, as in the model, with the 2 points of the 44-point touch area.
+            .padding(.top, 6)
             .accessibilityIdentifier("workout.addExercises")
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .padding(.horizontal, 14)
+        .padding(.top, 22)
+        .padding(.bottom, 18)
+        .padding(.horizontal, 16)
         .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("workout.empty")

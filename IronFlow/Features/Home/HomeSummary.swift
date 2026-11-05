@@ -53,21 +53,6 @@ enum SummaryMetric: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    var systemImage: String {
-        switch self {
-        case .monthWorkouts: "calendar"
-        case .streak: "medal"
-        case .weekVolume: "dumbbell"
-        case .weekTime: "stopwatch"
-        case .lastWorkout: "clock.arrow.circlepath"
-        case .bodyWeight: "scalemass"
-        case .height: "ruler"
-        case .dailyCalorieGoal: "flame"
-        case .bmr: "waveform.path.ecg"
-        case .weightChange: "chart.line.uptrend.xyaxis"
-        }
-    }
-
     /// The body data value the card edits; `nil` for the indicators that are computed.
     var bodyMetric: BodyMetric? {
         switch self {

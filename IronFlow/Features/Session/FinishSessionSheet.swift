@@ -32,10 +32,12 @@ struct FinishSessionSheet: View {
         FittedSheet {
             VStack(alignment: .leading, spacing: 14) {
                 SheetHeader(Text("Concluir treino?"))
+                    // The boxes 12 below the title, as in the model.
+                    .padding(.bottom, -2)
                 boxes
                 if let notDoneText = summary.notDoneText {
                     Text(verbatim: notDoneText)
-                        .scaledFont(13)
+                        .scaledFont(13, lineHeight: 1.4)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("finish.notDone")
@@ -46,13 +48,13 @@ struct FinishSessionSheet: View {
             }
             .sheetContentPadding()
         } bottom: {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 SheetButton(Text("Concluir e salvar"), kind: .primary) {
                     onFinish(summary.suggestedEnd == nil ? .now : end)
                     dismiss()
                 }
                 .accessibilityIdentifier("finish.save")
-                continueButton
+                continueButton(kind: .secondary)
             }
             .sheetButtonBar()
         }
@@ -67,9 +69,10 @@ struct FinishSessionSheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .sheetContentPadding()
         } bottom: {
-            VStack(spacing: 10) {
-                continueButton
-                SheetButton(Text("Descartar treino"), kind: .secondary) {
+            VStack(spacing: 8) {
+                // Nothing to save: going on with the workout is the action, discarding the danger.
+                continueButton(kind: .primary)
+                SheetButton(Text("Descartar treino"), kind: .destructive) {
                     onDiscard()
                     dismiss()
                 }
@@ -79,8 +82,8 @@ struct FinishSessionSheet: View {
         }
     }
 
-    private var continueButton: some View {
-        SheetButton(Text("Continuar treinando"), kind: .secondary) {
+    private func continueButton(kind: SheetButton.Kind) -> some View {
+        SheetButton(Text("Continuar treinando"), kind: kind) {
             dismiss()
         }
         .accessibilityIdentifier("finish.continue")
@@ -122,20 +125,21 @@ struct FinishSessionSheet: View {
         }
     }
 
+    /// One box, as the model's: the number 17 heavy over its caption, to the left, 10 points inside.
     private func box(value: String, caption: LocalizedStringKey, spoken: String, identifier: String) -> some View {
-        VStack(spacing: 2) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(verbatim: value)
-                .scaledFont(19, weight: .heavy)
+                .scaledFont(17, weight: .heavy)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Theme.Colors.brightText)
             Text(caption)
                 .scaledFont(11)
                 .foregroundStyle(Theme.Colors.secondaryText)
         }
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
         .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: spoken))

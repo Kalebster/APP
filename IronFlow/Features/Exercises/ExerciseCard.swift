@@ -47,7 +47,8 @@ struct ExerciseCard: View {
             case .selectable(let isSelected):
                 selectionCircle(isSelected: isSelected)
             case .inWorkout:
-                badge(String(localized: "NO TREINO"))
+                // Gray on gray, as in the model: it is there already, nothing to choose.
+                badge(String(localized: "NO TREINO"), foreground: Theme.Colors.mediumText, background: Theme.Colors.unplannedDayBackground)
             }
         }
         .padding(.vertical, 10)
@@ -73,12 +74,18 @@ struct ExerciseCard: View {
         selection == .selectable(isSelected: true)
     }
 
-    private func badge(_ text: String) -> some View {
+    private func badge(
+        _ text: String,
+        foreground: Color = Theme.Colors.highlightText,
+        background: Color = Theme.Colors.highlightBadge
+    ) -> some View {
         CapsuleBadge(
             text: text,
             weight: .bold,
             tracking: 0.8,
-            padding: EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
+            padding: EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8),
+            foreground: foreground,
+            background: background
         )
     }
 
@@ -87,11 +94,10 @@ struct ExerciseCard: View {
         ZStack {
             if isSelected {
                 Circle().fill(Color.accentColor)
-                Image(systemName: "checkmark")
-                    .font(.system(size: circleSide * 0.46, weight: .bold))
+                AppIcon(.check, size: 12, relativeTo: .body)
                     .foregroundStyle(.white)
             } else {
-                Circle().strokeBorder(Theme.Colors.controlBorder, lineWidth: 1.5)
+                Circle().strokeBorder(Theme.Colors.dashedBorder, lineWidth: 1.5)
             }
         }
         .frame(width: circleSide, height: circleSide)

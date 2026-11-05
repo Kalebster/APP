@@ -128,7 +128,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         let options = app.buttons["Opções de Push"]
         XCTAssertTrue(options.waitForExistence(timeout: 10), "Workout menu not shown")
         options.tap()
-        let rename = app.buttons["Renomear"]
+        let rename = app.buttons["Renomear treino"]
         XCTAssertTrue(rename.waitForExistence(timeout: 10), "Rename option not found")
         rename.tap()
         let field = app.textFields["workout.name.field"]
@@ -155,22 +155,20 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
 
         // Delete: cancelling keeps the workout.
         app.buttons["Opções de Pull"].tap()
-        let delete = app.buttons["Excluir"]
+        let delete = app.buttons["Excluir treino"]
         XCTAssertTrue(delete.waitForExistence(timeout: 10), "Delete option not found")
         delete.tap()
         XCTAssertTrue(element(labelStartingWith: "Excluir “Pull”", in: app).waitForExistence(timeout: 10), "Delete confirmation not shown")
-        cancelDialog(confirmLabel: "Excluir", in: app)
+        cancelDialog(confirmLabel: "Excluir treino", in: app)
         XCTAssertTrue(app.buttons["workouts.card"].exists, "Cancel deleted the workout")
         XCTAssertTrue(app.staticTexts["1 treino no plano"].exists, "Subtitle after cancelling")
 
         // Delete: confirming removes it and shows the empty card.
         let menuFrame = app.buttons["Opções de Pull"].frame
         app.buttons["Opções de Pull"].tap()
-        XCTAssertTrue(app.buttons["Excluir"].waitForExistence(timeout: 10), "Delete option not found")
-        app.buttons["Excluir"].tap()
-        XCTAssertTrue(element(labelStartingWith: "Excluir “Pull”", in: app).waitForExistence(timeout: 10), "Delete confirmation not shown")
-        let confirm = app.buttons["Excluir"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Confirm button not shown")
+        XCTAssertTrue(app.buttons["Excluir treino"].waitForExistence(timeout: 10), "Delete option not found")
+        app.buttons["Excluir treino"].tap()
+        let confirm = confirmationButton("Excluir treino", title: "Excluir “Pull”", in: app)
         // The confirmation points to the card's ⋮ it came from: it opens right below it.
         XCTAssertGreaterThan(confirm.frame.minY, menuFrame.maxY, "Confirmation not below the ⋮ \(menuFrame): \(confirm.frame)")
         XCTAssertLessThan(confirm.frame.minY, menuFrame.maxY + 300, "Confirmation far from the ⋮ \(menuFrame): \(confirm.frame)")

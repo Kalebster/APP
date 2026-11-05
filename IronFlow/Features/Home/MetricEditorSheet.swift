@@ -34,8 +34,9 @@ struct MetricEditorSheet: View {
 
     @ScaledMetric(relativeTo: .body) private var stepSide: CGFloat = 52
     @ScaledMetric(relativeTo: .body) private var fieldWidth: CGFloat = 136
-    @ScaledMetric(relativeTo: .caption) private var messageHeight: CGFloat = 32
-    @ScaledMetric(relativeTo: .caption2) private var changeWidth: CGFloat = 44
+    /// Two lines of the message: 12 points at the model's line height of 1,4.
+    @ScaledMetric(relativeTo: .caption) private var messageHeight: CGFloat = 34
+    @ScaledMetric(relativeTo: .caption2) private var changeWidth: CGFloat = 46
 
     init(
         metric: BodyMetric,
@@ -56,15 +57,21 @@ struct MetricEditorSheet: View {
 
     var body: some View {
         FittedSheet {
-            VStack(alignment: .leading, spacing: 16) {
+            // 8 between the blocks, as in the model's sheet, and the value row's own margins.
+            VStack(alignment: .leading, spacing: 8) {
                 SheetHeader(Text(metric.editorTitle))
                 valueRow
+                    .padding(.top, 10)
+                    .padding(.bottom, 2)
                 message
+                    .padding(.top, 2)
+                    .padding(.bottom, 4)
                 if metric == .dailyCalorieGoal, onCalculatedGoal != nil {
                     calculatorLink
                 }
                 if metric == .bodyWeight, !recentWeights.isEmpty {
                     records
+                        .padding(.top, 8)
                 }
             }
             .sheetContentPadding()
@@ -110,21 +117,22 @@ struct MetricEditorSheet: View {
 
     /// The number, large and underlined, with its unit beside it. Tapping it opens the keyboard.
     private var valueField: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
             TextField(text: $text, prompt: Text(verbatim: "—")) {
                 Text(metric.editorTitle)
             }
             .scaledFont(46, weight: .heavy)
+            .tracking(-1)
             .foregroundStyle(Theme.Colors.brightText)
             .multilineTextAlignment(.center)
             .keyboardType(metric == .bodyWeight ? .decimalPad : .numberPad)
             .focused($isFieldFocused)
             // Wide enough for "80,25" and "8.000"; never wider than the sheet with large text.
             .frame(width: min(fieldWidth, 240))
-            .padding(.bottom, 4)
+            .padding(.bottom, 2)
             .overlay(alignment: .bottom) {
                 Rectangle()
-                    .fill(isFieldFocused ? Color.accentColor : Theme.Colors.controlBorder)
+                    .fill(isFieldFocused ? Theme.Colors.lightAccent : Theme.Colors.cardBorder)
                     .frame(height: 2)
                     .accessibilityHidden(true)
             }
@@ -139,7 +147,7 @@ struct MetricEditorSheet: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// A round − or +: one step (0,1 kg, 1 cm or 50 kcal), unavailable at the limit.
+    /// A round − or +, in text as in the model: one step (0,1 kg, 1 cm or 50 kcal), unavailable at the limit.
     private func stepButton(_ direction: MetricEditing.Direction) -> some View {
         let isEnabled = MetricEditing.canStep(base, metric: metric, direction: direction)
         let stepText = "\(HomeSummary.number(MetricEditing.step(of: metric))) \(metric.unit)"
@@ -148,11 +156,11 @@ struct MetricEditorSheet: View {
         return Button {
             text = HomeSummary.fieldText(MetricEditing.stepped(base, metric: metric, direction: direction), for: metric)
         } label: {
-            Image(systemName: direction == .up ? "plus" : "minus")
-                .font(.system(size: side * 0.5, weight: .semibold))
+            Text(verbatim: direction == .up ? "+" : "\u{2212}")
+                .scaledFont(26, weight: .medium)
                 .foregroundStyle(Theme.Colors.brightText)
                 .frame(width: side, height: side)
-                .background(Theme.Colors.setFieldBackground, in: Circle())
+                .background(Theme.Colors.unplannedDayBackground, in: Circle())
                 .opacity(isEnabled ? 1 : 0.35)
                 .contentShape(Circle())
         }
@@ -175,7 +183,7 @@ struct MetricEditorSheet: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
-        .scaledFont(12)
+        .scaledFont(12, lineHeight: 1.4)
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, minHeight: messageHeight, alignment: .top)
@@ -190,13 +198,20 @@ struct MetricEditorSheet: View {
             calculatedGoal = nil
             isCalculating = true
         } label: {
-            Text("Calcular pela minha TMB")
-                .scaledFont(15, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
+            HStack(spacing: 6) {
+                AppIcon(.calculator, size: 14)
+                Text("Calcular pela minha TMB")
+                    .scaledFont(13, weight: .bold)
+            }
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // A 44-point touch area in the room of the model's link: its text with 6 points above and below.
+        .padding(.vertical, -8)
         .accessibilityIdentifier("metric.editor.bmr")
         .sheet(isPresented: $isCalculating, onDismiss: finishCalculation) {
             BMRCalculatorSheet { goal in
@@ -219,7 +234,7 @@ struct MetricEditorSheet: View {
     /// "ÚLTIMOS REGISTROS": the latest body weights, each with its change from the one below it.
     private var records: some View {
         let rows = HomeSummary.weightRecordRows(recentWeights, now: .now, calendar: TrainingDay.calendar)
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 6) {
             SheetSectionTitle("Últimos registros")
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
@@ -231,22 +246,22 @@ struct MetricEditorSheet: View {
                     recordRow(row)
                 }
             }
-            .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .background(Theme.Colors.screenBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
     private func recordRow(_ row: HomeSummary.WeightRecordRow) -> some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Text(verbatim: row.dateText)
-                    .foregroundStyle(Theme.Colors.brightText)
-                Spacer(minLength: 8)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+                Spacer(minLength: 0)
                 recordValue(row)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(verbatim: row.dateText)
-                    .foregroundStyle(Theme.Colors.brightText)
+                    .foregroundStyle(Theme.Colors.secondaryText)
                 recordValue(row)
             }
         }
@@ -266,7 +281,7 @@ struct MetricEditorSheet: View {
                 .foregroundStyle(Theme.Colors.brightText)
             Text(verbatim: row.changeText ?? "")
                 .scaledFont(11)
-                .foregroundStyle(Theme.Colors.secondaryText)
+                .foregroundStyle(Theme.Colors.dimText)
                 .frame(minWidth: changeWidth, alignment: .trailing)
         }
     }
@@ -275,7 +290,7 @@ struct MetricEditorSheet: View {
 
     /// "Salvar" in blue and "Cancelar" below it, above the keyboard while it is open.
     private var buttons: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             SheetButton(Text("Salvar"), kind: .primary, action: saveTapped)
                 .disabled(isTextEmpty)
                 .accessibilityIdentifier("metric.editor.save")

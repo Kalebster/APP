@@ -129,12 +129,10 @@ struct WeekSummaryTests {
         // Monday has two sessions, Wednesday one; the session in progress does not count.
         #expect(days.map(\.appWorkouts) == [2, 0, 1, 0, 0, 0, 0])
         #expect(days.map(\.isMarked) == [false, true, true, false, false, false, false])
-        // Three finished sessions and two marked days, on three distinct days: without a plan the card
-        // counts every workout.
-        #expect(WeekSummary.workoutCount(of: days) == 5)
+        // Three finished sessions and two marked days, on three distinct days.
         #expect(days.filter(\.isTrained).count == 3)
-        // The goal counts each day with a workout once: Monday's two sessions, and Wednesday's session
-        // and marking, count one day each.
+        // With or without a plan, the card counts each day with a workout once: Monday's two sessions,
+        // and Wednesday's session and marking, count one day each.
         #expect(WeekSummary.trainedDayCount(of: days) == 3)
         #expect(WeekSummary.goal(of: days, plannedDays: 4) == WeekSummary.Goal(done: 3, total: 4))
         // It can go past the planned days.
@@ -142,7 +140,7 @@ struct WeekSummaryTests {
         #expect(WeekSummary.goal(of: days, plannedDays: 0) == nil)
     }
 
-    @Test("Two markings of the same day count as one workout and one day")
+    @Test("Two markings of the same day count as one day")
     func duplicateMarkingsCountOnce() throws {
         let calendar = try makeCalendar()
         let now = try date(2026, 10, 14, 15, in: calendar)
@@ -151,7 +149,6 @@ struct WeekSummaryTests {
         let days = WeekSummary.days(of: week, now: now, calendar: calendar, sessions: [], markedDays: ["2026-10-13", "2026-10-13"])
 
         #expect(days.map(\.isMarked) == [false, true, false, false, false, false, false])
-        #expect(WeekSummary.workoutCount(of: days) == 1)
         #expect(WeekSummary.trainedDayCount(of: days) == 1)
         #expect(days.filter(\.isTrained).count == 1)
     }

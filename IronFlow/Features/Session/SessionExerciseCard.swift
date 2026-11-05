@@ -92,7 +92,7 @@ struct SessionExerciseCard: View {
                     .scaledFont(14, weight: .heavy)
                 Text(verbatim: subtitle)
                     .scaledFont(10)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
@@ -101,7 +101,9 @@ struct SessionExerciseCard: View {
             if isFinished {
                 // A finished exercise opened again closes from here.
                 Button(action: onOpenOrClose) {
-                    roundIcon("chevron.up")
+                    // The chevron of the closed row, turned up, as in the model.
+                    roundIcon(.chevronDown, size: 14, color: Theme.Colors.dimText)
+                        .rotationEffect(.degrees(180))
                 }
                 .buttonStyle(.plain)
                 .padding(min(0, (menuSide - 44) / 2))
@@ -110,9 +112,9 @@ struct SessionExerciseCard: View {
             }
 
             Menu {
-                Button("Remover exercício", systemImage: "trash", role: .destructive, action: onRemoveExercise)
+                Button("Remover do treino", systemImage: "trash", role: .destructive, action: onRemoveExercise)
             } label: {
-                roundIcon("ellipsis")
+                roundIcon(.more, size: 16, color: Theme.Colors.secondaryText)
             }
             .padding(min(0, (menuSide - 44) / 2))
             .accessibilityLabel(Text("Opções de \(performed.exerciseNameSnapshot)"))
@@ -123,10 +125,9 @@ struct SessionExerciseCard: View {
     }
 
     /// An icon in a 26-point area that answers on 44 points.
-    private func roundIcon(_ systemImage: String) -> some View {
-        Image(systemName: systemImage)
-            .scaledFont(13, weight: .bold)
-            .foregroundStyle(.secondary)
+    private func roundIcon(_ icon: ImageResource, size: CGFloat, color: Color) -> some View {
+        AppIcon(icon, size: size)
+            .foregroundStyle(color)
             .frame(width: menuSide, height: menuSide)
             .frame(width: max(44, menuSide), height: max(44, menuSide))
             .contentShape(Rectangle())
@@ -135,12 +136,16 @@ struct SessionExerciseCard: View {
     /// "+ Adicionar série", the + next to the text as in the editor; the whole row answers, 44 points tall.
     private var addSetRow: some View {
         Button(action: onAddSet) {
-            Label("Adicionar série", systemImage: "plus")
-                .labelStyle(TightLabelStyle())
-                .scaledFont(12, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                .contentShape(Rectangle())
+            Label {
+                Text("Adicionar série")
+            } icon: {
+                AppIcon(.plus, size: 12)
+            }
+            .labelStyle(TightLabelStyle(spacing: 6))
+            .scaledFont(12, weight: .semibold)
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .padding(.leading, SetRowMetrics.innerPadding)
@@ -162,27 +167,25 @@ struct SessionExerciseCard: View {
         let spoken = summary.isEmpty ? doneText : "\(doneText), \(summary)"
         return Button(action: onOpenOrClose) {
             HStack(spacing: 10) {
-                Image(systemName: "checkmark")
-                    .scaledFont(11, weight: .bold)
+                AppIcon(.check, size: 12)
                     .foregroundStyle(.white)
                     .frame(width: doneSide, height: doneSide)
                     .background(Color.accentColor, in: Circle())
                 VStack(alignment: .leading, spacing: 2) {
                     Text(performed.exerciseNameSnapshot)
                         .scaledFont(13, weight: .bold)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Theme.Colors.brightText)
                     Text(verbatim: detail)
                         .scaledFont(10)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text(verbatim: "\(done)/\(sets.count)")
                     .scaledFont(11, weight: .bold)
                     .monospacedDigit()
                     .foregroundStyle(Theme.Colors.mediumText)
-                Image(systemName: "chevron.down")
-                    .scaledFont(11, weight: .semibold)
-                    .foregroundStyle(.secondary)
+                AppIcon(.chevronDown, size: 14)
+                    .foregroundStyle(Theme.Colors.dimText)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, SetRowMetrics.innerPadding)

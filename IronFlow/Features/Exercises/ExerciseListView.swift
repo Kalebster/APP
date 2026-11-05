@@ -43,9 +43,9 @@ struct ExerciseListView: View {
                 }
                 cards(shown)
                     .padding(.horizontal, Theme.Metrics.screenPadding)
-                    .padding(.top, isFiltering ? 8 : 14)
+                    .padding(.top, 14)
             }
-            .padding(.top, 21)
+            .padding(.top, 16)
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
         .scrollDismissesKeyboard(.immediately)
@@ -70,7 +70,7 @@ struct ExerciseListView: View {
     private func header(total: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text("Exercícios")
-                .scaledFont(29, weight: .heavy)
+                .scaledFont(29, weight: .heavy, lineHeight: 1.05)
                 .tracking(-0.5)
                 .accessibilityAddTraits(.isHeader)
             Text(verbatim: ExerciseCatalog.countText(total))

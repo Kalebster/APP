@@ -15,6 +15,8 @@ struct SessionView: View {
     let session: Session
     /// The rest between sets. Kept by the root view, so it goes on while the session is minimized.
     @Binding var restTimer: RestTimer
+    /// Once the session is finished and saved, before the screen closes: the app goes to the Início.
+    let onFinish: @MainActor () -> Void
     /// Closes the screen (minimized, finished or discarded).
     let onClose: @MainActor () -> Void
 
@@ -42,8 +44,14 @@ struct SessionView: View {
     @State private var isConfirmingDiscard = false
     /// A set already done that is about to be removed, waiting for the confirmation.
     @State private var setPendingRemoval: SetLog?
+    /// "+ Adicionar exercício", 38 points tall at the default text size, as in the model.
+    @ScaledMetric(relativeTo: .caption) private var addExerciseHeight: CGFloat = 38
+    /// The number of the set asked about, kept while the confirmation goes away.
+    @State private var setRemovalNumber = 1
     /// An exercise with sets done that is about to be removed, waiting for the confirmation.
     @State private var exercisePendingRemoval: SessionExercise?
+    /// The name of the exercise asked about, kept while the confirmation goes away.
+    @State private var exerciseRemovalName = ""
     /// The set whose type sheet is open.
     @State private var typeSheet: TypeSheetTarget?
     /// The set "Remover série" of the type sheet asked to remove, removed once the sheet has closed (a
@@ -84,12 +92,23 @@ struct SessionView: View {
         return NavigationStack {
             List {
                 if exercises.isEmpty {
-                    Text("Adicione exercícios para começar.")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 24)
-                        .accessibilityIdentifier("session.empty")
-                        .cardListRow()
+                    // As in the model: what is missing and where to add it, on a card.
+                    VStack(spacing: 6) {
+                        Text("Nenhum exercício ainda")
+                            .scaledFont(14, weight: .bold)
+                            .foregroundStyle(Theme.Colors.brightText)
+                        Text("Toque em Adicionar exercício para escolher na lista.")
+                            .scaledFont(12, lineHeight: 1.4)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 14)
+                    .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("session.empty")
+                    .cardListRow()
                 }
 
                 ForEach(Array(exercises.enumerated()), id: \.element.id) { index, performed in
@@ -107,8 +126,8 @@ struct SessionView: View {
             .scrollContentBackground(.hidden)
             .environment(\.defaultMinListRowHeight, 0)
             .scrollDismissesKeyboard(.interactively)
-            // Below the header, which keeps "Concluir" in sight.
-            .toast($toast)
+            // Right below the header, which keeps "Concluir" in sight.
+            .toast($toast, top: 8)
             // The header and the rest bar stay in place, so, like the system's bars, they stop growing at
             // the first accessibility text size: with the largest ones they would leave the sets no room.
             .safeAreaInset(edge: .top, spacing: 0) {
@@ -180,13 +199,17 @@ struct SessionView: View {
                     onDiscard: { afterFinishSheet = .discard }
                 )
             }
-            .confirmationDialog("Descartar este treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
-                Button("Descartar", role: .destructive, action: discard)
-                Button("Cancelar", role: .cancel) {}
+            .confirmationDialog("Descartar treino?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
+                Button("Descartar treino", role: .destructive, action: discard)
+                Button("Voltar ao treino", role: .cancel) {}
             } message: {
-                Text("Tudo o que foi registrado neste treino será apagado. O treino planejado não muda.")
+                Text("As séries deste treino não serão salvas. Não dá para desfazer.")
             }
-            .confirmationDialog("Remover esta série?", isPresented: isConfirmingSetRemoval, titleVisibility: .visible) {
+            .confirmationDialog(
+                Text("Remover a série \(setRemovalNumber)?"),
+                isPresented: isConfirmingSetRemoval,
+                titleVisibility: .visible
+            ) {
                 Button("Remover série", role: .destructive) {
                     if let log = setPendingRemoval {
                         setPendingRemoval = nil
@@ -195,9 +218,13 @@ struct SessionView: View {
                 }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                Text("A série já foi feita. Ela será apagada deste treino; o treino planejado não muda.")
+                Text("Ela já foi feita. A carga e as repetições dela saem deste treino.")
             }
-            .confirmationDialog("Remover este exercício?", isPresented: isConfirmingExerciseRemoval, titleVisibility: .visible) {
+            .confirmationDialog(
+                Text("Remover \(exerciseRemovalName)?"),
+                isPresented: isConfirmingExerciseRemoval,
+                titleVisibility: .visible
+            ) {
                 Button("Remover exercício", role: .destructive) {
                     if let performed = exercisePendingRemoval {
                         exercisePendingRemoval = nil
@@ -206,7 +233,7 @@ struct SessionView: View {
                 }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                Text("As séries já feitas dele serão apagadas deste treino; o treino planejado não muda.")
+                Text("As séries já feitas dele saem deste treino. O treino planejado não muda.")
             }
             .sheet(item: $typeSheet, onDismiss: removeAfterTypeSheet) { target in
                 SetTypeSheet(
@@ -254,18 +281,24 @@ struct SessionView: View {
 
     /// "+ Adicionar exercício", a dashed outline after the last card.
     private var addExerciseButton: some View {
-        let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
         return Button {
             isPickingExercises = true
         } label: {
-            Label("Adicionar exercício", systemImage: "plus")
-                .scaledFont(14, weight: .semibold)
-                .foregroundStyle(Theme.Colors.lightAccent)
-                .frame(maxWidth: .infinity, minHeight: 46)
-                .overlay(shape.strokeBorder(Theme.Colors.controlBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-                .contentShape(shape)
+            HStack(spacing: 6) {
+                AppIcon(.plus, size: 14)
+                Text("Adicionar exercício")
+            }
+            .scaledFont(12, weight: .bold)
+            .foregroundStyle(Theme.Colors.lightAccent)
+            .frame(maxWidth: .infinity, minHeight: addExerciseHeight)
+            .overlay(shape.strokeBorder(Theme.Colors.dashedBorder, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
+            // 3 more points above and below respond to touches, for a 44-point touch area.
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(.vertical, -3)
         .accessibilityIdentifier("session.addExercise")
         .listRowInsets(EdgeInsets(
             top: 0,
@@ -458,6 +491,7 @@ struct SessionView: View {
     /// Removes a set; one already done is removed only after a confirmation.
     private func requestRemoval(of log: SetLog) {
         if log.isCompleted {
+            setRemovalNumber = (log.sessionExercise?.orderedSetLogs.firstIndex(where: { $0.id == log.id }) ?? 0) + 1
             setPendingRemoval = log
         } else {
             remove(log)
@@ -480,6 +514,7 @@ struct SessionView: View {
     /// Removes an exercise; one with sets done is removed only after a confirmation.
     private func requestRemoval(of performed: SessionExercise) {
         if performed.setLogs.contains(where: \.isCompleted) {
+            exerciseRemovalName = performed.exerciseNameSnapshot
             exercisePendingRemoval = performed
         } else {
             remove(performed)
@@ -545,6 +580,7 @@ struct SessionView: View {
             isClosed = true
             restTimer.stop()
             rootFeedback?.show(saved)
+            onFinish()
             onClose()
         } catch {
             errorMessage = UserFacingError.message(for: error)
