@@ -104,12 +104,12 @@ enum FrozenSchemaFingerprints {
         "ExternalWorkoutDay": "K9sh48mJ6F+Y/BbOXLaz5n1vJ0en9wZmSRoY+vmsH4o=",
         "PlannedSet": "/ylbFYlVI2t38xF8Ae1EFCMXF4YtZ0kfuWQGMuzskag=",
         "Session": "HNYoMs0B88OrlUPyl8IWVpum9Q+nhSawFatu08CW0Qc=",
-        "SessionExercise": "PENDING-CI",
+        "SessionExercise": "jJKItU5k9xxhNpeER2IqFbxfaVZpiMRJnAnI/6CM5jE=",
         "SetLog": "xQoQ9isZV42wwZcmtpgbHxbF51LdBrAYwG7MGi95rGk=",
         "UserProfile": "4Nr0098cSQpmwuBwsNYjY5qSwvqc4f2hutnk73koRn0=",
         "WeeklyPlanDay": "7w4IMQhG9NUouQpJpyY4GaJzs+iVRf9iOCMwk9z/0Rs=",
         "Workout": "dJaZ5Te6/QwBv2X26ydCT8/LdJDgg62L3rCKFfOAxPo=",
-        "WorkoutExercise": "PENDING-CI",
+        "WorkoutExercise": "joVmzEuOU5SH5IJ5ZryPzOourRlqnfXMiVFet/sdfhU=",
     ]
 
     /// One fingerprint per version of `IronFlowMigrationPlan.schemas`, in the same order.

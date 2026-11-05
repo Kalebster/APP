@@ -48,9 +48,10 @@ final class WorkoutUITests: IronFlowUITestCase {
 
     /// Replaces the whole text of a field. The tap is on the right side of the field, past its centered
     /// text, so the cursor lands after the last character; that many deletes clear it, then `text` is typed.
+    /// It stays inside the text field itself, which leaves 4 points of the field's padding on each side.
     @MainActor
     private func replaceText(of field: XCUIElement, with text: String) {
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
         let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
         XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 10), .completed, "Field did not get keyboard focus")
         // An empty field reports its placeholder as its value.
