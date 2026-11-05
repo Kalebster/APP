@@ -508,7 +508,7 @@ Segurança (vale desde já e principalmente na conta e na assinatura)
 - Quando uma exigência de segurança não puder ser atendida, não contorne em silêncio: explique o risco e peça orientação.
 
 Relatório
-- Enquanto trabalha, não narre cada passo: mensagens curtas, só quando houver pergunta, problema ou parte pronta. O plano e o relatório final continuam completos.
+- Enquanto trabalha, não escreva texto entre um comando e outro: nada de 'agora vou…', 'inspecionando…', 'continuo', nem resumo do que acabou de ler ou do próximo passo. Escreva só para uma pergunta ao dono, um problema que muda o plano, uma parte pronta (uma linha com o hash do commit) e o relatório final. Sempre em português. O plano e o relatório final continuam completos.
 - Diferencie com clareza: não executado, bloqueado, falhou e aprovado.
 - Nunca invente links, resultados, commits ou prints, e nunca afirme commit, push, PR ou merge sem confirmação.
 
