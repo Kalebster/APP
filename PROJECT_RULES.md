@@ -443,7 +443,7 @@ Etapas e Git
 
 Repositório público
 - Nunca colocar senhas, chaves, tokens, dados pessoais ou e-mail pessoal no código, nos commits, nos screenshots ou nos relatórios.
-- Os commits usam o e-mail noreply do GitHub.
+- Os commits usam um e-mail noreply (o do ambiente do Claude serve), nunca um e-mail pessoal.
 
 CI e testes
 - Se o CI falhar, descobrir a causa antes de rodar de novo. Só repetir sem correção quando a falha não for do código (por exemplo, o GitHub cancelou por falta de máquina).
@@ -465,3 +465,52 @@ Relatório final de cada etapa
 - Achados do /code-review e o que foi feito com cada um.
 - "O que decidi sozinho" (seção 18).
 - "Para o dono decidir": cada divergência entre o protótipo e o código, sem mudar nada antes da resposta.
+
+---
+
+## 20. Regras complementares
+
+Inspeção e escopo
+- Antes de mudar, confira também o estado do Git e as alterações que já existiam. Se o contexto não bastar para uma mudança segura, investigue primeiro ou pergunte.
+- Não altere formatos de dados, integrações ou comportamentos públicos sem avaliar a compatibilidade. Não corrija problemas antigos sem relação com a etapa. Se um deles trouxer um risco relevante, explique e peça aprovação antes; a correção aprovada fica no mínimo necessário.
+- O plano cobre todos os itens da seção 6, na medida do tamanho e do risco: para algo simples, uma frase curta em cada item basta.
+
+Autonomia e aprovação
+- Dentro do escopo aprovado, não peça aprovação para cada arquivo, comando seguro ou passo interno.
+- A aprovação para desenvolver não autoriza publicar, gastar dinheiro nem fazer operações destrutivas ou irreversíveis.
+- Silêncio nunca é aprovação. Se surgir uma decisão relevante não prevista, pare só a parte afetada, explique as opções e espere.
+
+Prioridade
+- Segurança, privacidade e dados das pessoas nunca são sacrificados para ganhar desempenho, reduzir esforço ou facilitar a implementação.
+- Nada de otimização especulativa que aumente a complexidade sem ganho demonstrável. Num problema de desempenho, ache a causa e confirme a melhora medindo.
+
+Dados
+- Migrações já distribuídas nunca são alteradas. Mudança que não afeta o banco não cria versão nova do schema à toa.
+- Nunca apague, reinicie ou substitua dados reais para facilitar testes.
+
+Erros
+- Registre informação técnica suficiente para diagnosticar, sem dados sensíveis.
+- Nunca use valores fictícios ou respostas simuladas como se fossem resultados reais.
+- Se a recuperação automática não for segura, interrompa a operação e explique.
+
+Testes e regressões
+- Testes de interface esperam o estado real da tela (o elemento aparecer, o texto mudar), nunca um tempo fixo.
+- Não mude um teste existente só para a implementação parecer certa.
+- Conta, pagamentos, migrações e segurança pedem testes de falha e de acesso indevido.
+- Se um teste não puder rodar, diga por quê e qual risco fica.
+- Antes de concluir, revise o diff completo e procure mudanças fora do escopo. Nunca declare ausência absoluta de regressões: diga o que foi conferido e as limitações.
+
+Segurança (vale desde já e principalmente na conta e na assinatura)
+- Trate todo dado externo como não confiável.
+- No servidor: valide as entradas e as permissões; nunca confie em identificador, papel, permissão, preço ou estado enviados pelo app; cada pessoa só acessa e altera os próprios dados.
+- Nenhum segredo administrativo ou credencial privilegiada dentro do app. Conexões seguras, com certificados validados.
+- Dependências: avalie também licença, tamanho e vulnerabilidades conhecidas. Investigar alternativas não precisa de aprovação; incluir precisa.
+- Quando uma exigência de segurança não puder ser atendida, não contorne em silêncio: explique o risco e peça orientação.
+
+Relatório
+- Enquanto trabalha, não narre cada passo: mensagens curtas, só quando houver pergunta, problema ou parte pronta. O plano e o relatório final continuam completos.
+- Diferencie com clareza: não executado, bloqueado, falhou e aprovado.
+- Nunca invente links, resultados, commits ou prints, e nunca afirme commit, push, PR ou merge sem confirmação.
+
+Regra final
+Autonomia dentro do escopo aprovado, cautela diante de riscos e transparência sobre resultados e limitações. Investigue antes de presumir, prefira soluções simples, preserve o trabalho existente, valide as alterações e peça autorização para decisões importantes e operações sensíveis.

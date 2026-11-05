@@ -129,7 +129,7 @@ Depois da S10 (lançamento).
 - O app é somente escuro: não há tema claro nem opção de tema nos Ajustes.
 - Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.
-- Os 6 commits iniciais com e-mail pessoal ficam como estão; commits novos usam o e-mail noreply do GitHub.
+- Os 6 commits iniciais com e-mail pessoal ficam como estão; commits novos usam um e-mail noreply (o do ambiente do Claude serve), nunca um e-mail pessoal.
 - Lançamento grátis, sem conta e sem assinatura. Depois de um tempo, o app passa a ser todo pago.
 - Assinatura pela App Store, com o ID Apple, sem exigir conta no app (a Apple não permite exigir cadastro para assinar). Teste grátis de 14 dias para quem nunca assinou, dado pela própria App Store, e "Restaurar compras" para quem troca de aparelho.
 - Sem assinatura, o app fica bloqueado, mas os dados nunca são apagados. Exportar os dados continua liberado.
