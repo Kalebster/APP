@@ -3,6 +3,10 @@ import UIKit
 
 /// The space between two exercise cards of the workout editor, below each card's last row.
 let editorCardGap: CGFloat = 12
+/// The margin inside an exercise card of the workout editor, as in the model: 4 more than the session's
+/// 8, so the icon starts 12 after the card's edge, the set number 14, and the last field ends 12 before
+/// its right edge.
+let editorCardInset: CGFloat = 12
 
 /// The first row of an exercise card in the workout editor: the equipment icon (the initial of a custom
 /// exercise), the name, "Grupo · Foco", "Arquivado" when the exercise was archived, and the ⋯ menu with

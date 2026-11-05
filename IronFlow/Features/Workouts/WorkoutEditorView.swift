@@ -279,9 +279,10 @@ struct WorkoutEditorView: View {
                 onRemove: { confirmRemoval(of: item) },
                 onConfirmRemoval: confirmedRemoval
             )
-            .cardSegmentRow(.top, gap: editorCardGap)
+            // 12 from the card's left edge to the icon, as in the model; the ⋯ keeps its place.
+            .cardSegmentRow(.top, gap: editorCardGap, leading: editorCardInset)
             PlannedSetColumns()
-                .cardSegmentRow(.middle, gap: editorCardGap)
+                .cardSegmentRow(.middle, gap: editorCardGap, leading: editorCardInset, trailing: editorCardInset)
             ForEach(Array(sets.enumerated()), id: \.element.id) { index, plannedSet in
                 PlannedSetRow(
                     number: index + 1,
@@ -291,12 +292,12 @@ struct WorkoutEditorView: View {
                 ) {
                     openTypeSheet(for: plannedSet, number: index + 1, setCount: sets.count)
                 }
-                .cardSegmentRow(.middle, gap: editorCardGap)
+                .cardSegmentRow(.middle, gap: editorCardGap, leading: editorCardInset, trailing: editorCardInset)
             }
             EditorAddSetRow {
                 addSet(to: item)
             }
-            .cardSegmentRow(.bottom, gap: editorCardGap)
+            .cardSegmentRow(.bottom, gap: editorCardGap, leading: editorCardInset, trailing: editorCardInset)
         }
     }
 

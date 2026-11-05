@@ -4,8 +4,8 @@ import SwiftUI
 /// text size: the title (17 heavy) and its explanation (13), the section titles (10 heavy, spaced 1,8),
 /// the buttons (46 high, corners of 13, text 15 bold), and a height that is that of the content.
 enum SheetStyle {
-    /// The space above the title, below the drag indicator.
-    static let topPadding: CGFloat = 20
+    /// The space from the sheet's top to its title, as in the model.
+    static let topPadding: CGFloat = 29
     /// The space below the last block of the content.
     static let bottomPadding: CGFloat = 12
 }

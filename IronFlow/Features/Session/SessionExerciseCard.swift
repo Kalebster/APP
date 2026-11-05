@@ -253,14 +253,21 @@ extension View {
         cardSegmentRow(position, isCurrent: isCurrent, gap: SessionCardSegment.gap)
     }
 
-    /// A row of an exercise's card in a list: the card's margins (8 points inside the screen margin), no
-    /// separator, and the part of the card behind it, with `gap` below the card's last row.
-    func cardSegmentRow(_ position: SessionCardRowPosition, isCurrent: Bool = false, gap: CGFloat) -> some View {
+    /// A row of an exercise's card in a list: the card's margins (`leading` and `trailing` points inside
+    /// the screen margin; 8 in the session), no separator, and the part of the card behind it, with `gap`
+    /// below the card's last row.
+    func cardSegmentRow(
+        _ position: SessionCardRowPosition,
+        isCurrent: Bool = false,
+        gap: CGFloat,
+        leading: CGFloat = 8,
+        trailing: CGFloat = 8
+    ) -> some View {
         listRowInsets(EdgeInsets(
             top: 0,
-            leading: Theme.Metrics.screenPadding + 8,
+            leading: Theme.Metrics.screenPadding + leading,
             bottom: 0,
-            trailing: Theme.Metrics.screenPadding + 8
+            trailing: Theme.Metrics.screenPadding + trailing
         ))
         .listRowSeparator(.hidden)
         .listRowBackground(SessionCardSegment(position: position, isCurrent: isCurrent, bottomGap: gap))

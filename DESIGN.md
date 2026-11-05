@@ -137,9 +137,15 @@ Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(
 | `cardSpacing` | 12 | Entre cartões |
 | `cardPadding` | 16 | Dentro dos cartões das telas antigas |
 | Cartões do Início e de Treinos | Linhas (Programação, Treino livre, recentes): 12 em cima e embaixo, 14 dos lados; grade de Treinos: 12 em cima, 9 à direita, 10 embaixo, 12 à esquerda; resumo: 12 e 10 | `cardStyle(padding:cornerRadius:)` |
-| Folhas | 20 acima do título; 12 abaixo do conteúdo; 8 em volta dos botões | `SheetStyle`, `sheetContentPadding()`, `sheetButtonBar()` |
+| Folhas | 29 do topo da folha ao título; 12 abaixo do conteúdo; 8 em volta dos botões | `SheetStyle`, `sheetContentPadding()`, `sheetButtonBar()` |
+| Cartões do editor do treino | 12 da borda do cartão ao ícone; nas linhas das colunas, das séries e de "+ Adicionar série", 12 de cada lado (o número da série começa 14 depois da borda) | `cardSegmentRow(_:gap:leading:trailing:)`; o treino em andamento usa 8 |
 
 Espaços internos comuns: 4, 6, 8, 10 e 12.
+
+### Medir nos screenshots
+
+- **Folhas no iOS 26:** as folhas que não ocupam a tela toda ficam soltas das bordas, e o sistema as desenha em escala de cerca de 0,957. Quem medir folhas nos screenshots precisa descontar essa escala (dividir a medida por 0,957) antes de comparar com o protótipo.
+- **Borda de 1 pt dos cartões:** é desenhada por dentro (`strokeBorder`) e não muda o tamanho do cartão. O protótipo foi ajustado para fazer igual.
 
 ### Cantos (sempre `style: .continuous`)
 
