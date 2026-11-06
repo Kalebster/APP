@@ -289,16 +289,8 @@ struct PlannedSetRow: View {
 
     private func field(_ field: PlannedSetField, prompt: String, keyboard: UIKeyboardType, label: Text, identifier: String) -> some View {
         let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
-        let variant = EditorFieldProbe.variant
-        let promptText = Text(verbatim: prompt).foregroundStyle(Theme.Colors.suggestionText)
-        let styled = Group {
-            if variant == 4 {
-                TextField(String(), text: text(field), prompt: promptText)
-            } else {
-                TextField(text: text(field), prompt: promptText) {
-                    label
-                }
-            }
+        return TextField(text: text(field), prompt: Text(verbatim: prompt).foregroundStyle(Theme.Colors.suggestionText)) {
+            label
         }
             .keyboardType(keyboard)
             .focused(focusedField, equals: field)
@@ -306,46 +298,19 @@ struct PlannedSetRow: View {
             .monospacedDigit()
             .multilineTextAlignment(.center)
             .foregroundStyle(Theme.Colors.brightText)
-            .padding(.horizontal, variant == 2 ? 0 : 4)
+            .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, minHeight: fieldHeight)
             .background(Theme.Colors.setFieldBackground, in: shape)
-        return Group {
-            switch variant {
-            case 1:
-                styled
-                    .contentShape(Rectangle())
-                    .onTapGesture { focusedField.wrappedValue = field }
-            case 3:
-                styled
-                    .frame(minHeight: 44)
-                    .contentShape(Rectangle())
-                    .onTapGesture { focusedField.wrappedValue = field }
-                    .padding(.vertical, min(0, (fieldHeight - 44) / 2))
-            default:
-                // The whole fill answers, as in the session's fields: a tap beside the text (the padding,
-                // above and below it) gives the field the focus.
-                styled
-                    .contentShape(shape)
-                    .onTapGesture { focusedField.wrappedValue = field }
+            // The whole fill answers, as in the session's fields: a tap beside the text (the padding,
+            // above and below it) gives the field the focus. A rectangle, as there: with the fill's
+            // rounded shape, the last 4 points on the right gave the focus to the next field (measured).
+            .contentShape(Rectangle())
+            .onTapGesture {
+                focusedField.wrappedValue = field
             }
-        }
             .accessibilityLabel(label)
             .accessibilityIdentifier(identifier)
     }
-}
-
-/// TEMPORARY, for the diagnosis only (removed before the PR): the variant of the set fields the interface
-/// tests ask for with `-ui-editor-field-variant N`; 0, the default, is the field as it is.
-enum EditorFieldProbe {
-    static let variant: Int = {
-        #if DEBUG
-        let arguments = ProcessInfo.processInfo.arguments
-        if let index = arguments.firstIndex(of: "-ui-editor-field-variant"), index + 1 < arguments.count {
-            return Int(arguments[index + 1]) ?? 0
-        }
-        #endif
-        return 0
-    }()
 }
 
 /// The last row of an exercise card: "+ Adicionar série", a copy of the last set, and on the right the
