@@ -22,6 +22,8 @@ enum ValidationError: Error, Equatable {
     case invalidHeight
     /// A daily calorie goal that is not a whole number of kilocalories within the allowed range.
     case invalidCalorieGoal
+    /// A rest between sets that is negative or longer than `RestDuration.maximumSeconds`.
+    case invalidRest
 }
 
 /// An exercise operation that the business rules do not allow.

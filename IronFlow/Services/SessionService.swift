@@ -72,7 +72,8 @@ struct SessionService {
         return descriptor
     }
 
-    /// Starts a session from a workout, copying names, muscle groups, order, targets and set types.
+    /// Starts a session from a workout, copying names, muscle groups, order, targets, set types and the
+    /// rest of each exercise.
     /// Later changes to the workout do not affect the session.
     ///
     /// The sets start empty: the planned load is kept as the set's target and offered in its empty
@@ -83,12 +84,12 @@ struct SessionService {
 
         let items = workout.orderedExercises
         guard !items.isEmpty else { throw WorkoutError.workoutHasNoExercises }
-        var plan: [(exercise: Exercise, sets: [PlannedSet])] = []
+        var plan: [(exercise: Exercise, sets: [PlannedSet], restSeconds: Int)] = []
         for item in items {
             guard let exercise = item.exercise else { throw WorkoutError.exerciseMissing }
             let sets = item.orderedPlannedSets
             guard !sets.isEmpty else { throw WorkoutError.plannedSetsMissing }
-            plan.append((exercise, sets))
+            plan.append((exercise, sets, item.restSeconds))
         }
 
         let timestamp = now()
@@ -109,6 +110,7 @@ struct SessionService {
             context.insert(performed)
             performed.session = session
             performed.exercise = entry.exercise
+            performed.restSeconds = entry.restSeconds
 
             for (setIndex, planned) in entry.sets.enumerated() {
                 makeSetLog(sortIndex: setIndex, planned: PlannedSetValues(planned), setType: planned.setType, at: timestamp)
@@ -135,7 +137,8 @@ struct SessionService {
     }
 
     /// Appends exercises to the active session, in the given order, each with the sets an exercise added
-    /// to a workout gets (`WorkoutService.defaultPlannedSets`: three working sets of 8 to 12), empty.
+    /// to a workout gets (`WorkoutService.defaultPlannedSets`: three working sets of 8 to 12), empty, and
+    /// the default rest (1 min 30 s), whatever their rest in a workout.
     ///
     /// Changes only the session: the planned workout is never touched. An exercise cannot be in
     /// the session twice and an archived exercise cannot be added. All or nothing.

@@ -31,6 +31,7 @@ import SwiftData
 /// - `set-types:<workout>`: the planned sets of the workout's first exercise become those of the workout
 ///   editor's model: a warm-up of 40 kg for 12–15, a feeder of 50 kg for 5–6, two working sets of 60 kg
 ///   for 8–10 and a failure set of 55 kg for 8–12;
+/// - `rest:<workout>:<seconds>`: every exercise of the workout rests that many seconds (0 is "Sem timer");
 /// - `weights:<kg>@<days ago>|<kg>@<days ago>`: body weights measured that many days ago, at this time
 ///   of day ("81.2@14|80.6@7"), with a decimal point;
 /// - `profile:<height cm>:<calorie goal kcal>`: the height and the daily calorie goal;
@@ -55,6 +56,7 @@ enum UITestSeed {
         case lastTime(workout: String)
         case customExercise(name: String, group: MuscleGroup)
         case setTypes(workout: String)
+        case rest(workout: String, seconds: Int)
         case weights([WeightRecord])
         case profile(heightCm: Int, goalKcal: Int)
         case bmr(sex: BiologicalSex, age: Int, goal: WeightGoal)
@@ -138,6 +140,9 @@ enum UITestSeed {
                 return .customExercise(name: parts[1], group: group)
             case ("set-types", 2):
                 return .setTypes(workout: parts[1])
+            case ("rest", 3):
+                guard let seconds = Int(parts[2]), RestDuration.isValid(seconds) else { throw SeedError.unknownItem(String(token)) }
+                return .rest(workout: parts[1], seconds: seconds)
             case ("weights", 2):
                 let records = try parts[1].split(separator: "|").map { record -> WeightRecord in
                     let pair = record.split(separator: "@")
@@ -260,6 +265,12 @@ enum UITestSeed {
                 }
                 for extra in existing.dropFirst(setTypesSets.count) {
                     try service.removePlannedSet(extra)
+                }
+            case .rest(let name, let seconds):
+                let workout = try findWorkout(named: name, in: context)
+                let service = WorkoutService(context: context)
+                for item in workout.orderedExercises {
+                    try service.setRestSeconds(seconds, of: item)
                 }
             case .weights(let records):
                 for record in records {

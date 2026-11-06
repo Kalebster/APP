@@ -1,10 +1,10 @@
 import SwiftData
 
-/// Version 6 of the Iron Flow data schema: the current one.
+/// Version 6 of the Iron Flow data schema.
 ///
 /// Adds to `UserProfile` what the BMR calculator asks: sex, date of birth, activity level and goal.
 /// Only `UserProfile` is redeclared here (see `Models/`): it has no relationships, so every other
-/// model of `SchemaV5` is unchanged and reused as it is. The migration from V5 only adds the new
+/// model of `SchemaV5` is unchanged and reused as it is (the frozen copies in `SchemaV5.swift`). The migration from V5 only adds the new
 /// attributes: they are optional or have a default, so every profile already stored keeps its values,
 /// with no sex or date of birth, a moderate activity level and the goal of keeping the weight.
 enum SchemaV6: VersionedSchema {

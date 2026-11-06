@@ -6,6 +6,8 @@ private let persistenceLogger = Logger(subsystem: "com.ironflow.app", category: 
 
 @main
 struct IronFlowApp: App {
+    /// Keeps the end-of-rest notification from showing while the app is open.
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     /// Result of opening the data store. On failure the store is left untouched
     /// and the app shows `PersistenceErrorView` instead of the main tabs.
     @State private var store: Result<ModelContainer, any Error>
@@ -86,6 +88,11 @@ struct IronFlowApp: App {
             throw SimulatedPersistenceFailure()
         }
         if arguments.contains("-ui-testing") {
+            // A store on disk in the app's temporary folder, never the real one, for the tests that
+            // close the app and open it again (`-ui-store <name>`); otherwise one in memory.
+            if let url = try UITestStore.url(in: arguments) {
+                return try ModelContainerFactory.makePersistent(at: url)
+            }
             return try ModelContainerFactory.makeInMemory()
         }
         #endif

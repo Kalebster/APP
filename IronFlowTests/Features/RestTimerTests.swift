@@ -2,19 +2,19 @@ import Foundation
 import Testing
 @testable import IronFlow
 
-/// The rest between sets: 1 min 30 s from the moment a set is checked, ±15 s, "Pular", never below
-/// zero, and always counted from the moment it ends.
+/// The rest between sets: the exercise's rest from the moment a set is checked, ±15 s, "Pular", never
+/// below zero, and always counted from the moment it ends.
 struct RestTimerTests {
     private let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
     private let session = UUID()
 
-    @Test("A rest starts with 1 min 30 s and counts down from the moment it ends")
+    @Test("A rest starts with its duration and counts down from the moment it ends")
     func startsAndCountsDown() {
         var timer = RestTimer()
         #expect(!timer.isRunning(for: session))
         #expect(timer.remaining(at: start) == 0)
 
-        timer.start(for: session, at: start)
+        timer.start(for: session, duration: 90, at: start)
         #expect(timer.isRunning(for: session))
         #expect(!timer.isRunning(for: UUID()), "A rest belongs to its session only")
         #expect(timer.endsAt == start.addingTimeInterval(90))
@@ -31,8 +31,8 @@ struct RestTimerTests {
     @Test("Checking another set starts the rest over")
     func restarts() {
         var timer = RestTimer()
-        timer.start(for: session, at: start)
-        timer.start(for: session, at: start.addingTimeInterval(40))
+        timer.start(for: session, duration: 90, at: start)
+        timer.start(for: session, duration: 90, at: start.addingTimeInterval(40))
         #expect(timer.remaining(at: start.addingTimeInterval(40)) == 90)
         #expect(timer.length == 90)
     }
@@ -40,7 +40,7 @@ struct RestTimerTests {
     @Test("+15 and −15 change the time left, which never goes below zero")
     func addsAndTakesAway() {
         var timer = RestTimer()
-        timer.start(for: session, at: start)
+        timer.start(for: session, duration: 90, at: start)
         let now = start.addingTimeInterval(10)
 
         timer.add(RestTimer.step, at: now)
@@ -64,12 +64,22 @@ struct RestTimerTests {
         timer.add(RestTimer.step, at: start)
         #expect(timer.endsAt == nil)
 
-        timer.start(for: session, at: start)
+        timer.start(for: session, duration: 90, at: start)
         timer.stop()
         #expect(!timer.isRunning(for: session))
         #expect(timer.endsAt == nil)
         #expect(timer.remaining(at: start) == 0)
         #expect(!timer.isOver(at: start.addingTimeInterval(200)))
+    }
+
+    @Test("A rest of another length starts with it, and the rest survives being kept and read again")
+    func otherLengthsAndKept() throws {
+        var timer = RestTimer()
+        timer.start(for: session, duration: 45, at: start)
+        #expect(timer.endsAt == start.addingTimeInterval(45))
+        #expect(timer.length == 45)
+        let read = try JSONDecoder().decode(RestTimer.self, from: JSONEncoder().encode(timer))
+        #expect(read == timer)
     }
 
     @Test("The time left is shown rounded up to the second")

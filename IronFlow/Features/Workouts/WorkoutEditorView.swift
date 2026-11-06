@@ -31,6 +31,12 @@ struct WorkoutEditorView: View {
     @State private var removal: PendingRemoval?
     /// The planned set whose type sheet is open.
     @State private var typeSheet: TypeSheetTarget?
+    /// The exercise whose "Descanso entre séries" is open.
+    @State private var restSheet: RestSheetTarget?
+    /// The exercise whose rest was just chosen, for the moment its capsule is outlined.
+    @State private var highlightedRest: UUID?
+    /// The exercise whose rest was chosen in the sheet, outlined once the sheet has closed.
+    @State private var chosenRest: UUID?
     /// Set right before the workout is deleted, so the view stops reading it.
     @State private var isDeleted = false
     @State private var errorMessage: String?
@@ -49,6 +55,12 @@ struct WorkoutEditorView: View {
         let number: Int
         let type: SetType
         let canRemove: Bool
+    }
+
+    private struct RestSheetTarget: Identifiable {
+        let id: UUID
+        let name: String
+        let seconds: Int
     }
 
     private var service: WorkoutService {
@@ -131,6 +143,24 @@ struct WorkoutEditorView: View {
                 onChoose: { (type: SetType) in setType(type, ofSetWithID: target.id) },
                 onRemove: { removeSet(withID: target.id) }
             )
+        }
+        .sheet(item: $restSheet, onDismiss: {
+            highlightedRest = chosenRest
+            chosenRest = nil
+        }) { target in
+            RestPickerSheet(exerciseName: target.name, selected: target.seconds) { seconds in
+                setRest(seconds, ofExerciseWithID: target.id)
+            }
+        }
+        .task(id: highlightedRest) {
+            // The outline of the capsule whose rest was just chosen goes after 0,9 s.
+            guard highlightedRest != nil else { return }
+            do {
+                try await Task.sleep(for: .seconds(0.9))
+            } catch {
+                return
+            }
+            highlightedRest = nil
         }
         .fullScreenCover(isPresented: $isPickingExercises) {
             ExercisePickerView(workoutExerciseIDs: Set(workout.exercises.compactMap { $0.exercise?.id })) { exercises in
@@ -279,9 +309,10 @@ struct WorkoutEditorView: View {
                 onRemove: { confirmRemoval(of: item) },
                 onConfirmRemoval: confirmedRemoval
             )
-            .cardSegmentRow(.top, gap: editorCardGap)
+            // 12 from the card's left edge to the icon, as in the model; the ⋯ keeps its place.
+            .cardSegmentRow(.top, gap: editorCardGap, leading: editorCardInset)
             PlannedSetColumns()
-                .cardSegmentRow(.middle, gap: editorCardGap)
+                .cardSegmentRow(.middle, gap: editorCardGap, leading: editorCardInset, trailing: editorCardInset)
             ForEach(Array(sets.enumerated()), id: \.element.id) { index, plannedSet in
                 PlannedSetRow(
                     number: index + 1,
@@ -291,12 +322,16 @@ struct WorkoutEditorView: View {
                 ) {
                     openTypeSheet(for: plannedSet, number: index + 1, setCount: sets.count)
                 }
-                .cardSegmentRow(.middle, gap: editorCardGap)
+                .cardSegmentRow(.middle, gap: editorCardGap, leading: editorCardInset, trailing: editorCardInset)
             }
-            EditorAddSetRow {
+            EditorAddSetRow(
+                restSeconds: item.restSeconds,
+                isRestHighlighted: highlightedRest == item.id,
+                onRest: { openRestSheet(for: item) }
+            ) {
                 addSet(to: item)
             }
-            .cardSegmentRow(.bottom, gap: editorCardGap)
+            .cardSegmentRow(.bottom, gap: editorCardGap, leading: editorCardInset, trailing: editorCardInset)
         }
     }
 
@@ -455,6 +490,22 @@ struct WorkoutEditorView: View {
         focusedField = nil
         commitAll()
         typeSheet = TypeSheetTarget(id: plannedSet.id, number: number, type: plannedSet.setType, canRemove: setCount > 1)
+    }
+
+    private func openRestSheet(for item: WorkoutExercise) {
+        focusedField = nil
+        commitAll()
+        restSheet = RestSheetTarget(id: item.id, name: EditorExerciseInfo.name(of: item.exercise), seconds: item.restSeconds)
+    }
+
+    private func setRest(_ seconds: Int, ofExerciseWithID id: UUID) {
+        guard let item = workout.exercises.first(where: { $0.id == id }) else { return }
+        do {
+            try service.setRestSeconds(seconds, of: item)
+            chosenRest = id
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
     }
 
     private func setType(_ type: SetType, ofSetWithID id: UUID) {

@@ -4,7 +4,7 @@ import SwiftData
 /// each with the stage that migrates from the previous version.
 enum IronFlowMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self, SchemaV6.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self, SchemaV6.self, SchemaV7.self]
     }
 
     static var stages: [MigrationStage] {
@@ -23,6 +23,10 @@ enum IronFlowMigrationPlan: SchemaMigrationPlan {
             // moderate activity level and the goal of keeping the weight; every other V5 record is kept
             // as it is.
             .lightweight(fromVersion: SchemaV5.self, toVersion: SchemaV6.self),
+            // V7 only adds the rest between sets to the planned and performed exercises. The new attribute
+            // has a default, so every exercise already stored rests 1 min 30 s; every other V6 record is
+            // kept as it is.
+            .lightweight(fromVersion: SchemaV6.self, toVersion: SchemaV7.self),
         ]
     }
 }

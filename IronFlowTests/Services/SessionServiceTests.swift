@@ -1188,4 +1188,24 @@ struct SessionServiceTests {
         let planAfter = try historySnapshot(harness.context).filter { line in planPrefixes.contains { line.hasPrefix($0) } }
         #expect(planAfter == planBefore)
     }
+
+    // MARK: - Rest
+
+    @Test("Starting copies each exercise's rest; changing the plan later does not change the session; an exercise added during it rests 1 min 30 s")
+    func restIsCopiedWhenStarting() throws {
+        let items = workout.orderedExercises
+        try harness.workouts.setRestSeconds(150, of: items[0])
+        try harness.workouts.setRestSeconds(RestDuration.noTimer, of: items[1])
+
+        let session = try harness.sessions.startSession(from: workout)
+        #expect(session.orderedExercises.map(\.restSeconds) == [150, 0])
+
+        try harness.workouts.setRestSeconds(30, of: items[0])
+        #expect(session.orderedExercises.map(\.restSeconds) == [150, 0])
+
+        let row = try harness.exercises.createCustomExercise(name: "Remada", muscleGroup: .back)
+        try harness.workouts.setRestSeconds(45, of: items[1])
+        let added = try harness.sessions.addExercises([row], to: session)
+        #expect(added.map(\.restSeconds) == [RestDuration.defaultSeconds])
+    }
 }

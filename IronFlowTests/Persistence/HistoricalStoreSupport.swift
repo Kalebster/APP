@@ -17,7 +17,9 @@ import Testing
 /// and keeps the version 2 hashes; version 4 adds the weekly plan and keeps the version 3 hashes;
 /// version 5 adds the set type to `PlannedSet` and `SetLog`, which get new hashes, and keeps the
 /// version 4 hashes of every other entity; version 6 adds the choices of the BMR calculator to
-/// `UserProfile`, which gets a new hash, and keeps the version 5 hashes of every other entity.
+/// `UserProfile`, which gets a new hash, and keeps the version 5 hashes of every other entity; version
+/// 7 adds the rest between sets to `WorkoutExercise` and `SessionExercise`, which get new hashes, and
+/// keeps the version 6 hashes of every other entity.
 enum FrozenSchemaFingerprints {
     static let v1: [String: String] = [
         "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
@@ -96,8 +98,22 @@ enum FrozenSchemaFingerprints {
         "WorkoutExercise": "SP+1dSWCM1Ixum4aJcztrcAI0UG6U5UQc1C4LpAUztw=",
     ]
 
+    static let v7: [String: String] = [
+        "BodyWeightEntry": "kGO75AdAUmfpekEnf0AsZdNSW0wGvtLcYRFbi7oB0nc=",
+        "Exercise": "1BkqgcXluhyBYJH33K97S2SIFYStucTz7S5w5iun+Jo=",
+        "ExternalWorkoutDay": "K9sh48mJ6F+Y/BbOXLaz5n1vJ0en9wZmSRoY+vmsH4o=",
+        "PlannedSet": "/ylbFYlVI2t38xF8Ae1EFCMXF4YtZ0kfuWQGMuzskag=",
+        "Session": "HNYoMs0B88OrlUPyl8IWVpum9Q+nhSawFatu08CW0Qc=",
+        "SessionExercise": "jJKItU5k9xxhNpeER2IqFbxfaVZpiMRJnAnI/6CM5jE=",
+        "SetLog": "xQoQ9isZV42wwZcmtpgbHxbF51LdBrAYwG7MGi95rGk=",
+        "UserProfile": "4Nr0098cSQpmwuBwsNYjY5qSwvqc4f2hutnk73koRn0=",
+        "WeeklyPlanDay": "7w4IMQhG9NUouQpJpyY4GaJzs+iVRf9iOCMwk9z/0Rs=",
+        "Workout": "dJaZ5Te6/QwBv2X26ydCT8/LdJDgg62L3rCKFfOAxPo=",
+        "WorkoutExercise": "joVmzEuOU5SH5IJ5ZryPzOourRlqnfXMiVFet/sdfhU=",
+    ]
+
     /// One fingerprint per version of `IronFlowMigrationPlan.schemas`, in the same order.
-    static let byVersion: [[String: String]] = [v1, v2, v3, v4, v5, v6]
+    static let byVersion: [[String: String]] = [v1, v2, v3, v4, v5, v6, v7]
 }
 
 /// The fingerprint written into the metadata of the store at `url`, by entity name.
@@ -295,6 +311,147 @@ func legacyHistorySnapshot(_ context: ModelContext) throws -> [String] {
         lines.append("SetLog \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) index=\(item.sortIndex) kg=\(text(item.weightKg)) reps=\(text(item.reps)) done=\(item.isCompleted) at=\(text(item.completedAt)) target=\(text(item.targetWeightKg))/\(text(item.targetRepsMin))-\(text(item.targetRepsMax)) item=\(text(item.sessionExercise?.id))")
     }
     return lines.sorted()
+}
+
+/// The records of a store written by versions 5 and 6, with the frozen main models of `SchemaV5`: the
+/// same graph as `SampleGraph` (library exercises, the "Push" plan and a finished session).
+@MainActor
+struct FrozenV5Graph {
+    let workout: SchemaV5.Workout
+    let session: SchemaV5.Session
+    let completedSet: SchemaV5.SetLog
+    let notCompletedSet: SchemaV5.SetLog
+
+    static func insert(into context: ModelContext) -> FrozenV5Graph {
+        let benchPress = SchemaV5.Exercise(name: "Supino Reto", muscleGroup: .chest, isCustom: false, libraryKey: "bench-press")
+        let curl = SchemaV5.Exercise(name: "Rosca Direta", muscleGroup: .biceps, isCustom: true)
+        context.insert(benchPress)
+        context.insert(curl)
+
+        let workout = SchemaV5.Workout(name: "Push")
+        context.insert(workout)
+
+        let benchPlan = SchemaV5.WorkoutExercise(sortIndex: 0)
+        context.insert(benchPlan)
+        benchPlan.workout = workout
+        benchPlan.exercise = benchPress
+        for planned in [
+            SchemaV5.PlannedSet(sortIndex: 0, weightKg: 20, repsMin: 8, repsMax: 10),
+            SchemaV5.PlannedSet(sortIndex: 1, weightKg: 22.25, repsMin: 6, repsMax: 8),
+        ] {
+            context.insert(planned)
+            planned.workoutExercise = benchPlan
+        }
+
+        let curlPlan = SchemaV5.WorkoutExercise(sortIndex: 1)
+        context.insert(curlPlan)
+        curlPlan.workout = workout
+        curlPlan.exercise = curl
+        let curlPlanned = SchemaV5.PlannedSet(sortIndex: 0, weightKg: nil, repsMin: 10, repsMax: 12)
+        context.insert(curlPlanned)
+        curlPlanned.workoutExercise = curlPlan
+
+        let session = SchemaV5.Session(startedAt: SampleGraph.sessionStart, workoutNameSnapshot: "Push")
+        context.insert(session)
+        session.workout = workout
+        session.endedAt = SampleGraph.sessionEnd
+
+        let benchPerformed = SchemaV5.SessionExercise(sortIndex: 0, exerciseNameSnapshot: "Supino Reto", muscleGroupSnapshot: .chest)
+        context.insert(benchPerformed)
+        benchPerformed.session = session
+        benchPerformed.exercise = benchPress
+
+        let completedSet = SchemaV5.SetLog(sortIndex: 0, weightKg: 20, reps: 10, targetWeightKg: 20, targetRepsMin: 8, targetRepsMax: 10)
+        context.insert(completedSet)
+        completedSet.sessionExercise = benchPerformed
+        completedSet.isCompleted = true
+        completedSet.completedAt = SampleGraph.completedAt
+
+        let notCompletedSet = SchemaV5.SetLog(sortIndex: 1, targetWeightKg: 22.25, targetRepsMin: 6, targetRepsMax: 8)
+        context.insert(notCompletedSet)
+        notCompletedSet.sessionExercise = benchPerformed
+
+        let curlPerformed = SchemaV5.SessionExercise(sortIndex: 1, exerciseNameSnapshot: "Rosca Direta", muscleGroupSnapshot: .biceps)
+        context.insert(curlPerformed)
+        curlPerformed.session = session
+        curlPerformed.exercise = curl
+
+        let curlSet = SchemaV5.SetLog(sortIndex: 0, reps: 12, targetRepsMin: 10, targetRepsMax: 12)
+        context.insert(curlSet)
+        curlSet.sessionExercise = curlPerformed
+        curlSet.isCompleted = true
+        curlSet.completedAt = SampleGraph.completedAt
+
+        return FrozenV5Graph(workout: workout, session: session, completedSet: completedSet, notCompletedSet: notCompletedSet)
+    }
+
+    /// A session still in progress of `workout`, a day after the finished one, with its first set done
+    /// and the second typed but not done, as a store closed in the middle of a session holds it.
+    @discardableResult
+    static func insertSessionInProgress(of workout: SchemaV5.Workout, exercise: SchemaV5.Exercise?, into context: ModelContext) -> SchemaV5.Session {
+        let active = SchemaV5.Session(startedAt: SampleGraph.sessionEnd.addingTimeInterval(86_400), workoutNameSnapshot: workout.name)
+        context.insert(active)
+        active.workout = workout
+        let performed = SchemaV5.SessionExercise(sortIndex: 0, exerciseNameSnapshot: exercise?.name ?? "", muscleGroupSnapshot: .chest)
+        context.insert(performed)
+        performed.session = active
+        performed.exercise = exercise
+        let done = SchemaV5.SetLog(sortIndex: 0, weightKg: 40, reps: 15, targetWeightKg: 20, targetRepsMin: 8, targetRepsMax: 10)
+        context.insert(done)
+        done.sessionExercise = performed
+        done.isCompleted = true
+        done.completedAt = active.startedAt.addingTimeInterval(300)
+        let typed = SchemaV5.SetLog(sortIndex: 1, weightKg: 50, reps: 6, targetWeightKg: 22.25, targetRepsMin: 6, targetRepsMax: 8)
+        context.insert(typed)
+        typed.sessionExercise = performed
+        return active
+    }
+}
+
+/// The same lines as `historySnapshot`, read with the frozen version 5 classes from a store of versions
+/// 5 and 6.
+@MainActor
+func frozenV5HistorySnapshot(_ context: ModelContext) throws -> [String] {
+    var lines: [String] = []
+    for item in try context.fetch(FetchDescriptor<SchemaV5.Exercise>()) {
+        lines.append("Exercise \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) name=\(item.name) group=\(item.muscleGroupRaw) custom=\(item.isCustom) archived=\(item.isArchived) key=\(text(item.libraryKey))")
+    }
+    for item in try context.fetch(FetchDescriptor<SchemaV5.Workout>()) {
+        lines.append("Workout \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) name=\(item.name)")
+    }
+    for item in try context.fetch(FetchDescriptor<SchemaV5.WorkoutExercise>()) {
+        lines.append("WorkoutExercise \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) index=\(item.sortIndex) workout=\(text(item.workout?.id)) exercise=\(text(item.exercise?.id))")
+    }
+    for item in try context.fetch(FetchDescriptor<SchemaV5.PlannedSet>()) {
+        lines.append("PlannedSet \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) index=\(item.sortIndex) kg=\(text(item.weightKg)) reps=\(item.repsMin)-\(item.repsMax) item=\(text(item.workoutExercise?.id))")
+    }
+    for item in try context.fetch(FetchDescriptor<SchemaV5.Session>()) {
+        lines.append("Session \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) start=\(text(item.startedAt)) end=\(text(item.endedAt)) name=\(item.workoutNameSnapshot) workout=\(text(item.workout?.id))")
+    }
+    for item in try context.fetch(FetchDescriptor<SchemaV5.SessionExercise>()) {
+        lines.append("SessionExercise \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) index=\(item.sortIndex) name=\(item.exerciseNameSnapshot) group=\(item.muscleGroupSnapshotRaw) session=\(text(item.session?.id)) exercise=\(text(item.exercise?.id))")
+    }
+    for item in try context.fetch(FetchDescriptor<SchemaV5.SetLog>()) {
+        lines.append("SetLog \(item.id) \(text(item.createdAt)) \(text(item.updatedAt)) index=\(item.sortIndex) kg=\(text(item.weightKg)) reps=\(text(item.reps)) done=\(item.isCompleted) at=\(text(item.completedAt)) target=\(text(item.targetWeightKg))/\(text(item.targetRepsMin))-\(text(item.targetRepsMax)) item=\(text(item.sessionExercise?.id))")
+    }
+    return lines.sorted()
+}
+
+/// The same as `storedSetTypeKeys`, read with the frozen version 5 classes.
+@MainActor
+func frozenV5SetTypeKeys(_ context: ModelContext) throws -> (planned: [String], performed: [String]) {
+    (
+        try context.fetch(FetchDescriptor<SchemaV5.PlannedSet>()).map(\.setTypeRaw),
+        try context.fetch(FetchDescriptor<SchemaV5.SetLog>()).map(\.setTypeRaw)
+    )
+}
+
+/// The rest between sets of every planned and performed exercise, as stored, sorted, each with its kind.
+@MainActor
+func restSecondsSnapshot(_ context: ModelContext) throws -> [String] {
+    let planned = try context.fetch(FetchDescriptor<WorkoutExercise>()).map { "planned \($0.id) rest=\($0.restSeconds)" }
+    let performed = try context.fetch(FetchDescriptor<SessionExercise>()).map { "performed \($0.id) rest=\($0.restSeconds)" }
+    return (planned + performed).sorted()
 }
 
 /// The stored type key of every planned set and every performed set, as written in the store (not

@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Session = SchemaV5.Session
+typealias Session = SchemaV7.Session
 
-extension SchemaV5 {
+extension SchemaV7 {
     /// A performed workout. Part of the history: it keeps its own snapshots and
     /// does not depend on the planned workout still existing.
     @Model
