@@ -445,6 +445,14 @@ Repositório público
 - Nunca colocar senhas, chaves, tokens, dados pessoais ou e-mail pessoal no código, nos commits, nos screenshots ou nos relatórios.
 - Os commits usam um e-mail noreply (o do ambiente do Claude serve), nunca um e-mail pessoal.
 
+Conversas e economia
+- Cada etapa começa numa conversa nova do Code. Ao começar, leia o CLAUDE.md, o PROJECT_RULES.md, o DESIGN.md e o ROTEIRO.md, e confira o main e o último PR. Não precisa ler conversas antigas.
+- Leia só o necessário: busque antes de abrir arquivos grandes, leia os trechos que importam e não releia um arquivo que não mudou.
+- Do log do CI, extraia só o erro e as linhas em volta, sem trazer o log inteiro para a conversa.
+- Espere o CI terminar sem consultar o estado a cada minuto: um único acompanhamento até o fim, com prazo maior que o CI inteiro. Se a espera acabar antes do CI, avise em uma linha em vez de ficar em silêncio.
+- Abra só os screenshots novos ou que mudaram.
+- Economizar nunca corta testes, conferências ou medidas.
+
 CI e testes
 - Se o CI falhar, descobrir a causa antes de rodar de novo. Só repetir sem correção quando a falha não for do código (por exemplo, o GitHub cancelou por falta de máquina).
 - Teste instável se corrige; nunca se desliga um teste para o CI passar.

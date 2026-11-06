@@ -28,8 +28,12 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 
 ## Próximas etapas
 
+### Campos de série: toque na borda
+Etapa pequena logo depois da S4-F (decisão do dono).
+- Os campos de série do editor e do treino têm um recuo de 4 pt de cada lado que não responde ao toque; tocar em qualquer ponto do campo passa a abrir a edição, sem mudança visual.
+
 ### Lista de exercícios
-Logo depois da S4-F e antes da S4-C (decisão do dono, a detalhar).
+Depois da etapa dos campos de série e antes da S4-C (decisão do dono, a detalhar).
 - Ampliar a biblioteca de exercícios e revisar os nomes no padrão que o dono está acostumado, só com exercícios de kg × repetições. Os ids não mudam, para não afetar o histórico.
 
 ### S4-C — Exercícios próprios
@@ -44,7 +48,7 @@ Etapa pequena depois da S4-C, com modelo antes.
 - No editor do treino, trocar mantém as séries planejadas.
 
 ### Melhorias antes do lançamento
-Plano aprovado pelo dono: cada uma vira uma etapa própria, com protótipo antes, sem parte social. A ordem é S4-F, lista de exercícios, S4-C e então as melhorias, nesta ordem.
+Plano aprovado pelo dono: cada uma vira uma etapa própria, com protótipo antes, sem parte social. A ordem é S4-F, campos de série, lista de exercícios, S4-C e então as melhorias, nesta ordem.
 - M1 — Treino na tela bloqueada e na Ilha Dinâmica (Live Activity): descanso, série atual e botões para usar sem abrir o app. Tocar no aviso do fim do descanso abre o treino direto (hoje o app só abre onde estava).
 - M2 — Widgets na tela inicial e na tela bloqueada (mesma base técnica da M1).
 - M3 — Nota fixa por exercício.
@@ -134,6 +138,7 @@ Depois da S10 (lançamento).
 
 ## Pendências da vistoria
 
+- Folhas de vidro (Liquid Glass): testar numa etapa futura, com protótipo antes, as folhas com o vidro do sistema no lugar do fundo sólido. Até lá, todas as folhas ficam com o fundo sólido do protótipo (decisão do dono).
 - O app precisa de um nome novo antes do lançamento, porque já existe na App Store o "IronFlow: Gym Strength Tracker". O dono decide o nome depois. Antes do TestFlight, trocar também o bundle ID `com.ironflow.app`, que é o mesmo de um app de Android com esse nome. Os nomes internos do código (pastas, alvos e o arquivo do banco) ficam como estão.
 - Conferir no iPhone de verdade, no TestFlight, o que o CI não consegue testar na S4-F: o aviso do fim do descanso com o celular bloqueado e com o app fechado, a pergunta real do iPhone sobre as notificações (com o texto do sistema) e o toque na notificação.
 - Com o iOS 26 mínimo, ver se dá para aproximar as linhas dos títulos de duas linhas como no protótipo (sugestão; precisa da aprovação do dono).
