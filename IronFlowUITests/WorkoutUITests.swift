@@ -4,7 +4,8 @@ import XCTest
 /// with the picker ("NO TREINO" for those already in it), editing loads and repetitions in place and
 /// finding them saved after leaving, the minimum and maximum kept in order, the set types and their
 /// sheet, adding and removing sets, reordering, removing an exercise, renaming, deleting, starting the
-/// workout, going back with a swipe, a value that cannot be saved, and large text. Runs on an in-memory store with the built-in
+/// workout, going back with a swipe, a value that cannot be saved, a tap near the edge of a set's field
+/// (in the editor and in the session), and large text. Runs on an in-memory store with the built-in
 /// library; most tests have their workout ready (`-ui-seed`).
 final class WorkoutUITests: IronFlowUITestCase {
     /// Push with four exercises of the built-in library, like the model.
@@ -48,16 +49,47 @@ final class WorkoutUITests: IronFlowUITestCase {
 
     /// Replaces the whole text of a field. The tap is on the right side of the field, past its centered
     /// text, so the cursor lands after the last character; that many deletes clear it, then `text` is typed.
-    /// It stays inside the text field itself, which leaves 4 points of the field's padding on each side.
+    /// It may land in the field's padding beside the text field: the whole fill gives the focus.
     @MainActor
     private func replaceText(of field: XCUIElement, with text: String) {
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 10), .completed, "Field did not get keyboard focus")
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        XCTAssertTrue(waitForFocus(of: field), "Field did not get keyboard focus")
         // An empty field reports its placeholder as its value.
         let current = field.value as? String ?? ""
         let count = current == field.placeholderValue ? 0 : current.count
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: count) + text)
+    }
+
+    /// Waits until `field` has the keyboard focus.
+    @MainActor
+    private func waitForFocus(of field: XCUIElement) -> Bool {
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        return XCTWaiter().wait(for: [focused], timeout: 10) == .completed
+    }
+
+    /// Taps a set's field 2 points inside the left or right end of its fill: in its 4 points of padding,
+    /// beside the text field. The element's frame is the fill's.
+    @MainActor
+    private func tapNearTheEdge(of field: XCUIElement, left: Bool) {
+        field.coordinate(withNormalizedOffset: CGVector(dx: left ? 0 : 1, dy: 0.5))
+            .withOffset(CGVector(dx: left ? 2 : -2, dy: 0))
+            .tap()
+    }
+
+    /// With no field focused, a tap 2 points inside each end of `field` gives it the focus and leaves its
+    /// value as it was; OK ends each time.
+    @MainActor
+    private func checkTapsNearTheEdges(of field: XCUIElement, named name: String, in app: XCUIApplication) {
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "\(name): field not shown")
+        let value = field.value as? String
+        for left in [true, false] {
+            let side = left ? "left" : "right"
+            XCTAssertFalse(app.keyboards.firstMatch.exists, "\(name), \(side): keyboard already shown")
+            tapNearTheEdge(of: field, left: left)
+            XCTAssertTrue(waitForFocus(of: field), "\(name): a tap 2 points inside the \(side) end did not give the focus (frame \(field.frame))")
+            XCTAssertEqual(field.value as? String, value, "\(name), \(side): the value changed")
+            tapOK(in: app)
+        }
     }
 
     /// Ends typing with the keyboard's OK, which saves the field.
@@ -596,6 +628,84 @@ final class WorkoutUITests: IronFlowUITestCase {
         // The session starts with the types of the plan.
         let first = app.buttons.matching(identifier: "session.set.type").element(boundBy: 0)
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
+    }
+
+    /// The whole fill of a set's field answers: a tap 2 points inside its left or right end, in the
+    /// padding beside the text field, gives it the focus. The load, minimum and maximum in the editor,
+    /// then the load and repetitions in the session.
+    @MainActor
+    func testATapNearTheEdgeOfASetFieldFocusesIt() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
+        openWorkout(named: "Push", in: app)
+        let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
+        XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
+        recordMeasurement(
+            "Medição: campos da série 1 no editor",
+            "kg \(weight.frame), mín \(fields("workout.set.min", in: app).element(boundBy: 0).frame), máx \(fields("workout.set.max", in: app).element(boundBy: 0).frame)"
+        )
+        checkTapsNearTheEdges(of: weight, named: "Editor kg", in: app)
+        checkTapsNearTheEdges(of: fields("workout.set.min", in: app).element(boundBy: 0), named: "Editor mín", in: app)
+        checkTapsNearTheEdges(of: fields("workout.set.max", in: app).element(boundBy: 0), named: "Editor máx", in: app)
+
+        startFromTheEditor(in: app)
+        let sessionWeight = fields("session.set.weight", in: app).element(boundBy: 0)
+        let sessionReps = fields("session.set.reps", in: app).element(boundBy: 0)
+        XCTAssertTrue(sessionWeight.waitForExistence(timeout: 10), "Session sets not shown")
+        recordMeasurement("Medição: campos da série 1 no treino", "kg \(sessionWeight.frame), reps \(sessionReps.frame)")
+        checkTapsNearTheEdges(of: sessionWeight, named: "Treino kg", in: app)
+        checkTapsNearTheEdges(of: sessionReps, named: "Treino reps", in: app)
+    }
+
+    /// With the keyboard up, a tap near the edge of the next field moves the focus there and keeps what
+    /// was typed in the field left, saved after OK: the load to the minimum in the editor, the load to
+    /// the repetitions in the session.
+    @MainActor
+    func testATapNearTheEdgeOfTheNextFieldKeepsTheTypedValue() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
+        openWorkout(named: "Push", in: app)
+        let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
+        let minimum = fields("workout.set.min", in: app).element(boundBy: 0)
+        XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
+
+        replaceText(of: weight, with: "62")
+        tapNearTheEdge(of: minimum, left: true)
+        XCTAssertTrue(waitForFocus(of: minimum), "Editor mín: a tap near its edge did not move the focus")
+        XCTAssertTrue(weight.waitForValue("62"), "Editor kg: typed load lost: \(weight.value ?? "nil")")
+        tapOK(in: app)
+        XCTAssertTrue(weight.waitForValue("62"), "Editor kg: load changed after OK")
+        goBackFromEditor(in: app)
+        openWorkout(named: "Push", in: app)
+        XCTAssertTrue(fields("workout.set.weight", in: app).element(boundBy: 0).waitForValue("62", timeout: 10), "Editor kg: load not saved")
+
+        startFromTheEditor(in: app)
+        let sessionWeight = fields("session.set.weight", in: app).element(boundBy: 0)
+        let sessionReps = fields("session.set.reps", in: app).element(boundBy: 0)
+        XCTAssertTrue(sessionWeight.waitForExistence(timeout: 10), "Session sets not shown")
+        // The plan's 62 is only a suggestion there: the field starts empty.
+        replaceText(of: sessionWeight, with: "42")
+        tapNearTheEdge(of: sessionReps, left: true)
+        XCTAssertTrue(waitForFocus(of: sessionReps), "Treino reps: a tap near its edge did not move the focus")
+        XCTAssertTrue(sessionWeight.waitForValue("42"), "Treino kg: typed load lost: \(sessionWeight.value ?? "nil")")
+        tapOK(in: app)
+        XCTAssertTrue(sessionWeight.waitForValue("42"), "Treino kg: load changed after OK")
+        // Minimized and opened again, the screen is built anew from what was saved.
+        app.buttons["session.minimize"].tap()
+        let bar = app.buttons["session.bar"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
+        bar.tap()
+        XCTAssertTrue(fields("session.set.weight", in: app).element(boundBy: 0).waitForValue("42", timeout: 10), "Treino kg: load not saved")
+    }
+
+    /// "Iniciar Push" at the end of the editor, then the session screen.
+    @MainActor
+    private func startFromTheEditor(in app: XCUIApplication) {
+        scrollToBottom(in: app)
+        let start = app.buttons["workout.start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 10), "Iniciar not shown")
+        start.tap()
+        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
     }
 
     /// A load that cannot be saved is never lost: "‹ Treinos" and "Iniciar" report it and the editor

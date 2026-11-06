@@ -300,7 +300,16 @@ struct PlannedSetRow: View {
             .foregroundStyle(Theme.Colors.brightText)
             .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, minHeight: fieldHeight)
-            .background(Theme.Colors.setFieldBackground, in: shape)
+            .background {
+                // The text field answers on its text only: a tap on the rest of the fill (the padding,
+                // above and below the text) gives it the focus. Behind the text field, so touches on the
+                // text (cursor, selection) still go to the text field alone.
+                shape.fill(Theme.Colors.setFieldBackground)
+                    .onTapGesture {
+                        focusedField.wrappedValue = field
+                    }
+                    .accessibilityHidden(true)
+            }
             .accessibilityLabel(label)
             .accessibilityIdentifier(identifier)
     }
