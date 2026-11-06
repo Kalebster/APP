@@ -710,6 +710,48 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(fields("session.set.weight", in: app).element(boundBy: 0).waitForValue("42", timeout: 10), "Treino kg: load not saved")
     }
 
+    /// TEMPORARY, for the diagnosis only (removed before the PR): taps across the ends of the first set's
+    /// fields and records which field gets the focus each time, in the editor and in the session.
+    @MainActor
+    func testProbeWhereTapsNearTheEdgesGo() throws {
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
+        openWorkout(named: "Push", in: app)
+        let editor = ["workout.set.weight", "workout.set.min", "workout.set.max"].map { fields($0, in: app).element(boundBy: 0) }
+        XCTAssertTrue(editor[0].waitForExistence(timeout: 10), "Sets not shown")
+        recordMeasurement("Medição: sondagem do editor", probe(editor, in: app))
+        startFromTheEditor(in: app)
+        let session = ["session.set.weight", "session.set.reps"].map { fields($0, in: app).element(boundBy: 0) }
+        XCTAssertTrue(session[0].waitForExistence(timeout: 10), "Session sets not shown")
+        recordMeasurement("Medição: sondagem do treino", probe(session, in: app))
+    }
+
+    /// For each field: taps at 2, 4, 8 and 12 points inside its left end and its right end, and in the
+    /// middle; reads the identifier of the field with the focus ("nenhum" when none), then ends with OK.
+    @MainActor
+    private func probe(_ row: [XCUIElement], in app: XCUIApplication) -> String {
+        var results: [String] = []
+        let focused = app.textFields.matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
+        for field in row {
+            let frame = field.frame
+            let name = field.identifier
+            var points: [(String, CGFloat)] = [("meio", frame.midX)]
+            for inset in [2, 4, 8, 12] as [CGFloat] {
+                points.append(("esq+\(Int(inset))", frame.minX + inset))
+                points.append(("dir-\(Int(inset))", frame.maxX - inset))
+            }
+            for (label, x) in points {
+                app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: frame.midY)).tap()
+                let got = focused.waitForExistence(timeout: 4) ? focused.identifier : "nenhum"
+                results.append("\(name) \(label) (x \(Int(x))): \(got)")
+                if app.buttons["OK"].exists {
+                    app.buttons["OK"].tap()
+                    _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 10)
+                }
+            }
+        }
+        return results.joined(separator: "; ")
+    }
+
     /// "Iniciar Push" at the end of the editor, then the session screen.
     @MainActor
     private func startFromTheEditor(in app: XCUIApplication) {
