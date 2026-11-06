@@ -31,8 +31,11 @@ final class RestUITests: IronFlowUITestCase {
 
     /// Launches on Treinos with the simulated permission and starts Push.
     @MainActor
-    private func startPush(seed: [String] = [], notifications: String? = nil, answer: String? = nil) -> XCUIApplication {
+    private func startPush(seed: [String] = [], notifications: String? = nil, answer: String? = nil, readySeconds: Int? = nil) -> XCUIApplication {
         var arguments: [String] = []
+        if let readySeconds {
+            arguments += ["-ui-rest-ready-seconds", "\(readySeconds)"]
+        }
         if let notifications {
             arguments += ["-ui-notifications", notifications]
         }
@@ -214,7 +217,8 @@ final class RestUITests: IronFlowUITestCase {
     func testRestEndsOnTheSessionScreenAndOnAnotherScreen() throws {
         continueAfterFailure = false
         // Rests of 30 s, taken to 15 by −15, so the test waits as little as it can.
-        let app = startPush(seed: ["rest:Push:30"])
+        // "Pronto" stays 20 s instead of 2,5 s (a test hook): one reading of the screen has taken 8 s in CI.
+        let app = startPush(seed: ["rest:Push:30"], readySeconds: 20)
 
         checks(in: app).element(boundBy: 0).tap()
         let time = element("session.rest.time", in: app)
@@ -227,36 +231,13 @@ final class RestUITests: IronFlowUITestCase {
         app.buttons["session.rest.minus"].tap()
 
         // At zero: "Próxima série", "Pronto", then the bar goes.
-        // Up to 15 s left after −15, with room to spare. "Pronto" stays 2,5 s: on a busy CI machine one
-        // reading of the screen can take longer (seen: 8 s), so the bar may be gone before "Pronto" is
-        // read. Each reading is one snapshot, so the label is never read from a bar already gone.
-        // A reading can also fail while the bar changes from the countdown to "Pronto" (seen: the last
-        // reading "Descanso, 0:01" and the bar still there): only a bar that stays gone ends the wait.
-        var lastLabel = ""
-        var sawReady = false
-        let deadline = Date().addingTimeInterval(25)
-        while Date() < deadline {
-            guard let snapshot = try? time.snapshot() else {
-                if time.waitForNonExistence(timeout: 1) {
-                    break
-                }
-                continue
-            }
-            lastLabel = snapshot.label
-            if lastLabel.contains("Pronto") {
-                sawReady = true
-                break
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        if sawReady {
-            XCTAssertTrue(lastLabel.contains("Próxima série"), "Rest: \(lastLabel)")
-            attachScreenshot(named: "100-rest-ready", of: app)
-            XCTAssertTrue(time.waitForNonExistence(timeout: 10), "Pronto did not go")
-        } else {
-            XCTAssertFalse(time.exists, "No Pronto at the end: \(lastLabel)")
-            recordMeasurement("Medição: Pronto do descanso", "a barra saiu antes de o teste ler o Pronto; última leitura: \(lastLabel)")
-        }
+        // Up to 15 s left after −15, with room to spare.
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Pronto"), object: time)
+        XCTAssertEqual(XCTWaiter().wait(for: [ready], timeout: 25), .completed, "No Pronto at the end")
+        let readyLabel = time.label
+        XCTAssertTrue(readyLabel.contains("Próxima série"), "Rest: \(readyLabel)")
+        attachScreenshot(named: "100-rest-ready", of: app)
+        XCTAssertTrue(time.waitForNonExistence(timeout: 30), "Pronto did not go")
 
         // Minimized, the end is a notice at the top, and the bar shows the sets again.
         checks(in: app).element(boundBy: 1).tap()

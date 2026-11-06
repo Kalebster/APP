@@ -219,7 +219,7 @@ struct SessionView: View {
             .task(id: readyRest?.id) {
                 guard readyRest != nil else { return }
                 do {
-                    try await Task.sleep(for: .seconds(2.5))
+                    try await Task.sleep(for: RestReadyDuration.current())
                 } catch {
                     return
                 }
