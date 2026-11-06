@@ -92,6 +92,16 @@ final class WorkoutUITests: IronFlowUITestCase {
         }
     }
 
+    /// VoiceOver reads each field once: nothing but the text field carries its identifier (a tap gesture
+    /// on the fill could add an element of its own, named like the field).
+    @MainActor
+    private func checkOneElementPerField(_ identifiers: [String], in app: XCUIApplication) {
+        for identifier in identifiers {
+            let all = app.descendants(matching: .any).matching(identifier: identifier).count
+            XCTAssertEqual(all, fields(identifier, in: app).count, "\(identifier): another element with the field's name")
+        }
+    }
+
     /// Ends typing with the keyboard's OK, which saves the field.
     @MainActor
     private func tapOK(in app: XCUIApplication) {
@@ -644,6 +654,7 @@ final class WorkoutUITests: IronFlowUITestCase {
             "Medição: campos da série 1 no editor",
             "kg \(weight.frame), mín \(fields("workout.set.min", in: app).element(boundBy: 0).frame), máx \(fields("workout.set.max", in: app).element(boundBy: 0).frame)"
         )
+        checkOneElementPerField(["workout.set.weight", "workout.set.min", "workout.set.max"], in: app)
         checkTapsNearTheEdges(of: weight, named: "Editor kg", in: app)
         checkTapsNearTheEdges(of: fields("workout.set.min", in: app).element(boundBy: 0), named: "Editor mín", in: app)
         checkTapsNearTheEdges(of: fields("workout.set.max", in: app).element(boundBy: 0), named: "Editor máx", in: app)
@@ -653,6 +664,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let sessionReps = fields("session.set.reps", in: app).element(boundBy: 0)
         XCTAssertTrue(sessionWeight.waitForExistence(timeout: 10), "Session sets not shown")
         recordMeasurement("Medição: campos da série 1 no treino", "kg \(sessionWeight.frame), reps \(sessionReps.frame)")
+        checkOneElementPerField(["session.set.weight", "session.set.reps"], in: app)
         checkTapsNearTheEdges(of: sessionWeight, named: "Treino kg", in: app)
         checkTapsNearTheEdges(of: sessionReps, named: "Treino reps", in: app)
     }

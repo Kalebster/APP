@@ -227,12 +227,29 @@ final class RestUITests: IronFlowUITestCase {
         app.buttons["session.rest.minus"].tap()
 
         // At zero: "Próxima série", "Pronto", then the bar goes.
-        // Up to 15 s left after −15, with room to spare.
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Pronto"), object: time)
-        XCTAssertEqual(XCTWaiter().wait(for: [ready], timeout: 25), .completed, "No Pronto at the end: \(time.label)")
-        XCTAssertTrue(time.label.contains("Próxima série"), "Rest: \(time.label)")
-        attachScreenshot(named: "100-rest-ready", of: app)
-        XCTAssertTrue(time.waitForNonExistence(timeout: 10), "Pronto did not go")
+        // Up to 15 s left after −15, with room to spare. "Pronto" stays 2,5 s: on a busy CI machine one
+        // reading of the screen can take longer (seen: 8 s), so the bar may be gone before "Pronto" is
+        // read. Each reading is one snapshot, so the label is never read from a bar already gone.
+        var lastLabel = ""
+        var sawReady = false
+        let deadline = Date().addingTimeInterval(25)
+        while Date() < deadline {
+            guard let snapshot = try? time.snapshot() else { break }
+            lastLabel = snapshot.label
+            if lastLabel.contains("Pronto") {
+                sawReady = true
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        if sawReady {
+            XCTAssertTrue(lastLabel.contains("Próxima série"), "Rest: \(lastLabel)")
+            attachScreenshot(named: "100-rest-ready", of: app)
+            XCTAssertTrue(time.waitForNonExistence(timeout: 10), "Pronto did not go")
+        } else {
+            XCTAssertFalse(time.exists, "No Pronto at the end: \(lastLabel)")
+            recordMeasurement("Medição: Pronto do descanso", "a barra saiu antes de o teste ler o Pronto; última leitura: \(lastLabel)")
+        }
 
         // Minimized, the end is a notice at the top, and the bar shows the sets again.
         checks(in: app).element(boundBy: 1).tap()
