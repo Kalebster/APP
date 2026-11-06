@@ -230,11 +230,18 @@ final class RestUITests: IronFlowUITestCase {
         // Up to 15 s left after −15, with room to spare. "Pronto" stays 2,5 s: on a busy CI machine one
         // reading of the screen can take longer (seen: 8 s), so the bar may be gone before "Pronto" is
         // read. Each reading is one snapshot, so the label is never read from a bar already gone.
+        // A reading can also fail while the bar changes from the countdown to "Pronto" (seen: the last
+        // reading "Descanso, 0:01" and the bar still there): only a bar that stays gone ends the wait.
         var lastLabel = ""
         var sawReady = false
         let deadline = Date().addingTimeInterval(25)
         while Date() < deadline {
-            guard let snapshot = try? time.snapshot() else { break }
+            guard let snapshot = try? time.snapshot() else {
+                if time.waitForNonExistence(timeout: 1) {
+                    break
+                }
+                continue
+            }
             lastLabel = snapshot.label
             if lastLabel.contains("Pronto") {
                 sawReady = true
