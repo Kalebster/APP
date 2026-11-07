@@ -114,9 +114,11 @@ jobs:
       # alone for the first launch on a simulator that has just booted. With one machine for every test,
       # the unit tests (which run inside the app) did that before the interface tests; on main at
       # 711820f (run 42393544305) the first test of two parts, on a cold simulator, failed on timing.
-      # Opened with -ui-testing, as the tests open it, so it uses their store and not the app's own.
+      # Opened with -ui-testing, as the tests open it, so it uses their store and not the app's own. Only an
+      # aid: if it fails, the tests still run.
       - name: Warm up simulator
         id: warmup
+        continue-on-error: true
         run: |
           set -euo pipefail
           source ci/record-step.sh simulator_warmup || true

@@ -11,7 +11,9 @@ struct ToastDurationTests {
     func duration() {
         #expect(ToastDuration.standard(for: short) == .seconds(2.5))
         #expect(ToastDuration.standard(for: long) == .seconds(4))
-        #expect(ToastMessage(short).duration == ToastDuration.current(for: short))
+        // The tests' own process has no -ui-testing: a notice keeps its standard time.
+        #expect(ToastMessage(short).duration == .seconds(2.5))
+        #expect(ToastMessage(long).duration == .seconds(4))
         #expect(ToastDuration.current(for: short, arguments: []) == .seconds(2.5))
         #expect(ToastDuration.current(for: long, arguments: []) == .seconds(4))
         // Without -ui-testing the argument does nothing.
