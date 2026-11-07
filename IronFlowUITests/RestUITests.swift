@@ -31,8 +31,14 @@ final class RestUITests: IronFlowUITestCase {
 
     /// Launches on Treinos with the simulated permission and starts Push.
     @MainActor
-    private func startPush(seed: [String] = [], notifications: String? = nil, answer: String? = nil, readySeconds: Int? = nil) -> XCUIApplication {
-        var arguments: [String] = []
+    private func startPush(
+        seed: [String] = [],
+        notifications: String? = nil,
+        answer: String? = nil,
+        readySeconds: Int? = nil,
+        longToasts: Bool = false
+    ) -> XCUIApplication {
+        var arguments: [String] = longToasts ? longToastArguments : []
         if let readySeconds {
             arguments += ["-ui-rest-ready-seconds", "\(readySeconds)"]
         }
@@ -186,7 +192,7 @@ final class RestUITests: IronFlowUITestCase {
     @MainActor
     func testNotNowAndTurningTheNoticeOnLater() throws {
         continueAfterFailure = false
-        let app = startPush(notifications: "notDetermined", answer: "allow")
+        let app = startPush(notifications: "notDetermined", answer: "allow", longToasts: true)
 
         checks(in: app).element(boundBy: 0).tap()
         let decline = app.buttons["restAlert.decline"]
@@ -218,7 +224,8 @@ final class RestUITests: IronFlowUITestCase {
         continueAfterFailure = false
         // Rests of 30 s, taken to 15 by −15, so the test waits as little as it can.
         // "Pronto" stays 20 s instead of 2,5 s (a test hook): one reading of the screen has taken 8 s in CI.
-        let app = startPush(seed: ["rest:Push:30"], readySeconds: 20)
+        // The notice at the end stays 15 s (longToastArguments); screenshot 103 shows it, taken right away.
+        let app = startPush(seed: ["rest:Push:30"], readySeconds: 20, longToasts: true)
 
         checks(in: app).element(boundBy: 0).tap()
         let time = element("session.rest.time", in: app)

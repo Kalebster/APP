@@ -242,7 +242,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRemovingSetsAndExercises() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra"])
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra"], extraArguments: longToastArguments)
         startWorkout(named: "Pull", in: app)
         XCTAssertTrue(waitForCount(checks(in: app), 6), "The session should have 6 sets")
 
@@ -270,7 +270,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         let removeExercise = app.buttons["Remover do treino"]
         XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover do treino in the ⋯ menu")
         removeExercise.tap()
-        // The notice first: it stays only 2,5 s.
+        // The notice first, as soon as it shows (it stays 15 s here: longToastArguments).
         XCTAssertTrue(waitForToast("Exercício removido do treino", in: app), "No notice after removing an exercise")
         XCTAssertTrue(app.buttons["Opções de Barra Fixa Pronada"].waitForNonExistence(timeout: 10), "Exercise not removed")
         XCTAssertTrue(waitForCount(checks(in: app), 3), "The other exercise lost sets")

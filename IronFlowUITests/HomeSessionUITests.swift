@@ -7,7 +7,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
     @MainActor
     func testFreeWorkoutFromHome() throws {
         continueAfterFailure = false
-        let app = launchOnHome()
+        let app = launchOnHome(extraArguments: longToastArguments)
 
         // Without workouts there is nothing to choose: only the free workout is offered.
         let startFree = app.buttons["home.startFree"]

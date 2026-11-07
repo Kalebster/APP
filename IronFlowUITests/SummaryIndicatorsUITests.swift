@@ -23,7 +23,7 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
     @MainActor
     func testCustomizeThreeIndicatorsInOrder() throws {
         continueAfterFailure = false
-        let app = launchOnHome(seed: Self.seed)
+        let app = launchOnHome(seed: Self.seed, extraArguments: longToastArguments)
         XCTAssertEqual(card("bodyWeight", in: app).label, "Peso: 80 kg, editar")
 
         app.buttons["home.customize"].tap()
@@ -68,7 +68,7 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
 
         // A computed indicator says what it is.
         month.tap()
-        // A notice stays 2,5 s: its text is checked as soon as it shows.
+        // The notice stays 15 s here (longToastArguments); its text is checked as soon as it shows.
         let toast = app.staticTexts["toast"]
         XCTAssertTrue(waitForLabel(of: toast, toBe: "Treinos concluídos em \(monthName)", timeout: 5), "No notice")
     }
@@ -77,7 +77,7 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
     @MainActor
     func testCardsOpenWhatTheyShow() throws {
         continueAfterFailure = false
-        let app = launchOnHome(seed: Self.seed)
+        let app = launchOnHome(seed: Self.seed, extraArguments: longToastArguments)
 
         app.buttons["home.customize"].tap()
         XCTAssertTrue(app.buttons["customize.bodyWeight"].waitForExistence(timeout: 10), "Personalizar not shown")

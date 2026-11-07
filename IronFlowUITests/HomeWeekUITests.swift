@@ -6,8 +6,8 @@ import XCTest
 /// with a plan is checked by `HomeScreenUITests`.
 final class HomeWeekUITests: IronFlowUITestCase {
     @MainActor
-    private func launchOnWeekCard() -> XCUIApplication {
-        let app = launchOnHome()
+    private func launchOnWeekCard(extraArguments: [String] = []) -> XCUIApplication {
+        let app = launchOnHome(extraArguments: extraArguments)
         XCTAssertTrue(element("home.week", in: app).waitForExistence(timeout: 10), "Week card not shown")
         return app
     }
@@ -27,7 +27,8 @@ final class HomeWeekUITests: IronFlowUITestCase {
     @MainActor
     func testMarkAndUnmarkToday() throws {
         continueAfterFailure = false
-        let app = launchOnWeekCard()
+        // Screenshot 38 shows the notice, taken right after it is read; it stays 15 s (longToastArguments).
+        let app = launchOnWeekCard(extraArguments: longToastArguments)
 
         // Seven days, today among them, and nothing trained yet.
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "home.week.day").count, 6)

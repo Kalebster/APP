@@ -4,8 +4,8 @@
 They only read what earlier steps left (build/*.log, build/diagnostics/ and the exported attachments in
 build/screenshots): anything missing is reported as unavailable, and this never changes the result of the
 job. Each macOS job runs it for its own steps; the outcome of each step comes from the environment
-(BUILD_OUTCOME, SIMULATOR_OUTCOME, UI_TEST_LIST_OUTCOME, UNIT_OUTCOME, UI_OUTCOME, RELEASE_OUTCOME), and
-the steps a job does not have are left out. DIAGNOSTICS_TITLE names the job in the title.
+(BUILD_OUTCOME, SIMULATOR_OUTCOME, WARMUP_OUTCOME, UI_TEST_LIST_OUTCOME, UNIT_OUTCOME, UI_OUTCOME,
+RELEASE_OUTCOME), and the steps a job does not have are left out. DIAGNOSTICS_TITLE names the job in the title.
 """
 import json, os, re, statistics, subprocess
 from datetime import datetime
@@ -138,6 +138,7 @@ def steps():
     for key, label, outcome in (
         ("build_for_testing", "Compilação para testes", "BUILD_OUTCOME"),
         ("simulator_boot", "Boot do simulador", "SIMULATOR_OUTCOME"),
+        ("simulator_warmup", "App aberto e fechado antes dos testes", "WARMUP_OUTCOME"),
         ("ui_test_list", "Lista dos testes de interface", "UI_TEST_LIST_OUTCOME"),
         ("unit_tests", "Testes de unidade", "UNIT_OUTCOME"),
         ("ui_tests", "Testes de interface", "UI_OUTCOME"),
