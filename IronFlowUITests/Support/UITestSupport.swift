@@ -246,12 +246,19 @@ extension XCTestCase {
         waitForEditor(of: name, in: app)
     }
 
-    /// Waits for the editor of the workout `name`, from its title.
+    /// Waits for the editor of the workout `name`: its title reading `name`, found by one query. On a slow
+    /// CI machine one reading of the screen took 9,5 s (run 42325279175), and a wait of 10 s for the title
+    /// followed by another for its text failed with the right title already on screen. One query waiting
+    /// up to 30 s covers such a reading and still returns as soon as the title is there.
     @MainActor
     func waitForEditor(of name: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
-        let title = element("workout.title", in: app)
-        XCTAssertTrue(title.waitForExistence(timeout: 10), "Editor of '\(name)' did not open", file: file, line: line)
-        XCTAssertTrue(waitForLabel(of: title, toBe: name), "Editor title: \(title.label)", file: file, line: line)
+        let title = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND label == %@", "workout.title", name))
+            .firstMatch
+        if !title.waitForExistence(timeout: 30) {
+            let shown = app.descendants(matching: .any).matching(identifier: "workout.title").firstMatch
+            XCTFail(shown.exists ? "Editor title: \(shown.label)" : "Editor of '\(name)' did not open", file: file, line: line)
+        }
     }
 
     /// In the workout editor on screen: goes back to the Treinos list with "‹ Treinos".

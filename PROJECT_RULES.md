@@ -440,6 +440,7 @@ Etapas e Git
 - Uma etapa por vez: uma branch e um PR por etapa, com commit e push a cada parte.
 - Plano primeiro; merge só com a aprovação do dono.
 - Nunca force-push, reescrever o histórico ou apagar branches com trabalho não integrado.
+- Detalhe pequeno achado no caminho não vira etapa sozinho: vai para a lista de acabamentos do ROTEIRO.md e entra junto da próxima etapa que mexe naquela tela, com a aprovação do dono, como o resto do escopo.
 
 Repositório público
 - Nunca colocar senhas, chaves, tokens, dados pessoais ou e-mail pessoal no código, nos commits, nos screenshots ou nos relatórios.
@@ -456,6 +457,7 @@ Conversas e economia
 CI e testes
 - Se o CI falhar, descobrir a causa antes de rodar de novo. Só repetir sem correção quando a falha não for do código (por exemplo, o GitHub cancelou por falta de máquina).
 - Teste instável se corrige; nunca se desliga um teste para o CI passar.
+- A rodada curta do CI serve só para diagnóstico; antes de cada PR e de cada merge, o CI completo é obrigatório.
 
 Revisões
 - O /code-review roda uma vez no fim de cada PR e olha só o que o PR mudou.
