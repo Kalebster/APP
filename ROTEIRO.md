@@ -25,12 +25,9 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Correções da revisão: "Última vez" pareada por tipo de série; o editor não sai nem inicia com um valor não salvo; folha "Concluir treino?", que salva só as séries feitas; avisos curtos de confirmação; barra "Treino em andamento" no modelo; exercício adicionado no treino com 3 séries; a meta da semana e a Sequência contam cada dia com treino uma vez; DESIGN.md na raiz; três cores de texto mais claras; fonte Inter (PR #29).
 - S4-G — Acabamento visual, o app igual ao protótipo: os ícones do protótipo no catálogo (43 SVGs) e nas telas com modelo, inclusive na barra de abas; medidas conferidas com o CSS do protótipo, tela por tela; menus e confirmações com os textos do protótipo; ordenar com ↑ ↓ e arrastar; folha "Novo treino" no modelo; depois de concluir, o app volta ao Início; "N treinos esta semana" conta dias; avisos de 4 s para textos longos; destaque, falha e texto apagado com contraste de 4,5:1; a altura de linha do protótipo nos títulos e nos textos que têm line-height próprio; séries do editor a 39 pt; folha "Tipo da série" na altura do conteúdo; nome em branco avisado como no protótipo; regra de decisões pequenas no PROJECT_RULES.md (PR #30).
 - S4-F — Descanso: tempo de descanso de cada exercício no editor (cápsula e folha "Descanso entre séries", "Sem timer"), copiado para o treino ao começar (SchemaV7); o descanso começa ao marcar uma série e não começa em "Sem timer" nem depois da última série; "Pronto" por 2,5 s com vibração leve, e "Descanso acabou. Próxima: …" no alto em outra tela; aviso por notificação local agendado no começo do descanso, refeito no −15, no +15 e quando o treino muda, e cancelado no Pular, ao concluir e ao descartar; a hora de fim guardada para o app fechado; pedido de permissão só no primeiro descanso, com a folha do app; folha "Opções do treino" com "Manter a tela ligada" e "Aviso do fim do descanso"; folhas a 29 pt do topo e margens dos cartões do editor; iOS 26.0 mínimo; testes de interface com banco em disco (PR da S4-F).
+- Campos de série: toque na borda — no editor, tocar em qualquer ponto do fundo cinza dos campos kg, mín e máx dá o foco ao campo (área de toque retangular, como nos campos do treino, sem mudança visual); antes, os últimos 4 pt à direita davam o foco ao campo seguinte. No treino já funcionava. Teste firme do "Pronto" do descanso com um gancho só de teste (`-ui-rest-ready-seconds`) (PR #32).
 
 ## Próximas etapas
-
-### Campos de série: toque na borda
-Etapa pequena logo depois da S4-F (decisão do dono).
-- Os campos de série do editor e do treino têm um recuo de 4 pt de cada lado que não responde ao toque; tocar em qualquer ponto do campo passa a abrir a edição, sem mudança visual.
 
 ### Lista de exercícios
 Depois da etapa dos campos de série e antes da S4-C (decisão do dono, a detalhar).
@@ -102,6 +99,7 @@ Fora do plano: desafios entre amigos e feed social.
 - Revisão completa do app inteiro antes do TestFlight, e de novo antes do lançamento (as duas únicas revisões do app inteiro; nas outras etapas, o /code-review e as conferências olham só o que mudou).
 - Regressão completa, uso offline, acessibilidade e desempenho.
 - Build Release, tamanho do app e envio ao TestFlight.
+- Conferir no iPhone de verdade a seleção de texto com toque duplo e a lupa nos campos de série do editor (o CI não testa).
 - Ícone do app.
 - Mensagem amigável na tela de erro ao abrir os dados.
 - Datas do Histórico e dos treinos recentes com o calendário do app (`TrainingDay.calendar`) em vez do calendário do aparelho: hoje o `SessionFormatting` usa o do aparelho por padrão, e num calendário budista ou japonês o ano sai errado.

@@ -31,8 +31,11 @@ final class RestUITests: IronFlowUITestCase {
 
     /// Launches on Treinos with the simulated permission and starts Push.
     @MainActor
-    private func startPush(seed: [String] = [], notifications: String? = nil, answer: String? = nil) -> XCUIApplication {
+    private func startPush(seed: [String] = [], notifications: String? = nil, answer: String? = nil, readySeconds: Int? = nil) -> XCUIApplication {
         var arguments: [String] = []
+        if let readySeconds {
+            arguments += ["-ui-rest-ready-seconds", "\(readySeconds)"]
+        }
         if let notifications {
             arguments += ["-ui-notifications", notifications]
         }
@@ -214,7 +217,8 @@ final class RestUITests: IronFlowUITestCase {
     func testRestEndsOnTheSessionScreenAndOnAnotherScreen() throws {
         continueAfterFailure = false
         // Rests of 30 s, taken to 15 by −15, so the test waits as little as it can.
-        let app = startPush(seed: ["rest:Push:30"])
+        // "Pronto" stays 20 s instead of 2,5 s (a test hook): one reading of the screen has taken 8 s in CI.
+        let app = startPush(seed: ["rest:Push:30"], readySeconds: 20)
 
         checks(in: app).element(boundBy: 0).tap()
         let time = element("session.rest.time", in: app)
@@ -229,10 +233,11 @@ final class RestUITests: IronFlowUITestCase {
         // At zero: "Próxima série", "Pronto", then the bar goes.
         // Up to 15 s left after −15, with room to spare.
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Pronto"), object: time)
-        XCTAssertEqual(XCTWaiter().wait(for: [ready], timeout: 25), .completed, "No Pronto at the end: \(time.label)")
-        XCTAssertTrue(time.label.contains("Próxima série"), "Rest: \(time.label)")
+        XCTAssertEqual(XCTWaiter().wait(for: [ready], timeout: 25), .completed, "No Pronto at the end")
+        let readyLabel = time.label
+        XCTAssertTrue(readyLabel.contains("Próxima série"), "Rest: \(readyLabel)")
         attachScreenshot(named: "100-rest-ready", of: app)
-        XCTAssertTrue(time.waitForNonExistence(timeout: 10), "Pronto did not go")
+        XCTAssertTrue(time.waitForNonExistence(timeout: 30), "Pronto did not go")
 
         // Minimized, the end is a notice at the top, and the bar shows the sets again.
         checks(in: app).element(boundBy: 1).tap()
