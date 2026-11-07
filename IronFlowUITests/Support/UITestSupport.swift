@@ -256,7 +256,7 @@ extension XCTestCase {
             .matching(NSPredicate(format: "identifier == %@ AND label == %@", "workout.title", name))
             .firstMatch
         if !title.waitForExistence(timeout: 30) {
-            let shown = element("workout.title", in: app)
+            let shown = app.descendants(matching: .any).matching(identifier: "workout.title").firstMatch
             XCTFail(shown.exists ? "Editor title: \(shown.label)" : "Editor of '\(name)' did not open", file: file, line: line)
         }
     }

@@ -57,8 +57,10 @@ jobs:
   ui-tests:
     name: ${{ matrix.part == 'diagnostico' && 'Diagnóstico — rodada curta (não vale como CI da etapa)' || format('UI tests {0}/3 (Xcode 26.6, iPhone 17, iOS 26.5)', matrix.part) }}
     runs-on: macos-26
-    # 45 minutes leave room for a slow machine; the short run may repeat its tests up to 10 times.
-    timeout-minutes: ${{ matrix.part == 'diagnostico' && 90 || 45 }}
+    # A part took 23 to 28 minutes in its first runs. 60 leave room for a slow machine (about 1.5 times
+    # slower has been seen) plus the 5 minutes of the simulator log when a test fails, so the results are
+    # still uploaded. The short run is limited to about 60 minutes of tests by ci/ui_tests.py.
+    timeout-minutes: ${{ matrix.part == 'diagnostico' && 90 || 60 }}
     strategy:
       # A part that fails does not stop the others, so every test still gets a result.
       fail-fast: false
@@ -260,8 +262,10 @@ jobs:
   # The unit tests and the Release build, on a machine of their own while the interface tests run. It
   # also lists the interface tests of the built bundle and fails if one is in no part of
   # ci/ui-test-shards.json, or in two, or listed there without existing.
+  # In the short run this job is skipped; its name changes there, so the skipped check never stands for
+  # the result of the full run on the same commit.
   unit-and-release:
-    name: Unit tests and Release (Xcode 26.6, iPhone 17, iOS 26.5)
+    name: ${{ inputs.testes && 'Unit tests and Release (não roda na rodada curta)' || 'Unit tests and Release (Xcode 26.6, iPhone 17, iOS 26.5)' }}
     if: ${{ !inputs.testes }}
     runs-on: macos-26
     # Green runs of these steps took 8 to 14 minutes on one machine.
@@ -509,9 +513,10 @@ jobs:
 
   # Every interface test of the built bundle must have run exactly once, in its own part, and passed. A
   # test in no part or in two, a part that did not finish and a test that ran twice all fail here. Runs
-  # even when a part failed, to say which tests ran.
+  # even when a part failed, to say which tests ran. Like unit-and-release, its name changes in the short
+  # run, where it is skipped.
   ui-tests-complete:
-    name: Interface tests complete
+    name: ${{ inputs.testes && 'Interface tests complete (não roda na rodada curta)' || 'Interface tests complete' }}
     needs: [ui-tests, unit-and-release]
     if: ${{ !cancelled() && !inputs.testes }}
     runs-on: ubuntu-24.04

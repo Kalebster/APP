@@ -31,6 +31,9 @@ TEST_ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]*/test[A-Za-z0-9_]*$")
 REQUESTED = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(/test[A-Za-z0-9_]*)?$")
 MAX_REQUESTED = 20
 MAX_REPETITIONS = 10
+# The short run must end well within its job limit (90 minutes, with about 10 of build and boot, and a
+# slow machine about 1.2 times slower): its tests, by their times in the parts, at most 60 minutes.
+MAX_SHORT_RUN_SECONDS = 60 * 60
 CASE = re.compile(r"Test Case '-\[(\w+)\.(\w+) (\w+)\]' (started|passed|failed|skipped)(?: \(([\d.]+) seconds\))?")
 
 
@@ -122,6 +125,14 @@ def arguments(args):
     if args.part == "diagnostico":
         chosen = requested_tests(os.environ.get("TESTES", ""), owner_of(parts))
         times = repetitions(os.environ.get("REPETICOES", ""))
+        seconds = {test: time for tests in parts.values() for test, time in tests.items()}
+        selected = {test for test in seconds for item in chosen if test == item or test.split("/")[0] == item}
+        estimate = sum(seconds[test] for test in selected) * times
+        if estimate > MAX_SHORT_RUN_SECONDS:
+            fail(
+                f"{len(selected)} tests x {times} repetitions take about {estimate / 60:.0f} min (times in ci/ui-test-shards.json); "
+                f"the short run allows at most {MAX_SHORT_RUN_SECONDS // 60}. Choose fewer tests or repetitions."
+            )
         lines = [f"-only-testing:{TARGET}/{item}" for item in chosen]
         if times > 1:
             lines += ["-test-iterations", str(times)]
@@ -133,6 +144,7 @@ def arguments(args):
             "",
             f"- Testes: {', '.join(f'`{item}`' for item in chosen)}",
             f"- Repetições: {times}",
+            f"- {len(selected)} testes, previsto {estimate / 60:.1f} min de testes",
         ]
     else:
         if (os.environ.get("REPETICOES") or "").strip():
