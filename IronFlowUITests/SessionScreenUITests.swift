@@ -242,7 +242,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRemovingSetsAndExercises() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra"])
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra"], extraArguments: longToastArguments)
         startWorkout(named: "Pull", in: app)
         XCTAssertTrue(waitForCount(checks(in: app), 6), "The session should have 6 sets")
 

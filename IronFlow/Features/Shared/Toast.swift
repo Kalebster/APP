@@ -9,10 +9,10 @@ struct ToastMessage: Equatable {
         self.text = text
     }
 
-    /// How long the notice stays on screen: 2,5 s, or 4 s for a text of more than 40 characters, which
-    /// takes longer to read.
+    /// How long the notice stays on screen (`ToastDuration`): 2,5 s, or 4 s for a text of more than 40
+    /// characters, which takes longer to read.
     var duration: Duration {
-        text.count > 40 ? .seconds(4) : .seconds(2.5)
+        ToastDuration.current(for: text)
     }
 }
 

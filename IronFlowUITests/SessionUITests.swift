@@ -126,7 +126,7 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testFinishNeedsACompletedSetAndDiscardKeepsThePlan() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada"], extraArguments: longToastArguments)
         startWorkout(named: "Pull", in: app)
 
         // Without a set done there is nothing to save: the sheet says so.

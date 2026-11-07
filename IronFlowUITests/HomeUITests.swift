@@ -108,7 +108,7 @@ final class HomeUITests: IronFlowUITestCase {
     @MainActor
     func testEditorStepsWithinTheLimits() throws {
         continueAfterFailure = false
-        let app = launchOnHome()
+        let app = launchOnHome(extraArguments: longToastArguments)
 
         card("height", in: app).tap()
         let field = app.textFields["metric.editor.field"]
@@ -139,7 +139,7 @@ final class HomeUITests: IronFlowUITestCase {
 
         app.buttons["metric.editor.save"].tap()
         let toast = app.staticTexts["toast"]
-        // A notice stays 2,5 s: its text is checked as soon as it shows.
+        // The notice stays 15 s here (longToastArguments); its text is checked as soon as it shows.
         XCTAssertTrue(waitForLabel(of: toast, toBe: "Altura salva", timeout: 5), "No notice after saving")
         XCTAssertTrue(card("height", in: app).label.contains("250 cm"), "Height: \(card("height", in: app).label)")
 
