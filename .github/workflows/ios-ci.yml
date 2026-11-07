@@ -110,6 +110,22 @@ jobs:
         id: simulator
         run: ci/boot-simulator.sh
 
+      # The app is opened and closed once before the tests, so the first test of each part does not pay
+      # alone for the first launch on a simulator that has just booted. With one machine for every test,
+      # the unit tests (which run inside the app) did that before the interface tests; on main at
+      # 711820f (run 42393544305) the first test of two parts, on a cold simulator, failed on timing.
+      # Opened with -ui-testing, as the tests open it, so it uses their store and not the app's own.
+      - name: Warm up simulator
+        id: warmup
+        run: |
+          set -euo pipefail
+          source ci/record-step.sh simulator_warmup || true
+          app="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/IronFlow.app"
+          bundle_id="$(plutil -extract CFBundleIdentifier raw "$app/Info.plist")"
+          xcrun simctl install "$SIMULATOR_UDID" "$app"
+          xcrun simctl launch "$SIMULATOR_UDID" "$bundle_id" -ui-testing
+          xcrun simctl terminate "$SIMULATOR_UDID" "$bundle_id"
+
       # Each line of test-arguments.txt is one xcodebuild argument (-only-testing:IronFlowUITests/...).
       - name: Run UI tests
         id: ui_tests
@@ -256,6 +272,7 @@ jobs:
           DIAGNOSTICS_TITLE: ${{ matrix.part == 'diagnostico' && 'rodada curta de diagnóstico' || format('testes de interface, parte {0} de 3', matrix.part) }}
           BUILD_OUTCOME: ${{ steps.build_for_testing.outcome }}
           SIMULATOR_OUTCOME: ${{ steps.simulator.outcome }}
+          WARMUP_OUTCOME: ${{ steps.warmup.outcome }}
           UI_OUTCOME: ${{ steps.ui_tests.outcome }}
         run: python3 ci/ci_diagnostics.py
 
