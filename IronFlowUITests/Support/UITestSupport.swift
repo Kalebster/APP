@@ -24,6 +24,12 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
     return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
 }
 
+/// Launch arguments that keep each notice (toast) 15 s on screen instead of 2,5 or 4 s, a test hook of
+/// Debug builds (`ToastDuration`). On a slow CI machine a test looked at the screen again only 9,6 s after
+/// the tap that showed a notice, which was gone by then. Used by the tests that check a notice and take no
+/// screenshot while one could still be on screen, so no screenshot changes.
+let longToastArguments = ["-ui-toast-seconds", "15"]
+
 /// The base of every interface test. When a test fails it keeps the text of what was on the app's
 /// screen, which the CI report prints: a failure message says which element was not found, and this
 /// says what was there instead. Xcode attaches only the query that failed, not the screen.
@@ -189,13 +195,24 @@ extension XCTestCase {
 
     /// Closes the keyboard's one-time introduction to typing by sliding over the letters ("Speed up your
     /// typing…"), which covers the keys the first time a simulator shows the keyboard, by tapping its
-    /// button. Does nothing when it is not shown; once closed, the simulator does not show it again.
+    /// button. Does nothing when it is not shown; once closed, the simulator does not show it again. On a
+    /// slow machine the first tap can be lost while the introduction is still coming in (main at 711820f,
+    /// run 42393544305: still on screen 12 s after the tap), so the button is tapped again while the
+    /// introduction stays, until it goes, for up to 30 s.
     @MainActor
     func dismissKeyboardIntroductionIfShown(in app: XCUIApplication) {
         let button = app.buttons.matching(NSPredicate(format: "label IN %@", ["Continue", "Continuar"])).firstMatch
         guard button.waitForExistence(timeout: 2) else { return }
-        button.tap()
-        XCTAssertTrue(button.waitForNonExistence(timeout: 10), "The keyboard introduction did not close")
+        let deadline = Date().addingTimeInterval(30)
+        repeat {
+            if button.exists {
+                button.tap()
+            }
+            if button.waitForNonExistence(timeout: 5) {
+                return
+            }
+        } while Date() < deadline
+        XCTFail("The keyboard introduction did not close in 30 s")
     }
 
     /// Taps 15 points above the vertical center of a field, beside its text but inside a box 44 points
