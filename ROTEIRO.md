@@ -29,6 +29,11 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 
 ## Próximas etapas
 
+### CI mais rápido
+- Testes de interface em 3 máquinas ao mesmo tempo, divididos pelo tempo real de cada teste, com a conferência de que cada teste roda uma vez; testes de unidade e build Release em paralelo.
+- Rodada curta, só para diagnóstico, com os testes escolhidos e repetições.
+- Correção do teste instável WorkoutUITests.testReorderExercises.
+
 ### Lista de exercícios
 Depois da etapa dos campos de série e antes da S4-C (decisão do dono, a detalhar).
 - Ampliar a biblioteca de exercícios e revisar os nomes no padrão que o dono está acostumado, só com exercícios de kg × repetições. Os ids não mudam, para não afetar o histórico.
@@ -44,15 +49,19 @@ Etapa pequena depois da S4-C, com modelo antes.
 - No treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. O treino planejado não muda; levar a troca para o plano fica com a M4.
 - No editor do treino, trocar mantém as séries planejadas.
 
+### Mapa dos músculos
+- Os músculos principais e secundários de cada exercício e um boneco de frente e de costas no detalhe do exercício, com protótipo antes.
+- A M8 reaproveita o mesmo desenho.
+
 ### Melhorias antes do lançamento
-Plano aprovado pelo dono: cada uma vira uma etapa própria, com protótipo antes, sem parte social. A ordem é S4-F, campos de série, lista de exercícios, S4-C e então as melhorias, nesta ordem.
+Plano aprovado pelo dono: cada uma vira uma etapa própria, com protótipo antes, sem parte social. A ordem é CI mais rápido, lista de exercícios, S4-C, trocar exercício, mapa dos músculos e então as melhorias, nesta ordem.
 - M1 — Treino na tela bloqueada e na Ilha Dinâmica (Live Activity): descanso, série atual e botões para usar sem abrir o app. Tocar no aviso do fim do descanso abre o treino direto (hoje o app só abre onde estava).
 - M2 — Widgets na tela inicial e na tela bloqueada (mesma base técnica da M1).
 - M3 — Nota fixa por exercício.
 - M4 — Ao concluir, salvar no treino planejado a carga nova ou a série a mais (conferir antes o que o app já faz).
 - M5 — Sugestão de carga. Ela diz o porquê ("bateu 12 em todas") e nunca troca um valor sozinha.
 - M6 — Recordes pessoais comemorados e cartão do treino para os Stories.
-- M7 — Bi-set e tri-set.
+- M7 — Bi-set, tri-set e descanso por série: cada série pode ter o próprio tempo de descanso (por exemplo, 1:30 nas primeiras e 3:00 na última), com o tempo do exercício como padrão. Bi-set e descanso por série mudam as regras do descanso e o banco, então ficam juntos: um protótipo e uma migração.
 - M8 — Resumo da semana e do mês com mapa do corpo: as séries válidas e de falha por grupo principal, semana contra semana, sem pontuar músculos secundários.
 - M9 — Área de cardio: a pessoa cronometra a corrida e o histórico guarda pace, gasto calórico aproximado e dados parecidos; calorias aproximadas também na musculação.
 
@@ -68,6 +77,7 @@ Fora do plano: desafios entre amigos e feed social.
 - Filtro por período: 7, 30 e 90 dias, e tudo.
 - Totais: treinos, tempo, volume e recordes.
 - Volume e recordes em cada treino da lista.
+- O desenho está em andamento no protótipo 'Iron Flow — visual novo'.
 - Calendário com os dias treinados.
 - Recordes recentes e gráficos de evolução.
 - Apagar ou corrigir um treino concluído.
@@ -94,6 +104,8 @@ Fora do plano: desafios entre amigos e feed social.
 - Apple Saúde: gravar o treino como treino de força e ler o peso.
 - Exportar os dados em planilha (CSV).
 - Backup completo: um arquivo com todos os dados, que dá para guardar fora do iPhone, e "Restaurar backup", com teste de ida e volta. O CSV continua, para planilhas.
+- Fale com a gente: enviar feedback e 'Seja um influenciador', pelo app de e-mail do iPhone, para um e-mail só do app que o dono ainda vai criar (nunca um e-mail pessoal).
+- O desenho está em andamento no protótipo 'Iron Flow — visual novo'.
 
 ### S10 — Revisão final e TestFlight
 - Revisão completa do app inteiro antes do TestFlight, e de novo antes do lançamento (as duas únicas revisões do app inteiro; nas outras etapas, o /code-review e as conferências olham só o que mudou).
@@ -114,7 +126,7 @@ Fora do plano: desafios entre amigos e feed social.
   - Histórico e Ajustes: a tela vazia do sistema (`ContentUnavailableView`) e o título do detalhe do Histórico com a fonte do sistema; o Histórico com tamanhos 17/15/13 adaptados; cores `.secondary` do sistema;
   - tela de erro ao abrir os dados: botão `.borderedProminent` e o texto técnico em SF Mono;
   - essas telas continuam com SF Symbols até ter modelo.
-- Antes do lançamento, o dono decide se o repositório continua público ou vira privado.
+- Antes do lançamento, o dono decide se o repositório continua público ou vira privado. Se virar privado, os minutos de macOS do CI passam a ser cobrados, e o CI em paralelo usa mais minutos no total do que um CI numa máquina só. Rever o CI antes de mudar.
 
 ### S8 — Conta
 Depois da S10 (lançamento).
@@ -134,12 +146,17 @@ Depois da S10 (lançamento).
 Depois da S10 (lançamento).
 - Assinatura pela App Store (StoreKit) e "Gerenciar assinatura".
 
+## Acabamentos
+
+Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cada um entra junto da próxima etapa que mexe naquela tela, com a aprovação do dono, como o resto do escopo.
+
 ## Pendências da vistoria
 
 - Folhas de vidro (Liquid Glass): testar numa etapa futura, com protótipo antes, as folhas com o vidro do sistema no lugar do fundo sólido. Até lá, todas as folhas ficam com o fundo sólido do protótipo (decisão do dono).
 - O app precisa de um nome novo antes do lançamento, porque já existe na App Store o "IronFlow: Gym Strength Tracker". O dono decide o nome depois. Antes do TestFlight, trocar também o bundle ID `com.ironflow.app`, que é o mesmo de um app de Android com esse nome. Os nomes internos do código (pastas, alvos e o arquivo do banco) ficam como estão.
 - Conferir no iPhone de verdade, no TestFlight, o que o CI não consegue testar na S4-F: o aviso do fim do descanso com o celular bloqueado e com o app fechado, a pergunta real do iPhone sobre as notificações (com o texto do sistema) e o toque na notificação.
 - Com o iOS 26 mínimo, ver se dá para aproximar as linhas dos títulos de duas linhas como no protótipo (sugestão; precisa da aprovação do dono).
+- Visual novo: cores neutras (preto, branco e cinza, com o azul só em detalhes), a fonte SF Pro e o vidro do iOS 26 (Liquid Glass). Em desenho no protótipo 'Iron Flow — visual novo'. Vira etapa quando o dono aprovar; até lá as etapas seguem na ordem.
 
 - Medir com dados reais o custo da busca do Histórico durante um treino (a lista pode buscar de novo todas as sessões concluídas a cada série salva).
 - Nomes de treino repetidos ficam ambíguos no VoiceOver ("Opções de Push") e no menu de iniciar.
@@ -147,7 +164,6 @@ Depois da S10 (lançamento).
 - Após uma falha ao salvar, o rollback() do SwiftData não restaura os valores alterados nos objetos em memória. O banco fica correto e o erro é mostrado, mas a tela pode exibir o valor não salvo até o objeto ser lido de novo. Raro (ex.: disco cheio). Prioridade baixa: resolver antes da S10. Coberto por teste com withKnownIssue.
 - No editor do treino, "‹ Treinos" e "Iniciar" ficam na tela quando um valor digitado não pode ser salvo (PR #29). As outras ações que abrem algo (adicionar exercícios, tipo da série, ordenar, remover exercício) mostram o erro, mas seguem. Decidir se elas também devem parar.
 - HomeUITests.testEditSummaryValues falhou uma vez por um toque perdido durante animação (run 39884902708) e falhou de novo no CI da main em db5c717 (run 40437064904, digitação antes de o campo ficar ativo); corrigido no PR #27, que também deixa mais lento o arraste do WorkoutUITests.testReorderExercises.
-- Os testes de interface já levam 38–46 min (58 testes); estudar como reduzir esse tempo antes que voltem a se aproximar do limite do CI.
 - Proteger o main no GitHub com uma regra (bloquear apagar e reescrever o main e exigir PR). O dono fará isso quando tiver um computador, porque pelo ambiente do Claude a alteração é bloqueada.
 
 ## Decisões
