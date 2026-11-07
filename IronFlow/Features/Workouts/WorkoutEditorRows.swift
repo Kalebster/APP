@@ -301,9 +301,9 @@ struct PlannedSetRow: View {
             .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, minHeight: fieldHeight)
             .background(Theme.Colors.setFieldBackground, in: shape)
-            // The whole fill answers, as in the session's fields: a tap beside the text (the padding,
-            // above and below it) gives the field the focus. A rectangle, as there: with the fill's
-            // rounded shape, the last 4 points on the right gave the focus to the next field (measured).
+            // The whole fill answers: a tap beside the text (the padding, above and below it) gives the
+            // field the focus. A rectangle, as in the session's fields: with the fill's rounded shape,
+            // the last 4 points on the right gave the focus to the next field (measured).
             .contentShape(Rectangle())
             .onTapGesture {
                 focusedField.wrappedValue = field
