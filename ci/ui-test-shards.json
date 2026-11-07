@@ -72,6 +72,7 @@
       "HomeScreenUITests/testScheduledWorkoutAndTheWeekRing": 10.6,
       "HomeSessionUITests/testFreeWorkoutFromHome": 41.8,
       "HomeWeekUITests/testWorkoutFinishedInTheAppCountsAndTodayCannotBeMarked": 32.4,
+      "PersistenceErrorUITests/testStoreFailureShowsErrorScreen": 8.4,
       "RestUITests/testNoRestWithSemTimer": 18.9,
       "RestUITests/testSessionSurvivesTheAppBeingClosed": 51.9,
       "SessionScreenUITests/testSetDoneWithoutALoadShowsADashAndTakesOne": 28.3,
