@@ -85,16 +85,19 @@ enum ExerciseCatalog {
         return chosen
     }
 
-    /// The items of the group, with the equipment, whose name contains the search, in the order given.
+    /// The items of the group, with the equipment, whose name has every word of the search, in the order
+    /// given.
     ///
-    /// The search matches any part of the name, ignoring case, diacritics and leading or trailing
-    /// whitespace. A custom exercise has no equipment, so choosing one leaves it out.
+    /// The search is split into words at any whitespace, so extra spaces do not count, and each word may
+    /// be any part of the name, in any order ("barra supino" finds "Supino Reto (Barra)"), ignoring case
+    /// and diacritics. An empty search keeps every item. A custom exercise has no equipment, so choosing
+    /// one leaves it out.
     static func filtered(_ items: [Item], group: GroupFilter, equipment: Equipment?, search: String) -> [Item] {
-        let query = Validation.comparisonKey(forName: search.trimmingCharacters(in: .whitespacesAndNewlines))
+        let words = Validation.comparisonKey(forName: search).split(whereSeparator: \.isWhitespace)
         return items.filter { item in
             guard matches(item, group: group) else { return false }
             if let equipment, item.equipment != equipment { return false }
-            return query.isEmpty || item.searchKey.contains(query)
+            return words.allSatisfy { item.searchKey.contains($0) }
         }
     }
 
@@ -103,7 +106,7 @@ enum ExerciseCatalog {
         group != .all || equipment != nil
     }
 
-    /// "157 exercícios", "1 exercício".
+    /// "220 exercícios", "1 exercício".
     static func countText(_ count: Int) -> String {
         String(localized: "\(count) exercícios")
     }
