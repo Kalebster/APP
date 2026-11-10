@@ -229,7 +229,7 @@ struct ExerciseLibrarySeederTests {
         harness.clock.advance(by: 3_600)
         #expect(try seeder.seed() == ExerciseLibrarySeedResult())
         #expect(harness.context.hasChanges == false)
-        #expect(try count(Exercise.self, in: harness.context) == 158)
+        #expect(try count(Exercise.self, in: harness.context) == 221)
     }
 
     @Test("A store with the library of 157, with workouts, sessions and a custom exercise stored with back, gets the 220: 144 names and 13 groups corrected, the 63 new ones active, nothing skipped, kept with the old name, archived or deleted, the same ids, workouts and history; seeding again changes nothing")

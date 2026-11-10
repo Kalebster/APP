@@ -656,7 +656,8 @@ final class WorkoutUITests: IronFlowUITestCase {
         }
 
         /// One line of the name more than the short one, never two: a line of 14 is about 17 pt, and the
-        /// icon hides part of it in a card. Nothing leaves the screen.
+        /// icon hides part of it in a card. Nothing leaves the screen. In the editor the names themselves
+        /// are compared, as the 44 pt of the ⋯ set the height of a row with a name in one or two lines.
         func checkTwoLines(long: CGRect, short: CGRect, in place: String) {
             let extra = long.height - short.height
             measurements.append("\(place): \(Int(short.height)) → \(Int(long.height)) pt, \(Int(long.minX))–\(Int(long.maxX))")
@@ -692,10 +693,11 @@ final class WorkoutUITests: IronFlowUITestCase {
         }
         XCTAssertTrue(header(longest).waitForExistence(timeout: 10), "Long exercise not in the editor")
         XCTAssertTrue(header(short).exists, "Short exercise not in the editor")
-        checkTwoLines(long: header(longest).frame, short: header(short).frame, in: "Editor")
         let name = header(longest).staticTexts[longest].firstMatch
+        let shortName = header(short).staticTexts[short].firstMatch
         let menu = menuButton(of: longest, identifier: "workout.exercise.menu")
-        XCTAssertTrue(name.exists && menu.exists, "Name or ⋯ not shown in the editor")
+        XCTAssertTrue(name.exists && shortName.exists && menu.exists, "Names or ⋯ not shown in the editor")
+        checkTwoLines(long: name.frame, short: shortName.frame, in: "Editor")
         XCTAssertLessThanOrEqual(name.frame.maxX, menu.frame.minX, "Editor: the name reaches the ⋯: \(name.frame), \(menu.frame)")
         attachScreenshot(named: "106-long-name-editor", of: app)
 
