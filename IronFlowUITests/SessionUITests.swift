@@ -24,8 +24,10 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testStartCheckMinimizeContinueAndFinish() throws {
         continueAfterFailure = false
-        // Planned for today, so the Início says it was done once the session is saved.
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "plan-today:Push"])
+        // Planned for today, so the Início says it was done once the session is saved. The notice after
+        // saving stays 15 s: on a slow machine the app took 2,5 s to settle after the tap on save, and the
+        // notice of 2,5 s was gone before the test looked for it.
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "plan-today:Push"], extraArguments: longToastArguments)
         startWorkout(named: "Push", in: app)
 
         XCTAssertEqual(element("session.name", in: app).label, "Push")
@@ -101,13 +103,15 @@ final class SessionUITests: IronFlowUITestCase {
         saveSessionFromTheFinishSheet(in: app)
         // Every set done and the load of the working and failure sets.
         XCTAssertTrue(waitForToast("Treino salvo · 2 séries · 200 kg", in: app), "No notice after finishing")
-        // Taken at once, while the notice of 2.5 s is still on the Início.
+        // Taken at once, while the notice is still on the Início.
         attachScreenshot(named: "93-workout-saved-notice", of: app)
         // Opened from Exercícios, finished: the app goes to the Início, where today's workout is done and
         // the week counts it.
         XCTAssertTrue(app.tabBars.buttons["Início"].isSelected, "Not on the Início after finishing")
         XCTAssertTrue(waitForLabel(of: element("home.today", in: app), containing: "Push concluído hoje"), "Today: \(element("home.today", in: app).label)")
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
+        // The history is taken without the notice, as when it lasted 2,5 s.
+        XCTAssertTrue(app.staticTexts.matching(identifier: "toast").firstMatch.waitForNonExistence(timeout: 20), "Notice still shown")
 
         openTab("Histórico", in: app)
         let finished = element("history.session", in: app)

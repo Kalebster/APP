@@ -27,7 +27,7 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
 /// Launch arguments that keep each notice (toast) 15 s on screen instead of 2,5 or 4 s, a test hook of
 /// Debug builds (`ToastDuration`). On a slow CI machine a test looked at the screen again only 9,6 s after
 /// the tap that showed a notice, which was gone by then. Used by the tests that check a notice and take no
-/// screenshot while a notice could still be on screen, or only one that already shows it (38 and 103), so
+/// screenshot while a notice could still be on screen, or only one that already shows it (38, 93 and 103), so
 /// no screenshot changes.
 let longToastArguments = ["-ui-toast-seconds", "15"]
 

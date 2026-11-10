@@ -171,6 +171,40 @@ final class ExerciseListUITests: IronFlowUITestCase {
         let app = launchOnTab("Exercícios")
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "Header not shown")
 
+        // Every word of the search, in any order, in every group.
+        let benchWithBarbell = [
+            "Supino Declinado (Barra), Peito, Peitoral inferior, Barra",
+            "Supino Fechado (Barra), Tríceps, Tríceps e peitoral, Barra",
+            "Supino Inclinado (Barra), Peito, Peitoral superior, Barra",
+            "Supino Reto (Barra), Peito, Peitoral médio, Barra",
+        ]
+        let clear = app.buttons["exercises.search.clear"]
+        for text in ["barra supino", "Supino  BARRA"] {
+            if clear.exists {
+                clear.tap()
+                XCTAssertTrue(clear.waitForNonExistence(timeout: 10), "Search not cleared")
+            }
+            search(text, in: app)
+            XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 0), toBe: benchWithBarbell[0]), "Search '\(text)'")
+            // The first word alone shows the same first card and more: the list has the whole search once
+            // the fifth card leaves.
+            XCTAssertTrue(cards(in: app).element(boundBy: benchWithBarbell.count).waitForNonExistence(timeout: 10), "Search '\(text)' kept other exercises")
+            XCTAssertEqual(cards(in: app).count, benchWithBarbell.count, "Search '\(text)'")
+            XCTAssertEqual((0..<benchWithBarbell.count).map { cards(in: app).element(boundBy: $0).label }, benchWithBarbell, "Search '\(text)'")
+        }
+
+        // The words and a group together: Peito leaves out Supino Fechado (Barra), of Tríceps.
+        groupChip("chest", in: app).tap()
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "3 exercícios"), "Peito with the search")
+        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, benchWithBarbell[0])
+        clear.tap()
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "33 exercícios"), "Peito without the search")
+        // Without the keyboard, which the search may keep after clearing it.
+        if app.keyboards.firstMatch.exists {
+            searchField(in: app).typeText("\n")
+            XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
+        }
+
         // Costas superiores, after Dorsais, and Adutores, near the end of the row that scrolls sideways.
         let upperBack = groupChip("upperBack", in: app)
         tapChip(upperBack, in: app)
@@ -187,35 +221,6 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Adução de Quadril (Polia), Adutores, Adutores (parte interna da coxa), Polia")
         XCTAssertEqual(cards(in: app).element(boundBy: 1).label, "Cadeira Adutora (Máquina), Adutores, Adutores (parte interna da coxa), Máquina")
         attachScreenshot(named: "104-exercises-adductors", of: app)
-
-        // Every word of the search, in any order, in every group.
-        tapChip(groupChip("all", in: app), in: app)
-        XCTAssertTrue(element("exercises.count", in: app).waitForNonExistence(timeout: 10), "Count row still shown")
-        let benchWithBarbell = [
-            "Supino Declinado (Barra), Peito, Peitoral inferior, Barra",
-            "Supino Fechado (Barra), Tríceps, Tríceps e peitoral, Barra",
-            "Supino Inclinado (Barra), Peito, Peitoral superior, Barra",
-            "Supino Reto (Barra), Peito, Peitoral médio, Barra",
-        ]
-        for text in ["barra supino", "Supino  BARRA"] {
-            let clear = app.buttons["exercises.search.clear"]
-            if clear.exists {
-                clear.tap()
-                XCTAssertTrue(clear.waitForNonExistence(timeout: 10), "Search not cleared")
-            }
-            search(text, in: app)
-            XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 0), toBe: benchWithBarbell[0]), "Search '\(text)'")
-            // The first word alone shows the same first card and more: the list has the whole search once
-            // the fifth card leaves.
-            XCTAssertTrue(cards(in: app).element(boundBy: benchWithBarbell.count).waitForNonExistence(timeout: 10), "Search '\(text)' kept other exercises")
-            XCTAssertEqual(cards(in: app).count, benchWithBarbell.count, "Search '\(text)'")
-            XCTAssertEqual((0..<benchWithBarbell.count).map { cards(in: app).element(boundBy: $0).label }, benchWithBarbell, "Search '\(text)'")
-        }
-
-        // The words and a group together: Tríceps keeps only Supino Fechado (Barra).
-        tapChip(groupChip("triceps", in: app), in: app)
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "1 exercício"), "Tríceps with the search")
-        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, benchWithBarbell[1])
     }
 
     @MainActor
