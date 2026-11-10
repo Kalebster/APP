@@ -28,18 +28,16 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Campos de série: toque na borda — no editor, tocar em qualquer ponto do fundo cinza dos campos kg, mín e máx dá o foco ao campo (área de toque retangular, como nos campos do treino, sem mudança visual); antes, os últimos 4 pt à direita davam o foco ao campo seguinte. No treino já funcionava. Teste firme do "Pronto" do descanso com um gancho só de teste (`-ui-rest-ready-seconds`) (PR #32).
 - CI mais rápido — testes de interface em 3 máquinas ao mesmo tempo, divididos pelo tempo real de cada teste (`ci/ui-test-shards.json`), com a conferência de que cada teste do pacote roda uma vez, na parte dele, e passa; testes de unidade e build Release numa 4ª máquina; o run completo caiu de 59–74 min para cerca de 29 min. Rodada curta só para diagnóstico (disparo manual com os testes e de 1 a 10 repetições, validados), que nunca vale como o CI de uma etapa. Teste instável `WorkoutUITests.testReorderExercises` corrigido no ajudante `waitForEditor` (uma consulta só, até 30 s) (PR #33).
 - CI: primeiro teste de cada parte num simulador frio — a apresentação do teclado é tocada de novo até sumir (até 30 s); gancho só de teste `-ui-toast-seconds` (só no Debug com `-ui-testing`), que deixa o aviso 15 s em 10 testes de interface sem mudar nenhum screenshot; o app é aberto e fechado uma vez antes dos testes de cada parte. Corrige as duas falhas do CI do main em 711820f (PR #34).
+- Lista de exercícios: biblioteca de 157 para 220 exercícios, com os nomes no padrão do Hevy (equipamento entre parênteses; os de peso do corpo sem parênteses), cada um no grupo do músculo que mais trabalha; "Costas" vira quatro grupos (Dorsais, que mantém o valor gravado "back", Costas superiores, Trapézio e Lombar) e entra Adutores, nos filtros na ordem aprovada; keys, ids e equipamentos de antes não mudam, e o histórico continua com o nome e o grupo de cada dia; busca por palavras na aba Exercícios e no seletor, em qualquer ordem, sem diferenciar maiúsculas, acentos e espaços a mais (PR da lista de exercícios).
 
 ## Próximas etapas
-
-### Lista de exercícios
-Depois da etapa dos campos de série e antes da S4-C (decisão do dono, a detalhar).
-- Ampliar a biblioteca de exercícios e revisar os nomes no padrão que o dono está acostumado, só com exercícios de kg × repetições. Os ids não mudam, para não afetar o histórico.
 
 ### S4-C — Exercícios próprios
 - Exercícios próprios: + Novo, detalhe do exercício, editar e arquivar, e equipamento dos exercícios próprios (precisa de modelo aprovado).
 - O › no fim de cada linha de Exercícios (13, `dimText`, como no protótipo), quando a linha passar a abrir o exercício.
 - Remover um exercício próprio que tem histórico arquiva o exercício, mas ele continua nos treinos. Decidir no modelo se o app pergunta se quer tirar dos treinos também.
 - O detalhe do exercício vale também para os exercícios da biblioteca, com equipamento, grupo, foco e o histórico da pessoa com aquele exercício (última vez, melhor série, evolução).
+- Barra Fixa (Graviton): o kg é a ajuda da máquina, então mais kg deixa o exercício mais fácil. A evolução e os recordes precisam tratar isso (decisão do dono).
 
 ### Trocar exercício
 Etapa pequena depois da S4-C, com modelo antes.
@@ -112,7 +110,7 @@ Fora do plano: desafios entre amigos e feed social.
 - Ícone do app.
 - Mensagem amigável na tela de erro ao abrir os dados.
 - Datas do Histórico e dos treinos recentes com o calendário do app (`TrainingDay.calendar`) em vez do calendário do aparelho: hoje o `SessionFormatting` usa o do aparelho por padrão, e num calendário budista ou japonês o ano sai errado.
-- A biblioteca de 157 exercícios é lida e conferida a cada abertura, antes da primeira tela; guardar a versão aplicada e pular quando for a mesma.
+- A biblioteca de 220 exercícios é lida e conferida a cada abertura, antes da primeira tela; guardar a versão aplicada e pular quando for a mesma.
 - Limpeza de código:
   - só usados nos testes: `SessionService.activeSession()` (com o erro `multipleActiveSessions`) e `RestTimer.isOver(at:)`;
   - sem tela: `WorkoutService.movePlannedSets`;
@@ -182,3 +180,4 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Sem calculadora de anilhas.
 - Revisões: em cada etapa, o /code-review e as conferências olham só o que mudou. O app inteiro é revisado só em dois momentos, antes do TestFlight e antes do lançamento.
 - O app pede o iOS 26.0 ou mais novo (app e alvos de teste): ele só é testado e medido no iOS 26.
+- Nomes dos exercícios no padrão do Hevy, com o equipamento entre parênteses (os de peso do corpo ficam sem parênteses). Cada exercício fica no grupo do músculo que ele mais trabalha.
