@@ -36,7 +36,8 @@ struct DefaultExerciseLibraryTests {
             if !line.hasPrefix(" ") {
                 // "Peito (chest):"
                 let key = try #require(line.firstMatch(of: /\((\w+)\):$/)?.1, "Group line: \(line)")
-                group = try #require(MuscleGroup(rawValue: String(key)), "Group: \(key)")
+                let parsed: MuscleGroup = try #require(MuscleGroup(rawValue: String(key)), "Group: \(key)")
+                group = parsed
                 continue
             }
             let lineGroup = try #require(group, "Line before a group: \(line)")

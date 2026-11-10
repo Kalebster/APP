@@ -318,8 +318,10 @@ struct ExerciseLibrarySeederTests {
         #expect(try storeCounts(in: harness.context) == countsAfter)
 
         // The workouts use the same records, with the same planned sets, now with the new names and groups.
-        #expect(pull.orderedExercises.map { $0.exercise?.id } == [pullUp.id, row.id, pullover.id, custom.id])
-        #expect(legs.orderedExercises.map { $0.exercise?.id } == [deadlift.id, adduction.id, bridge.id])
+        let pullIDs: [UUID?] = [pullUp.id, row.id, pullover.id, custom.id]
+        let legsIDs: [UUID?] = [deadlift.id, adduction.id, bridge.id]
+        #expect(pull.orderedExercises.map { $0.exercise?.id } == pullIDs)
+        #expect(legs.orderedExercises.map { $0.exercise?.id } == legsIDs)
         #expect(legs.orderedExercises.map { $0.orderedPlannedSets.count } == [2, 1, 1])
         #expect([pullUp, row, pullover, deadlift, adduction, bridge].map(\.name) == [
             "Barra Fixa (Pegada Aberta)", "Remada Curvada (Barra)", "Pullover (Halter)", "Levantamento Terra (Barra)",
@@ -336,8 +338,8 @@ struct ExerciseLibrarySeederTests {
         #expect(sessions[0].orderedExercises.map(\.muscleGroupSnapshot) == [.back, .back, .chest, .back])
         #expect(sessions[1].orderedExercises.map(\.exerciseNameSnapshot) == ["Levantamento Terra", "Cadeira Adutora", "Ponte de Glúteo"])
         #expect(sessions[1].orderedExercises.map(\.muscleGroupSnapshot) == [.back, .glutes, .glutes])
-        #expect(sessions[0].orderedExercises.map { $0.exercise?.id } == [pullUp.id, row.id, pullover.id, custom.id])
-        #expect(sessions[1].orderedExercises.map { $0.exercise?.id } == [deadlift.id, adduction.id, bridge.id])
+        #expect(sessions[0].orderedExercises.map { $0.exercise?.id } == pullIDs)
+        #expect(sessions[1].orderedExercises.map { $0.exercise?.id } == legsIDs)
         for session in sessions {
             #expect(session.orderedExercises.allSatisfy { $0.orderedSetLogs[0].reps == 8 && $0.orderedSetLogs[0].weightKg == 30 })
         }
