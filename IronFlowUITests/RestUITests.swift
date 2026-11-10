@@ -7,7 +7,7 @@ import XCTest
 final class RestUITests: IronFlowUITestCase {
     /// Push with four exercises of the built-in library, like the model, the first with the sets of the
     /// editor's model (5 sets).
-    private let push = "workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres|Desenvolvimento com Halteres|Tríceps na Polia com Corda"
+    private let push = "workout:Push:Supino Reto (Barra)|Supino Inclinado (Halter)|Desenvolvimento (Halter)|Tríceps Corda (Polia)"
     private let setTypes = "set-types:Push"
 
     @MainActor
@@ -77,7 +77,7 @@ final class RestUITests: IronFlowUITestCase {
         first.tap()
         let two = app.buttons["rest.option.120"]
         XCTAssertTrue(two.waitForExistence(timeout: 10), "Descanso entre séries not shown")
-        XCTAssertTrue(element("rest.explanation", in: app).label.hasPrefix("Supino Reto com Barra. O timer começa"), "Explanation: \(element("rest.explanation", in: app).label)")
+        XCTAssertTrue(element("rest.explanation", in: app).label.hasPrefix("Supino Reto (Barra). O timer começa"), "Explanation: \(element("rest.explanation", in: app).label)")
         XCTAssertTrue(app.buttons["rest.option.90"].isSelected, "1:30 is not the one chosen")
         XCTAssertEqual(app.buttons["rest.option.90"].label, "1 min 30 s, padrão")
         two.tap()
@@ -91,7 +91,7 @@ final class RestUITests: IronFlowUITestCase {
         second.tap()
         let none = app.buttons["rest.option.0"]
         XCTAssertTrue(none.waitForExistence(timeout: 10), "Descanso entre séries not shown for the second exercise")
-        XCTAssertTrue(element("rest.explanation", in: app).label.hasPrefix("Supino Inclinado com Halteres."), "Explanation: \(element("rest.explanation", in: app).label)")
+        XCTAssertTrue(element("rest.explanation", in: app).label.hasPrefix("Supino Inclinado (Halter)."), "Explanation: \(element("rest.explanation", in: app).label)")
         attachScreenshot(named: "96-rest-sheet", of: app)
         none.tap()
         XCTAssertTrue(waitForLabel(of: second, toBe: "Descanso entre séries: Sem timer"), "Rest: \(second.label)")
@@ -254,7 +254,7 @@ final class RestUITests: IronFlowUITestCase {
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
         XCTAssertTrue(
-            waitForToast("Descanso acabou. Próxima: Supino Reto com Barra · série 3 de 5", in: app, timeout: 30),
+            waitForToast("Descanso acabou. Próxima: Supino Reto (Barra) · série 3 de 5", in: app, timeout: 30),
             "No notice at the end of the rest on another screen"
         )
         attachScreenshot(named: "103-rest-ended-elsewhere", of: app)
@@ -265,7 +265,7 @@ final class RestUITests: IronFlowUITestCase {
     @MainActor
     func testNoRestWithSemTimer() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Curto:Rosca Direta com Barra", "rest:Curto:0"])
+        let app = launchOnTab("Treinos", seed: ["workout:Curto:Rosca Direta (Barra)", "rest:Curto:0"])
         startWorkout(named: "Curto", in: app)
         checks(in: app).element(boundBy: 0).tap()
         XCTAssertTrue(checks(in: app).element(boundBy: 0).isSelected, "First set not checked")

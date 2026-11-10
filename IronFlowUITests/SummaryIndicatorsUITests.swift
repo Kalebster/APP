@@ -9,7 +9,7 @@ final class SummaryIndicatorsUITests: IronFlowUITestCase {
     private static let seed = [
         "weights:81.2@14|80.6@7|80@2",
         "profile:180:2300",
-        "workout:Push:Supino Reto com Barra",
+        "workout:Push:Supino Reto (Barra)",
         "finished-today:Push",
     ]
 

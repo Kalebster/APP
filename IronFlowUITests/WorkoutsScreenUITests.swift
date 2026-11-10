@@ -8,9 +8,9 @@ import XCTest
 final class WorkoutsScreenUITests: IronFlowUITestCase {
     /// Push, Pull and Pernas with exercises of the built-in library, like the model.
     private let workouts = [
-        "workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres|Desenvolvimento com Halteres|Tríceps na Polia com Corda",
-        "workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra",
-        "workout:Pernas:Agachamento Livre com Barra|Cadeira Extensora|Stiff com Barra|Mesa Flexora|Panturrilha Sentado",
+        "workout:Push:Supino Reto (Barra)|Supino Inclinado (Halter)|Desenvolvimento (Halter)|Tríceps Corda (Polia)",
+        "workout:Pull:Barra Fixa (Pegada Aberta)|Rosca Direta (Barra)",
+        "workout:Pernas:Agachamento Livre (Barra)|Cadeira Extensora (Máquina)|Stiff (Barra)|Mesa Flexora (Máquina)|Panturrilha Sentado (Máquina)",
     ]
 
     @MainActor
@@ -45,7 +45,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         let cards = app.buttons.matching(identifier: "workouts.card")
         XCTAssertEqual(cards.count, 3)
         XCTAssertTrue(cards.element(boundBy: 0).label.hasSuffix("4 exercícios · 12 séries, Peito · Ombros · Tríceps"), "Push: \(cards.element(boundBy: 0).label)")
-        XCTAssertTrue(cards.element(boundBy: 1).label.hasSuffix("2 exercícios · 6 séries, Costas · Bíceps"), "Pull: \(cards.element(boundBy: 1).label)")
+        XCTAssertTrue(cards.element(boundBy: 1).label.hasSuffix("2 exercícios · 6 séries, Dorsais · Bíceps"), "Pull: \(cards.element(boundBy: 1).label)")
         XCTAssertTrue(cards.element(boundBy: 2).label.hasSuffix("Quadríceps · Posteriores de coxa · Panturrilhas"), "Pernas: \(cards.element(boundBy: 2).label)")
         // The cards of a row share its height.
         XCTAssertEqual(cards.element(boundBy: 0).frame.height, cards.element(boundBy: 1).frame.height, accuracy: 1)
@@ -91,7 +91,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
     @MainActor
     func testStartFromTheCardAndFreeWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "workout:Pull"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "workout:Pull"])
 
         XCTAssertTrue(app.staticTexts["2 treinos no plano"].waitForExistence(timeout: 10), "Subtitle with two workouts")
         XCTAssertFalse(element("workouts.empty", in: app).exists, "Empty card shown with workouts")
@@ -122,7 +122,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRenameAndDeleteFromTheMenu() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
 
         // Rename.
         let options = app.buttons["Opções de Push"]
@@ -184,7 +184,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
     func testRecentWorkoutsShowOnlyTheLastThree() throws {
         continueAfterFailure = false
         // Four finished sessions of Push, two hours apart, each lasting 40 minutes.
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "workout:Pull", "finished:Push:4"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "workout:Pull", "finished:Push:4"])
 
         // Four sessions were finished, three are shown.
         let recents = app.buttons.matching(identifier: "workouts.recent")

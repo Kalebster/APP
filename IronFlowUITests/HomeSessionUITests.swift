@@ -21,7 +21,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
         XCTAssertTrue(element("session.empty", in: app).exists, "Free session not empty")
 
         app.buttons["session.addExercise"].tap()
-        pickExercise("Barra Fixa Pronada", in: app)
+        pickExercise("Barra Fixa (Pegada Aberta)", in: app)
         XCTAssertTrue(waitForToast("1 exercício adicionado", in: app), "No notice after adding")
         // The exercise comes with three sets, as in a workout.
         let checks = app.buttons.matching(identifier: "session.set.check")
@@ -53,7 +53,7 @@ final class HomeSessionUITests: IronFlowUITestCase {
     @MainActor
     func testChooseWorkoutThenContinueTheSameSession() throws {
         continueAfterFailure = false
-        let app = launchOnHome(seed: ["workout:Push:Barra Fixa Pronada"])
+        let app = launchOnHome(seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
 
         let choose = app.buttons["home.chooseWorkout"]
         XCTAssertTrue(choose.waitForExistence(timeout: 10), "No Escolher treino")
