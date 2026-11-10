@@ -205,6 +205,9 @@ final class ExerciseListUITests: IronFlowUITestCase {
             }
             search(text, in: app)
             XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 0), toBe: benchWithBarbell[0]), "Search '\(text)'")
+            // The first word alone shows the same first card and more: the list has the whole search once
+            // the fifth card leaves.
+            XCTAssertTrue(cards(in: app).element(boundBy: benchWithBarbell.count).waitForNonExistence(timeout: 10), "Search '\(text)' kept other exercises")
             XCTAssertEqual(cards(in: app).count, benchWithBarbell.count, "Search '\(text)'")
             XCTAssertEqual((0..<benchWithBarbell.count).map { cards(in: app).element(boundBy: $0).label }, benchWithBarbell, "Search '\(text)'")
         }

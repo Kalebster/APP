@@ -20,9 +20,11 @@ struct DefaultExercise: Equatable, Sendable {
 /// Rules: keys and ids are never changed, removed or reused. Name and muscle group may be
 /// corrected in a later version. Entries that leave this list stay in existing stores.
 ///
-/// Names: the equipment goes in parentheses ("Supino Reto (Barra)"); a bodyweight exercise has none, and
-/// its load is the extra weight (0 is the body alone). Barra W uses the barbell equipment. Each exercise
-/// is in the group of the muscle it works the most.
+/// Names follow the approved list: the equipment goes in parentheses ("Supino Reto (Barra)"); a bodyweight
+/// exercise has none, and its load is the extra weight (0 is the body alone). A few names keep another
+/// detail in parentheses, or none, as approved ("Barra Fixa (Pegada Aberta)", "Barra Fixa (Graviton)",
+/// "Kettlebell Swing"). Barra W uses the barbell equipment. Each exercise is in the group of the muscle it
+/// works the most.
 enum DefaultExerciseLibrary {
     static let all: [DefaultExercise] = [
         // MARK: Peito

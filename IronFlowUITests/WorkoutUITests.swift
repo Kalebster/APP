@@ -679,6 +679,8 @@ final class WorkoutUITests: IronFlowUITestCase {
         search.tapAndWaitForKeyboardFocus()
         search.typeText("acima barra")
         XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(longest), Tríceps, Cabeça longa, Barra"), "Long card: \(cards.element(boundBy: 0).label)")
+        // "acima" alone also shows the (Halter) and (Polia) ones: the list has the whole search once they leave.
+        XCTAssertTrue(cards.element(boundBy: 1).waitForNonExistence(timeout: 10), "The search kept other exercises")
         XCTAssertEqual(cards.count, 1)
         checkTwoLines(long: cards.element(boundBy: 0).frame, short: shortCard, in: "Exercícios")
         search.typeText("\n")

@@ -14,21 +14,18 @@ struct MuscleGroupTests {
     }
 
     /// Storage keys are written to the database: changing one would break existing data.
+    /// The order of the cases is the order of the filters (checked with the names above); the keys are
+    /// checked without it.
     @Test("Storage keys are stable and unique: the thirteen first ones as they were, and the four added")
     func storageKeysAreStable() {
         let keys = MuscleGroup.allCases.map(\.rawValue)
-        #expect(keys == [
-            "chest", "back", "upperBack", "traps", "lowerBack", "shoulders", "biceps", "triceps", "forearms",
-            "abs", "quadriceps", "hamstrings", "glutes", "adductors", "calves", "fullBody", "other",
-        ])
         #expect(Set(keys).count == keys.count)
-        let firstKeys = [
+        let firstKeys: Set = [
             "chest", "back", "shoulders", "biceps", "triceps", "forearms", "quadriceps",
             "hamstrings", "glutes", "calves", "abs", "fullBody", "other",
         ]
-        for key in firstKeys {
-            #expect(MuscleGroup(rawValue: key)?.rawValue == key, "Storage key lost: \(key)")
-        }
+        let addedKeys: Set = ["upperBack", "traps", "lowerBack", "adductors"]
+        #expect(Set(keys) == firstKeys.union(addedKeys))
     }
 
     @Test("A group stored as back, as every back exercise was before, reads as Dorsais")
