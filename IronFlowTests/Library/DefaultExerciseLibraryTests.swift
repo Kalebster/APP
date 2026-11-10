@@ -5,17 +5,109 @@ import Testing
 struct DefaultExerciseLibraryTests {
     let library = DefaultExerciseLibrary.all
 
-    @Test("The library has the 157 approved exercises with the approved count per muscle group, none in Outro")
+    @Test("The library has the 220 approved exercises with the approved count per muscle group, none in Outro")
     func countsPerGroup() {
-        #expect(library.count == 157)
+        #expect(library.count == 220)
         var counts: [MuscleGroup: Int] = [:]
         for entry in library {
             counts[entry.muscleGroup, default: 0] += 1
         }
         #expect(counts == [
-            .chest: 21, .back: 22, .shoulders: 18, .biceps: 14, .triceps: 14, .forearms: 4, .quadriceps: 16,
-            .hamstrings: 9, .glutes: 13, .calves: 5, .abs: 14, .fullBody: 7,
+            .chest: 33, .back: 20, .upperBack: 10, .traps: 5, .lowerBack: 6, .shoulders: 23, .biceps: 17,
+            .triceps: 23, .forearms: 7, .abs: 17, .quadriceps: 22, .hamstrings: 11, .glutes: 12, .adductors: 2,
+            .calves: 5, .fullBody: 7,
         ])
+    }
+
+    /// The approved list, parsed: each line with its group, and for a new exercise its equipment and focus.
+    private struct ApprovedLine {
+        /// `nil` for a new exercise ("NOVO").
+        let key: String?
+        let name: String
+        let group: MuscleGroup
+        let equipment: Equipment?
+        let focus: String?
+    }
+
+    private static func approvedLines() throws -> [ApprovedLine] {
+        var lines: [ApprovedLine] = []
+        var group: MuscleGroup?
+        for line in ApprovedExerciseList.text.split(separator: "\n").map(String.init) {
+            if !line.hasPrefix(" ") {
+                // "Peito (chest):"
+                let key = try #require(line.firstMatch(of: /\((\w+)\):$/)?.1, "Group line: \(line)")
+                group = try #require(MuscleGroup(rawValue: String(key)), "Group: \(key)")
+                continue
+            }
+            let lineGroup = try #require(group, "Line before a group: \(line)")
+            let parts = line.trimmingCharacters(in: .whitespaces).components(separatedBy: " = ")
+            try #require(parts.count == 2, "Line: \(line)")
+            let fields = parts[1].components(separatedBy: " · ")
+            if parts[0] == "NOVO" {
+                try #require(fields.count == 3, "Line: \(line)")
+                let equipment = try #require(Equipment(rawValue: fields[1]), "Equipment: \(line)")
+                lines.append(ApprovedLine(key: nil, name: fields[0], group: lineGroup, equipment: equipment, focus: fields[2]))
+            } else {
+                try #require(fields.count <= 2, "Line: \(line)")
+                var focus: String?
+                if fields.count == 2 {
+                    try #require(fields[1].hasPrefix("foco: "), "Line: \(line)")
+                    focus = String(fields[1].dropFirst("foco: ".count))
+                }
+                lines.append(ApprovedLine(key: parts[0], name: fields[0], group: lineGroup, equipment: nil, focus: focus))
+            }
+        }
+        return lines
+    }
+
+    @Test("The library is the approved list, in its order: each name, group, equipment and focus")
+    func approvedList() throws {
+        let approved = try Self.approvedLines()
+        let before = Dictionary(uniqueKeysWithValues: Library157Fixture.entries.map { ($0.key, $0) })
+        #expect(approved.count == 220)
+        #expect(approved.filter { $0.key == nil }.count == 63)
+        try #require(library.count == approved.count)
+        for (entry, line) in zip(library, approved) {
+            #expect(entry.name == line.name, "Name of \(entry.key)")
+            #expect(entry.muscleGroup == line.group, "Group of \(entry.key)")
+            if let key = line.key {
+                // An exercise that already existed: key, id and equipment as before; the focus as before
+                // unless the line gives one.
+                let old = try #require(before[key], "Not in the library of 157: \(key)")
+                #expect(entry.key == key)
+                #expect(entry.id == old.id)
+                #expect(entry.equipment == old.equipment, "Equipment of \(key)")
+                #expect(entry.focus == (line.focus ?? old.focus), "Focus of \(key)")
+            } else {
+                // A new exercise: a key of its own, with the listed equipment and focus.
+                #expect(before[entry.key] == nil, "New exercise with an existing key: \(entry.key)")
+                #expect(entry.equipment == line.equipment, "Equipment of \(entry.key)")
+                #expect(entry.focus == line.focus, "Focus of \(entry.key)")
+            }
+        }
+    }
+
+    @Test("Against the library of 157, every exercise stays with its key, id and equipment; 144 names, 13 groups and 4 focuses change")
+    func changesFromTheLibraryOf157() throws {
+        #expect(Library157Fixture.entries.count == 157)
+        var renamed = 0
+        var regrouped: Set<String> = []
+        var refocused: Set<String> = []
+        for old in Library157Fixture.entries {
+            let entry = try #require(DefaultExerciseLibrary.byKey[old.key], "Missing: \(old.key)")
+            #expect(entry.id == old.id)
+            #expect(entry.equipment == old.equipment)
+            if entry.name != old.name { renamed += 1 }
+            if entry.muscleGroup != old.muscleGroup { regrouped.insert(old.key) }
+            if entry.focus != old.focus { refocused.insert(old.key) }
+        }
+        #expect(renamed == 144)
+        #expect(regrouped == [
+            "pullover-dumbbell", "bent-over-row-barbell", "bent-over-row-smith", "t-bar-row", "row-lever-machine",
+            "wide-grip-seated-cable-row", "row-machine", "seal-row", "shrug-barbell", "shrug-dumbbell",
+            "back-extension", "deadlift", "hip-adduction-machine",
+        ])
+        #expect(refocused == ["seated-cable-row", "pullover-dumbbell", "wide-grip-seated-cable-row", "row-machine"])
     }
 
     @Test("Keys are unique, English lowercase words separated by hyphens")
@@ -62,21 +154,24 @@ struct DefaultExerciseLibraryTests {
         }
     }
 
-    @Test("Approved classifications: the corrected groups, and power clean and thruster now in the library")
+    @Test("Approved classifications: each exercise in the group of the muscle it works the most")
     func classifications() {
         func group(_ key: String) -> MuscleGroup? { library.first { $0.key == key }?.muscleGroup }
-        #expect(group("deadlift") == .back)
-        #expect(group("shrug-dumbbell") == .back)
-        #expect(group("hip-adduction-machine") == .glutes)
+        #expect(group("pull-up") == .back)
+        #expect(group("pullover-dumbbell") == .back)
+        #expect(group("bent-over-row-barbell") == .upperBack)
+        #expect(group("shrug-dumbbell") == .traps)
+        #expect(group("deadlift") == .lowerBack)
+        #expect(group("hip-adduction-machine") == .adductors)
         #expect(group("dips") == .triceps)
         #expect(group("hammer-curl-dumbbell") == .biceps)
         #expect(group("power-clean") == .fullBody)
         #expect(group("thruster-barbell") == .fullBody)
-        #expect(library.first { $0.key == "bench-press-barbell" }?.name == "Supino Reto com Barra")
-        #expect(library.first { $0.key == "pull-up" }?.name == "Barra Fixa Pronada")
+        #expect(library.first { $0.key == "bench-press-barbell" }?.name == "Supino Reto (Barra)")
+        #expect(library.first { $0.key == "pull-up" }?.name == "Barra Fixa (Pegada Aberta)")
     }
 
-    @Test("Against the first library, 20 names and 3 groups are corrected, and nothing else of its 71 exercises changes")
+    @Test("Against the first library, its 71 exercises keep their ids; 67 names and 5 groups changed since then")
     func correctionsOfTheFirstLibrary() throws {
         var renamed: [String] = []
         var regrouped: [String] = []
@@ -87,8 +182,8 @@ struct DefaultExerciseLibraryTests {
             if entry.muscleGroup != old.muscleGroup { regrouped.append(old.key) }
         }
         #expect(LibraryV1Fixture.entries.count == 71)
-        #expect(renamed.count == 20)
-        #expect(Set(regrouped) == ["deadlift", "shrug-dumbbell", "hip-adduction-machine"])
+        #expect(renamed.count == 67)
+        #expect(Set(regrouped) == ["bent-over-row-barbell", "row-machine", "shrug-dumbbell", "deadlift", "hip-adduction-machine"])
     }
 
     /// Keys and ids are permanent. This list may only grow: changing or removing a pair
@@ -258,5 +353,69 @@ struct DefaultExerciseLibraryTests {
         "thruster-barbell": "D3582270-5FAE-4B7D-99A3-F1DA1BE00431",
         "thruster-dumbbell": "94F098B9-9AF6-4DCA-A9D1-0A96B5B5C1F5",
         "power-clean": "372E8075-4DF9-4DC2-9EE2-4E50CFF9EA1A",
+        // Added with the library of 220 (lista de exercícios).
+        "bench-press-cable": "A14779F1-530A-4C91-9EED-FD747EC88C85",
+        "incline-bench-press-cable": "139A7832-60F5-4D7C-9009-311F92BE01E2",
+        "decline-chest-press-machine": "C320DD5B-A263-4D26-8A88-2D1557BB46B1",
+        "decline-bench-press-smith": "75F2205B-0DE6-4384-BC01-9CD9918674D7",
+        "decline-bench-press-cable": "D1AABBEB-1EEF-40A9-9A2E-5C444FCB21E8",
+        "seated-chest-press-machine": "DFAF5159-F81D-4C31-B766-DBDD1DD45F91",
+        "seated-chest-press-cable": "26A9D91B-3600-41CE-B1F3-79F34199E07D",
+        "fly-cable": "3396FD56-4170-44B4-A65D-E885B036292F",
+        "incline-fly-machine": "BC5BC023-E74A-4F72-8DFF-60E8A53371E2",
+        "incline-fly-cable": "A8FEFECE-4E10-40D6-9964-8E072A142957",
+        "single-arm-cable-crossover": "59C29ADB-6DFB-436C-8155-E516DF366841",
+        "incline-push-up": "3E49E429-B361-433A-BBBC-50DD1306305E",
+        "knee-push-up": "5873429C-978A-45E8-A529-2F6B64C746B9",
+        "close-grip-pull-up": "28F1B731-96E6-4877-8E2B-F45B56AE386E",
+        "lat-pulldown-machine": "AD589024-E54E-447F-A92F-B555CD8DFD3D",
+        "single-arm-lat-pulldown-machine": "CAF97DF2-C7CB-4DDC-9ED4-821006EA3559",
+        "single-arm-row-cable": "24488176-1FE8-4030-8D4A-AF4F9C37C673",
+        "single-arm-row-machine": "992C150B-3DF9-4B5D-8F40-E80836A7127A",
+        "high-row-machine": "6790D887-711C-4CA6-B5AD-86C60C439940",
+        "pullover-barbell": "7F8D6F93-5C43-4622-82D0-BC499D9A8F53",
+        "pullover-machine": "A5E6EA3B-0329-4CC8-A28D-2E0F7651432A",
+        "bent-over-row-dumbbell": "015C9D09-72E3-4D4F-9AC3-D61ED3DFE569",
+        "t-bar-row-machine": "61049916-7CE1-4CDF-86B3-17ADA76E2255",
+        "v-grip-row-machine": "CFA196F2-588C-4DDD-A56A-C553E1E24ECE",
+        "shrug-smith": "50590B97-3AA4-4B88-8825-49C2C9BDA4B6",
+        "shrug-machine": "20D4403C-6C92-427D-A6AB-986BC77C9179",
+        "shrug-cable": "A3C747BD-8736-412A-A716-702604858160",
+        "back-extension-plate": "A27B4AFA-87E5-4C42-A0E0-2E3C13FD1725",
+        "back-extension-machine": "64C30AF4-D275-47F3-B5C6-C0C0F83C4811",
+        "superman": "49CE5F30-05F6-4046-B224-6C9A4E67B0CD",
+        "deadlift-dumbbell": "B961FC90-D332-4077-9AC0-7CFF63D97C53",
+        "single-arm-lateral-raise-dumbbell": "0A7A2EC9-C85B-4278-A6C6-83CE08FAEE4C",
+        "single-arm-lateral-raise-cable": "1895F788-5A94-4153-B17C-83CDCADFFFA6",
+        "front-raise-barbell": "F56C9460-E524-472C-B6F7-695D9A201753",
+        "single-arm-reverse-fly-cable": "1766A0C1-60BF-46D0-AB1B-84CA4D4B8230",
+        "upright-row-dumbbell": "770DA728-6956-4E8A-BDCB-9E66D645A6B0",
+        "single-arm-curl-cable": "4C3B63B3-455B-4129-AC31-BB3714AD87E6",
+        "preacher-curl-cable": "DC34389A-6210-43FE-A403-3E6A9D79396D",
+        "spider-curl-dumbbell": "080B9377-7A85-478C-9ABD-83831CFE03CA",
+        "single-arm-triceps-pushdown": "7A1B220C-5CC8-48CE-A04D-7AC95DA90826",
+        "overhead-extension-ez-bar": "D05AC5FE-92AF-4967-BC4C-BA6555B03945",
+        "single-arm-overhead-extension-dumbbell": "0E9FD0FE-5C9D-4122-981D-6D868B997CE0",
+        "skull-crusher-cable": "1C296FCF-E863-460A-9988-853473C2D813",
+        "skull-crusher-smith": "38A960C6-5A73-4276-B8F9-A205201DD068",
+        "jm-press-barbell": "1E2466F8-B5E9-4263-B55A-7656392C229D",
+        "jm-press-smith": "FB8883F5-4167-45EA-B82D-3A5460B0845B",
+        "close-grip-bench-press-smith": "EEBBA5E2-8F5E-4F44-A03B-F48D6F5B73D1",
+        "seated-dip-machine": "49E05F8F-300F-4E7C-AC51-333836C9ABBD",
+        "reverse-wrist-curl-dumbbell": "C5F2A423-5862-4484-BA78-A86F12B98E71",
+        "reverse-curl-dumbbell": "EEE5EB96-6125-4896-9A61-56F84AE8C432",
+        "reverse-curl-cable": "7B240C7E-6DA9-45D0-A6AD-0BEFCEA9A576",
+        "decline-crunch": "448C4290-B9B6-4F14-AB34-F11022EC9452",
+        "scissor-kick": "0E1ED61D-280E-4AB5-A6A2-C5836607DB52",
+        "dragon-flag": "AFD2254B-F118-410F-81E9-CC52C30623F5",
+        "pendulum-squat": "B2D2E4C7-4B4A-4CCF-8E43-83B2BF911D9D",
+        "goblet-squat-dumbbell": "F5BF0562-FF37-4359-BBD3-AA19B6912F86",
+        "bulgarian-split-squat-smith": "825104FE-299A-42E7-AE09-712FB01DC895",
+        "single-leg-press": "BC25AD7A-BA53-41D9-823C-3E93F9613448",
+        "single-leg-extension": "A5D56C6E-66DA-4DA8-A091-EE1C88092436",
+        "lunge-barbell": "55B29EF1-74F2-4C8C-A036-25C35BB2F3B4",
+        "single-leg-romanian-deadlift-dumbbell": "88E4BC9E-8248-48A3-9753-2BC5B9BD3E10",
+        "good-morning-smith": "260397E6-BC71-4C8D-9959-46AF7863C31A",
+        "hip-adduction-cable": "6C990FD1-E4AC-49EB-8ABC-C6FDA130AC20",
     ]
 }
