@@ -122,7 +122,8 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRenameAndDeleteFromTheMenu() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
+        // The notices stay 15 s (longToastArguments); screenshot 82 is taken once the first has gone.
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"], extraArguments: longToastArguments)
 
         // Rename.
         let options = app.buttons["Opções de Push"]
@@ -164,6 +165,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(app.staticTexts["1 treino no plano"].exists, "Subtitle after cancelling")
 
         // Delete: confirming removes it and shows the empty card.
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
         let menuFrame = app.buttons["Opções de Pull"].frame
         app.buttons["Opções de Pull"].tap()
         XCTAssertTrue(app.buttons["Excluir treino"].waitForExistence(timeout: 10), "Delete option not found")

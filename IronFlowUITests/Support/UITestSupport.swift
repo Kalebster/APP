@@ -26,9 +26,9 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
 
 /// Launch arguments that keep each notice (toast) 15 s on screen instead of 2,5 or 4 s, a test hook of
 /// Debug builds (`ToastDuration`). On a slow CI machine a test looked at the screen again only 9,6 s after
-/// the tap that showed a notice, which was gone by then. Used by the tests that check a notice and take no
-/// screenshot while a notice could still be on screen, or only one that already shows it (38, 93 and 103), so
-/// no screenshot changes.
+/// the tap that showed a notice, which was gone by then. Used by every test that checks a notice. A screenshot
+/// that shows the notice (38, 93, 98, 101, 102 and 103) is taken while it is still there; one that was taken
+/// without it is taken after `waitForToastToLeave`, so no screenshot changes.
 let longToastArguments = ["-ui-toast-seconds", "15"]
 
 /// The base of every interface test. When a test fails it keeps the text of what was on the app's
@@ -101,6 +101,22 @@ extension XCTestCase {
         }
     }
 
+    /// Opens the session from the "Treino em andamento" bar and waits for its screen. A tap a few seconds
+    /// after the launch can be lost, as on the tabs (seen in CI: the app did not react to it, and 10 s later
+    /// the bar was still on Treinos with nothing over it), so when the session has not opened in 5 s and
+    /// the bar can still be tapped, it is tapped once more. Nothing waits when the first tap works.
+    @MainActor
+    func openSessionFromTheBar(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let bar = app.buttons["session.bar"]
+        let name = element("session.name", in: app)
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown", file: file, line: line)
+        bar.tap()
+        if !name.waitForExistence(timeout: 5), bar.isHittable {
+            bar.tap()
+        }
+        XCTAssertTrue(name.waitForExistence(timeout: 10), "Session not opened from the bar", file: file, line: line)
+    }
+
     @MainActor
     private func waitUntilSelected(_ tab: XCUIElement, timeout: TimeInterval) -> Bool {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: tab)
@@ -154,6 +170,13 @@ extension XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         } while Date() < deadline
         return false
+    }
+
+    /// Waits until no notice is on screen: with `longToastArguments` a notice stays 15 s, so a test calls it
+    /// before a screenshot that was taken without the notice when it lasted 2,5 or 4 s.
+    @MainActor
+    func waitForToastToLeave(in app: XCUIApplication) -> Bool {
+        app.staticTexts.matching(identifier: "toast").firstMatch.waitForNonExistence(timeout: 20)
     }
 
     /// Waits until the element's label is exactly `label`.

@@ -32,7 +32,7 @@
       "WorkoutUITests/testEmptyStateAndCreateWorkout": 35.1,
       "WorkoutUITests/testRenameWorkout": 40.6,
       "WorkoutUITests/testReorderExercises": 52.0,
-      "WorkoutUITests/testTheLongestExerciseNameWrapsInTwoLines": 51.1,
+      "WorkoutUITests/testTheLongestExerciseNameWrapsInTwoLines": 45.1,
       "WorkoutsScreenUITests/testRenameAndDeleteFromTheMenu": 55.0
     },
     "2": {
@@ -67,7 +67,7 @@
       "BMRCalculatorUITests/testCalculatorWithSavedChoices": 29.6,
       "ExerciseListUITests/testEquipmentFollowsTheGroup": 62.1,
       "ExerciseListUITests/testLargeTextKeepsTheExercisesOnScreen": 23.6,
-      "ExerciseListUITests/testNewGroupsAndSearchByWords": 109.2,
+      "ExerciseListUITests/testNewGroupsAndSearchByWords": 59.4,
       "ExerciseListUITests/testSearchWithoutAccentsAndWithoutResults": 29.6,
       "HistoryUITests/testFinishedSessionDetailAfterItsWorkoutIsDeleted": 45.9,
       "HomeScreenUITests/testLargeTextKeepsTheHomeOnScreen": 20.3,

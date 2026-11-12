@@ -115,7 +115,8 @@ final class RestUITests: IronFlowUITestCase {
     @MainActor
     func testFirstRestOffersTheNoticeAndAllowing() throws {
         continueAfterFailure = false
-        let app = startPush(notifications: "notDetermined", answer: "allow")
+        // The notice stays 15 s (longToastArguments): screenshot 98 shows it, and 99 is taken once it has gone.
+        let app = startPush(notifications: "notDetermined", answer: "allow", longToasts: true)
 
         checks(in: app).element(boundBy: 0).tap()
         let accept = app.buttons["restAlert.accept"]
@@ -128,6 +129,7 @@ final class RestUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForToast("Aviso do descanso ligado", in: app), "No notice after allowing")
         XCTAssertTrue(element("session.rest", in: app).exists, "The rest stopped")
         attachScreenshot(named: "98-rest-running", of: app)
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
 
         // The options show the notice on; the screen option is off until turned on.
         app.buttons["session.more"].tap()
@@ -162,7 +164,8 @@ final class RestUITests: IronFlowUITestCase {
     @MainActor
     func testRefusingTheNoticeAtTheIPhoneQuestion() throws {
         continueAfterFailure = false
-        let app = startPush(notifications: "notDetermined", answer: "deny")
+        // The notice stays 15 s (longToastArguments): screenshots 101 and 102 show it.
+        let app = startPush(notifications: "notDetermined", answer: "deny", longToasts: true)
 
         checks(in: app).element(boundBy: 0).tap()
         let accept = app.buttons["restAlert.accept"]

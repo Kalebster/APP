@@ -209,7 +209,8 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testEmptyStateAndCreateWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos")
+        // The notice stays 15 s (longToastArguments); screenshot 79 is taken once it has gone.
+        let app = launchOnTab("Treinos", extraArguments: longToastArguments)
 
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Empty state not shown")
         attachScreenshot(named: "11-workouts-empty", of: app)
@@ -248,6 +249,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertFalse(element("workout.legend", in: app).exists, "Legend shown without exercises")
         XCTAssertFalse(app.buttons["workout.start"].exists, "Iniciar shown without exercises")
         XCTAssertEqual(app.buttons.matching(identifier: "workout.addExercises").count, 1, "More than the empty card's button")
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
         attachScreenshot(named: "79-workout-new", of: app)
 
         goBackFromEditor(in: app)
@@ -387,7 +389,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testEditLoadAndRepetitionsInPlace() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)|Barra Fixa (Pegada Aberta)"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)|Barra Fixa (Pegada Aberta)"], extraArguments: longToastArguments)
         openWorkout(named: "Push", in: app)
 
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
@@ -413,8 +415,8 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "6", "Minimum not saved")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "10", "Maximum not saved")
 
-        // A maximum below the minimum: the minimum follows it, with the notice. A notice stays 2,5 s,
-        // so it is looked for right after OK, before anything else is waited for.
+        // A maximum below the minimum: the minimum follows it, with the notice, which stays 15 s here
+        // (longToastArguments) and is looked for right after OK.
         replaceText(of: fields("workout.set.max", in: app).element(boundBy: 0), with: "4")
         app.buttons["OK"].tap()
         let notice = app.staticTexts["toast"]
@@ -422,7 +424,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "4")
-        XCTAssertTrue(notice.waitForNonExistence(timeout: 10), "Notice did not go away")
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice did not go away")
 
         // Clearing the load removes it: the field shows its placeholder.
         replaceText(of: fields("workout.set.weight", in: app).element(boundBy: 0), with: "")

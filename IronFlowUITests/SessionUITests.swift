@@ -111,7 +111,7 @@ final class SessionUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: element("home.today", in: app), containing: "Push concluído hoje"), "Today: \(element("home.today", in: app).label)")
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
         // The history is taken without the notice, as when it lasted 2,5 s.
-        XCTAssertTrue(app.staticTexts.matching(identifier: "toast").firstMatch.waitForNonExistence(timeout: 20), "Notice still shown")
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
 
         openTab("Histórico", in: app)
         let finished = element("history.session", in: app)
@@ -188,8 +188,7 @@ final class SessionUITests: IronFlowUITestCase {
         // Without a rest: the time since the start and the sets done.
         XCTAssertTrue(bar.label.hasPrefix("Treino em andamento, Push, 3:0"), "Bar: \(bar.label)")
         XCTAssertTrue(bar.label.hasSuffix(", 1 de 3 séries. Abrir"), "Bar: \(bar.label)")
-        bar.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened from the bar")
+        openSessionFromTheBar(in: app)
 
         // "Concluir treino?" asks for the end, the time of the last record or now, and the duration
         // follows the choice: the last record, 1 hour after the start, is chosen first.
