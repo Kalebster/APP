@@ -24,6 +24,43 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
     return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
 }
 
+/// The RGBA bytes of `rect` of `image`, in pixels from its top left corner.
+func pixels(of image: CGImage, in rect: CGRect) -> [UInt8]? {
+    let rect = rect.integral.intersection(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+    guard !rect.isEmpty, let cropped = image.cropping(to: rect) else { return nil }
+    let width = cropped.width
+    let height = cropped.height
+    var bytes = [UInt8](repeating: 0, count: width * height * 4)
+    let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
+        guard let context = CGContext(
+            data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return false }
+        context.draw(cropped, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return true
+    }
+    return drawn ? bytes : nil
+}
+
+/// Whether two areas of the same size look different: more than 8 pixels changed clearly in a color.
+/// Two screenshots of a screen that does not change give the same pixels.
+func pixelsDiffer(_ first: [UInt8], _ second: [UInt8]) -> Bool {
+    guard first.count == second.count else { return true }
+    var changed = 0
+    for index in stride(from: 0, to: first.count, by: 4) {
+        let red = abs(Int(first[index]) - Int(second[index]))
+        let green = abs(Int(first[index + 1]) - Int(second[index + 1]))
+        let blue = abs(Int(first[index + 2]) - Int(second[index + 2]))
+        if max(red, green, blue) > 24 {
+            changed += 1
+            if changed > 8 {
+                return true
+            }
+        }
+    }
+    return false
+}
+
 /// Launch arguments that keep each notice (toast) 15 s on screen instead of 2,5 or 4 s, a test hook of
 /// Debug builds (`ToastDuration`). On a slow CI machine a test looked at the screen again only 9,6 s after
 /// the tap that showed a notice, which was gone by then. Used by every test that checks a notice. A screenshot
@@ -172,11 +209,36 @@ extension XCTestCase {
         return false
     }
 
-    /// Waits until no notice is on screen: with `longToastArguments` a notice stays 15 s, so a test calls it
-    /// before a screenshot that was taken without the notice when it lasted 2,5 or 4 s.
+    /// Waits until the notice on screen has gone: with `longToastArguments` a notice stays 15 s, so a test
+    /// calls it before a screenshot that was taken without the notice when it lasted 2,5 or 4 s. The notice
+    /// leaves the accessibility tree as it starts to fade out, and a screenshot taken then still showed it
+    /// (seen in CI), so the wait ends only when its band of the screen no longer looks as it did with the
+    /// notice and has stopped changing between two screenshots.
     @MainActor
     func waitForToastToLeave(in app: XCUIApplication) -> Bool {
-        app.staticTexts.matching(identifier: "toast").firstMatch.waitForNonExistence(timeout: 20)
+        let toast = app.staticTexts.matching(identifier: "toast").firstMatch
+        guard toast.exists else { return true }
+        let band = CGRect(x: 0, y: toast.frame.minY - 12, width: app.frame.width, height: toast.frame.height + 24)
+        guard let shown = screenPixels(of: app, in: band), toast.waitForNonExistence(timeout: 20) else { return false }
+        var previous: [UInt8]?
+        let deadline = Date().addingTimeInterval(10)
+        while Date() < deadline {
+            guard let current = screenPixels(of: app, in: band) else { return false }
+            if let previous, pixelsDiffer(current, shown), !pixelsDiffer(current, previous) {
+                return true
+            }
+            previous = current
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        return false
+    }
+
+    /// The RGBA bytes of `area` of the screen, in points, as the app's screenshot shows it.
+    @MainActor
+    func screenPixels(of app: XCUIApplication, in area: CGRect) -> [UInt8]? {
+        guard let image = app.screenshot().image.cgImage, app.frame.width > 0 else { return nil }
+        let scale = CGFloat(image.width) / app.frame.width
+        return pixels(of: image, in: CGRect(x: area.minX * scale, y: area.minY * scale, width: area.width * scale, height: area.height * scale))
     }
 
     /// Waits until the element's label is exactly `label`.
