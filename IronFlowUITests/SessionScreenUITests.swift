@@ -8,7 +8,7 @@ import XCTest
 /// `SessionUITests`.
 final class SessionScreenUITests: IronFlowUITestCase {
     /// Push with four exercises of the built-in library, like the model: 12 sets.
-    private let push = "workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres|Desenvolvimento com Halteres|Tríceps na Polia com Corda"
+    private let push = "workout:Push:Supino Reto (Barra)|Supino Inclinado (Halter)|Desenvolvimento (Halter)|Tríceps Corda (Polia)"
 
     @MainActor
     private func checks(in app: XCUIApplication) -> XCUIElementQuery {
@@ -193,7 +193,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
         }
         let done = app.buttons["session.exercise.done"]
         XCTAssertTrue(done.waitForExistence(timeout: 10), "The finished exercise did not close")
-        XCTAssertEqual(done.label, "Supino Reto com Barra, concluído: 3 de 3 séries, 60 kg × 10 · 10 · 9")
+        XCTAssertEqual(done.label, "Supino Reto (Barra), concluído: 3 de 3 séries, 60 kg × 10 · 10 · 9")
         XCTAssertFalse(done.isSelected, "The finished exercise reads as selected")
         XCTAssertEqual(element("session.progress", in: app).label, "3 de 12 séries, Exercício 2 de 4")
         XCTAssertTrue(app.buttons["Série 1, atual"].exists, "The next exercise's first set is not the current one")
@@ -242,7 +242,7 @@ final class SessionScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRemovingSetsAndExercises() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada|Rosca Direta com Barra"], extraArguments: longToastArguments)
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa (Pegada Aberta)|Rosca Direta (Barra)"], extraArguments: longToastArguments)
         startWorkout(named: "Pull", in: app)
         XCTAssertTrue(waitForCount(checks(in: app), 6), "The session should have 6 sets")
 
@@ -266,21 +266,21 @@ final class SessionScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForCount(checks(in: app), 4), "Set done not removed")
 
         // An exercise without sets done goes at once.
-        app.buttons["Opções de Barra Fixa Pronada"].tap()
+        app.buttons["Opções de Barra Fixa (Pegada Aberta)"].tap()
         let removeExercise = app.buttons["Remover do treino"]
         XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover do treino in the ⋯ menu")
         removeExercise.tap()
         // The notice first, as soon as it shows (it stays 15 s here: longToastArguments).
         XCTAssertTrue(waitForToast("Exercício removido do treino", in: app), "No notice after removing an exercise")
-        XCTAssertTrue(app.buttons["Opções de Barra Fixa Pronada"].waitForNonExistence(timeout: 10), "Exercise not removed")
+        XCTAssertTrue(app.buttons["Opções de Barra Fixa (Pegada Aberta)"].waitForNonExistence(timeout: 10), "Exercise not removed")
         XCTAssertTrue(waitForCount(checks(in: app), 3), "The other exercise lost sets")
 
         // One with a set done asks first.
         checks(in: app).element(boundBy: 0).tap()
-        app.buttons["Opções de Rosca Direta com Barra"].tap()
+        app.buttons["Opções de Rosca Direta (Barra)"].tap()
         XCTAssertTrue(removeExercise.waitForExistence(timeout: 10), "No Remover do treino in the ⋯ menu")
         removeExercise.tap()
-        let confirmExercise = confirmationButton("Remover exercício", title: "Remover Rosca Direta com Barra?", in: app)
+        let confirmExercise = confirmationButton("Remover exercício", title: "Remover Rosca Direta (Barra)?", in: app)
         XCTAssertTrue(app.staticTexts["As séries já feitas dele saem deste treino. O treino planejado não muda."].exists, "Exercise removal message")
         confirmExercise.tap()
         XCTAssertTrue(element("session.empty", in: app).waitForExistence(timeout: 10), "Exercise with sets done not removed")

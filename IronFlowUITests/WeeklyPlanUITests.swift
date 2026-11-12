@@ -50,7 +50,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
     @MainActor
     func testPlanTodayStartAndComplete() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
 
         // Planned for today: the row says the day, today and the workout.
         openPlan(in: app)
@@ -92,8 +92,8 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         let other = todayWeekday == 2 ? 3 : 2
         let planned = [1, 2, 3, 4, 5, 6, 7].filter { $0 != other && $0 != todayWeekday }.prefix(2).map(String.init).joined(separator: "|")
         let app = launchOnTab("Treinos", seed: [
-            "workout:Push:Supino Reto com Barra|Desenvolvimento com Halteres",
-            "workout:Pull:Barra Fixa Pronada",
+            "workout:Push:Supino Reto (Barra)|Desenvolvimento (Halter)",
+            "workout:Pull:Barra Fixa (Pegada Aberta)",
             "workout:Vazio",
             "plan:Push:\(planned)",
             "plan-today:Pull",
@@ -104,7 +104,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         XCTAssertEqual(header.label, "3 dias de treino · 4 de descanso")
         XCTAssertTrue(element("plan.goal", in: app).label.contains("Meta da semana: 3 treinos"), element("plan.goal", in: app).label)
         let today = element("plan.today", in: app)
-        XCTAssertTrue(today.label.contains(", hoje, Pull, 1 exercício · 3 séries, Costas"), "Today's row: \(today.label)")
+        XCTAssertTrue(today.label.contains(", hoje, Pull, 1 exercício · 3 séries, Dorsais"), "Today's row: \(today.label)")
         let row = element("plan.day.\(other)", in: app)
         XCTAssertTrue(row.label.hasSuffix(", descanso"), "Rest day: \(row.label)")
         attachScreenshot(named: "89-weekly-plan", of: app)
@@ -144,7 +144,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
     @MainActor
     func testSwipeFromTheEdgeGoesBack() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
         openPlan(in: app)
 
         let window = app.windows.firstMatch
@@ -158,7 +158,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
     @MainActor
     func testRestDayAndDeletedWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "workout:Pull:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "workout:Pull:Barra Fixa (Pegada Aberta)"])
 
         // Planned for today: the Home shows it at once, without reopening the app.
         openPlan(in: app)

@@ -24,8 +24,10 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testStartCheckMinimizeContinueAndFinish() throws {
         continueAfterFailure = false
-        // Planned for today, so the Início says it was done once the session is saved.
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "plan-today:Push"])
+        // Planned for today, so the Início says it was done once the session is saved. The notice after
+        // saving stays 15 s: on a slow machine the app took 2,5 s to settle after the tap on save, and the
+        // notice of 2,5 s was gone before the test looked for it.
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "plan-today:Push"], extraArguments: longToastArguments)
         startWorkout(named: "Push", in: app)
 
         XCTAssertEqual(element("session.name", in: app).label, "Push")
@@ -101,13 +103,15 @@ final class SessionUITests: IronFlowUITestCase {
         saveSessionFromTheFinishSheet(in: app)
         // Every set done and the load of the working and failure sets.
         XCTAssertTrue(waitForToast("Treino salvo · 2 séries · 200 kg", in: app), "No notice after finishing")
-        // Taken at once, while the notice of 2.5 s is still on the Início.
+        // Taken at once, while the notice is still on the Início.
         attachScreenshot(named: "93-workout-saved-notice", of: app)
         // Opened from Exercícios, finished: the app goes to the Início, where today's workout is done and
         // the week counts it.
         XCTAssertTrue(app.tabBars.buttons["Início"].isSelected, "Not on the Início after finishing")
         XCTAssertTrue(waitForLabel(of: element("home.today", in: app), containing: "Push concluído hoje"), "Today: \(element("home.today", in: app).label)")
         XCTAssertTrue(bar.waitForNonExistence(timeout: 10), "Session bar still shown after finishing")
+        // The history is taken without the notice, as when it lasted 2,5 s.
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
 
         openTab("Histórico", in: app)
         let finished = element("history.session", in: app)
@@ -126,7 +130,7 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testFinishNeedsACompletedSetAndDiscardKeepsThePlan() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa Pronada"], extraArguments: longToastArguments)
+        let app = launchOnTab("Treinos", seed: ["workout:Pull:Barra Fixa (Pegada Aberta)"], extraArguments: longToastArguments)
         startWorkout(named: "Pull", in: app)
 
         // Without a set done there is nothing to save: the sheet says so.
@@ -161,7 +165,7 @@ final class SessionUITests: IronFlowUITestCase {
     @MainActor
     func testSecondStartOffersTheCurrentSession() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Legs:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Legs:Barra Fixa (Pegada Aberta)"])
         startWorkout(named: "Legs", in: app)
         app.buttons["session.minimize"].tap()
         XCTAssertTrue(app.buttons["session.bar"].waitForExistence(timeout: 10), "Session bar not shown")
@@ -178,14 +182,13 @@ final class SessionUITests: IronFlowUITestCase {
     func testSessionLeftOpenOffersTheLastRecordAsTheEnd() throws {
         continueAfterFailure = false
         // Started 3 hours ago, its first set done 2 hours ago (by the seed's own clock), still open.
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada", "open-session:Push"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "open-session:Push"])
         let bar = app.buttons["session.bar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown")
         // Without a rest: the time since the start and the sets done.
         XCTAssertTrue(bar.label.hasPrefix("Treino em andamento, Push, 3:0"), "Bar: \(bar.label)")
         XCTAssertTrue(bar.label.hasSuffix(", 1 de 3 séries. Abrir"), "Bar: \(bar.label)")
-        bar.tap()
-        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session not opened from the bar")
+        openSessionFromTheBar(in: app)
 
         // "Concluir treino?" asks for the end, the time of the last record or now, and the duration
         // follows the choice: the last record, 1 hour after the start, is chosen first.
@@ -243,7 +246,7 @@ final class SessionUITests: IronFlowUITestCase {
         continueAfterFailure = false
         let app = launchOnTab(
             "Treinos",
-            seed: ["workout:Push:Barra Fixa Pronada", "open-session:Push"],
+            seed: ["workout:Push:Barra Fixa (Pegada Aberta)", "open-session:Push"],
             extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         )
         let bar = app.buttons["session.bar"]

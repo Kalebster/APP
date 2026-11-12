@@ -17,10 +17,10 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push,weights:81.2@14|80.6@7|80@2,profile:180:2300,bmr:male:30:lose")
+        let items = try UITestSeed.parse("workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta),workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push,weights:81.2@14|80.6@7|80@2,profile:180:2300,bmr:male:30:lose")
 
         #expect(items == [
-            .workout(name: "Push", exercises: ["Crossover na Polia Alta", "Barra Fixa Pronada"]),
+            .workout(name: "Push", exercises: ["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"]),
             .workout(name: "Vazio", exercises: []),
             .planToday(workout: "Push"),
             .finishedSessions(workout: "Push", count: 4),
@@ -77,12 +77,12 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,workout:Vazio"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta),workout:Vazio"), in: context)
 
         let workouts = try context.fetch(FetchDescriptor<Workout>())
         #expect(workouts.count == 2)
         let push = try #require(workouts.first { $0.name == "Push" })
-        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Crossover na Polia Alta", "Barra Fixa Pronada"])
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"])
         #expect(push.orderedExercises.map { $0.plannedSets.count } == [3, 3])
         let empty = try #require(workouts.first { $0.name == "Vazio" })
         #expect(empty.exercises.isEmpty)
@@ -93,7 +93,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,plan-today:Push,finished:Push:4"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa (Pegada Aberta),plan-today:Push,finished:Push:4"), in: context)
 
         let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
         let plan = try context.fetch(FetchDescriptor<WeeklyPlanDay>())
@@ -119,7 +119,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,session-detail:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa (Pegada Aberta),session-detail:Push"), in: context)
 
         let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
         #expect(session.endedAt != nil)
@@ -136,7 +136,7 @@ struct UITestSeedTests {
         let context = container.mainContext
         let before = Date.now
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,plan:Push:1|3|7,finished-today:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa (Pegada Aberta),plan:Push:1|3|7,finished-today:Push"), in: context)
 
         let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
         let plan = try context.fetch(FetchDescriptor<WeeklyPlanDay>())
@@ -159,7 +159,7 @@ struct UITestSeedTests {
         let context = container.mainContext
         let before = Date.now
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa Pronada,open-session:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Barra Fixa (Pegada Aberta),open-session:Push"), in: context)
 
         let after = Date.now
         let service = SessionService(context: context)
@@ -195,7 +195,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover na Polia Alta|Barra Fixa Pronada,last-time:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta),last-time:Push"), in: context)
 
         let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
         let ended = try #require(session.endedAt)
@@ -232,7 +232,7 @@ struct UITestSeedTests {
         #expect(custom.first?.libraryKey == nil)
         // A name already used by an exercise of the library is refused, as in the app.
         #expect(throws: ValidationError.duplicateExerciseName) {
-            try UITestSeed.apply(try UITestSeed.parse("custom-exercise:Supino Reto com Barra:chest"), in: context)
+            try UITestSeed.apply(try UITestSeed.parse("custom-exercise:Supino Reto (Barra):chest"), in: context)
         }
     }
 
@@ -241,7 +241,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres,set-types:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Supino Reto (Barra)|Supino Inclinado (Halter),set-types:Push"), in: context)
 
         let push = try #require(try context.fetch(FetchDescriptor<Workout>()).first)
         let first = push.orderedExercises[0].orderedPlannedSets
@@ -275,14 +275,14 @@ struct UITestSeedTests {
     @Test("The list arrives percent-encoded, so an accented exercise name is found as written")
     func decodesThePercentEncodedList() throws {
         let container = try makeContainer()
-        let list = try #require("workout:Push:Tríceps na Polia com Corda|Barra Fixa Pronada".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
+        let list = try #require("workout:Push:Tríceps Corda (Polia)|Barra Fixa (Pegada Aberta)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
         let isASCII = list.allSatisfy(\.isASCII)
         #expect(isASCII, "Encoded list: \(list)")
 
         UITestSeed.applyIfRequested(in: container, arguments: ["-ui-testing", "-ui-seed", list])
 
         let push = try #require(try container.mainContext.fetch(FetchDescriptor<Workout>()).first)
-        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Tríceps na Polia com Corda", "Barra Fixa Pronada"])
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Tríceps Corda (Polia)", "Barra Fixa (Pegada Aberta)"])
     }
 }
 #endif

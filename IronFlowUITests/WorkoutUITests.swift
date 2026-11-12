@@ -9,7 +9,7 @@ import XCTest
 /// library; most tests have their workout ready (`-ui-seed`).
 final class WorkoutUITests: IronFlowUITestCase {
     /// Push with four exercises of the built-in library, like the model.
-    private let push = "workout:Push:Supino Reto com Barra|Supino Inclinado com Halteres|Desenvolvimento com Halteres|Tríceps na Polia com Corda"
+    private let push = "workout:Push:Supino Reto (Barra)|Supino Inclinado (Halter)|Desenvolvimento (Halter)|Tríceps Corda (Polia)"
 
     /// The exercise headers of the open workout, top to bottom.
     @MainActor
@@ -209,7 +209,8 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testEmptyStateAndCreateWorkout() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos")
+        // The notice stays 15 s (longToastArguments); screenshot 79 is taken once it has gone.
+        let app = launchOnTab("Treinos", extraArguments: longToastArguments)
 
         XCTAssertTrue(element("workouts.empty", in: app).waitForExistence(timeout: 10), "Empty state not shown")
         attachScreenshot(named: "11-workouts-empty", of: app)
@@ -248,6 +249,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertFalse(element("workout.legend", in: app).exists, "Legend shown without exercises")
         XCTAssertFalse(app.buttons["workout.start"].exists, "Iniciar shown without exercises")
         XCTAssertEqual(app.buttons.matching(identifier: "workout.addExercises").count, 1, "More than the empty card's button")
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
         attachScreenshot(named: "79-workout-new", of: app)
 
         goBackFromEditor(in: app)
@@ -268,12 +270,12 @@ final class WorkoutUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos")
         createWorkout(named: "Push", in: app)
 
-        addExercises(["Crossover na Polia Alta", "Barra Fixa Pronada"], in: app)
+        addExercises(["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"], in: app)
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
         XCTAssertEqual(headers.count, 2)
-        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crossover na Polia Alta,"), "First: \(headers.element(boundBy: 0).label)")
-        XCTAssertTrue(headers.element(boundBy: 1).label.hasPrefix("Barra Fixa Pronada,"), "Second: \(headers.element(boundBy: 1).label)")
+        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crossover (Polia Alta),"), "First: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 1).label.hasPrefix("Barra Fixa (Pegada Aberta),"), "Second: \(headers.element(boundBy: 1).label)")
         XCTAssertTrue(headers.element(boundBy: 0).label.hasSuffix("3 séries"), "Default sets missing: \(headers.element(boundBy: 0).label)")
         XCTAssertEqual(element("workout.summary", in: app).label, "2 exercícios · 6 séries")
 
@@ -284,7 +286,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let chest = app.buttons["picker.filter.chest"]
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest filter not shown")
         chest.tap()
-        let inWorkout = pickerCard("Crossover na Polia Alta", in: app)
+        let inWorkout = pickerCard("Crossover (Polia Alta)", in: app)
         XCTAssertTrue(inWorkout.waitForExistence(timeout: 10), "Exercise not found in the picker")
         XCTAssertTrue(inWorkout.label.hasSuffix("Já está no treino"), "Missing 'NO TREINO': \(inWorkout.label)")
         XCTAssertFalse(inWorkout.isEnabled, "An exercise already in the workout can be chosen")
@@ -292,7 +294,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertFalse(add.isEnabled, "Add button enabled without a selection")
         inWorkout.tap()
         XCTAssertFalse(add.isEnabled, "An exercise already in the workout was chosen")
-        for name in ["Crossover na Polia Média", "Crossover na Polia Baixa"] {
+        for name in ["Crossover (Polia Média)", "Crossover (Polia Baixa)"] {
             let card = pickerCard(name, in: app)
             XCTAssertTrue(card.waitForExistence(timeout: 10), "'\(name)' not found in the picker")
             card.tap()
@@ -307,14 +309,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(element("workout.summary", in: app).label, "2 exercícios · 6 séries")
 
         // Added in the order they were chosen.
-        addExercises(["Crossover na Polia Média", "Crossover na Polia Baixa"], in: app)
+        addExercises(["Crossover (Polia Média)", "Crossover (Polia Baixa)"], in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "4 exercícios · 12 séries"), "Summary after adding")
         scrollToTop(in: app)
         let names = (0..<headers.count).map { headers.element(boundBy: $0).label.components(separatedBy: ",")[0] }
-        XCTAssertEqual(Array(names.prefix(2)), ["Crossover na Polia Alta", "Barra Fixa Pronada"])
+        XCTAssertEqual(Array(names.prefix(2)), ["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"])
         scrollToBottom(in: app)
         let lastNames = (0..<headers.count).map { headers.element(boundBy: $0).label.components(separatedBy: ",")[0] }
-        XCTAssertEqual(Array(lastNames.suffix(2)), ["Crossover na Polia Média", "Crossover na Polia Baixa"])
+        XCTAssertEqual(Array(lastNames.suffix(2)), ["Crossover (Polia Média)", "Crossover (Polia Baixa)"])
     }
 
     /// A double tap on "Adicionar (N)" adds the exercises once, closes the picker and shows no error.
@@ -325,7 +327,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         openWorkout(named: "Push", in: app)
 
         app.buttons["workout.addExercises"].tap()
-        for name in ["Crossover na Polia Alta", "Crossover na Polia Baixa"] {
+        for name in ["Crossover (Polia Alta)", "Crossover (Polia Baixa)"] {
             searchPicker(for: name, in: app)
             let card = pickerCard(name, in: app)
             XCTAssertTrue(card.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
@@ -340,7 +342,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "2 exercícios · 6 séries"), "Exercises added more than once")
-        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crossover na Polia Alta,"), "First: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crossover (Polia Alta),"), "First: \(headers.element(boundBy: 0).label)")
     }
 
     // MARK: - Sets
@@ -387,7 +389,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testEditLoadAndRepetitionsInPlace() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra|Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)|Barra Fixa (Pegada Aberta)"], extraArguments: longToastArguments)
         openWorkout(named: "Push", in: app)
 
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
@@ -413,16 +415,16 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "6", "Minimum not saved")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "10", "Maximum not saved")
 
-        // A maximum below the minimum: the minimum follows it, with the notice. A notice stays 2,5 s,
-        // so it is looked for right after OK, before anything else is waited for.
+        // A maximum below the minimum: the minimum follows it, with the notice, which stays 15 s here
+        // (longToastArguments) and is looked for right after OK.
         replaceText(of: fields("workout.set.max", in: app).element(boundBy: 0), with: "4")
         app.buttons["OK"].tap()
         let notice = app.staticTexts["toast"]
-        XCTAssertTrue(waitForLabel(of: notice, toBe: "O máximo não pode ser menor que o mínimo.", timeout: 5), "Notice not shown")
+        XCTAssertTrue(waitForLabel(of: notice, toBe: "O máximo não pode ser menor que o mínimo.", timeout: 12), "Notice not shown")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "4")
-        XCTAssertTrue(notice.waitForNonExistence(timeout: 10), "Notice did not go away")
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice did not go away")
 
         // Clearing the load removes it: the field shows its placeholder.
         replaceText(of: fields("workout.set.weight", in: app).element(boundBy: 0), with: "")
@@ -436,7 +438,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testAddAndRemoveSets() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra", "set-types:Push"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)", "set-types:Push"])
         openWorkout(named: "Push", in: app)
         let types = setTypes(in: app)
         XCTAssertTrue(waitForCount(types, 5), "Sets not shown")
@@ -479,7 +481,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testReorderExercises() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra|Barra Fixa Pronada|Tríceps na Polia com Corda"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)|Barra Fixa (Pegada Aberta)|Tríceps Corda (Polia)"])
         openWorkout(named: "Push", in: app)
         XCTAssertTrue(exerciseHeaders(in: app).firstMatch.waitForExistence(timeout: 10), "Exercises not shown")
 
@@ -489,19 +491,19 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(rows.count, 3)
         XCTAssertTrue(app.buttons["workout.ordering.done"].exists, "Concluir not shown")
         XCTAssertFalse(app.buttons["workout.menu"].exists, "The ⋯ menu is still shown")
-        XCTAssertEqual(rows.element(boundBy: 0).label, "Supino Reto com Barra, 3 séries")
+        XCTAssertEqual(rows.element(boundBy: 0).label, "Supino Reto (Barra), 3 séries")
         // ↑ ↓ on each row, without the iOS drag handle; the ↑ of the first and the ↓ of the last do nothing.
         XCTAssertEqual(app.buttons.matching(identifier: "workout.ordering.up").count, 3)
         XCTAssertEqual(app.buttons.matching(identifier: "workout.ordering.down").count, 3)
-        XCTAssertFalse(app.buttons["Subir Supino Reto com Barra"].isEnabled, "↑ of the first exercise available")
-        XCTAssertTrue(app.buttons["Descer Supino Reto com Barra"].isEnabled, "↓ of the first exercise unavailable")
-        XCTAssertFalse(app.buttons["Descer Tríceps na Polia com Corda"].isEnabled, "↓ of the last exercise available")
+        XCTAssertFalse(app.buttons["Subir Supino Reto (Barra)"].isEnabled, "↑ of the first exercise available")
+        XCTAssertTrue(app.buttons["Descer Supino Reto (Barra)"].isEnabled, "↓ of the first exercise unavailable")
+        XCTAssertFalse(app.buttons["Descer Tríceps Corda (Polia)"].isEnabled, "↓ of the last exercise available")
         attachScreenshot(named: "78-workout-reorder", of: app)
 
         // The first exercise touched, held and dragged below the last one. A drag the list did not follow
         // at all (seen on a busy CI machine: the order unchanged) is made once more; the new order is
         // checked either way.
-        let moved = "Supino Reto com Barra, 3 séries"
+        let moved = "Supino Reto (Barra), 3 séries"
         dragFirstExerciseBelowTheLast(in: app)
         if !waitForLabel(of: rows.element(boundBy: 2), toBe: moved, timeout: 5), rows.element(boundBy: 0).label == moved {
             dragFirstExerciseBelowTheLast(in: app)
@@ -509,22 +511,22 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: rows.element(boundBy: 2), toBe: moved), "Not reordered: \(rows.element(boundBy: 2).label)")
 
         // ↑ brings it back one place: Barra Fixa, Supino, Tríceps.
-        app.buttons["Subir Supino Reto com Barra"].tap()
+        app.buttons["Subir Supino Reto (Barra)"].tap()
         XCTAssertTrue(waitForLabel(of: rows.element(boundBy: 1), toBe: moved), "↑ did not move it: \(rows.element(boundBy: 1).label)")
-        XCTAssertTrue(app.buttons["Descer Tríceps na Polia com Corda"].waitForExistence(timeout: 10))
-        XCTAssertFalse(app.buttons["Descer Tríceps na Polia com Corda"].isEnabled, "↓ of the new last exercise available")
+        XCTAssertTrue(app.buttons["Descer Tríceps Corda (Polia)"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["Descer Tríceps Corda (Polia)"].isEnabled, "↓ of the new last exercise available")
 
         app.buttons["workout.ordering.done"].tap()
         XCTAssertTrue(app.buttons["workout.menu"].waitForExistence(timeout: 10), "Reorder mode not left")
         let headers = exerciseHeaders(in: app)
-        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Barra Fixa Pronada,"), "First: \(headers.element(boundBy: 0).label)")
-        XCTAssertTrue(headers.element(boundBy: 1).label.hasPrefix("Supino Reto com Barra,"), "Second: \(headers.element(boundBy: 1).label)")
+        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Barra Fixa (Pegada Aberta),"), "First: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 1).label.hasPrefix("Supino Reto (Barra),"), "Second: \(headers.element(boundBy: 1).label)")
 
         // Kept after leaving.
         goBackFromEditor(in: app)
         openWorkout(named: "Push", in: app)
-        XCTAssertTrue(exerciseHeaders(in: app).element(boundBy: 0).label.hasPrefix("Barra Fixa Pronada,"), "Order not saved")
-        XCTAssertTrue(exerciseHeaders(in: app).element(boundBy: 1).label.hasPrefix("Supino Reto com Barra,"), "Order not saved")
+        XCTAssertTrue(exerciseHeaders(in: app).element(boundBy: 0).label.hasPrefix("Barra Fixa (Pegada Aberta),"), "Order not saved")
+        XCTAssertTrue(exerciseHeaders(in: app).element(boundBy: 1).label.hasPrefix("Supino Reto (Barra),"), "Order not saved")
 
         // The exercise's ⋯ menu also starts reordering.
         app.buttons.matching(identifier: "workout.exercise.menu").element(boundBy: 0).tap()
@@ -537,7 +539,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testRemoveExerciseCancelAndConfirm() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover na Polia Alta|Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta)"])
         openWorkout(named: "Push", in: app)
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.firstMatch.waitForExistence(timeout: 10), "Exercises not shown")
@@ -545,7 +547,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let menu = app.buttons.matching(identifier: "workout.exercise.menu").element(boundBy: 0)
         menu.tap()
         app.buttons["Remover do treino"].tap()
-        XCTAssertTrue(app.staticTexts["Remover Crossover na Polia Alta?"].waitForExistence(timeout: 10), "Removal question not shown")
+        XCTAssertTrue(app.staticTexts["Remover Crossover (Polia Alta)?"].waitForExistence(timeout: 10), "Removal question not shown")
         XCTAssertTrue(app.staticTexts["As séries planejadas dele também saem deste treino. O histórico não muda."].exists, "Removal message")
         // The question points to the exercise's ⋯: it opens right below it.
         let menuFrame = menu.frame
@@ -562,7 +564,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         confirm.tap()
 
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "1 exercício · 3 séries"), "Exercise not removed")
-        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Barra Fixa Pronada,"), "Wrong exercise removed: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Barra Fixa (Pegada Aberta),"), "Wrong exercise removed: \(headers.element(boundBy: 0).label)")
     }
 
     // MARK: - Workout
@@ -626,7 +628,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testStartFromTheEditor() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra", "set-types:Push"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)", "set-types:Push"])
         openWorkout(named: "Push", in: app)
 
         scrollToBottom(in: app)
@@ -640,13 +642,99 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
     }
 
+    /// The longest name of the library wraps in two lines, whole and beside the ⋯, as any long name does:
+    /// in the Exercícios tab, in the editor and in the workout in progress. Each place is compared with
+    /// "Tríceps Corda (Polia)", whose name takes one line.
+    @MainActor
+    func testTheLongestExerciseNameWrapsInTwoLines() throws {
+        continueAfterFailure = false
+        let longest = "Extensão de Tríceps Acima da Cabeça (Barra W)"
+        let short = "Tríceps Corda (Polia)"
+        let app = launchOnTab("Exercícios", seed: ["workout:Tríceps:\(longest)|\(short)"])
+        let screen = app.windows.firstMatch.frame
+        var measurements: [String] = []
+        func menuButton(of name: String, identifier: String) -> XCUIElement {
+            app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", identifier, "Opções de \(name)")).firstMatch
+        }
+
+        /// One line of the name more than the short one, never two: a line of 14 is about 17 pt, and the
+        /// icon hides part of it in a card. Nothing leaves the screen. In the editor the names themselves
+        /// are compared, as the 44 pt of the ⋯ set the height of a row with a name in one or two lines.
+        func checkTwoLines(long: CGRect, short: CGRect, in place: String) {
+            let extra = long.height - short.height
+            measurements.append("\(place): \(Int(short.height)) → \(Int(long.height)) pt, \(Int(long.minX))–\(Int(long.maxX))")
+            XCTAssertGreaterThanOrEqual(extra, 8, "\(place): the name is not in two lines (\(extra) pt more)")
+            XCTAssertLessThanOrEqual(extra, 24, "\(place): the name takes more than two lines (\(extra) pt more)")
+            XCTAssertGreaterThanOrEqual(long.minX, screen.minX, "\(place): leaves the screen")
+            XCTAssertLessThanOrEqual(long.maxX, screen.maxX, "\(place): leaves the screen")
+        }
+
+        // The Exercícios tab: each card found by searching words of its name.
+        let cards = app.descendants(matching: .any).matching(identifier: "exercises.card")
+        let search = app.textFields["exercises.search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 10), "Search field not found")
+        search.tapAndWaitForKeyboardFocus()
+        search.typeText("triceps corda")
+        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(short), Tríceps, Cabeça lateral, Polia"), "Short card: \(cards.element(boundBy: 0).label)")
+        let shortCard = cards.element(boundBy: 0).frame
+        app.buttons["exercises.search.clear"].tap()
+        search.tapAndWaitForKeyboardFocus()
+        search.typeText("acima barra")
+        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(longest), Tríceps, Cabeça longa, Barra"), "Long card: \(cards.element(boundBy: 0).label)")
+        // "acima" alone also shows the (Halter) and (Polia) ones: the list has the whole search once they leave.
+        XCTAssertTrue(cards.element(boundBy: 1).waitForNonExistence(timeout: 10), "The search kept other exercises")
+        XCTAssertEqual(cards.count, 1)
+        checkTwoLines(long: cards.element(boundBy: 0).frame, short: shortCard, in: "Exercícios")
+        search.typeText("\n")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
+        attachScreenshot(named: "105-long-name-exercises", of: app)
+
+        // The editor: the rows of both exercises, and the name beside its ⋯.
+        openTab("Treinos", in: app)
+        openWorkout(named: "Tríceps", in: app)
+        func header(_ name: String) -> XCUIElement {
+            exerciseHeaders(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "\(name),")).firstMatch
+        }
+        XCTAssertTrue(header(longest).waitForExistence(timeout: 10), "Long exercise not in the editor")
+        XCTAssertTrue(header(short).exists, "Short exercise not in the editor")
+        let name = header(longest).staticTexts[longest].firstMatch
+        let shortName = header(short).staticTexts[short].firstMatch
+        let menu = menuButton(of: longest, identifier: "workout.exercise.menu")
+        XCTAssertTrue(name.exists && shortName.exists && menu.exists, "Names or ⋯ not shown in the editor")
+        checkTwoLines(long: name.frame, short: shortName.frame, in: "Editor")
+        XCTAssertLessThanOrEqual(name.frame.maxX, menu.frame.minX, "Editor: the name reaches the ⋯: \(name.frame), \(menu.frame)")
+        attachScreenshot(named: "106-long-name-editor", of: app)
+
+        // The workout in progress: the headers of both cards, and the name beside its ⋯.
+        scrollToBottom(in: app)
+        let start = app.buttons["workout.start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 10), "Iniciar not shown")
+        start.tap()
+        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "Session screen not shown")
+        // The name and the line below it are read as one header, without an identifier (the editor's
+        // rows, under the session, have theirs).
+        func sessionHeader(_ name: String) -> XCUIElement {
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier == '' AND label BEGINSWITH %@", "\(name), "))
+                .firstMatch
+        }
+        XCTAssertTrue(sessionHeader(longest).waitForExistence(timeout: 10), "Long exercise not in the session")
+        XCTAssertTrue(sessionHeader(short).exists, "Short exercise not in the session")
+        checkTwoLines(long: sessionHeader(longest).frame, short: sessionHeader(short).frame, in: "Treino em andamento")
+        let sessionMenu = menuButton(of: longest, identifier: "session.exercise.menu")
+        XCTAssertTrue(sessionMenu.exists, "⋯ not shown in the session")
+        XCTAssertLessThanOrEqual(sessionHeader(longest).frame.maxX, sessionMenu.frame.minX, "Session: the name reaches the ⋯")
+        recordMeasurement("Medição: nome mais longo, altura do curto → longo", measurements.joined(separator: "; "))
+        attachScreenshot(named: "107-long-name-session", of: app)
+    }
+
     /// The whole fill of a set's field answers: a tap 2 points inside its left or right end, in the
     /// padding beside the text field, gives it the focus. The load, minimum and maximum in the editor,
     /// then the load and repetitions in the session.
     @MainActor
     func testATapNearTheEdgeOfASetFieldFocusesIt() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)"])
         openWorkout(named: "Push", in: app)
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
         XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
@@ -675,7 +763,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testATapNearTheEdgeOfTheNextFieldKeepsTheTypedValue() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)"])
         openWorkout(named: "Push", in: app)
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
         let minimum = fields("workout.set.min", in: app).element(boundBy: 0)
@@ -726,7 +814,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testAValueThatCannotBeSavedIsReported() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa Pronada"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
         openWorkout(named: "Push", in: app)
         let weight = fields("workout.set.weight", in: app).element(boundBy: 0)
         XCTAssertTrue(weight.waitForExistence(timeout: 10), "Sets not shown")
@@ -784,7 +872,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testSwipeFromTheEdgeGoesBack() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto com Barra"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)"])
         openWorkout(named: "Push", in: app)
         XCTAssertTrue(waitForHiddenTabBar(in: app), "Tab bar shown on the editor")
 
@@ -828,7 +916,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertGreaterThan(minimum.frame.minY, weight.frame.maxY, "The repetitions are not below the load")
         XCTAssertEqual(type.label, "Série 1, Aquecimento")
         // The exercise's icon stops growing at the largest standard size: the name keeps most of the width.
-        let name = app.staticTexts["Supino Reto com Barra"].firstMatch
+        let name = app.staticTexts["Supino Reto (Barra)"].firstMatch
         XCTAssertTrue(name.exists, "Exercise name not shown")
         XCTAssertLessThan(name.frame.minX, screen.width / 4, "The icon takes the name's room: \(name.frame)")
         recordMeasurement(

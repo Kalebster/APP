@@ -244,7 +244,7 @@ private struct WeeklyPlanDayRow: View {
         )
     }
 
-    /// "2 exercícios · 6 séries" and, darker, " · Costas · Bíceps"; "Nenhum exercício ainda"; or "Sem
+    /// "2 exercícios · 6 séries" and, darker, " · Dorsais · Bíceps"; "Nenhum exercício ainda"; or "Sem
     /// treino neste dia".
     private var detail: AttributedString {
         guard let workout else {

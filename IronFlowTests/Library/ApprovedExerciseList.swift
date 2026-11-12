@@ -1,0 +1,246 @@
+import Foundation
+
+/// The list of 220 exercises approved by the owner for the library, as it was written: each block is a
+/// muscle group (its storage key in parentheses); "key = Nome" is an exercise that already existed, which
+/// keeps its key, id and equipment, and its focus unless the line says "foco: …"; "NOVO = Nome · equipamento
+/// · foco" is a new exercise. The library follows it in this order.
+enum ApprovedExerciseList {
+    static let text = """
+Peito (chest):
+  bench-press-barbell = Supino Reto (Barra)
+  bench-press-dumbbell = Supino Reto (Halter)
+  chest-press-machine = Supino Reto (Máquina)
+  bench-press-smith = Supino Reto (Smith)
+  NOVO = Supino Reto (Polia) · cable · Peitoral médio
+  chest-press-lever = Supino Reto Iso-Lateral (Máquina)
+  incline-bench-press-barbell = Supino Inclinado (Barra)
+  incline-bench-press-dumbbell = Supino Inclinado (Halter)
+  incline-chest-press-machine = Supino Inclinado (Máquina)
+  incline-bench-press-smith = Supino Inclinado (Smith)
+  NOVO = Supino Inclinado (Polia) · cable · Peitoral superior
+  decline-bench-press-barbell = Supino Declinado (Barra)
+  decline-bench-press-dumbbell = Supino Declinado (Halter)
+  NOVO = Supino Declinado (Máquina) · machine · Peitoral inferior
+  NOVO = Supino Declinado (Smith) · smith · Peitoral inferior
+  NOVO = Supino Declinado (Polia) · cable · Peitoral inferior
+  NOVO = Supino Sentado (Máquina) · machine · Peitoral médio
+  NOVO = Supino Sentado (Polia) · cable · Peitoral médio
+  fly-dumbbell = Crucifixo (Halter)
+  fly-machine = Crucifixo (Máquina)
+  NOVO = Crucifixo (Polia) · cable · Peitoral médio
+  incline-fly-dumbbell = Crucifixo Inclinado (Halter)
+  NOVO = Crucifixo Inclinado (Máquina) · machine · Peitoral superior
+  NOVO = Crucifixo Inclinado (Polia) · cable · Peitoral superior
+  cable-crossover = Crossover (Polia Alta)
+  cable-crossover-mid = Crossover (Polia Média)
+  cable-crossover-low = Crossover (Polia Baixa)
+  NOVO = Crossover Unilateral (Polia) · cable · Peitoral (contração)
+  push-up = Flexão
+  decline-push-up = Flexão Declinada
+  NOVO = Flexão Inclinada · bodyweight · Peitoral inferior
+  NOVO = Flexão com Joelhos Apoiados · bodyweight · Peitoral e tríceps
+  chest-dips = Peito na Paralela
+Dorsais (back):
+  pull-up = Barra Fixa (Pegada Aberta)
+  NOVO = Barra Fixa (Pegada Fechada) · bodyweight · Dorsal (parte baixa)
+  chin-up = Barra Fixa (Pegada Supinada)
+  assisted-pull-up = Barra Fixa (Graviton)
+  lat-pulldown = Puxada Alta Aberta (Polia)
+  close-grip-lat-pulldown = Puxada Alta Fechada (Polia)
+  reverse-grip-lat-pulldown = Puxada Alta Supinada (Polia)
+  NOVO = Puxada Alta (Máquina) · machine · Dorsal (largura)
+  single-arm-lat-pulldown = Puxada Unilateral (Polia)
+  NOVO = Puxada Unilateral (Máquina) · machine · Dorsal (amplitude total)
+  reverse-grip-bent-over-row = Remada Curvada Supinada (Barra)
+  one-arm-row-dumbbell = Remada Serrote (Halter)
+  NOVO = Remada Unilateral (Polia) · cable · Dorsal
+  NOVO = Remada Unilateral (Máquina) · machine · Dorsal
+  seated-cable-row = Remada Baixa (Polia) · foco: Dorsal e meio das costas
+  NOVO = Remada Alta (Máquina) · machine · Dorsal
+  pullover-dumbbell = Pullover (Halter) · foco: Dorsal e peitoral
+  NOVO = Pullover (Barra) · barbell · Dorsal e peitoral
+  straight-arm-pulldown = Pullover (Polia)
+  NOVO = Pullover (Máquina) · machine · Dorsal (isolado)
+Costas superiores (upperBack):
+  bent-over-row-barbell = Remada Curvada (Barra)
+  NOVO = Remada Curvada (Halter) · dumbbell · Espessura das costas
+  bent-over-row-smith = Remada Curvada (Smith)
+  t-bar-row = Remada Cavalinho (Barra)
+  NOVO = Remada T-Bar (Máquina) · machine · Meio das costas
+  row-lever-machine = Remada Baixa Iso-Lateral (Máquina)
+  wide-grip-seated-cable-row = Remada Sentada Aberta (Polia) · foco: Costas superiores e romboides
+  row-machine = Remada Sentada Aberta (Máquina) · foco: Costas superiores e romboides
+  NOVO = Remada Sentada Pegada V (Máquina) · machine · Meio das costas
+  seal-row = Remada Apoiada no Banco (Halter)
+Trapézio (traps):
+  shrug-barbell = Encolhimento (Barra)
+  shrug-dumbbell = Encolhimento (Halter)
+  NOVO = Encolhimento (Smith) · smith · Trapézio superior
+  NOVO = Encolhimento (Máquina) · machine · Trapézio superior
+  NOVO = Encolhimento (Polia) · cable · Trapézio superior
+Lombar (lowerBack):
+  back-extension = Extensão Lombar
+  NOVO = Extensão Lombar (Anilha) · plate · Lombar
+  NOVO = Extensão Lombar (Máquina) · machine · Lombar
+  NOVO = Super-Homem · bodyweight · Lombar
+  deadlift = Levantamento Terra (Barra)
+  NOVO = Levantamento Terra (Halter) · dumbbell · Lombar e cadeia posterior
+Ombros (shoulders):
+  overhead-press-barbell = Desenvolvimento (Barra)
+  shoulder-press-dumbbell = Desenvolvimento (Halter)
+  shoulder-press-machine = Desenvolvimento (Máquina)
+  shoulder-press-smith = Desenvolvimento (Smith)
+  arnold-press = Desenvolvimento Arnold (Halter)
+  lateral-raise-dumbbell = Elevação Lateral (Halter)
+  lateral-raise-cable = Elevação Lateral (Polia)
+  lateral-raise-machine = Elevação Lateral (Máquina)
+  NOVO = Elevação Lateral Unilateral (Halter) · dumbbell · Deltoide lateral
+  NOVO = Elevação Lateral Unilateral (Polia) · cable · Deltoide lateral
+  front-raise-dumbbell = Elevação Frontal (Halter)
+  NOVO = Elevação Frontal (Barra) · barbell · Deltoide anterior
+  front-raise-plate = Elevação Frontal (Anilha)
+  front-raise-cable = Elevação Frontal (Polia)
+  reverse-fly-dumbbell = Crucifixo Invertido (Halter)
+  reverse-fly-machine = Crucifixo Invertido (Máquina)
+  reverse-fly-cable = Crucifixo Invertido (Polia)
+  NOVO = Crucifixo Invertido Unilateral (Polia) · cable · Deltoide posterior
+  face-pull = Face Pull (Polia)
+  upright-row-barbell = Remada Alta (Barra)
+  NOVO = Remada Alta (Halter) · dumbbell · Deltoide lateral e trapézio
+  upright-row-cable = Remada Alta (Polia)
+  external-rotation-cable = Rotação Externa (Polia)
+Bíceps (biceps):
+  curl-barbell = Rosca Direta (Barra)
+  curl-ez-bar = Rosca Direta (Barra W)
+  curl-dumbbell = Rosca Direta (Halter)
+  alternating-curl-dumbbell = Rosca Alternada (Halter)
+  curl-cable = Rosca Direta (Polia)
+  NOVO = Rosca Unilateral (Polia) · cable · Bíceps (tensão contínua)
+  bayesian-curl-cable = Rosca Bayesiana (Polia)
+  preacher-curl = Rosca Scott (Barra W)
+  preacher-curl-machine = Rosca Scott (Máquina)
+  NOVO = Rosca Scott (Polia) · cable · Bíceps (cabeça curta)
+  preacher-curl-dumbbell = Rosca Scott Unilateral (Halter)
+  concentration-curl = Rosca Concentrada (Halter)
+  hammer-curl-dumbbell = Rosca Martelo (Halter)
+  hammer-curl-rope = Rosca Martelo (Polia)
+  incline-curl-dumbbell = Rosca Inclinada (Halter)
+  spider-curl-ez-bar = Rosca Spider (Barra W)
+  NOVO = Rosca Spider (Halter) · dumbbell · Bíceps (cabeça curta)
+Tríceps (triceps):
+  triceps-pushdown-bar = Tríceps Pulley (Polia)
+  triceps-pushdown-rope = Tríceps Corda (Polia)
+  NOVO = Tríceps Unilateral (Polia) · cable · Cabeça lateral
+  single-arm-reverse-grip-pushdown = Tríceps Unilateral Invertido (Polia)
+  overhead-extension-dumbbell = Extensão de Tríceps Acima da Cabeça (Halter)
+  NOVO = Extensão de Tríceps Acima da Cabeça (Barra W) · barbell · Cabeça longa
+  overhead-extension-rope = Extensão de Tríceps Acima da Cabeça (Polia)
+  NOVO = Extensão de Tríceps Unilateral (Halter) · dumbbell · Cabeça longa
+  triceps-extension-machine = Extensão de Tríceps (Máquina)
+  skull-crusher-barbell = Tríceps Testa (Barra W)
+  skull-crusher-dumbbell = Tríceps Testa (Halter)
+  NOVO = Tríceps Testa (Polia) · cable · Cabeça longa
+  NOVO = Tríceps Testa (Smith) · smith · Cabeça longa
+  kickback-dumbbell = Tríceps Coice (Halter)
+  kickback-cable = Tríceps Coice (Polia)
+  NOVO = JM Press (Barra) · barbell · Tríceps (geral)
+  NOVO = JM Press (Smith) · smith · Tríceps (geral)
+  close-grip-bench-press = Supino Fechado (Barra)
+  NOVO = Supino Fechado (Smith) · smith · Tríceps e peitoral
+  NOVO = Mergulho Sentado (Máquina) · machine · Tríceps (geral)
+  dips = Tríceps na Paralela
+  bench-dips = Tríceps no Banco
+  diamond-push-up = Flexão Diamante
+Antebraços (forearms):
+  wrist-curl-barbell = Rosca de Punho (Barra)
+  wrist-curl-dumbbell = Rosca de Punho (Halter)
+  reverse-wrist-curl-barbell = Rosca de Punho Invertida (Barra)
+  NOVO = Rosca de Punho Invertida (Halter) · dumbbell · Extensores do antebraço
+  reverse-curl-barbell = Rosca Invertida (Barra W)
+  NOVO = Rosca Invertida (Halter) · dumbbell · Braquiorradial
+  NOVO = Rosca Invertida (Polia) · cable · Braquiorradial
+Abdômen (abs):
+  crunch = Abdominal
+  weighted-crunch-plate = Abdominal (Anilha)
+  cable-crunch = Abdominal (Polia)
+  crunch-machine = Abdominal (Máquina)
+  NOVO = Abdominal Declinado · bodyweight · Reto abdominal
+  reverse-crunch = Abdominal Infra
+  oblique-crunch = Abdominal Oblíquo
+  bicycle-crunch = Abdominal Bicicleta
+  NOVO = Abdominal Tesoura · bodyweight · Reto abdominal (parte inferior)
+  ab-wheel-rollout = Roda Abdominal
+  NOVO = Dragon Flag · bodyweight · Core (força)
+  lying-leg-raise = Elevação de Pernas Deitado
+  hanging-leg-raise = Elevação de Pernas na Barra Fixa
+  captains-chair-knee-raise = Elevação de Joelhos na Paralela
+  russian-twist = Rotação Russa (Anilha)
+  cable-woodchop = Lenhador (Polia)
+  dead-bug = Dead Bug
+Quadríceps (quadriceps):
+  back-squat = Agachamento Livre (Barra)
+  front-squat = Agachamento Frontal (Barra)
+  squat-smith = Agachamento (Smith)
+  hack-squat = Agachamento Hack (Máquina)
+  NOVO = Agachamento Pendular (Máquina) · machine · Quadríceps
+  goblet-squat = Agachamento Goblet (Kettlebell)
+  NOVO = Agachamento Goblet (Halter) · dumbbell · Quadríceps
+  bulgarian-split-squat = Agachamento Búlgaro (Halter)
+  NOVO = Agachamento Búlgaro (Smith) · smith · Quadríceps e glúteos
+  bodyweight-squat = Agachamento sem Peso
+  sissy-squat = Sissy Squat
+  leg-press = Leg Press 45° (Máquina)
+  leg-press-horizontal = Leg Press Horizontal (Máquina)
+  NOVO = Leg Press Unilateral (Máquina) · machine · Quadríceps e glúteos
+  leg-extension = Cadeira Extensora (Máquina)
+  NOVO = Cadeira Extensora Unilateral (Máquina) · machine · Quadríceps (isolado)
+  lunge-dumbbell = Afundo (Halter)
+  NOVO = Afundo (Barra) · barbell · Quadríceps e glúteos
+  lunge-smith = Afundo (Smith)
+  walking-lunge-dumbbell = Passada (Halter)
+  walking-lunge-barbell = Passada (Barra)
+  step-up-dumbbell = Subida no Banco (Halter)
+Posteriores de coxa (hamstrings):
+  lying-leg-curl = Mesa Flexora (Máquina)
+  seated-leg-curl = Cadeira Flexora (Máquina)
+  standing-leg-curl = Flexora Unilateral em Pé (Máquina)
+  romanian-deadlift-barbell = Stiff (Barra)
+  romanian-deadlift-dumbbell = Stiff (Halter)
+  romanian-deadlift-smith = Stiff (Smith)
+  NOVO = Stiff Unilateral (Halter) · dumbbell · Posteriores e glúteos
+  rdl-barbell = Levantamento Terra Romeno (Barra)
+  good-morning = Good Morning (Barra)
+  NOVO = Good Morning (Smith) · smith · Posteriores e lombar
+  nordic-curl = Flexão Nórdica
+Glúteos (glutes):
+  hip-thrust-barbell = Elevação Pélvica (Barra)
+  hip-thrust-machine = Elevação Pélvica (Máquina)
+  hip-thrust-smith = Elevação Pélvica (Smith)
+  glute-bridge = Ponte de Glúteo
+  cable-kickback = Glúteo Coice (Polia)
+  glute-kickback-machine = Glúteo Coice (Máquina)
+  hip-abduction-machine = Cadeira Abdutora (Máquina)
+  hip-abduction-cable = Abdução de Quadril (Polia)
+  hip-abduction-band = Abdução de Quadril (Elástico)
+  lateral-band-walk = Caminhada Lateral (Elástico)
+  sumo-squat-dumbbell = Agachamento Sumô (Halter)
+  sumo-deadlift = Levantamento Terra Sumô (Barra)
+Adutores (adductors):
+  hip-adduction-machine = Cadeira Adutora (Máquina)
+  NOVO = Adução de Quadril (Polia) · cable · Adutores (parte interna da coxa)
+Panturrilhas (calves):
+  standing-calf-raise = Panturrilha em Pé (Máquina)
+  calf-raise-smith = Panturrilha em Pé (Smith)
+  seated-calf-raise = Panturrilha Sentado (Máquina)
+  leg-press-calf-raise = Panturrilha no Leg Press (Máquina)
+  single-leg-calf-raise-dumbbell = Panturrilha Unilateral (Halter)
+Corpo inteiro (fullBody):
+  kettlebell-swing = Kettlebell Swing
+  kettlebell-snatch = Arranco (Kettlebell)
+  turkish-get-up = Levantamento Turco (Kettlebell)
+  thruster-barbell = Thruster (Barra)
+  thruster-dumbbell = Thruster (Halter)
+  power-clean = Power Clean (Barra)
+  burpee = Burpee
+"""
+}

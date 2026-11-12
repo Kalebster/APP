@@ -24,11 +24,48 @@ func pixelBrightness(of image: CGImage, x: Int, y: Int) -> CGFloat? {
     return (CGFloat(pixel[0]) + CGFloat(pixel[1]) + CGFloat(pixel[2])) / (3 * 255)
 }
 
+/// The RGBA bytes of `rect` of `image`, in pixels from its top left corner.
+func pixels(of image: CGImage, in rect: CGRect) -> [UInt8]? {
+    let rect = rect.integral.intersection(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+    guard !rect.isEmpty, let cropped = image.cropping(to: rect) else { return nil }
+    let width = cropped.width
+    let height = cropped.height
+    var bytes = [UInt8](repeating: 0, count: width * height * 4)
+    let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
+        guard let context = CGContext(
+            data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return false }
+        context.draw(cropped, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return true
+    }
+    return drawn ? bytes : nil
+}
+
+/// Whether two areas of the same size look different: more than 8 pixels changed clearly in a color.
+/// Two screenshots of a screen that does not change give the same pixels.
+func pixelsDiffer(_ first: [UInt8], _ second: [UInt8]) -> Bool {
+    guard first.count == second.count else { return true }
+    var changed = 0
+    for index in stride(from: 0, to: first.count, by: 4) {
+        let red = abs(Int(first[index]) - Int(second[index]))
+        let green = abs(Int(first[index + 1]) - Int(second[index + 1]))
+        let blue = abs(Int(first[index + 2]) - Int(second[index + 2]))
+        if max(red, green, blue) > 24 {
+            changed += 1
+            if changed > 8 {
+                return true
+            }
+        }
+    }
+    return false
+}
+
 /// Launch arguments that keep each notice (toast) 15 s on screen instead of 2,5 or 4 s, a test hook of
 /// Debug builds (`ToastDuration`). On a slow CI machine a test looked at the screen again only 9,6 s after
-/// the tap that showed a notice, which was gone by then. Used by the tests that check a notice and take no
-/// screenshot while a notice could still be on screen, or only one that already shows it (38 and 103), so
-/// no screenshot changes.
+/// the tap that showed a notice, which was gone by then. Used by every test that checks a notice. A screenshot
+/// that shows the notice (38, 93, 98, 101, 102 and 103) is taken while it is still there; one that was taken
+/// without it is taken after `waitForToastToLeave`, so no screenshot changes.
 let longToastArguments = ["-ui-toast-seconds", "15"]
 
 /// The base of every interface test. When a test fails it keeps the text of what was on the app's
@@ -101,6 +138,22 @@ extension XCTestCase {
         }
     }
 
+    /// Opens the session from the "Treino em andamento" bar and waits for its screen. A tap a few seconds
+    /// after the launch can be lost, as on the tabs (seen in CI: the app did not react to it, and 10 s later
+    /// the bar was still on Treinos with nothing over it), so when the session has not opened in 5 s and
+    /// the bar can still be tapped, it is tapped once more. Nothing waits when the first tap works.
+    @MainActor
+    func openSessionFromTheBar(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let bar = app.buttons["session.bar"]
+        let name = element("session.name", in: app)
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Session bar not shown", file: file, line: line)
+        bar.tap()
+        if !name.waitForExistence(timeout: 5), bar.isHittable {
+            bar.tap()
+        }
+        XCTAssertTrue(name.waitForExistence(timeout: 10), "Session not opened from the bar", file: file, line: line)
+    }
+
     @MainActor
     private func waitUntilSelected(_ tab: XCUIElement, timeout: TimeInterval) -> Bool {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: tab)
@@ -139,12 +192,12 @@ extension XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
     }
 
-    /// Waits for the notice at the top of the screen to read `text`, looking every tenth of a second: a
-    /// notice stays 2,5 s, which the usual waits, about a second apart, can miss after a sheet closes or
-    /// a screen changes. The notice and its text are one query: reading the label after `exists` fails the
-    /// test when the notice leaves in between, which a slow machine makes likely.
+    /// Waits for the notice at the top of the screen to read `text`, looking every tenth of a second. Every
+    /// test that calls it keeps the notice 15 s (`longToastArguments`), so it waits up to 12 s, inside that
+    /// time: on a slow CI machine one look at the screen took more than 5 s. The notice and its text are
+    /// one query: reading the label after `exists` fails the test when the notice leaves in between.
     @MainActor
-    func waitForToast(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 5) -> Bool {
+    func waitForToast(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 12) -> Bool {
         let toast = app.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "toast", text)).firstMatch
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
@@ -154,6 +207,38 @@ extension XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         } while Date() < deadline
         return false
+    }
+
+    /// Waits until the notice on screen has gone: with `longToastArguments` a notice stays 15 s, so a test
+    /// calls it before a screenshot that was taken without the notice when it lasted 2,5 or 4 s. The notice
+    /// leaves the accessibility tree as it starts to fade out, and a screenshot taken then still showed it
+    /// (seen in CI), so the wait ends only when its band of the screen no longer looks as it did with the
+    /// notice and has stopped changing between two screenshots.
+    @MainActor
+    func waitForToastToLeave(in app: XCUIApplication) -> Bool {
+        let toast = app.staticTexts.matching(identifier: "toast").firstMatch
+        guard toast.exists else { return true }
+        let band = CGRect(x: 0, y: toast.frame.minY - 12, width: app.frame.width, height: toast.frame.height + 24)
+        guard let shown = screenPixels(of: app, in: band), toast.waitForNonExistence(timeout: 20) else { return false }
+        var previous: [UInt8]?
+        let deadline = Date().addingTimeInterval(10)
+        while Date() < deadline {
+            guard let current = screenPixels(of: app, in: band) else { return false }
+            if let previous, pixelsDiffer(current, shown), !pixelsDiffer(current, previous) {
+                return true
+            }
+            previous = current
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        return false
+    }
+
+    /// The RGBA bytes of `area` of the screen, in points, as the app's screenshot shows it.
+    @MainActor
+    func screenPixels(of app: XCUIApplication, in area: CGRect) -> [UInt8]? {
+        guard let image = app.screenshot().image.cgImage, app.frame.width > 0 else { return nil }
+        let scale = CGFloat(image.width) / app.frame.width
+        return pixels(of: image, in: CGRect(x: area.minX * scale, y: area.minY * scale, width: area.width * scale, height: area.height * scale))
     }
 
     /// Waits until the element's label is exactly `label`.

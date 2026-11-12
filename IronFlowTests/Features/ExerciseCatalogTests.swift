@@ -33,13 +33,9 @@ struct ExerciseCatalogTests {
     func alphabeticalAndActiveOnly() {
         let all = items(library + [custom("Meu Arquivado", .chest, archived: true)])
 
-        #expect(all.count == 157)
+        #expect(all.count == 220)
         #expect(!all.contains { $0.name == "Meu Arquivado" })
-        #expect(Array(names(all).prefix(10)) == [
-            "Abdominal Bicicleta", "Abdominal com Anilha", "Abdominal com Roda", "Abdominal Infra",
-            "Abdominal na Máquina", "Abdominal na Polia", "Abdominal Oblíquo", "Abdominal Supra",
-            "Abdução com Elástico", "Abdução de Quadril na Polia",
-        ])
+        #expect(Array(names(all).prefix(2)) == ["Abdominal", "Abdominal (Anilha)"])
         let sorted = names(all).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         #expect(names(all) == sorted)
     }
@@ -48,7 +44,7 @@ struct ExerciseCatalogTests {
     func equipmentAndFocus() throws {
         let all = items(library + [custom("Meu Supino", .chest)])
 
-        let bench = try #require(all.first { $0.name == "Supino Reto com Barra" })
+        let bench = try #require(all.first { $0.name == "Supino Reto (Barra)" })
         #expect(bench.equipment == .barbell)
         #expect(bench.focus == "Peitoral médio")
         #expect(bench.group == .chest)
@@ -61,9 +57,13 @@ struct ExerciseCatalogTests {
 
     // MARK: - Group filters
 
-    @Test("The group filters are Todos, the groups with an exercise in the group order, and Meus only with a custom exercise")
+    @Test("The group filters are Todos, the groups with an exercise in the approved order, and Meus only with a custom exercise")
     func groupFilters() {
-        let groups = MuscleGroup.allCases.filter { $0 != .other }.map(ExerciseCatalog.GroupFilter.group)
+        let groups: [ExerciseCatalog.GroupFilter] = [
+            .group(.chest), .group(.back), .group(.upperBack), .group(.traps), .group(.lowerBack), .group(.shoulders),
+            .group(.biceps), .group(.triceps), .group(.forearms), .group(.abs), .group(.quadriceps),
+            .group(.hamstrings), .group(.glutes), .group(.adductors), .group(.calves), .group(.fullBody),
+        ]
         let withoutMine: [ExerciseCatalog.GroupFilter] = [.all] + groups
         let withMine: [ExerciseCatalog.GroupFilter] = [.all, .mine] + groups
         #expect(ExerciseCatalog.groupFilters(in: items(library)) == withoutMine)
@@ -71,6 +71,22 @@ struct ExerciseCatalogTests {
         // An archived custom exercise does not count; a group without exercises is not offered.
         let few = items([custom("Arquivado", .abs, archived: true), builtIn(DefaultExerciseLibrary.all[0])])
         #expect(ExerciseCatalog.groupFilters(in: few) == [.all, .group(.chest)])
+        let withoutAdductors = items(library.filter { $0.muscleGroup != .adductors })
+        #expect(ExerciseCatalog.groupFilters(in: withoutAdductors) == [.all] + groups.filter { $0 != .group(.adductors) })
+    }
+
+    @Test("A custom exercise stored with back, as every back exercise was before, shows as Dorsais and in its filter")
+    func customBackShowsAsDorsais() throws {
+        let remada = custom("Minha Remada", .back)
+        #expect(remada.muscleGroupRaw == "back")
+        let all = items(library + [remada])
+
+        let item = try #require(all.first { $0.name == "Minha Remada" })
+        #expect(item.group == .back)
+        #expect(String(localized: item.group.displayName) == "Dorsais")
+        let dorsais = ExerciseCatalog.filtered(all, group: .group(.back), equipment: nil, search: "")
+        #expect(dorsais.count == 21)
+        #expect(dorsais.contains { $0.name == "Minha Remada" })
     }
 
     @Test("A group keeps its exercises; Meus keeps the custom ones of every group")
@@ -78,10 +94,10 @@ struct ExerciseCatalogTests {
         let all = items(library + [custom("Meu Supino", .chest), custom("Minha Remada", .back)])
 
         let chest = ExerciseCatalog.filtered(all, group: .group(.chest), equipment: nil, search: "")
-        #expect(chest.count == 22)
+        #expect(chest.count == 34)
         #expect(chest.allSatisfy { $0.group == .chest })
         #expect(names(ExerciseCatalog.filtered(all, group: .mine, equipment: nil, search: "")) == ["Meu Supino", "Minha Remada"])
-        #expect(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "").count == 159)
+        #expect(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "").count == 222)
     }
 
     @Test("A filter no longer offered falls back to Todos")
@@ -102,6 +118,8 @@ struct ExerciseCatalogTests {
         #expect(ExerciseCatalog.equipment(for: .group(.chest), in: all) == [.barbell, .dumbbell, .machine, .cable, .smith, .bodyweight])
         #expect(ExerciseCatalog.equipment(for: .group(.glutes), in: all) == [.barbell, .dumbbell, .machine, .cable, .smith, .bodyweight, .band])
         #expect(ExerciseCatalog.equipment(for: .group(.fullBody), in: all) == [.barbell, .dumbbell, .bodyweight, .kettlebell])
+        #expect(ExerciseCatalog.equipment(for: .group(.lowerBack), in: all) == [.barbell, .dumbbell, .machine, .bodyweight, .plate])
+        #expect(ExerciseCatalog.equipment(for: .group(.adductors), in: all) == [.machine, .cable])
         // Custom exercises have no equipment.
         #expect(ExerciseCatalog.equipment(for: .mine, in: all).isEmpty)
     }
@@ -118,16 +136,16 @@ struct ExerciseCatalogTests {
         #expect(ExerciseCatalog.equipment(nil, for: .group(.chest), in: all) == nil)
     }
 
-    @Test("Peito with Halteres shows the 6 exercises of the model, and a custom exercise never shows with an equipment")
+    @Test("Peito with Halteres shows its 5 exercises, and a custom exercise never shows with an equipment")
     func groupWithEquipment() {
-        let all = items(library + [custom("Meu Supino com Halteres", .chest)])
+        let all = items(library + [custom("Meu Supino com Halter", .chest)])
 
         let chestDumbbells = ExerciseCatalog.filtered(all, group: .group(.chest), equipment: .dumbbell, search: "")
         #expect(names(chestDumbbells) == [
-            "Crucifixo Inclinado com Halteres", "Crucifixo Reto com Halteres", "Pullover com Halter",
-            "Supino Declinado com Halteres", "Supino Inclinado com Halteres", "Supino Reto com Halteres",
+            "Crucifixo (Halter)", "Crucifixo Inclinado (Halter)", "Supino Declinado (Halter)",
+            "Supino Inclinado (Halter)", "Supino Reto (Halter)",
         ])
-        let dumbbells = ExerciseCatalog.filtered(all, group: .all, equipment: .dumbbell, search: "halteres")
+        let dumbbells = ExerciseCatalog.filtered(all, group: .all, equipment: .dumbbell, search: "halter")
         #expect(!dumbbells.contains { $0.isCustom })
     }
 
@@ -138,11 +156,40 @@ struct ExerciseCatalogTests {
         let all = items(library)
 
         #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "  ELEVACAO PELVICA ")) == [
-            "Elevação Pélvica com Barra", "Elevação Pélvica na Máquina", "Elevação Pélvica no Smith",
+            "Elevação Pélvica (Barra)", "Elevação Pélvica (Máquina)", "Elevação Pélvica (Smith)",
         ])
-        #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "pronada")) == ["Barra Fixa Pronada"])
+        #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "graviton")) == ["Barra Fixa (Graviton)"])
         #expect(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "supino xyz").isEmpty)
-        #expect(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "   ").count == 157)
+        #expect(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "   ").count == 220)
+    }
+
+    @Test("The search finds the names with every word typed, in any order, ignoring case, diacritics and extra spaces")
+    func searchByWords() {
+        let all = items(library)
+        func search(_ text: String) -> [String] {
+            names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: text))
+        }
+        let benchWithBarbell = [
+            "Supino Declinado (Barra)", "Supino Fechado (Barra)", "Supino Inclinado (Barra)", "Supino Reto (Barra)",
+        ]
+
+        // Any order.
+        #expect(search("supino barra") == benchWithBarbell)
+        #expect(search("barra supino") == benchWithBarbell)
+        // Case, diacritics and extra spaces, tabs and line breaks between and around the words.
+        #expect(search("  BARRA   Supino \t\n") == benchWithBarbell)
+        #expect(search("EXTENSAO   triceps  CABEÇA") == [
+            "Extensão de Tríceps Acima da Cabeça (Barra W)", "Extensão de Tríceps Acima da Cabeça (Halter)",
+            "Extensão de Tríceps Acima da Cabeça (Polia)",
+        ])
+        // Each word may be any part of the name.
+        #expect(search("sup barr") == ["Barra Fixa (Pegada Supinada)", "Remada Curvada Supinada (Barra)"] + benchWithBarbell)
+        // A word that no name has leaves nothing, even with words that match.
+        #expect(search("supino barra xyz").isEmpty)
+        #expect(search("xyz").isEmpty)
+        // An empty search keeps every exercise.
+        #expect(search("").count == 220)
+        #expect(search(" \t ").count == 220)
     }
 
     @Test("Search, group and equipment work together")
@@ -150,14 +197,26 @@ struct ExerciseCatalogTests {
         let all = items(library + [custom("Meu Supino Inclinado", .chest)])
 
         #expect(names(ExerciseCatalog.filtered(all, group: .group(.chest), equipment: .dumbbell, search: "inclinado")) == [
-            "Crucifixo Inclinado com Halteres", "Supino Inclinado com Halteres",
+            "Crucifixo Inclinado (Halter)", "Supino Inclinado (Halter)",
         ])
         #expect(names(ExerciseCatalog.filtered(all, group: .group(.chest), equipment: nil, search: "inclinado")) == [
-            "Crucifixo Inclinado com Halteres", "Meu Supino Inclinado", "Supino Inclinado com Barra",
-            "Supino Inclinado com Halteres", "Supino Inclinado na Máquina", "Supino Inclinado no Smith",
+            "Crucifixo Inclinado (Halter)", "Crucifixo Inclinado (Máquina)", "Crucifixo Inclinado (Polia)",
+            "Meu Supino Inclinado", "Supino Inclinado (Barra)", "Supino Inclinado (Halter)", "Supino Inclinado (Máquina)",
+            "Supino Inclinado (Polia)", "Supino Inclinado (Smith)",
         ])
         #expect(names(ExerciseCatalog.filtered(all, group: .mine, equipment: nil, search: "inclinado")) == ["Meu Supino Inclinado"])
         #expect(ExerciseCatalog.filtered(all, group: .group(.back), equipment: .smith, search: "supino").isEmpty)
+        // Several words with a group or an equipment.
+        #expect(names(ExerciseCatalog.filtered(all, group: .group(.chest), equipment: nil, search: "barra supino")) == [
+            "Supino Declinado (Barra)", "Supino Inclinado (Barra)", "Supino Reto (Barra)",
+        ])
+        #expect(names(ExerciseCatalog.filtered(all, group: .group(.triceps), equipment: nil, search: "fechado supino")) == [
+            "Supino Fechado (Barra)", "Supino Fechado (Smith)",
+        ])
+        #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: .smith, search: "SUPINO  smith")) == [
+            "Supino Declinado (Smith)", "Supino Fechado (Smith)", "Supino Inclinado (Smith)", "Supino Reto (Smith)",
+        ])
+        #expect(names(ExerciseCatalog.filtered(all, group: .mine, equipment: nil, search: "inclinado meu")) == ["Meu Supino Inclinado"])
     }
 
     @Test("Only a group other than Todos or an equipment counts as filtering, never the search")
@@ -168,9 +227,9 @@ struct ExerciseCatalogTests {
         #expect(ExerciseCatalog.isFiltering(group: .all, equipment: .band))
     }
 
-    @Test("The count reads 157 exercícios, 1 exercício")
+    @Test("The count reads 220 exercícios, 1 exercício")
     func countText() {
-        #expect(ExerciseCatalog.countText(157) == "157 exercícios")
+        #expect(ExerciseCatalog.countText(220) == "220 exercícios")
         #expect(ExerciseCatalog.countText(6) == "6 exercícios")
         #expect(ExerciseCatalog.countText(1) == "1 exercício")
     }
@@ -186,14 +245,14 @@ struct ExerciseCatalogTests {
         _ = cache.items(for: exercises)
         _ = cache.items(for: exercises)
         #expect(cache.builds == 1)
-        #expect(first.count == 158)
+        #expect(first.count == 221)
 
-        exercises[157].name = "Meu Supino Reto"
+        exercises[220].name = "Meu Supino Reto"
         #expect(cache.items(for: exercises).contains { $0.name == "Meu Supino Reto" })
         #expect(cache.builds == 2)
 
-        exercises[157].isArchived = true
-        #expect(cache.items(for: exercises).count == 157)
+        exercises[220].isArchived = true
+        #expect(cache.items(for: exercises).count == 220)
         #expect(cache.builds == 3)
     }
 }
