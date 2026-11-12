@@ -122,7 +122,8 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
     @MainActor
     func testRenameAndDeleteFromTheMenu() throws {
         continueAfterFailure = false
-        // The notices stay 15 s (longToastArguments); screenshot 82 is taken once the first has gone.
+        // The notices stay 15 s (longToastArguments). The first is waited out before the menus: in CI a tap
+        // on "Excluir treino" was lost as the notice left the screen, and screenshot 82 is taken without it.
         let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"], extraArguments: longToastArguments)
 
         // Rename.
@@ -145,6 +146,7 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: card, containing: "Pull"), "Card not renamed: \(card.label)")
         XCTAssertTrue(app.buttons["Iniciar Pull"].exists, "▶ not renamed")
         XCTAssertFalse(element("workout.title", in: app).exists, "Renaming opened the editor")
+        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
 
         // "Editar treino" opens the editor.
         app.buttons["Opções de Pull"].tap()
@@ -165,7 +167,6 @@ final class WorkoutsScreenUITests: IronFlowUITestCase {
         XCTAssertTrue(app.staticTexts["1 treino no plano"].exists, "Subtitle after cancelling")
 
         // Delete: confirming removes it and shows the empty card.
-        XCTAssertTrue(waitForToastToLeave(in: app), "Notice still shown")
         let menuFrame = app.buttons["Opções de Pull"].frame
         app.buttons["Opções de Pull"].tap()
         XCTAssertTrue(app.buttons["Excluir treino"].waitForExistence(timeout: 10), "Delete option not found")
