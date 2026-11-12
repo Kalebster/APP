@@ -420,7 +420,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         replaceText(of: fields("workout.set.max", in: app).element(boundBy: 0), with: "4")
         app.buttons["OK"].tap()
         let notice = app.staticTexts["toast"]
-        XCTAssertTrue(waitForLabel(of: notice, toBe: "O máximo não pode ser menor que o mínimo.", timeout: 5), "Notice not shown")
+        XCTAssertTrue(waitForLabel(of: notice, toBe: "O máximo não pode ser menor que o mínimo.", timeout: 12), "Notice not shown")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         XCTAssertEqual(fields("workout.set.min", in: app).element(boundBy: 0).value as? String, "4")
         XCTAssertEqual(fields("workout.set.max", in: app).element(boundBy: 0).value as? String, "4")

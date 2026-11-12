@@ -192,12 +192,12 @@ extension XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
     }
 
-    /// Waits for the notice at the top of the screen to read `text`, looking every tenth of a second: a
-    /// notice stays 2,5 s, which the usual waits, about a second apart, can miss after a sheet closes or
-    /// a screen changes. The notice and its text are one query: reading the label after `exists` fails the
-    /// test when the notice leaves in between, which a slow machine makes likely.
+    /// Waits for the notice at the top of the screen to read `text`, looking every tenth of a second. Every
+    /// test that calls it keeps the notice 15 s (`longToastArguments`), so it waits up to 12 s, inside that
+    /// time: on a slow CI machine one look at the screen took more than 5 s. The notice and its text are
+    /// one query: reading the label after `exists` fails the test when the notice leaves in between.
     @MainActor
-    func waitForToast(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 5) -> Bool {
+    func waitForToast(_ text: String, in app: XCUIApplication, timeout: TimeInterval = 12) -> Bool {
         let toast = app.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "toast", text)).firstMatch
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
