@@ -102,7 +102,8 @@ struct DefaultExerciseLibraryTests {
         for line in ApprovedExerciseList2.text.split(separator: "\n").map(String.init) {
             if !line.hasPrefix(" ") {
                 let key = try #require(line.firstMatch(of: /\((\w+)\):$/)?.1, "Group line: \(line)")
-                group = try #require(MuscleGroup(rawValue: String(key)), "Group: \(key)")
+                let parsed: MuscleGroup = try #require(MuscleGroup(rawValue: String(key)), "Group: \(key)")
+                group = parsed
                 continue
             }
             let lineGroup = try #require(group, "Line before a group: \(line)")
