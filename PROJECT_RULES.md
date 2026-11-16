@@ -475,6 +475,7 @@ Relatório final de cada etapa
 - Achados do /code-review e o que foi feito com cada um.
 - "O que decidi sozinho" (seção 18).
 - "Para o dono decidir": cada divergência entre o protótipo e o código, sem mudar nada antes da resposta.
+- Perguntas ao dono sempre no fim da mensagem (do plano ou do relatório), com opções em letras e a recomendação marcada. Nunca use uma ferramenta de pergunta que pare o trabalho no meio: termine tudo o que dá para fazer e pergunte no fim.
 
 ---
 
