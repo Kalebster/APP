@@ -32,7 +32,7 @@
       "WorkoutUITests/testEmptyStateAndCreateWorkout": 35.1,
       "WorkoutUITests/testRenameWorkout": 40.6,
       "WorkoutUITests/testReorderExercises": 52.0,
-      "WorkoutUITests/testTheLongestExerciseNameWrapsInTwoLines": 45.1,
+      "WorkoutUITests/testTheLongestExerciseNameWrapsInTwoLines": 70.6,
       "WorkoutsScreenUITests/testRenameAndDeleteFromTheMenu": 55.0
     },
     "2": {
