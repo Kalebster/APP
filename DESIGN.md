@@ -229,7 +229,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 
 - As transições padrão do iOS: empurrar a tela, abrir a folha, fade do aviso.
 - O ponto azul pulsando da barra do treino em andamento é a única animação contínua, e para quando "Reduzir movimento" estiver ligado.
-- Nada de animação em cada toque. Vibração só onde o protótipo ou o prompt da etapa pedir: hoje, uma vibração leve, sem som, no fim do descanso.
+- Nada de animação em cada toque. Vibração só onde o protótipo ou o prompt da etapa pedir: hoje, uma vibração leve, sem som, no fim do descanso, e a vibração de sucesso do sistema ao marcar uma série com o ✓ (só ao marcar, não ao desmarcar).
 
 ## 9. Acessibilidade
 
