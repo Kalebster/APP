@@ -162,6 +162,14 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertTrue(empty.label.contains("Nenhum exercício encontrado"), "Message: \(empty.label)")
         XCTAssertEqual(cards(in: app).count, 0)
         attachScreenshot(named: "72-exercises-no-results", of: app)
+
+        // With a group chosen the count is shown: "0 exercícios", never "0 exercício".
+        if app.keyboards.firstMatch.exists {
+            searchField(in: app).typeText("\n")
+            XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
+        }
+        groupChip("chest", in: app).tap()
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "0 exercícios"), "Count without results: \(element("exercises.count", in: app).label)")
     }
 
     @MainActor

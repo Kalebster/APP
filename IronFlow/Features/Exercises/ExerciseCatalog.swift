@@ -23,7 +23,8 @@ enum ExerciseCatalog {
         let equipment: Equipment?
         let focus: String?
         let isCustom: Bool
-        /// The name as the search compares it (`Validation.comparisonKey`), computed once.
+        /// What the search compares, computed once (`Validation.comparisonKey`): the name, and for a built-in
+        /// exercise the name of its equipment after it, as the equipment filter shows it ("halteres").
         let searchKey: String
     }
 
@@ -40,6 +41,12 @@ enum ExerciseCatalog {
             .filter { !$0.isArchived }
             .map { source in
                 let entry = source.isCustom ? nil : source.libraryKey.flatMap { DefaultExerciseLibrary.byKey[$0] }
+                var searchKey = Validation.comparisonKey(forName: source.name)
+                if let equipment = entry?.equipment {
+                    // A space between them: a word typed never has one, so it never runs from the name into
+                    // the equipment.
+                    searchKey += " " + Validation.comparisonKey(forName: String(localized: equipment.displayName))
+                }
                 return Item(
                     id: source.id,
                     name: source.name,
@@ -47,7 +54,7 @@ enum ExerciseCatalog {
                     equipment: entry?.equipment,
                     focus: entry?.focus,
                     isCustom: source.isCustom,
-                    searchKey: Validation.comparisonKey(forName: source.name)
+                    searchKey: searchKey
                 )
             }
             .sorted { lhs, rhs in
@@ -85,13 +92,14 @@ enum ExerciseCatalog {
         return chosen
     }
 
-    /// The items of the group, with the equipment, whose name has every word of the search, in the order
-    /// given.
+    /// The items of the group, with the equipment, that have every word of the search, in the order given.
     ///
     /// The search is split into words at any whitespace, so extra spaces do not count, and each word may
     /// be any part of the name, in any order ("barra supino" finds "Supino Reto (Barra)"), ignoring case
-    /// and diacritics. An empty search keeps every item. A custom exercise has no equipment, so choosing
-    /// one leaves it out.
+    /// and diacritics. A built-in exercise is also found by the name of its equipment, as the equipment
+    /// filter shows it ("supino halteres" finds "Supino Reto (Halter)", "peso do corpo" the exercises done
+    /// with the body only); a custom exercise only by its name. An empty search keeps every item. A custom
+    /// exercise has no equipment, so choosing one leaves it out.
     static func filtered(_ items: [Item], group: GroupFilter, equipment: Equipment?, search: String) -> [Item] {
         let words = Validation.comparisonKey(forName: search).split(whereSeparator: \.isWhitespace)
         return items.filter { item in
@@ -106,9 +114,10 @@ enum ExerciseCatalog {
         group != .all || equipment != nil
     }
 
-    /// "220 exercícios", "1 exercício".
+    /// "420 exercícios", "1 exercício", "0 exercícios". The Portuguese plural rules treat 0 as singular,
+    /// which would read "0 exercício", so 0 has a text of its own.
     static func countText(_ count: Int) -> String {
-        String(localized: "\(count) exercícios")
+        count == 0 ? String(localized: "0 exercícios") : String(localized: "\(count) exercícios")
     }
 
     private static func matches(_ item: Item, group: GroupFilter) -> Bool {
