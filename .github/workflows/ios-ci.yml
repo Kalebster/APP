@@ -442,7 +442,10 @@ jobs:
             echo "| Texto que só existe com os ganchos de teste | No Debug (controle) | No Release |"
             echo "|---|---|---|"
           } >> "$GITHUB_STEP_SUMMARY"
-          for marker in "-simulate-persistence-failure" "com.ironflow.app.ui-testing" "UI test seed failed" "UITestSeed"; do
+          # Every launch argument the test hooks read, each only inside #if DEBUG, and texts of the hooks' code.
+          for marker in "-simulate-persistence-failure" "-ui-testing" "-ui-seed" "-ui-store" "-ui-store-new" \
+            "-ui-notifications" "-ui-notification-answer" "-ui-rest-ready-seconds" "-ui-toast-seconds" \
+            "com.ironflow.app.ui-testing" "UI test seed failed" "UITestSeed"; do
             in_debug=não
             in_release=não
             if grep -qF -- "$marker" build/diagnostics/debug-app-text.txt; then in_debug=sim; fi
