@@ -19,18 +19,38 @@ final class AppearanceUITests: IronFlowUITestCase {
     /// Brightness of the space bar of the keyboard on screen, at a point of the key's surface away from
     /// its label: 15% of its width from its left edge, halfway down. The letter keys are not used:
     /// their letter is in the middle, and their frames take in part of the gaps between the keys.
-    /// The keyboard's one-time introduction, which covers the keys, is closed first.
+    /// The keyboard's one-time introduction, which covers the keys, is closed first, and the space bar is
+    /// measured only once it is on the screen with nothing over it (`waitUntilUncovered`).
     @MainActor
     private func spaceBarBrightness(in app: XCUIApplication) throws -> CGFloat {
         let keyboard = app.keyboards.firstMatch
-        XCTAssertTrue(keyboard.waitForExistence(timeout: 10), "Keyboard not shown")
+        XCTAssertTrue(keyboard.waitForExistence(timeout: 30), "Keyboard not shown")
         dismissKeyboardIntroductionIfShown(in: app)
         let space = try XCTUnwrap(spaceBar(of: keyboard), "No space bar on the keyboard")
-        XCTAssertTrue(space.isHittable, "The space bar is covered")
+        XCTAssertTrue(waitUntilUncovered(space, in: app), "The space bar is covered")
         return try XCTUnwrap(
             brightness(of: app, atX: space.frame.minX + space.frame.width * 0.15, y: space.frame.midY),
             "Could not measure the space bar"
         )
+    }
+
+    /// Waits until `key` is on the screen with nothing over it, for up to 30 s. On a cold simulator the
+    /// keyboard can still be coming in, and its one-time introduction can show after the first look for it:
+    /// it was still over the space bar right after the keyboard appeared (run 43793625672, first test of a
+    /// part, the app 24 s to open). The introduction is closed whenever it shows, and the key is looked at
+    /// again until it can be tapped.
+    @MainActor
+    private func waitUntilUncovered(_ key: XCUIElement, in app: XCUIApplication, timeout: TimeInterval = 30) -> Bool {
+        let uncovered = NSPredicate(format: "exists == true AND hittable == true")
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            dismissKeyboardIntroductionIfShown(in: app)
+            let expectation = XCTNSPredicateExpectation(predicate: uncovered, object: key)
+            if XCTWaiter().wait(for: [expectation], timeout: 5) == .completed {
+                return true
+            }
+        } while Date() < deadline
+        return false
     }
 
     /// The space bar, found by its name in English or Portuguese, or else as the widest key.
