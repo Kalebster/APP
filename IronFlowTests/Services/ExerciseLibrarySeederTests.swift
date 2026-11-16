@@ -25,6 +25,34 @@ struct ExerciseLibrarySeederTests {
     private static let entryA = DefaultExercise(key: "test-a", id: "0A000000-0000-4000-8000-00000000000A", name: "Teste A", muscleGroup: .chest)
     private static let entryB = DefaultExercise(key: "test-b", id: "0B000000-0000-4000-8000-00000000000B", name: "Teste B", muscleGroup: .back)
 
+    private static let entryC = DefaultExercise(key: "test-c", id: "0C000000-0000-4000-8000-00000000000C", name: "Teste C", muscleGroup: .biceps)
+
+    /// Seeds `first` and then `second` in a store of its own, with a custom exercise named `customName`
+    /// created between the two runs. Returns the store, its built-in exercises by key, the custom exercise,
+    /// the second run's result and the result of seeding `second` once more.
+    private static func upgrade(
+        from first: [DefaultExercise],
+        to second: [DefaultExercise],
+        customName: String? = nil
+    ) throws -> (
+        harness: ServiceTestHarness,
+        exercises: [String: Exercise],
+        custom: Exercise?,
+        result: ExerciseLibrarySeedResult,
+        again: ExerciseLibrarySeedResult
+    ) {
+        let harness = try ServiceTestHarness()
+        let seeder = ExerciseLibrarySeeder(context: harness.context, now: harness.clock.now)
+        try seeder.seed(first)
+        let custom = try customName.map { try harness.exercises.createCustomExercise(name: $0, muscleGroup: .other) }
+        harness.clock.advance(by: 60)
+        let result = try seeder.seed(second)
+        let again = try seeder.seed(second)
+        let stored = try harness.context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isCustom }))
+        let exercises = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
+        return (harness, exercises, custom, result, again)
+    }
+
     // MARK: - Installation
 
     @Test("A new install gets the whole library, active, with the fixed ids, names and groups")
@@ -432,6 +460,74 @@ struct ExerciseLibrarySeederTests {
         #expect(first.name == "Nome Livre")
         #expect(second.name == "Nome Usado")
         #expect(second.isArchived)
+    }
+
+    @Test("An exercise takes the name another one leaves in the same run, whatever their order in the library")
+    func nameLeftByAnotherInTheSameRun() throws {
+        let takes = DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Teste B", muscleGroup: .chest)
+        let leaves = DefaultExercise(key: "test-b", id: Self.entryB.id, name: "Teste B Novo", muscleGroup: .back)
+        for library in [[takes, leaves], [leaves, takes]] {
+            let run = try Self.upgrade(from: [Self.entryA, Self.entryB], to: library)
+            #expect(Set(run.result.updatedKeys) == ["test-a", "test-b"])
+            #expect(run.result.keptNameKeys.isEmpty && run.result.insertedKeys.isEmpty)
+            #expect(run.exercises["test-a"]?.name == "Teste B")
+            #expect(run.exercises["test-b"]?.name == "Teste B Novo")
+            #expect(run.exercises.values.allSatisfy { !$0.isArchived })
+            #expect(run.again == ExerciseLibrarySeedResult())
+            #expect(run.harness.context.hasChanges == false)
+        }
+    }
+
+    @Test("Two exercises swap their names in one run")
+    func swappedNames() throws {
+        let run = try Self.upgrade(from: [Self.entryA, Self.entryB], to: [
+            DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Teste B", muscleGroup: .chest),
+            DefaultExercise(key: "test-b", id: Self.entryB.id, name: "teste a", muscleGroup: .back),
+        ])
+        #expect(run.result.updatedKeys == ["test-a", "test-b"])
+        #expect(run.result.keptNameKeys.isEmpty)
+        #expect(run.exercises["test-a"]?.name == "Teste B")
+        #expect(run.exercises["test-b"]?.name == "teste a")
+        #expect(run.exercises["test-a"]?.id.uuidString == Self.entryA.id)
+        #expect(run.exercises["test-b"]?.id.uuidString == Self.entryB.id)
+        #expect(run.exercises.values.allSatisfy { !$0.isArchived })
+        #expect(run.again == ExerciseLibrarySeedResult())
+    }
+
+    @Test("A new entry takes, active, a name an existing exercise leaves in the same run, whatever their order in the library")
+    func newEntryTakesALeftName() throws {
+        // As the first library's "Agachamento Búlgaro", which becomes "(Halter)" when a bodyweight one comes.
+        let old = DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Agachamento Búlgaro", muscleGroup: .quadriceps)
+        let renamed = DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Agachamento Búlgaro (Halter)", muscleGroup: .quadriceps)
+        let new = DefaultExercise(key: "test-b", id: Self.entryB.id, name: "Agachamento Búlgaro", muscleGroup: .quadriceps)
+        for library in [[renamed, new], [new, renamed]] {
+            let run = try Self.upgrade(from: [old], to: library)
+            #expect(run.result == ExerciseLibrarySeedResult(insertedKeys: ["test-b"], updatedKeys: ["test-a"]))
+            #expect(run.exercises["test-a"]?.name == "Agachamento Búlgaro (Halter)")
+            #expect(run.exercises["test-b"]?.name == "Agachamento Búlgaro")
+            #expect(run.exercises["test-a"]?.isArchived == false)
+            #expect(run.exercises["test-b"]?.isArchived == false)
+            #expect(run.again == ExerciseLibrarySeedResult())
+        }
+    }
+
+    @Test("A name an active custom exercise keeps stays kept: the corrected exercise keeps its name, which then stops the next correction and hides a new entry")
+    func customExerciseKeepsItsName() throws {
+        let run = try Self.upgrade(from: [Self.entryA, Self.entryB], to: [
+            DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Meu Nome", muscleGroup: .chest),
+            DefaultExercise(key: "test-b", id: Self.entryB.id, name: "Teste A", muscleGroup: .back),
+            DefaultExercise(key: "test-c", id: Self.entryC.id, name: "Teste B", muscleGroup: .biceps),
+        ], customName: "meu nome")
+        #expect(run.result == ExerciseLibrarySeedResult(insertedKeys: ["test-c"], keptNameKeys: ["test-a", "test-b"]))
+        #expect(run.exercises["test-a"]?.name == "Teste A")
+        #expect(run.exercises["test-b"]?.name == "Teste B")
+        #expect(run.exercises["test-c"]?.isArchived == true)
+        #expect(run.exercises["test-a"]?.isArchived == false && run.exercises["test-b"]?.isArchived == false)
+        #expect(run.custom?.name == "meu nome")
+        #expect(run.custom?.isArchived == false)
+        // Nothing changes on the next run, and the kept names are reported again.
+        #expect(run.again == ExerciseLibrarySeedResult(keptNameKeys: ["test-a", "test-b"]))
+        #expect(run.harness.context.hasChanges == false)
     }
 
     @Test("A new entry in a later library is inserted and the others are untouched")
