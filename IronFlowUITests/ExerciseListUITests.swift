@@ -2,7 +2,7 @@ import XCTest
 
 /// The Exercícios tab in the approved model: one alphabetical list with a search, the group filters
 /// ("Todos", "Meus" and the groups), the equipment of the chosen group and "Limpar filtros".
-/// Runs on an in-memory store where the 220 built-in exercises are installed at launch.
+/// Runs on an in-memory store where the 420 built-in exercises are installed at launch.
 final class ExerciseListUITests: IronFlowUITestCase {
     @MainActor
     private func groupChip(_ key: String, in app: XCUIApplication) -> XCUIElement {
@@ -59,7 +59,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         let app = launchOnTab("Exercícios")
 
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "Header not shown")
-        XCTAssertEqual(element("exercises.total", in: app).label, "220 exercícios")
+        XCTAssertEqual(element("exercises.total", in: app).label, "420 exercícios")
         let all = groupChip("all", in: app)
         XCTAssertTrue(all.isSelected, "Todos is not selected at first")
         XCTAssertFalse(groupChip("mine", in: app).exists, "Meus shown without a custom exercise")
@@ -73,7 +73,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
 
         let chest = groupChip("chest", in: app)
         chest.tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "33 exercícios"), "Chest count not shown")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "58 exercícios"), "Chest count not shown")
         XCTAssertTrue(chest.isSelected, "Peito is not selected")
         XCTAssertFalse(all.isSelected, "Todos is still selected")
         XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Crossover (Polia Alta), Peito, Peitoral inferior, Polia")
@@ -87,40 +87,38 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Peito not shown")
         chest.tap()
 
-        // Only the equipment of the chest exercises.
-        for key in ["barbell", "dumbbell", "machine", "cable", "smith", "bodyweight"] {
+        // Only the equipment of the chest exercises: every one but Kettlebell.
+        for key in ["barbell", "dumbbell", "machine", "cable", "smith", "bodyweight", "band", "plate"] {
             XCTAssertTrue(equipmentChip(key, in: app).exists, "No \(key) for Peito")
         }
-        for key in ["kettlebell", "band", "plate"] {
-            XCTAssertFalse(equipmentChip(key, in: app).exists, "\(key) offered for Peito")
-        }
+        XCTAssertFalse(equipmentChip("kettlebell", in: app).exists, "kettlebell offered for Peito")
 
         let dumbbell = equipmentChip("dumbbell", in: app)
         dumbbell.tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "5 exercícios"), "Peito + Halteres count")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "12 exercícios"), "Peito + Halteres count")
         XCTAssertTrue(dumbbell.isSelected, "Halteres is not selected")
-        XCTAssertEqual(cards(in: app).count, 5)
         XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Crucifixo (Halter), Peito, Peitoral (alongamento), Halteres")
+        XCTAssertEqual(cards(in: app).element(boundBy: 1).label, "Crucifixo Declinado (Halter), Peito, Peitoral inferior, Halteres")
         attachScreenshot(named: "71-exercises-chest-dumbbells", of: app)
 
         // A second tap unselects it.
         dumbbell.tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "33 exercícios"), "Halteres not unselected")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "58 exercícios"), "Halteres not unselected")
         XCTAssertFalse(dumbbell.isSelected, "Halteres still selected")
 
-        // Elástico exists only in Glúteos; choosing Peito unselects it, and it stays unselected.
+        // Kettlebell exists in Glúteos and not in Peito; choosing Peito unselects it, and it stays unselected.
         tapChip(groupChip("glutes", in: app), in: app)
-        let band = equipmentChip("band", in: app)
-        XCTAssertTrue(band.waitForExistence(timeout: 10), "No Elástico for Glúteos")
-        tapChip(band, in: app)
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "2 exercícios"), "Glúteos + Elástico count")
+        let kettlebell = equipmentChip("kettlebell", in: app)
+        XCTAssertTrue(kettlebell.waitForExistence(timeout: 10), "No Kettlebell for Glúteos")
+        tapChip(kettlebell, in: app)
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "1 exercício"), "Glúteos + Kettlebell count")
         tapChip(groupChip("chest", in: app), in: app)
-        XCTAssertTrue(band.waitForNonExistence(timeout: 10), "Elástico offered for Peito")
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "33 exercícios"), "The equipment kept filtering Peito")
+        XCTAssertTrue(kettlebell.waitForNonExistence(timeout: 10), "Kettlebell offered for Peito")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "58 exercícios"), "The equipment kept filtering Peito")
         tapChip(groupChip("glutes", in: app), in: app)
-        XCTAssertTrue(band.waitForExistence(timeout: 10), "No Elástico for Glúteos")
-        XCTAssertFalse(band.isSelected, "Elástico selected again")
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "12 exercícios"), "Glúteos count")
+        XCTAssertTrue(kettlebell.waitForExistence(timeout: 10), "No Kettlebell for Glúteos")
+        XCTAssertFalse(kettlebell.isSelected, "Kettlebell selected again")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "29 exercícios"), "Glúteos count")
     }
 
     @MainActor
@@ -130,7 +128,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         search("supino", in: app)
         groupChip("chest", in: app).tap()
         equipmentChip("barbell", in: app).tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "3 exercícios"), "Peito + Barra + supino count")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "7 exercícios"), "Peito + Barra + supino count")
 
         app.buttons["exercises.clearFilters"].tap()
 
@@ -149,7 +147,8 @@ final class ExerciseListUITests: IronFlowUITestCase {
 
         search("pelvica", in: app)
         XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 0), toBe: "Elevação Pélvica (Barra), Glúteos, Glúteo máximo, Barra"))
-        XCTAssertEqual(cards(in: app).count, 3)
+        XCTAssertEqual(cards(in: app).element(boundBy: 1).label, "Elevação Pélvica (Halter), Glúteos, Glúteo máximo, Halteres")
+        XCTAssertEqual(cards(in: app).element(boundBy: 2).label, "Elevação Pélvica (Máquina), Glúteos, Glúteo máximo, Máquina")
 
         let clear = app.buttons["exercises.search.clear"]
         XCTAssertTrue(clear.exists, "No clear button with text")
@@ -171,12 +170,14 @@ final class ExerciseListUITests: IronFlowUITestCase {
         let app = launchOnTab("Exercícios")
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "Header not shown")
 
-        // Every word of the search, in any order, in every group.
+        // Every word of the search, in any order, in every group: the first four of the eight "supino" done
+        // with a barbell, Supino Fechado (Barra) of Tríceps among them. The list may hold more cards than the
+        // screen shows, so only the first ones are read here; the count comes with Peito below.
         let benchWithBarbell = [
             "Supino Declinado (Barra), Peito, Peitoral inferior, Barra",
             "Supino Fechado (Barra), Tríceps, Tríceps e peitoral, Barra",
+            "Supino Guilhotina (Barra), Peito, Peitoral superior, Barra",
             "Supino Inclinado (Barra), Peito, Peitoral superior, Barra",
-            "Supino Reto (Barra), Peito, Peitoral médio, Barra",
         ]
         let clear = app.buttons["exercises.search.clear"]
         for text in ["barra supino", "Supino  BARRA"] {
@@ -186,19 +187,17 @@ final class ExerciseListUITests: IronFlowUITestCase {
             }
             search(text, in: app)
             XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 0), toBe: benchWithBarbell[0]), "Search '\(text)'")
-            // The first word alone shows the same first card and more: the list has the whole search once
-            // the fifth card leaves.
-            XCTAssertTrue(cards(in: app).element(boundBy: benchWithBarbell.count).waitForNonExistence(timeout: 10), "Search '\(text)' kept other exercises")
-            XCTAssertEqual(cards(in: app).count, benchWithBarbell.count, "Search '\(text)'")
+            XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 1), toBe: benchWithBarbell[1]), "Search '\(text)'")
             XCTAssertEqual((0..<benchWithBarbell.count).map { cards(in: app).element(boundBy: $0).label }, benchWithBarbell, "Search '\(text)'")
         }
 
         // The words and a group together: Peito leaves out Supino Fechado (Barra), of Tríceps.
         groupChip("chest", in: app).tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "3 exercícios"), "Peito with the search")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "7 exercícios"), "Peito with the search")
         XCTAssertEqual(cards(in: app).element(boundBy: 0).label, benchWithBarbell[0])
+        XCTAssertEqual(cards(in: app).element(boundBy: 1).label, benchWithBarbell[2])
         clear.tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "33 exercícios"), "Peito without the search")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "58 exercícios"), "Peito without the search")
         // Without the keyboard, which the search may keep after clearing it.
         if app.keyboards.firstMatch.exists {
             searchField(in: app).typeText("\n")
@@ -208,18 +207,22 @@ final class ExerciseListUITests: IronFlowUITestCase {
         // Costas superiores, after Dorsais, and Adutores, near the end of the row that scrolls sideways.
         let upperBack = groupChip("upperBack", in: app)
         tapChip(upperBack, in: app)
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "10 exercícios"), "Costas superiores count")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "20 exercícios"), "Costas superiores count")
         XCTAssertTrue(upperBack.isSelected, "Costas superiores is not selected")
         XCTAssertLessThan(groupChip("back", in: app).frame.maxX, upperBack.frame.minX, "Dorsais is not before Costas superiores")
-        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Remada Apoiada no Banco (Halter), Costas superiores, Meio das costas, Halteres")
+        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Remada Apoiada (Máquina), Costas superiores, Meio das costas, Máquina")
 
         let adductors = groupChip("adductors", in: app)
         tapChip(adductors, in: app)
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "2 exercícios"), "Adutores count")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "4 exercícios"), "Adutores count")
         XCTAssertTrue(adductors.isSelected, "Adutores is not selected")
-        XCTAssertEqual(cards(in: app).count, 2)
-        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Adução de Quadril (Polia), Adutores, Adutores (parte interna da coxa), Polia")
-        XCTAssertEqual(cards(in: app).element(boundBy: 1).label, "Cadeira Adutora (Máquina), Adutores, Adutores (parte interna da coxa), Máquina")
+        XCTAssertEqual(cards(in: app).count, 4)
+        XCTAssertEqual((0..<4).map { cards(in: app).element(boundBy: $0).label }, [
+            "Adução de Quadril (Elástico), Adutores, Adutores (parte interna da coxa), Elástico",
+            "Adução de Quadril (Polia), Adutores, Adutores (parte interna da coxa), Polia",
+            "Adução Lateral Deitado, Adutores, Adutores (parte interna da coxa), Peso do corpo",
+            "Cadeira Adutora (Máquina), Adutores, Adutores (parte interna da coxa), Máquina",
+        ])
         attachScreenshot(named: "104-exercises-adductors", of: app)
     }
 
@@ -229,7 +232,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         let app = launchOnTab("Exercícios", seed: ["custom-exercise:Meu Supino:chest"])
 
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "Header not shown")
-        XCTAssertEqual(element("exercises.total", in: app).label, "221 exercícios")
+        XCTAssertEqual(element("exercises.total", in: app).label, "421 exercícios")
         let mine = groupChip("mine", in: app)
         XCTAssertTrue(mine.exists, "No Meus with a custom exercise")
         mine.tap()
@@ -243,9 +246,9 @@ final class ExerciseListUITests: IronFlowUITestCase {
 
         // With an equipment chosen, the custom exercise is not shown.
         groupChip("chest", in: app).tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "34 exercícios"), "Peito count with the custom exercise")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "59 exercícios"), "Peito count with the custom exercise")
         equipmentChip("dumbbell", in: app).tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "5 exercícios"), "The custom exercise counted with Halteres")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "12 exercícios"), "The custom exercise counted with Halteres")
         search("meu", in: app)
         XCTAssertTrue(element("exercises.empty", in: app).waitForExistence(timeout: 10), "The custom exercise shown with Halteres")
     }

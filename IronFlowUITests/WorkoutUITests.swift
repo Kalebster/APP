@@ -642,15 +642,15 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
     }
 
-    /// The longest name of the library wraps in two lines, whole and beside the ⋯, as any long name does:
-    /// in the Exercícios tab, in the editor and in the workout in progress. Each place is compared with
-    /// "Tríceps Corda (Polia)", whose name takes one line.
+    /// The longest name of the library (54 characters) wraps in two lines, whole and beside the ⋯, as any
+    /// long name does: found by searching in the Exercícios tab, added to a workout through the editor's
+    /// picker and started. Each place is compared with "Tríceps Corda (Polia)", whose name takes one line.
     @MainActor
     func testTheLongestExerciseNameWrapsInTwoLines() throws {
         continueAfterFailure = false
-        let longest = "Extensão de Tríceps Acima da Cabeça (Barra W)"
+        let longest = "Extensão de Tríceps Acima da Cabeça Unilateral (Polia)"
         let short = "Tríceps Corda (Polia)"
-        let app = launchOnTab("Exercícios", seed: ["workout:Tríceps:\(longest)|\(short)"])
+        let app = launchOnTab("Exercícios", seed: ["workout:Tríceps:\(short)"])
         let screen = app.windows.firstMatch.frame
         var measurements: [String] = []
         func menuButton(of name: String, identifier: String) -> XCUIElement {
@@ -679,9 +679,9 @@ final class WorkoutUITests: IronFlowUITestCase {
         let shortCard = cards.element(boundBy: 0).frame
         app.buttons["exercises.search.clear"].tap()
         search.tapAndWaitForKeyboardFocus()
-        search.typeText("acima barra")
-        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(longest), Tríceps, Cabeça longa, Barra"), "Long card: \(cards.element(boundBy: 0).label)")
-        // "acima" alone also shows the (Halter) and (Polia) ones: the list has the whole search once they leave.
+        search.typeText("acima unilateral")
+        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(longest), Tríceps, Cabeça longa, Polia"), "Long card: \(cards.element(boundBy: 0).label)")
+        // "acima" alone also shows the other five: the list has the whole search once they leave.
         XCTAssertTrue(cards.element(boundBy: 1).waitForNonExistence(timeout: 10), "The search kept other exercises")
         XCTAssertEqual(cards.count, 1)
         checkTwoLines(long: cards.element(boundBy: 0).frame, short: shortCard, in: "Exercícios")
@@ -689,9 +689,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         attachScreenshot(named: "105-long-name-exercises", of: app)
 
-        // The editor: the rows of both exercises, and the name beside its ⋯.
+        // The editor: the long one added through the picker, found by its whole name; then the rows of both
+        // exercises, and the name beside its ⋯.
         openTab("Treinos", in: app)
         openWorkout(named: "Tríceps", in: app)
+        scrollToBottom(in: app)
+        addExercises([longest], in: app)
+        scrollToTop(in: app)
+        XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "2 exercícios · 6 séries"), "Summary after adding: \(element("workout.summary", in: app).label)")
         func header(_ name: String) -> XCUIElement {
             exerciseHeaders(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "\(name),")).firstMatch
         }
