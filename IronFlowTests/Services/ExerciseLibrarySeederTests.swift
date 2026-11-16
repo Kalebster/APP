@@ -144,7 +144,7 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.libraryKey == nil)
         #expect(custom.updatedAt == custom.createdAt)
         #expect(workout.orderedExercises.first?.exercise?.id == custom.id)
-        #expect(try count(Exercise.self, in: harness.context) == 221)
+        #expect(try count(Exercise.self, in: harness.context) == 421)
     }
 
     @Test("A built-in exercise named like an active custom one is created archived")
@@ -288,7 +288,7 @@ struct ExerciseLibrarySeederTests {
         harness.clock.advance(by: 3_600)
         #expect(try seeder.seed() == ExerciseLibrarySeedResult())
         #expect(harness.context.hasChanges == false)
-        #expect(try count(Exercise.self, in: harness.context) == 221)
+        #expect(try count(Exercise.self, in: harness.context) == 421)
     }
 
     @Test("A store with the library of 157, with workouts, sessions and a custom exercise stored with back, gets the 420: 144 names and 13 groups corrected, the 263 new ones active, nothing skipped, kept with the old name, archived or deleted, the same ids, workouts and history; seeding again changes nothing")
@@ -413,7 +413,7 @@ struct ExerciseLibrarySeederTests {
         harness.clock.advance(by: 3_600)
         #expect(try seeder.seed() == ExerciseLibrarySeedResult())
         #expect(harness.context.hasChanges == false)
-        #expect(try count(Exercise.self, in: harness.context) == 221)
+        #expect(try count(Exercise.self, in: harness.context) == 421)
     }
 
 
