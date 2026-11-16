@@ -324,6 +324,45 @@ extension XCTestCase {
         }
     }
 
+    /// Waits until `element` can be tapped and its frame is the same in three looks at the screen in a row,
+    /// for up to `timeout` seconds. Each look reads the screen again, so it waits only as long as the
+    /// element moves.
+    @MainActor
+    func waitUntilSettled(_ element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        var frames: [CGRect] = []
+        repeat {
+            if element.exists, element.isHittable {
+                frames.append(element.frame)
+                if frames.count >= 3, frames.suffix(3).allSatisfy({ $0 == frames.last }) {
+                    return true
+                }
+            } else {
+                frames.removeAll()
+            }
+        } while Date() < deadline
+        return false
+    }
+
+    /// Goes back from a pushed screen with the swipe from the left edge, as a person does. `back` is the
+    /// screen's own "‹" button, which moves in with the screen and leaves with it. The swipe starts only
+    /// once the screen has finished coming in (`back` can be tapped and stays in place): a swipe right
+    /// after the push was not taken in CI (main at 68a5b1b, run 43960586107, the editor still open 10 s
+    /// later). Should the screen still be there 5 s after the swipe, it swipes once more. The caller checks
+    /// where it went back to.
+    @MainActor
+    func swipeBackFromTheEdge(closing back: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(back.waitForExistence(timeout: 10), "Back button not shown", file: file, line: line)
+        XCTAssertTrue(waitUntilSettled(back), "The screen did not finish coming in", file: file, line: line)
+        let window = app.windows.firstMatch
+        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        let end = window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5))
+        edge.press(forDuration: 0.05, thenDragTo: end)
+        if !back.waitForNonExistence(timeout: 5), back.exists, back.isHittable {
+            edge.press(forDuration: 0.05, thenDragTo: end)
+        }
+    }
+
     // MARK: - Workouts and sessions
 
     /// Creates a workout with the name sheet and waits for its editor.

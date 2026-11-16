@@ -51,26 +51,6 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         XCTAssertTrue(option.waitForNonExistence(timeout: 10), "Sheet not closed")
     }
 
-    /// Waits until `element` can be tapped and its frame is the same in three looks at the screen in a row,
-    /// for up to `timeout` seconds. Each look reads the screen again, so it waits only as long as the
-    /// element moves.
-    @MainActor
-    private func waitUntilSettled(_ element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        var frames: [CGRect] = []
-        repeat {
-            if element.exists, element.isHittable {
-                frames.append(element.frame)
-                if frames.count >= 3, frames.suffix(3).allSatisfy({ $0 == frames.last }) {
-                    return true
-                }
-            } else {
-                frames.removeAll()
-            }
-        } while Date() < deadline
-        return false
-    }
-
     /// Today's weekday in the plan, 1 = Monday to 7 = Sunday.
     private var todayWeekday: Int {
         (Calendar(identifier: .gregorian).component(.weekday, from: .now) + 5) % 7 + 1
@@ -176,9 +156,7 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
         let app = launchOnTab("Treinos", seed: ["workout:Push:Barra Fixa (Pegada Aberta)"])
         openPlan(in: app)
 
-        let window = app.windows.firstMatch
-        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
-        edge.press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        swipeBackFromTheEdge(closing: app.buttons["plan.back"], in: app)
         XCTAssertTrue(app.buttons["workouts.plan"].waitForExistence(timeout: 10), "The swipe did not go back to Treinos")
         XCTAssertTrue(element("plan.screen", in: app).waitForNonExistence(timeout: 10), "Plan still shown")
         XCTAssertTrue(app.tabBars.buttons["Treinos"].waitForExistence(timeout: 10), "Tab bar not shown again")
