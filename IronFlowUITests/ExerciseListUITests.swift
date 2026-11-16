@@ -149,6 +149,12 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: cards(in: app).element(boundBy: 0), toBe: "Elevação Pélvica (Barra), Glúteos, Glúteo máximo, Barra"))
         XCTAssertEqual(cards(in: app).element(boundBy: 1).label, "Elevação Pélvica (Halter), Glúteos, Glúteo máximo, Halteres")
         XCTAssertEqual(cards(in: app).element(boundBy: 2).label, "Elevação Pélvica (Máquina), Glúteos, Glúteo máximo, Máquina")
+        // Without the keyboard the six cards of the search, and the place of a seventh, are on the screen:
+        // the search leaves only them.
+        searchField(in: app).typeText("\n")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
+        XCTAssertEqual(cards(in: app).count, 6)
+        XCTAssertEqual(cards(in: app).element(boundBy: 5).label, "Elevação Pélvica Unilateral (Máquina), Glúteos, Glúteo máximo, Máquina")
 
         let clear = app.buttons["exercises.search.clear"]
         XCTAssertTrue(clear.exists, "No clear button with text")

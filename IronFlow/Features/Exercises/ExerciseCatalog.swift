@@ -37,15 +37,19 @@ enum ExerciseCatalog {
 
     /// The active exercises, in alphabetical order (Portuguese, ignoring case and diacritics).
     static func items(from sources: [Source]) -> [Item] {
-        sources
+        // The equipment names as the search compares them, read once for all the items.
+        let equipmentKeys = Dictionary(uniqueKeysWithValues: Equipment.allCases.map { equipment in
+            (equipment, Validation.comparisonKey(forName: String(localized: equipment.displayName)))
+        })
+        return sources
             .filter { !$0.isArchived }
             .map { source in
                 let entry = source.isCustom ? nil : source.libraryKey.flatMap { DefaultExerciseLibrary.byKey[$0] }
                 var searchKey = Validation.comparisonKey(forName: source.name)
-                if let equipment = entry?.equipment {
+                if let equipment = entry?.equipment, let equipmentKey = equipmentKeys[equipment] {
                     // A space between them: a word typed never has one, so it never runs from the name into
                     // the equipment.
-                    searchKey += " " + Validation.comparisonKey(forName: String(localized: equipment.displayName))
+                    searchKey += " " + equipmentKey
                 }
                 return Item(
                     id: source.id,
