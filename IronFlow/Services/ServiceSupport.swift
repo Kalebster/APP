@@ -1,5 +1,8 @@
 import Foundation
+import OSLog
 import SwiftData
+
+private let persistenceLogger = Logger(subsystem: "com.ironflow.app", category: "persistence")
 
 /// A model ordered inside its parent by an explicit `sortIndex`.
 protocol SortIndexed: AnyObject {
@@ -41,11 +44,17 @@ enum SortIndexing {
 extension ModelContext {
     /// Saves all pending changes. If saving fails, discards every unsaved change
     /// so the store keeps its previous state, and throws `SaveError`.
+    ///
+    /// The failure is logged, so it can be diagnosed: the error's type, domain and code are public; its
+    /// description is private, as it may hold values the person typed.
     func saveOrRollback() throws {
         do {
             try save()
         } catch {
             rollback()
+            let nsError = error as NSError
+            let errorType = String(reflecting: type(of: error))
+            persistenceLogger.error("Save failed and was rolled back: \(errorType, privacy: .public) \(nsError.domain, privacy: .public) \(nsError.code, privacy: .public): \(String(describing: error), privacy: .private)")
             throw SaveError.saveFailed(String(describing: error))
         }
     }
