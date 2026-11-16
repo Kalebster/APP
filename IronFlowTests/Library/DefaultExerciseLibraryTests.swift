@@ -5,17 +5,22 @@ import Testing
 struct DefaultExerciseLibraryTests {
     let library = DefaultExerciseLibrary.all
 
-    @Test("The library has the 220 approved exercises with the approved count per muscle group, none in Outro")
+    /// The names changed since the library of 220, by key.
+    static let renamedSince220 = ["high-row-machine": "Remada Alta Articulada (Máquina)"]
+
+    @Test("The library has the 420 approved exercises (220 + 200) with the approved count per muscle group, none in Outro")
     func countsPerGroup() {
-        #expect(library.count == 220)
+        #expect(library.count == 420)
         var counts: [MuscleGroup: Int] = [:]
         for entry in library {
             counts[entry.muscleGroup, default: 0] += 1
         }
+        // The first list's count plus the second's, group by group.
         #expect(counts == [
-            .chest: 33, .back: 20, .upperBack: 10, .traps: 5, .lowerBack: 6, .shoulders: 23, .biceps: 17,
-            .triceps: 23, .forearms: 7, .abs: 17, .quadriceps: 22, .hamstrings: 11, .glutes: 12, .adductors: 2,
-            .calves: 5, .fullBody: 7,
+            .chest: 33 + 25, .back: 20 + 18, .upperBack: 10 + 10, .traps: 5 + 4, .lowerBack: 6 + 5,
+            .shoulders: 23 + 25, .biceps: 17 + 13, .triceps: 23 + 16, .forearms: 7 + 5, .abs: 17 + 18,
+            .quadriceps: 22 + 21, .hamstrings: 11 + 8, .glutes: 12 + 17, .adductors: 2 + 2, .calves: 5 + 7,
+            .fullBody: 7 + 6,
         ])
     }
 
@@ -61,15 +66,17 @@ struct DefaultExerciseLibraryTests {
         return lines
     }
 
-    @Test("The library is the approved list, in its order: each name, group, equipment and focus")
+    @Test("The exercises of the first list are the approved list, in its order: each name, group, equipment and focus")
     func approvedList() throws {
         let approved = try Self.approvedLines()
         let before = Dictionary(uniqueKeysWithValues: Library157Fixture.entries.map { ($0.key, $0) })
         #expect(approved.count == 220)
         #expect(approved.filter { $0.key == nil }.count == 63)
-        try #require(library.count == approved.count)
-        for (entry, line) in zip(library, approved) {
-            #expect(entry.name == line.name, "Name of \(entry.key)")
+        let firstListKeys = Set(Library220Fixture.entries.map(\.key))
+        let firstList = library.filter { firstListKeys.contains($0.key) }
+        try #require(firstList.count == approved.count)
+        for (entry, line) in zip(firstList, approved) {
+            #expect(entry.name == (Self.renamedSince220[entry.key] ?? line.name), "Name of \(entry.key)")
             #expect(entry.muscleGroup == line.group, "Group of \(entry.key)")
             if let key = line.key {
                 // An exercise that already existed: key, id and equipment as before; the focus as before
@@ -86,6 +93,70 @@ struct DefaultExerciseLibraryTests {
                 #expect(entry.focus == line.focus, "Focus of \(entry.key)")
             }
         }
+    }
+
+    /// The second approved list, parsed: each line with its group, name, equipment and focus.
+    private static func secondListLines() throws -> [ApprovedLine] {
+        var lines: [ApprovedLine] = []
+        var group: MuscleGroup?
+        for line in ApprovedExerciseList2.text.split(separator: "\n").map(String.init) {
+            if !line.hasPrefix(" ") {
+                let key = try #require(line.firstMatch(of: /\((\w+)\):$/)?.1, "Group line: \(line)")
+                let parsed: MuscleGroup = try #require(MuscleGroup(rawValue: String(key)), "Group: \(key)")
+                group = parsed
+                continue
+            }
+            let lineGroup = try #require(group, "Line before a group: \(line)")
+            let fields = line.trimmingCharacters(in: .whitespaces).components(separatedBy: " · ")
+            try #require(fields.count == 3, "Line: \(line)")
+            let equipment = try #require(Equipment(rawValue: fields[1]), "Equipment: \(line)")
+            lines.append(ApprovedLine(key: nil, name: fields[0], group: lineGroup, equipment: equipment, focus: fields[2]))
+        }
+        return lines
+    }
+
+    @Test("The 200 exercises of the second list are new, with the listed name, group, equipment and focus, in its order, each after the others of its group")
+    func secondApprovedList() throws {
+        let approved = try Self.secondListLines()
+        #expect(approved.count == 200)
+        let firstListKeys = Set(Library220Fixture.entries.map(\.key))
+        let added = library.filter { !firstListKeys.contains($0.key) }
+        try #require(added.count == approved.count)
+        for (entry, line) in zip(added, approved) {
+            #expect(entry.name == line.name, "Name of \(entry.key)")
+            #expect(entry.muscleGroup == line.group, "Group of \(entry.key)")
+            #expect(entry.equipment == line.equipment, "Equipment of \(entry.key)")
+            #expect(entry.focus == line.focus, "Focus of \(entry.key)")
+        }
+
+        // The groups keep the order of the library of 220, and each group lists its exercises of the first
+        // list first, as they were, then its new ones in the order of the second list.
+        var groupOrder: [MuscleGroup] = []
+        for entry in Library220Fixture.entries where groupOrder.last != entry.muscleGroup {
+            groupOrder.append(entry.muscleGroup)
+        }
+        #expect(Set(groupOrder).count == groupOrder.count)
+        let expectedKeys = groupOrder.flatMap { group in
+            Library220Fixture.entries.filter { $0.muscleGroup == group }.map(\.key)
+                + added.filter { $0.muscleGroup == group }.map(\.key)
+        }
+        #expect(library.map(\.key) == expectedKeys)
+    }
+
+    @Test("Against the library of 220, every exercise stays with its key, id, group, equipment and focus; only high-row-machine changes its name")
+    func changesFromTheLibraryOf220() throws {
+        #expect(Library220Fixture.entries.count == 220)
+        var renamed: [String: String] = [:]
+        for old in Library220Fixture.entries {
+            let entry = try #require(DefaultExerciseLibrary.byKey[old.key], "Missing: \(old.key)")
+            #expect(entry.id == old.id)
+            #expect(entry.muscleGroup == old.muscleGroup, "Group of \(old.key)")
+            #expect(entry.equipment == old.equipment, "Equipment of \(old.key)")
+            #expect(entry.focus == old.focus, "Focus of \(old.key)")
+            if entry.name != old.name { renamed[old.key] = entry.name }
+        }
+        #expect(renamed == Self.renamedSince220)
+        #expect(Library220Fixture.entries.first { $0.key == "high-row-machine" }?.name == "Remada Alta (Máquina)")
     }
 
     @Test("Against the library of 157, every exercise stays with its key, id and equipment; 144 names, 13 groups and 4 focuses change")
@@ -134,6 +205,10 @@ struct DefaultExerciseLibraryTests {
         }
         let comparisonKeys = library.map { Validation.comparisonKey(forName: $0.name) }
         #expect(Set(comparisonKeys).count == comparisonKeys.count)
+        // The longest name, which the interface tests show whole, has 54 of the 60 characters allowed.
+        let longest = try #require(library.max { $0.name.count < $1.name.count })
+        #expect(longest.name == "Extensão de Tríceps Acima da Cabeça Unilateral (Polia)")
+        #expect(longest.name.count == 54)
     }
 
     @Test("Every exercise has its equipment and a focus without spaces around it")
@@ -418,5 +493,205 @@ struct DefaultExerciseLibraryTests {
         "single-leg-romanian-deadlift-dumbbell": "88E4BC9E-8248-48A3-9753-2BC5B9BD3E10",
         "good-morning-smith": "260397E6-BC71-4C8D-9959-46AF7863C31A",
         "hip-adduction-cable": "6C990FD1-E4AC-49EB-8ABC-C6FDA130AC20",
+        "single-arm-bench-press-dumbbell": "37972895-1F79-4E2D-B408-17BD39B782D2",
+        "neutral-grip-bench-press-dumbbell": "51F31EB6-9804-4CD8-BB47-E419CEBA8988",
+        "wide-grip-bench-press-barbell": "93BF9A4C-D4B1-444C-88F4-CC2E367C43A2",
+        "single-arm-chest-press-machine": "57CFDC55-F452-4164-838C-A239DD242468",
+        "single-arm-bench-press-cable": "3720757B-F8EF-4191-9AB1-A893128861FC",
+        "single-arm-incline-bench-press-dumbbell": "5132CC95-543E-42AD-9D4F-1487F01218C5",
+        "neutral-grip-incline-bench-press-dumbbell": "5D9899F9-DC43-4513-9C8F-6D2D3AC2F3D2",
+        "incline-chest-press-lever": "4A3E7D03-FC26-4B51-B752-57D683D7E5E2",
+        "single-arm-incline-chest-press-machine": "1453A24D-8C25-46F5-A59B-047091E0D426",
+        "single-arm-incline-bench-press-cable": "53FE34F8-AB73-4E29-B632-539035CA506C",
+        "decline-chest-press-lever": "EAA4DC9B-EA4E-47D4-A9BF-9E0E9A677B49",
+        "squeeze-press-dumbbell": "149BACA9-4D85-48A5-9F3E-D9A092AE91C1",
+        "guillotine-press-barbell": "C4AC98AD-0733-4E62-92D4-AB3E70634E05",
+        "floor-press-barbell": "D5CC21C9-E89D-4EE5-88B0-FFBF39DE7046",
+        "floor-press-dumbbell": "F67A1090-8E67-4F1C-B0E5-B4E1EAC18008",
+        "landmine-chest-press": "896B0866-605B-4B73-966C-758527F8FACF",
+        "decline-fly-dumbbell": "8D79EF76-2A10-4A45-8273-5D251459D02E",
+        "fly-band": "83B70343-0840-4F39-BE0B-58A2699AD118",
+        "svend-press": "8E5B0429-5056-40F6-8D89-452DDEB220F9",
+        "assisted-chest-dips": "5A1059F1-9BD4-4016-AE88-049B69A83489",
+        "wide-push-up": "9A5F728D-0ED4-439F-9D92-4814B21AF25B",
+        "weighted-push-up-plate": "AA6CC8B2-D59E-403E-89A7-2E14660B0BDD",
+        "band-push-up": "8F9D2552-2E53-447F-B0FF-4C0073027EB2",
+        "archer-push-up": "E134E58A-96DA-443C-A6B1-619B2C70FFD0",
+        "plyometric-push-up": "72C496DF-1E4F-483E-9230-CFB24BA20CB8",
+        "neutral-grip-pull-up": "A4DB71B0-2375-41EB-B7F0-312CA0930792",
+        "weighted-pull-up": "EA086BE6-ABB0-4C76-BE0D-A6920117EF47",
+        "weighted-chin-up": "5DB9913E-F37C-4D94-B353-963D27525188",
+        "band-assisted-pull-up": "A461D98B-58DE-4CD2-8130-77FADF126C72",
+        "assisted-chin-up": "2C0A9E23-2038-440E-9ECE-963EC45915C1",
+        "neutral-grip-lat-pulldown": "17A8F3DD-264A-4D21-99B3-D07FD2F824A0",
+        "behind-the-neck-lat-pulldown": "28E9476D-39AE-4B15-B126-AACF71B9A846",
+        "reverse-grip-lat-pulldown-machine": "CB71DCBE-33C8-4C3A-8817-14F762492F6B",
+        "close-grip-lat-pulldown-machine": "9A79FD4D-7E44-46F6-9076-EF2D3D7B42F6",
+        "lat-pulldown-band": "D192B650-0C7D-4525-80D4-AC8BBDD52404",
+        "rope-pullover-cable": "139D530C-AFCE-4D4C-B4F0-60C11437306D",
+        "single-arm-pullover-cable": "C1281954-00A3-4031-BBAC-663510BB5C4D",
+        "kroc-row": "57CDE3AC-3F16-4054-A2FA-1A51232D29AE",
+        "meadows-row": "5570942F-4458-4F66-8135-7881442BB7DF",
+        "single-arm-high-row-machine": "DE32238A-3687-408A-B6C5-938767B1B62C",
+        "reverse-grip-seated-cable-row": "D7B55485-851C-41C0-8C37-D20230E90EB6",
+        "reverse-grip-bent-over-row-dumbbell": "96D20437-22BF-456D-8423-67BB7E774BD0",
+        "reverse-grip-bent-over-row-smith": "285E02C8-9E42-4557-A640-85A728BAD880",
+        "pendlay-row": "267DEEBF-4E22-4E62-A4D6-1A4763046127",
+        "inverted-row": "87DCC79B-6A5C-4D4F-900F-3A10011006A2",
+        "seal-row-barbell": "5F097598-C4A7-4A1C-A523-CCD7B3724059",
+        "chest-supported-row-machine": "5CC53827-418E-48B2-8248-DBA45FB5647D",
+        "single-arm-row-smith": "442BB5A9-81F4-4724-A87A-05A39109C6AB",
+        "bent-over-row-band": "FE22BFC8-DC9A-4ECE-8768-EAE9FE156AF6",
+        "seated-row-band": "9AF8DE43-CC76-4F23-941D-7660C8BF1A27",
+        "gorilla-row": "9882958F-199B-4A7B-802A-53A9511AED9E",
+        "renegade-row": "5C029D5A-E7BE-4FD6-8530-ACB4F0846555",
+        "scapular-pull-up": "9408ED0C-A25C-4FA4-9C3B-1682467C57C4",
+        "behind-the-back-shrug": "4AA4E858-9101-48E6-ACEC-855958B7EA97",
+        "incline-shrug-dumbbell": "B34B36C5-4E70-443F-BFC1-15A416ECD6F1",
+        "y-raise-dumbbell": "5E762F55-019E-407E-8F8D-EF4862985D79",
+        "y-raise-cable": "D929C0D1-1EA4-4767-A2E3-0C2078F25869",
+        "trap-bar-deadlift": "FE7C4B4E-EE85-4CF2-A4DA-B8437E7B0B00",
+        "deficit-deadlift": "50DB2074-1BC2-4EDE-9B79-A87BAB17A087",
+        "rack-pull": "7341EEB8-D433-4255-BE4C-AE9D8313C568",
+        "deadlift-kettlebell": "818B76D7-9263-494A-B460-36D63D254B76",
+        "bird-dog": "356570FF-2054-437E-8CD8-9CA7519AEDF7",
+        "seated-overhead-press-barbell": "4939E190-2875-422D-96A3-B91A1C53B1CD",
+        "behind-the-neck-press-barbell": "4903E1DC-3240-4681-B2C4-ABB810679924",
+        "behind-the-neck-press-smith": "D8E15EEB-E4EB-49AB-8542-364AF95A01E0",
+        "single-arm-shoulder-press-dumbbell": "1D51D4BB-A75D-4F37-A730-0AE15D474277",
+        "neutral-grip-shoulder-press-dumbbell": "39529995-8B14-4797-9F12-2E4F6275AB63",
+        "shoulder-press-lever": "00697E2A-1C03-4083-8394-1B46A1F29582",
+        "single-arm-shoulder-press-machine": "75D815BB-566F-469D-9A94-CD111E7553EE",
+        "shoulder-press-kettlebell": "CC5D181B-0902-4ECB-8FA6-AAB472BEB8E1",
+        "shoulder-press-band": "75E569E5-F4B8-48B2-B1D9-2ED8E88DA922",
+        "landmine-shoulder-press": "03FA10BD-B78E-4D5C-9F9D-E998E9665189",
+        "push-press": "072A69DE-7EFD-4FE3-9A55-C884F69AC9DD",
+        "seated-lateral-raise-dumbbell": "C7883059-A317-41AE-8CF6-16C9E6B61181",
+        "lateral-raise-band": "9A1FC1BE-537F-4BB0-8DDA-476B121E852C",
+        "alternating-front-raise-dumbbell": "733EEEE6-E24E-44A5-B7B3-C2857E6BB675",
+        "single-arm-front-raise-cable": "4B16AD3B-F198-497C-B0F8-F7D7F51E3DC2",
+        "front-raise-band": "E6F7E189-5921-4490-845B-62D59DC8E6DD",
+        "incline-reverse-fly-dumbbell": "8E5C22FD-761C-463D-A953-2109836049E6",
+        "reverse-fly-band": "7073E06F-0A94-4CB8-8DD0-BBC7C7D79982",
+        "face-pull-band": "DD4B7EE6-2FA8-4A9E-AAAD-5C6B437C2213",
+        "upright-row-smith": "686CEB1E-F69E-4E23-9941-F77A9A7BC566",
+        "external-rotation-dumbbell": "8955FFBC-DF4D-41A2-8882-593F133E1AA1",
+        "external-rotation-band": "BF07800A-5E19-496D-B8BD-A15C9EF18D12",
+        "internal-rotation-cable": "97F8BB8E-D813-4467-A0F9-BEDDA981BDA0",
+        "pike-push-up": "1CC05137-4836-46EB-AF9C-669BA7457123",
+        "handstand-push-up": "ECD22BC8-899E-4F11-BF30-B1A82183FABD",
+        "curl-machine": "8F95ACDF-64FD-4AFF-84C8-7376F4FD7C45",
+        "curl-band": "730984C6-53E4-4B61-B47C-5A9831CF8382",
+        "close-grip-curl-ez-bar": "F516869D-6226-434A-91C6-C684AD3B8D15",
+        "curl-21s-barbell": "38B4CCCD-9B78-4842-A941-2DEA160FAC2A",
+        "drag-curl-barbell": "2284CB51-6D80-490B-80FB-2F67B804558D",
+        "alternating-hammer-curl-dumbbell": "BC357B72-4721-483F-9EE7-E76E7A16BABE",
+        "cross-body-hammer-curl": "220DFE5B-DF34-49B4-944A-9E11BFCE27AC",
+        "preacher-curl-barbell": "A7747478-AD64-4EF8-844F-D0B5A6AAB0F7",
+        "single-arm-preacher-curl-cable": "5EED939E-978C-4F81-AE9E-83848FC40377",
+        "single-arm-preacher-curl-machine": "475FC504-CB54-4DA3-8E97-0D510E057D95",
+        "concentration-curl-cable": "BE74676F-2D09-46DD-8C1B-6885B3F93B39",
+        "zottman-curl": "10694303-1E8E-41C8-BC7C-526D9FF00E33",
+        "high-cable-curl": "CB6661BE-6028-4DCD-A828-D4175CF49196",
+        "reverse-grip-pushdown": "AEF685CB-0EFA-4124-8EAF-D01C069B2C4B",
+        "triceps-pushdown-v-bar": "F04DE973-11DA-48CA-A34C-6D6F8AB5D429",
+        "cross-body-triceps-extension-cable": "EF2EC54C-BA82-4CBE-9B8A-DDDC12EC57E9",
+        "triceps-pushdown-band": "F588831B-3944-4CA9-8F60-806DAABC44E3",
+        "single-arm-overhead-extension-cable": "41C546F6-858D-4228-8038-543BC7673F3C",
+        "overhead-extension-machine": "D9EDB1FF-AD39-4766-9E30-20F8CE1DE07F",
+        "overhead-extension-band": "4794F87D-69A0-400B-A944-B2E39A9ADDD6",
+        "skull-crusher-straight-bar": "CBBECD32-E8A6-46E0-A193-EBB0A81C34DF",
+        "incline-skull-crusher-ez-bar": "238ABAA2-6174-4BDD-8AFC-CF04BDE9BF0F",
+        "single-arm-skull-crusher-dumbbell": "DE773437-FBDD-4FBB-85E4-A100235A991B",
+        "tate-press": "8345ADAD-FC96-46AA-B687-2BA765ACC8AF",
+        "close-grip-bench-press-dumbbell": "746382AB-51AE-4452-B72F-A57880160EDB",
+        "weighted-dips": "EFB1DC35-37A9-4136-8997-3DF3DF7ABEAE",
+        "assisted-dips": "D44471E5-0887-4750-85AA-2612CBDF612D",
+        "weighted-bench-dips": "891CFE84-4D5B-41D6-B477-B24C8005B0C8",
+        "close-grip-push-up": "593637DD-8037-4208-92D7-901C3F8E31B1",
+        "wrist-curl-cable": "A7FBED22-BD31-4DBE-A30F-FC957358D35C",
+        "behind-the-back-wrist-curl": "E27AADEC-08B4-4DDA-8AC0-D55D25D6BD0B",
+        "reverse-curl-straight-bar": "48378A0A-2CAA-4130-B2DD-BFFFCA624EAD",
+        "wrist-roller": "9262742A-3738-49E1-84E1-23C55BB461A7",
+        "wrist-rotation-dumbbell": "C589F864-C491-45BB-933A-ADF0DAC0CE78",
+        "sit-up": "EFCADE80-10A1-46A7-9F97-5FCADEF2372A",
+        "weighted-decline-crunch": "A4010807-7B1B-4691-B523-24567C195D2C",
+        "v-up": "1C007C7E-1596-4527-93EB-83B7F9DE34C8",
+        "rowing-crunch": "5019E787-079A-4121-A035-C92F0FD306F9",
+        "heel-touch": "CB89A2D8-B9D8-4841-A57E-4EF671491641",
+        "stability-ball-crunch": "7235E620-0306-4AE9-ABD6-8C54C3BCF724",
+        "hanging-knee-raise": "087460FD-C5C7-40DD-8997-5A8FA3099EDA",
+        "captains-chair-leg-raise": "EAF1CC34-3A39-4398-BAC6-C549B4D127B0",
+        "decline-leg-raise": "91EAB8B9-671A-4BF3-A931-636F638DC7C1",
+        "toes-to-bar": "79439BA9-44D5-402A-8336-171E9C83EA2D",
+        "windshield-wiper": "91F005A1-74A6-4D41-9F33-15263216983C",
+        "mountain-climber": "70ABB43F-4F7F-42CC-A629-EFDC179C664B",
+        "side-bend-dumbbell": "691DF7BA-94FB-43EB-B42E-B867B11151DB",
+        "side-bend-cable": "D15395C4-9128-40E5-A566-E9982781804B",
+        "russian-twist-dumbbell": "833A426A-13EF-431E-A863-50858429AC6D",
+        "torso-rotation-machine": "9B3811FC-12B3-4ECD-9487-401972309CE5",
+        "reverse-cable-woodchop": "3E7F8F85-2F5E-4AF7-AC95-4E1730617011",
+        "pallof-press": "9AC40950-6C31-4C03-90CF-502B61E73258",
+        "squat-dumbbell": "8045D489-74CF-4D75-9FD9-545912C6722A",
+        "box-squat": "3F9F16F0-A0E1-4E23-8FB2-0DE73F919D7E",
+        "zercher-squat": "C85FE94A-01E6-4009-A4AB-F529294744B5",
+        "overhead-squat": "D8C49719-BD95-4EC3-827D-CCE279F4A327",
+        "front-squat-smith": "CACE2152-B0FA-4926-AE8C-0CB9FE11A3B0",
+        "v-squat-machine": "E1D2DB9C-33B2-476A-A7D6-B3E5DD0554F2",
+        "belt-squat-machine": "5301E290-9EFC-4464-8FC0-BC2733872D08",
+        "bulgarian-split-squat-barbell": "03B70297-C662-4F45-A569-32243A4F526B",
+        "bulgarian-split-squat-bodyweight": "05782DDE-CD21-41FE-9650-AF987FBDCD30",
+        "pistol-squat": "84CBD686-1D00-41D0-93DE-258F610B5513",
+        "cossack-squat": "FE459584-48DF-4BF1-96A0-5B27F44FDEED",
+        "jump-squat": "1CBA35C0-6C3E-467D-A4B5-D2CA694FB829",
+        "vertical-leg-press": "E6CE1B9B-1F8D-452A-AD85-040A09BB5B14",
+        "lunge-bodyweight": "35072D46-D3CA-4C2F-AE70-C9F6B5ED28C2",
+        "reverse-lunge-dumbbell": "96277DF1-0C3E-455C-9E45-11B5BCC81C5A",
+        "reverse-lunge-barbell": "D2018202-A7A1-4AF6-8056-8191AC650F1A",
+        "reverse-lunge-smith": "102C6327-0092-4B24-BB34-B3C742EB2758",
+        "lateral-lunge-dumbbell": "BF0AF26F-0614-4F6E-99D3-A92093550C3B",
+        "walking-lunge-bodyweight": "EBFA0BC5-75DF-4EA9-9C1D-1D7C74D0591B",
+        "step-up-bodyweight": "A274B4D6-6910-4A62-A665-EFA51E95ACEA",
+        "step-up-barbell": "CCCBEE74-E23B-487B-8DC3-F681E2563F96",
+        "single-leg-lying-leg-curl": "5534EBDC-91C2-492E-A06F-3908A40AD972",
+        "single-leg-seated-leg-curl": "E0D72F60-C42A-496F-A66B-A5BA0C5955A1",
+        "kneeling-leg-curl": "B9B2FBA4-E1A0-4D1A-9F20-E4EF0725D5CC",
+        "lying-leg-curl-dumbbell": "120F4BFC-3232-4654-A20D-F1F8BFDAB0C5",
+        "standing-leg-curl-cable": "2E32153E-7E6C-482C-9FDA-7398943C1FB4",
+        "stability-ball-leg-curl": "FEF97402-8059-441B-AED7-455D8AD3ADD2",
+        "romanian-deadlift-kettlebell": "CF69D782-F259-44C2-A4F4-1105A2874016",
+        "glute-ham-raise": "08837A9C-2DF3-495D-AB44-155FFFD90B28",
+        "hip-thrust-dumbbell": "7B84F970-7CBB-4548-B691-49329FBFEF5C",
+        "single-leg-hip-thrust": "FE38F720-2974-4F4D-9DDE-A2E701033562",
+        "single-leg-hip-thrust-machine": "66692DAE-988A-4BFC-9B2F-F2F7CC9F5D1D",
+        "glute-bridge-barbell": "A803F344-CC5B-476C-AEBD-1C219A22CD9C",
+        "single-leg-glute-bridge": "B621FD84-9765-4E23-81ED-FC2D31692527",
+        "quadruped-kickback": "05B23B2F-2329-41E0-8F9C-E3072D831991",
+        "glute-kickback-smith": "B74F69B8-2BA5-4268-A6B3-AB0EE621B2D6",
+        "reverse-hyperextension": "CD2244B9-52D7-4869-A222-CC224626F9DB",
+        "cable-pull-through": "D9395DE5-8675-404A-81D5-40DBAE5967B7",
+        "reverse-hack-squat": "E0905767-458C-458C-BDF7-7797FD90A634",
+        "sumo-squat-kettlebell": "D247B473-6B47-4464-AAC7-F05F7E23D44B",
+        "sumo-squat-smith": "8BEAD648-CC95-4AB4-9710-2DD4B4EE5B09",
+        "curtsy-lunge-dumbbell": "D87FC72F-FCFF-4274-9B5E-D31D70C10CAD",
+        "standing-hip-abduction-machine": "0C0BBF49-2B58-439B-8B35-B653A6068B25",
+        "side-lying-hip-abduction": "BFE45AFC-D496-4151-B647-6955361D2CBB",
+        "clamshell-band": "E015BF7B-89CC-4656-8716-B3921838418A",
+        "fire-hydrant": "D99D8F2C-FA96-41C1-9845-81A322661440",
+        "hip-adduction-band": "A852ECEE-53F0-437A-B531-27742133CCB6",
+        "side-lying-hip-adduction": "F67FE5B5-F38F-4BED-9E52-5337B0F684E7",
+        "standing-calf-raise-bodyweight": "A5A80189-1A36-44B6-AEEB-2E991626D47D",
+        "standing-calf-raise-dumbbell": "8155CC18-978D-4054-9B64-A2037B864510",
+        "standing-calf-raise-barbell": "99D5962A-78C8-4AD2-9FD0-62689B411B6A",
+        "seated-calf-raise-dumbbell": "1D092482-613C-4822-9161-40B6595883B6",
+        "hack-squat-calf-raise": "E5C908E8-18AB-489E-B4FE-8EC6244A1AFF",
+        "donkey-calf-raise": "6F8FF0BA-9879-4BC0-BA39-E98D72C08459",
+        "tibialis-raise": "F449F243-5DB1-4FE5-BA8B-AFED69DB9472",
+        "clean-and-jerk": "2055A6E7-3AB8-49A4-B20B-0D19FD953A93",
+        "snatch-barbell": "288DF240-84E6-4E11-8B22-570E18FB2937",
+        "snatch-dumbbell": "C6396DC6-92CB-40DB-8B44-0B4FC3A794E3",
+        "kettlebell-clean": "E99672D6-F4F3-40B1-B0A1-00BAB937F3FB",
+        "thruster-kettlebell": "8FF8A8B1-A091-4141-BB6C-15B39D674C46",
+        "single-arm-kettlebell-swing": "1C46EB31-03EC-48F0-A776-C36324F3E1AB",
     ]
 }

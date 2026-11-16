@@ -29,131 +29,175 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - CI mais rápido — testes de interface em 3 máquinas ao mesmo tempo, divididos pelo tempo real de cada teste (`ci/ui-test-shards.json`), com a conferência de que cada teste do pacote roda uma vez, na parte dele, e passa; testes de unidade e build Release numa 4ª máquina; o run completo caiu de 59–74 min para cerca de 29 min. Rodada curta só para diagnóstico (disparo manual com os testes e de 1 a 10 repetições, validados), que nunca vale como o CI de uma etapa. Teste instável `WorkoutUITests.testReorderExercises` corrigido no ajudante `waitForEditor` (uma consulta só, até 30 s) (PR #33).
 - CI: primeiro teste de cada parte num simulador frio — a apresentação do teclado é tocada de novo até sumir (até 30 s); gancho só de teste `-ui-toast-seconds` (só no Debug com `-ui-testing`), que deixa o aviso 15 s em 10 testes de interface sem mudar nenhum screenshot; o app é aberto e fechado uma vez antes dos testes de cada parte. Corrige as duas falhas do CI do main em 711820f (PR #34).
 - Lista de exercícios: biblioteca de 157 para 220 exercícios, com os nomes no padrão do Hevy (equipamento entre parênteses; os de peso do corpo sem parênteses), cada um no grupo do músculo que mais trabalha; "Costas" vira quatro grupos (Dorsais, que mantém o valor gravado "back", Costas superiores, Trapézio e Lombar) e entra Adutores, nos filtros na ordem aprovada; keys, ids e equipamentos de antes não mudam, e o histórico continua com o nome e o grupo de cada dia; busca por palavras na aba Exercícios e no seletor, em qualquer ordem, sem diferenciar maiúsculas, acentos e espaços a mais; os 6 testes de interface que conferiam um aviso sem o gancho -ui-toast-seconds passam a usá-lo e, antes de um screenshot tirado sem o aviso, esperam ele sumir; o toque na barra "Treino em andamento" logo depois de abrir o app é repetido quando se perde, como já acontecia com as abas (PR #35).
+- Lista de exercícios, parte 2: biblioteca de 220 para 420 exercícios, com os 200 da segunda lista aprovada, cada um com key e UUID novos, no fim do bloco do seu grupo; "Remada Alta (Máquina)" passa a "Remada Alta Articulada (Máquina)"; keys e ids de antes não mudam e não há schema novo; o seeder decide cada nome com os nomes que ficam no fim da passada, então um exercício recebe o nome que outro deixa, dois trocam de nome e o "Agachamento Búlgaro" novo é criado ativo (testado de 71, 157 e 220 para 420, sem nome mantido nem exercício escondido); a busca acha também pelo nome do equipamento ("halteres", "peso do corpo"); a contagem mostra "0 exercícios"; falha ao salvar registrada com Logger (tipo, domínio e código públicos, descrição privada); a verificação do Release confere os 12 textos dos ganchos de teste (todos no Debug, nenhum no Release); README; vibração ao marcar a série no DESIGN.md; ROTEIRO com o plano novo de etapas (PR da lista de exercícios, parte 2).
 
 ## Próximas etapas
 
-### S4-C — Exercícios próprios
-- Exercícios próprios: + Novo, detalhe do exercício, editar e arquivar, e equipamento dos exercícios próprios (precisa de modelo aprovado).
+Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem protótipo aprovado antes de qualquer tela nova e começa numa conversa nova do Code. Sem recursos sociais.
+
+### Visual novo
+Entra assim que o dono aprovar o protótipo 'Iron Flow — visual novo', antes da próxima tela nova; até lá as etapas seguem na ordem.
+- Cores neutras (preto, branco e cinza, com o azul só em detalhes), a fonte SF Pro e o vidro do iOS 26 (Liquid Glass); o cartão "Treino de hoje" do Início em preto sólido com borda de vidro; o layout e os tamanhos ficam como estão.
+- Folhas de vidro: testar no protótipo as folhas com o vidro do sistema no lugar do fundo sólido. Até lá, todas as folhas ficam com o fundo sólido do protótipo (decisão do dono).
+- Na série atual do treino, o texto da coluna ÚLTIMA (`futureDayText` sobre `currentSetBackground`) tem contraste de cerca de 4,0:1, abaixo dos 4,5:1 do DESIGN.md. Corrigir com as cores novas.
+
+### Detalhe do exercício e Mapa dos músculos
+- O detalhe do exercício vale para os exercícios da biblioteca e os próprios: equipamento, grupo, foco e o histórico da pessoa com aquele exercício (última vez, melhor série e evolução).
 - O › no fim de cada linha de Exercícios (13, `dimText`, como no protótipo), quando a linha passar a abrir o exercício.
+- O tipo de máquina numa linha curta no detalhe (por exemplo, "Máquina de placas" ou "Articulada (anilhas)"), sem desenho de cada máquina.
+- Mapa dos músculos: os músculos principais e secundários de cada exercício e um boneco de frente e de costas, com desenho original, no detalhe. A M8 reaproveita o mesmo desenho.
+- Exercícios com Graviton ("Barra Fixa (Graviton)", "Barra Fixa Supinada (Graviton)", "Peito na Paralela (Graviton)" e "Tríceps na Paralela (Graviton)"): o kg é a ajuda da máquina, então mais kg deixa o exercício mais fácil. A evolução e os recordes tratam isso (decisão do dono).
+
+### S4-C — Exercícios próprios
+- + Novo, editar e arquivar, com o equipamento dos exercícios próprios.
+- Duplicar um exercício da biblioteca numa versão própria, com nome, evolução e recordes próprios (para as variações de máquina).
 - Remover um exercício próprio que tem histórico arquiva o exercício, mas ele continua nos treinos. Decidir no modelo se o app pergunta se quer tirar dos treinos também.
-- O detalhe do exercício vale também para os exercícios da biblioteca, com equipamento, grupo, foco e o histórico da pessoa com aquele exercício (última vez, melhor série, evolução).
-- Barra Fixa (Graviton): o kg é a ajuda da máquina, então mais kg deixa o exercício mais fácil. A evolução e os recordes precisam tratar isso (decisão do dono).
 
-### Trocar exercício
-Etapa pequena depois da S4-C, com modelo antes.
-- No treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. O treino planejado não muda; levar a troca para o plano fica com a M4.
-- No editor do treino, trocar mantém as séries planejadas.
+### Ajustar o treino na hora
+- Trocar exercício: no treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. No editor do treino, trocar mantém as séries planejadas.
+- M18 — Mover o treino de um dia para outro, sem mudar a programação semanal.
+- M4 — Ao concluir, salvar no treino planejado a carga nova, a série a mais ou a troca de exercício (conferir antes o que o app já faz).
 
-### Mapa dos músculos
-- Os músculos principais e secundários de cada exercício e um boneco de frente e de costas no detalhe do exercício, com protótipo antes.
-- A M8 reaproveita o mesmo desenho.
-
-### Melhorias antes do lançamento
-Plano aprovado pelo dono: cada uma vira uma etapa própria, com protótipo antes, sem parte social. A ordem é CI mais rápido, lista de exercícios, S4-C, trocar exercício, mapa dos músculos e então as melhorias, nesta ordem.
-- M1 — Treino na tela bloqueada e na Ilha Dinâmica (Live Activity): descanso, série atual e botões para usar sem abrir o app. Tocar no aviso do fim do descanso abre o treino direto (hoje o app só abre onde estava).
-- M2 — Widgets na tela inicial e na tela bloqueada (mesma base técnica da M1).
+### Notas e esforço
 - M3 — Nota fixa por exercício.
-- M4 — Ao concluir, salvar no treino planejado a carga nova ou a série a mais (conferir antes o que o app já faz).
-- M5 — Sugestão de carga. Ela diz o porquê ("bateu 12 em todas") e nunca troca um valor sozinha.
-- M6 — Recordes pessoais comemorados e cartão do treino para os Stories.
-- M7 — Bi-set, tri-set e descanso por série: cada série pode ter o próprio tempo de descanso (por exemplo, 1:30 nas primeiras e 3:00 na última), com o tempo do exercício como padrão. Bi-set e descanso por série mudam as regras do descanso e o banco, então ficam juntos: um protótipo e uma migração.
-- M8 — Resumo da semana e do mês com mapa do corpo: as séries válidas e de falha por grupo principal, semana contra semana, sem pontuar músculos secundários.
-- M9 — Área de cardio: a pessoa cronometra a corrida e o histórico guarda pace, gasto calórico aproximado e dados parecidos; calorias aproximadas também na musculação.
+- Notas do treino e RPE/RIR por série.
 
-### Melhorias depois do lançamento
-- M10 — App Saúde.
-- M11 — Importar a ficha de treino por foto.
-- M12 — Apple Watch.
-- M13 — Strava.
+### Séries avançadas
+- M7 — Bi-set e tri-set.
+- Descanso por série: cada série pode ter o próprio tempo de descanso (por exemplo, 1:30 nas primeiras e 3:00 na última), com o tempo do exercício como padrão.
+- M16 — Tipos de série drop set e rest-pause.
+- Os três mudam as regras do descanso e o banco, então ficam juntos: um protótipo e uma migração.
 
-Fora do plano: desafios entre amigos e feed social.
+### M5 — Sugestão de carga e estagnação
+- Sugestão de carga: subir a carga quando todas as séries válidas chegam ao topo da faixa de repetições. Ela diz o porquê ("bateu 12 em todas") e nunca troca um valor sozinha.
+- Aviso de estagnação: um exercício que parou de progredir.
 
 ### S5 — Histórico completo
-- Filtro por período: 7, 30 e 90 dias, e tudo.
-- Totais: treinos, tempo, volume e recordes.
-- Volume e recordes em cada treino da lista.
-- O desenho está em andamento no protótipo 'Iron Flow — visual novo'.
-- Calendário com os dias treinados.
-- Recordes recentes e gráficos de evolução.
-- Apagar ou corrigir um treino concluído.
-- Aviso de recorde na hora, durante o treino, e 1RM estimado.
+- Desenho no protótipo 'Iron Flow — visual novo': resumo e lista; períodos de 7, 30, 60 e 90 dias (sem "Tudo"); 4 indicadores personalizáveis, como no "Resumo rápido"; gráfico de volume por dia nos 7 dias e por semana nos outros, com a barra atual em azul; a lista com o mês atual aberto e os 3 anteriores recolhidos, e os meses mais antigos só na folha do calendário. A evolução de cada exercício fica no detalhe do exercício.
+- Calendário com os dias treinados, mapa do ano com os dias treinados e o total de kg levantados desde o começo.
+- Filtros; apagar ou corrigir um treino concluído.
 - O detalhe de um treino concluído mostra o tipo de cada série e os kg só das séries válidas e de falha.
-- Desempenho com muitos dados: um teste que cria 3 anos de treinos e mede o Início, o Histórico, o ✓ e a digitação no treino em andamento.
+- Os recordes (os 3 recentes do resumo e os de cada treino da lista) entram na etapa Recordes e progresso.
+- Mudança do banco, numa versão nova do schema e numa migração só:
+  - índices (sessões por data, pesos por data, dias marcados);
+  - em cada sessão, o dia local e o fuso de quando ela começou, para um treino não mudar de dia quando o iPhone está em outro fuso (hoje o dia é recalculado com o fuso atual do aparelho; as sessões antigas recebem o fuso do aparelho na migração);
+  - em cada sessão, ao concluir, os totais (séries feitas, exercícios e kg levantados), para a lista não abrir todas as séries de cada treino;
+  - a meta de dias de cada semana, para a Sequência contar cada semana passada com a meta que ela tinha na época; hoje a meta atual vale para todas (decisão do dono).
+- Desempenho com muitos dados: um teste no CI que cria 3 anos de treinos e mede a abertura do app, o Início (inclusive a releitura dos indicadores a cada volta à aba), o Histórico, a rolagem, o ✓ e a digitação no treino em andamento.
   - A digitação: hoje cada tecla reordena e redesenha todos os cartões do treino; otimizar se passar do aceitável.
   - O ✓: cada série salva muda a sessão em andamento, e isso refaz as buscas do Histórico (todas as sessões concluídas), da semana e do resumo. Medir e, se preciso, salvar só a série.
 - As buscas do Histórico e da coluna ÚLTIMA leem só o necessário. A ÚLTIMA hoje lê e ordena todas as sessões concluídas ao abrir o treino e a cada exercício adicionado; ler em lotes de 20 até achar todos os exercícios.
-- Índices no banco (sessões por data, pesos por data, dias marcados), que exigem um novo schema.
+- Os testes de interface que contam por período ("hoje", "esta semana", "no mês") semeiam os treinos a partir do meio-dia de hoje, ou usam um gancho só de teste `-ui-now`, para não falhar na virada do dia, da semana ou do mês.
 
-### S6 — Durante o treino
-- Timer de descanso (feito no PR #23).
-- RPE/RIR e notas.
-- Superséries e bi-sets.
-- Remover série ou exercício durante o treino (feito no PR #23).
-- Mostrar a carga e as repetições da última vez (feito no PR #23).
-- Sugestão de carga: subir a carga quando todas as séries válidas chegam ao topo da faixa de repetições.
-- Descanso na tela bloqueada e na Dynamic Island (Live Activity): fica com a M1.
+### Recordes e progresso
+- Recordes pessoais e 1RM estimado, com o aviso de recorde na hora, durante o treino; os 3 recordes recentes do Histórico e os recordes de cada treino da lista.
+- M6 — Recordes pessoais comemorados e cartão do treino para os Stories.
+- M8 — Resumo da semana e do mês com mapa do corpo: as séries válidas e de falha por grupo principal, semana contra semana, sem pontuar músculos secundários.
+- M17 — Gráfico do peso do corpo com a linha da meta e o ritmo por semana.
+- Apagar um registro de peso errado, com confirmação (hoje só dá para mudar o de hoje, e um peso errado de outro dia fica para sempre).
+
+### M1 — Treino na tela bloqueada e na Ilha Dinâmica (Live Activity)
+- Descanso, série atual e botões para usar sem abrir o app. Tocar no aviso do fim do descanso abre o treino direto (hoje o app só abre onde estava).
+- Instalar o plugin context7 no Code antes de começar esta etapa.
+- Tirar da Central de Notificações o aviso do fim do descanso que já foi entregue, quando o descanso acaba com o app aberto.
+- Decidir se o aviso do fim do descanso fica "sensível ao tempo", para passar pelo modo Foco (pede uma capacidade nova do app; decisão do dono).
+- O banco continua com a proteção de arquivo padrão do iOS (ver Decisões), porque esta etapa grava séries com o iPhone bloqueado.
+
+### M2 — Widgets na tela inicial e na tela bloqueada
+- Mesma base técnica da M1. O widget roda em outro processo e só lê um contêiner compartilhado (App Group): o app grava ali um resumo pequeno, sem mover o banco.
 
 ### S7 — Ajustes
-- Unidades, idioma e notificações.
-- Preferências de treino.
-- Apple Saúde: gravar o treino como treino de força e ler o peso.
+- Desenho no protótipo 'Iron Flow — visual novo': Conta e assinatura; Perfil (peso, altura e meta de calorias pela calculadora); Treino (meta por semana, primeiro dia da semana, descanso padrão, aviso do fim do descanso, som ou só vibrar, vibrar, tela acesa, aquecimento nas estatísticas e lembrete de treino); Unidades e idioma (kg ou lb; o idioma segue o do iPhone); Apple Saúde; Seus dados; Fale com a gente; Sobre e ajuda; Zona de perigo (apagar tudo, com confirmação dupla).
+- Apple Saúde: gravar o treino como treino de força e ler o peso. (A antiga M10 era a mesma coisa e saiu.)
+- Unidades e idioma: um lugar só para o idioma (hoje `pt_BR` fixo em 6 arquivos) e para a unidade de carga (hoje "kg" fixo nos textos).
+- Fale com a gente: enviar feedback e "Seja um influenciador", pelo app de e-mail do iPhone, para um e-mail só do app que o dono vai criar antes desta etapa (nunca um e-mail pessoal). O mesmo e-mail serve para o suporte da App Store e a política de privacidade.
+
+### Seus dados
+- M14 — Importar o histórico do Hevy e do Strong (CSV). Regras a decidir no plano: o mesmo exercício duas vezes no treino (os outros apps permitem, e o app hoje recusa); os limites de valores (100 repetições, 1.000 kg, 60 caracteres e 2 casas decimais, que recusariam libras convertidas); um caminho próprio no serviço para gravar uma sessão já concluída com data antiga; e uma tabela que liga os nomes dos outros apps às keys da biblioteca (o resto vira exercício próprio).
 - Exportar os dados em planilha (CSV).
-- Backup completo: um arquivo com todos os dados, que dá para guardar fora do iPhone, e "Restaurar backup", com teste de ida e volta. O CSV continua, para planilhas.
-- Fale com a gente: enviar feedback e 'Seja um influenciador', pelo app de e-mail do iPhone, para um e-mail só do app que o dono ainda vai criar (nunca um e-mail pessoal).
-- O desenho está em andamento no protótipo 'Iron Flow — visual novo'.
+- Backup completo: um arquivo com todos os dados, que dá para guardar fora do iPhone, e "Restaurar backup", com teste de ida e volta. O backup leva também as preferências guardadas fora do banco (indicadores escolhidos e opções do treino). O "Restaurar" confere os ids que já existem antes de gravar, porque um id repetido substituiria o registro em silêncio.
+- Lembrete periódico de fazer o backup.
+- Se o Firebase entrar, as exclusões passam a deixar uma marca, para a sincronização saber apagar nos outros aparelhos.
+
+### Assinatura
+- Assinatura pela App Store (StoreKit), com o ID Apple e sem conta: 30 dias grátis e depois pago, "Restaurar compras" e "Gerenciar assinatura". O preço é decidido pelo dono perto do lançamento.
+- Sem assinatura, o histórico, os recordes e a exportação continuam liberados, só para ler; registrar treinos novos pede a assinatura. Os dados nunca são apagados.
+- A assinatura é sempre conferida com a Apple (transações assinadas do StoreKit), nunca por um valor salvo no iPhone.
+- Um único lugar inicia sessões (`RootView.startSession`): é ali que entra a conferência da assinatura.
+- Usar o plugin finecomb (revisão de código e de segurança) nesta etapa.
+
+### Primeira abertura e planos prontos
+- M19 — Boas-vindas na primeira abertura: meta por semana, peso (opcional) e começar por um plano pronto.
+- M15 — Planos prontos: Push/Pull/Legs, Superior/Inferior, Corpo inteiro e 5×5.
+- O fluxo termina na tela da assinatura: a pessoa começa o teste grátis de 30 dias (ou assina) antes de usar o app, sem pular.
+
+### M9 — Cardio
+- Área de cardio: a pessoa cronometra a corrida e o histórico guarda pace, gasto calórico aproximado e dados parecidos; calorias aproximadas também na musculação.
 
 ### S10 — Revisão final e TestFlight
 - Revisão completa do app inteiro antes do TestFlight, e de novo antes do lançamento (as duas únicas revisões do app inteiro; nas outras etapas, o /code-review e as conferências olham só o que mudou).
+- Plugins finecomb (revisão de código e de segurança) e Mobile Release Check, instalados só nesta etapa.
 - Regressão completa, uso offline, acessibilidade e desempenho.
 - Build Release, tamanho do app e envio ao TestFlight.
+- Nome novo do app e bundle ID novo antes do envio (ver Pendências).
+- `ITSAppUsesNonExemptEncryption` no projeto, para a Apple não perguntar sobre criptografia a cada envio.
+- Nenhuma tela 'em breve' no envio à Apple, porque a revisão costuma recusar.
 - Conferir no iPhone de verdade a seleção de texto com toque duplo e a lupa nos campos de série do editor (o CI não testa).
 - Ícone do app.
 - Mensagem amigável na tela de erro ao abrir os dados.
 - Datas do Histórico e dos treinos recentes com o calendário do app (`TrainingDay.calendar`) em vez do calendário do aparelho: hoje o `SessionFormatting` usa o do aparelho por padrão, e num calendário budista ou japonês o ano sai errado.
-- A biblioteca de 220 exercícios é lida e conferida a cada abertura, antes da primeira tela; guardar a versão aplicada e pular quando for a mesma.
+- A biblioteca de 420 exercícios é lida e conferida a cada abertura, antes da primeira tela; guardar a versão aplicada e pular quando for a mesma, gravando a versão só quando a correção dos nomes terminar sem nenhum nome mantido (`keptNameKeys` vazio).
 - Limpeza de código:
-  - só usados nos testes: `SessionService.activeSession()` (com o erro `multipleActiveSessions`) e `RestTimer.isOver(at:)`;
+  - só usado nos testes: `SessionService.activeSession()` (com o erro `multipleActiveSessions`); o `RestTimer.isOver(at:)` é usado pelo app, no `RestController`.
   - sem tela: `WorkoutService.movePlannedSets`;
   - repetidos: `durationText` e `compactDurationText`; os nomes dos dias em `WeekSummary` e em `WeeklyPlanSummary`; as letras dos dias em `WeekSummary` e em `WorkoutListView`; a escolha em segmentos da calculadora de TMB e da folha "Concluir treino?";
   - repetidos, do /code-review do PR #29: o arredondamento da duração falada em `SessionFormatting.spokenDurationText`, e as duas funções quase iguais de criar série (`SessionService.makeSetLog`).
+  - repetidos, da revisão completa de novembro: guardar o rascunho ao perder o foco (`SessionView` e `WorkoutEditorView`); as duas buscas da semana (`WeekCard` e `SummaryCards`); as sessões concluídas redeclaradas no `HistoryView` (já existem no `SessionService`); "hoje / ontem / data" (`SessionFormatting` e `SummaryIndicators`); o título de folha feito à mão no `SessionOptionsSheet` (o `SheetHeader` já faz isso).
 - Com a folha "Concluir treino?" aberta por mais de 1 hora, a pergunta do treino esquecido (último registro ou agora) não aparece; ela só é feita quando a folha abre (do /code-review do PR #29).
 - Diferenças antigas com o DESIGN.md nas telas ainda sem modelo, a refazer na etapa de cada uma:
   - Histórico e Ajustes: a tela vazia do sistema (`ContentUnavailableView`) e o título do detalhe do Histórico com a fonte do sistema; o Histórico com tamanhos 17/15/13 adaptados; cores `.secondary` do sistema;
   - tela de erro ao abrir os dados: botão `.borderedProminent` e o texto técnico em SF Mono;
   - essas telas continuam com SF Symbols até ter modelo.
+- Opcional: um `.github/dependabot.yml`, para avisar de versões novas das ações do CI (hoje fixadas por SHA).
 - Antes do lançamento, o dono decide se o repositório continua público ou vira privado. Se virar privado, os minutos de macOS do CI passam a ser cobrados, e o CI em paralelo usa mais minutos no total do que um CI numa máquina só. Rever o CI antes de mudar.
 
-### S8 — Conta
-Depois da S10 (lançamento).
-- Login e sincronização. Antes de escolher, comparar o iCloud e o Firebase.
+### Firebase (opcional)
+Decidido pelo dono e pelo chat juntos, depois de testar o app no TestFlight. Se não entrar agora, vem com o projeto Android.
+- Conta opcional (e-mail e senha, Google e Apple) que sobe os dados do iPhone, com sincronização. Ao criar a conta, os dados do aparelho são enviados para ela, nunca apagados.
+- Usar o plugin finecomb nesta etapa.
 - Lista de segurança obrigatória:
   - regras de segurança do Firebase: cada pessoa só lê e grava os próprios dados;
   - App Check e limites de uso, para que só o app fale com o servidor;
   - nenhuma chave de administrador no app, e o arquivo de configuração do Firebase fora do repositório público;
   - os dados também são validados no servidor;
   - campos protegidos que o app não pode alterar (por exemplo, a assinatura);
-  - login com a Apple, sem guardar senhas;
+  - login sem guardar senhas no app;
   - apagar a conta dentro do app;
   - alertas de dependências do GitHub ligados quando entrar o SDK do Firebase;
   - política de privacidade e relatório de privacidade atualizados.
 
-### S9 — Assinatura
-Depois da S10 (lançamento).
-- Assinatura pela App Store (StoreKit) e "Gerenciar assinatura".
+### Depois do lançamento
+- M11 — Importar a ficha de treino por foto.
+- M12 — Apple Watch.
+- M13 — Strava.
+- Projeto Android, com o Firebase (conta, sincronização entre iPhone e Android e assinatura valendo nos dois), se ele não tiver entrado antes.
+
+Fora do plano: desafios entre amigos e feed social. Ideias avaliadas e não escolhidas: exercício reserva, repetições por lado, mapa de recuperação, fotos de progresso, rodízio A/B/C e instruções de execução dos exercícios.
 
 ## Acabamentos
 
 Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cada um entra junto da próxima etapa que mexe naquela tela, com a aprovação do dono, como o resto do escopo.
 
+- Tela do treino: deslizar uma série para apagar (com Desfazer) ou para copiar.
+- Tela do treino: com "Manter a tela ligada", a tela pode apagar depois de 1 hora sem série marcada, o mesmo tempo do treino esquecido; hoje ela nunca apaga com um treino esquecido aberto (decisão do dono).
+- Tela do treino: desmarcar a série que começou o descanso atual encerra esse descanso, com a barra e o aviso; hoje eles continuam correndo (decisão do dono).
+- "Escolher treino" e Programação semanal: um treino com muitos grupos fica cortado com "…". Mostrar no máximo alguns grupos e "+N"; os detalhes se decidem quando a tela for mexida.
+
 ## Pendências da vistoria
 
-- Folhas de vidro (Liquid Glass): testar numa etapa futura, com protótipo antes, as folhas com o vidro do sistema no lugar do fundo sólido. Até lá, todas as folhas ficam com o fundo sólido do protótipo (decisão do dono).
 - O app precisa de um nome novo antes do lançamento, porque já existe na App Store o "IronFlow: Gym Strength Tracker". O dono decide o nome depois. Antes do TestFlight, trocar também o bundle ID `com.ironflow.app`, que é o mesmo de um app de Android com esse nome. Os nomes internos do código (pastas, alvos e o arquivo do banco) ficam como estão.
 - Conferir no iPhone de verdade, no TestFlight, o que o CI não consegue testar na S4-F: o aviso do fim do descanso com o celular bloqueado e com o app fechado, a pergunta real do iPhone sobre as notificações (com o texto do sistema) e o toque na notificação.
 - Com o iOS 26 mínimo, ver se dá para aproximar as linhas dos títulos de duas linhas como no protótipo (sugestão; precisa da aprovação do dono).
-- Visual novo: cores neutras (preto, branco e cinza, com o azul só em detalhes), a fonte SF Pro e o vidro do iOS 26 (Liquid Glass). Em desenho no protótipo 'Iron Flow — visual novo'. Vira etapa quando o dono aprovar; até lá as etapas seguem na ordem.
-
-- Medir com dados reais o custo da busca do Histórico durante um treino (a lista pode buscar de novo todas as sessões concluídas a cada série salva).
 - Nomes de treino repetidos ficam ambíguos no VoiceOver ("Opções de Push") e no menu de iniciar.
 - O banco é aberto de forma síncrona ao iniciar o app; uma migração num banco grande atrasaria a abertura.
 - Após uma falha ao salvar, o rollback() do SwiftData não restaura os valores alterados nos objetos em memória. O banco fica correto e o erro é mostrado, mas a tela pode exibir o valor não salvo até o objeto ser lido de novo. Raro (ex.: disco cheio). Prioridade baixa: resolver antes da S10. Coberto por teste com withKnownIssue.
@@ -172,11 +216,12 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.
 - Os 6 commits iniciais com e-mail pessoal ficam como estão; commits novos usam um e-mail noreply (o do ambiente do Claude serve), nunca um e-mail pessoal.
-- Lançamento grátis, sem conta e sem assinatura. Depois de um tempo, registrar treinos novos passa a pedir a assinatura; o histórico, os recordes e a exportação continuam liberados, só para ler.
-- Assinatura pela App Store, com o ID Apple, sem exigir conta no app (a Apple não permite exigir cadastro para assinar). Teste grátis de 14 dias para quem nunca assinou, dado pela própria App Store, e "Restaurar compras" para quem troca de aparelho.
+- O app lança com a assinatura pela App Store, com o ID Apple e sem conta (a Apple não permite exigir cadastro para uma assinatura que não precisa de conta): 30 dias grátis, depois pago, e "Restaurar compras". A primeira abertura termina na tela do teste grátis, sem pular. Substitui o plano antigo de lançar grátis e ter o teste de 14 dias depois.
+- Lançamento só com a Apple: os dados ficam no iPhone, protegidos pelo backup do iPhone e pelo arquivo de backup do app, com lembrete. O Firebase (conta opcional e sincronização) é uma etapa opcional, decidida junto depois do TestFlight, ou vem com o projeto Android.
+- O banco usa a proteção de arquivo padrão do iOS (protegido até o primeiro desbloqueio depois de ligar o iPhone), porque a M1 grava séries com o iPhone bloqueado.
 - Sem assinatura, o histórico, os recordes e a exportação continuam liberados, só para ler; registrar treinos novos pede a assinatura. Os dados nunca são apagados.
-- A conta é opcional e vem depois do lançamento. Ao criar a conta, os dados do aparelho são enviados para ela, nunca apagados.
 - Sem calculadora de anilhas.
 - Revisões: em cada etapa, o /code-review e as conferências olham só o que mudou. O app inteiro é revisado só em dois momentos, antes do TestFlight e antes do lançamento.
 - O app pede o iOS 26.0 ou mais novo (app e alvos de teste): ele só é testado e medido no iOS 26.
-- Nomes dos exercícios no padrão do Hevy, com o equipamento entre parênteses (os de peso do corpo ficam sem parênteses). Cada exercício fica no grupo do músculo que ele mais trabalha.
+- Nomes dos exercícios no padrão do Hevy, com o equipamento entre parênteses (os de peso do corpo ficam sem parênteses). Exceções aprovadas: a pegada ou a máquina entre parênteses quando é isso que diferencia (por exemplo, "Barra Fixa (Pegada Aberta)" e "Barra Fixa (Graviton)"), e nomes conhecidos sem parênteses (por exemplo, "Kettlebell Swing"). Cada exercício fica no grupo do músculo que ele mais trabalha.
+- O openGym (licença AGPL) serve só de fonte de ideias: nenhum código nem dado dele é copiado.

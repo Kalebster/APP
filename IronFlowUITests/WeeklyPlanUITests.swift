@@ -32,14 +32,43 @@ final class WeeklyPlanUITests: IronFlowUITestCase {
 
     /// Opens the sheet of `row`, picks `choice` (a workout's name or "Descanso") and waits until the sheet
     /// is gone.
+    ///
+    /// The day's sheet opens tall and then takes the height of its content, so the choice is tapped only
+    /// once it can be tapped and stays in place between looks at the screen: a tap while the sheet still
+    /// moved was lost in CI (run 43793625672, the sheet still open 10 s later). Should the tap still be
+    /// lost, the choice is tapped once more, as on the tabs. Nothing waits when the first tap works.
     @MainActor
     private func choose(_ choice: String, inRow row: XCUIElement, app: XCUIApplication) {
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Day's row not found")
         row.tap()
         let option = app.buttons[choice == "Descanso" ? "plan.option.rest" : "plan.option.\(choice)"]
         XCTAssertTrue(option.waitForExistence(timeout: 10), "'\(choice)' not in the sheet")
+        XCTAssertTrue(waitUntilSettled(option), "'\(choice)' did not stop moving in the sheet")
         option.tap()
+        if !option.waitForNonExistence(timeout: 5), option.exists, option.isHittable {
+            option.tap()
+        }
         XCTAssertTrue(option.waitForNonExistence(timeout: 10), "Sheet not closed")
+    }
+
+    /// Waits until `element` can be tapped and its frame is the same in three looks at the screen in a row,
+    /// for up to `timeout` seconds. Each look reads the screen again, so it waits only as long as the
+    /// element moves.
+    @MainActor
+    private func waitUntilSettled(_ element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        var frames: [CGRect] = []
+        repeat {
+            if element.exists, element.isHittable {
+                frames.append(element.frame)
+                if frames.count >= 3, frames.suffix(3).allSatisfy({ $0 == frames.last }) {
+                    return true
+                }
+            } else {
+                frames.removeAll()
+            }
+        } while Date() < deadline
+        return false
     }
 
     /// Today's weekday in the plan, 1 = Monday to 7 = Sunday.

@@ -15,16 +15,17 @@ struct DefaultExercise: Equatable, Sendable {
     let focus: String
 }
 
-/// The built-in exercise library, controlled by the app, in the order of the approved list.
+/// The built-in exercise library, controlled by the app, in the order of the approved lists: the first
+/// list of 220, then, within each group, the 200 exercises of the second list after the group's others.
 ///
 /// Rules: keys and ids are never changed, removed or reused. Name and muscle group may be
 /// corrected in a later version. Entries that leave this list stay in existing stores.
 ///
-/// Names follow the approved list: the equipment goes in parentheses ("Supino Reto (Barra)"); a bodyweight
+/// Names follow the approved lists: the equipment goes in parentheses ("Supino Reto (Barra)"); a bodyweight
 /// exercise has none, and its load is the extra weight (0 is the body alone). A few names keep another
 /// detail in parentheses, or none, as approved ("Barra Fixa (Pegada Aberta)", "Barra Fixa (Graviton)",
-/// "Kettlebell Swing"). Barra W uses the barbell equipment. Each exercise is in the group of the muscle it
-/// works the most.
+/// "Kettlebell Swing"). Barra W and Barra Hexagonal use the barbell equipment, and Graviton the machine.
+/// Each exercise is in the group of the muscle it works the most.
 enum DefaultExerciseLibrary {
     static let all: [DefaultExercise] = [
         // MARK: Peito
@@ -61,6 +62,31 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "incline-push-up", id: "3E49E429-B361-433A-BBBC-50DD1306305E", name: "Flexão Inclinada", muscleGroup: .chest, equipment: .bodyweight, focus: "Peitoral inferior"),
         DefaultExercise(key: "knee-push-up", id: "5873429C-978A-45E8-A529-2F6B64C746B9", name: "Flexão com Joelhos Apoiados", muscleGroup: .chest, equipment: .bodyweight, focus: "Peitoral e tríceps"),
         DefaultExercise(key: "chest-dips", id: "13BD9806-A427-4B3C-82AB-C417AA95A806", name: "Peito na Paralela", muscleGroup: .chest, equipment: .bodyweight, focus: "Peitoral inferior"),
+        DefaultExercise(key: "single-arm-bench-press-dumbbell", id: "37972895-1F79-4E2D-B408-17BD39B782D2", name: "Supino Reto Unilateral (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral médio e core"),
+        DefaultExercise(key: "neutral-grip-bench-press-dumbbell", id: "51F31EB6-9804-4CD8-BB47-E419CEBA8988", name: "Supino Reto Pegada Neutra (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral e tríceps"),
+        DefaultExercise(key: "wide-grip-bench-press-barbell", id: "93BF9A4C-D4B1-444C-88F4-CC2E367C43A2", name: "Supino Reto Pegada Aberta (Barra)", muscleGroup: .chest, equipment: .barbell, focus: "Peitoral médio"),
+        DefaultExercise(key: "single-arm-chest-press-machine", id: "57CFDC55-F452-4164-838C-A239DD242468", name: "Supino Reto Unilateral (Máquina)", muscleGroup: .chest, equipment: .machine, focus: "Peitoral médio"),
+        DefaultExercise(key: "single-arm-bench-press-cable", id: "3720757B-F8EF-4191-9AB1-A893128861FC", name: "Supino Reto Unilateral (Polia)", muscleGroup: .chest, equipment: .cable, focus: "Peitoral médio"),
+        DefaultExercise(key: "single-arm-incline-bench-press-dumbbell", id: "5132CC95-543E-42AD-9D4F-1487F01218C5", name: "Supino Inclinado Unilateral (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral superior"),
+        DefaultExercise(key: "neutral-grip-incline-bench-press-dumbbell", id: "5D9899F9-DC43-4513-9C8F-6D2D3AC2F3D2", name: "Supino Inclinado Pegada Neutra (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral superior e tríceps"),
+        DefaultExercise(key: "incline-chest-press-lever", id: "4A3E7D03-FC26-4B51-B752-57D683D7E5E2", name: "Supino Inclinado Iso-Lateral (Máquina)", muscleGroup: .chest, equipment: .machine, focus: "Peitoral superior"),
+        DefaultExercise(key: "single-arm-incline-chest-press-machine", id: "1453A24D-8C25-46F5-A59B-047091E0D426", name: "Supino Inclinado Unilateral (Máquina)", muscleGroup: .chest, equipment: .machine, focus: "Peitoral superior"),
+        DefaultExercise(key: "single-arm-incline-bench-press-cable", id: "53FE34F8-AB73-4E29-B632-539035CA506C", name: "Supino Inclinado Unilateral (Polia)", muscleGroup: .chest, equipment: .cable, focus: "Peitoral superior"),
+        DefaultExercise(key: "decline-chest-press-lever", id: "EAA4DC9B-EA4E-47D4-A9BF-9E0E9A677B49", name: "Supino Declinado Iso-Lateral (Máquina)", muscleGroup: .chest, equipment: .machine, focus: "Peitoral inferior"),
+        DefaultExercise(key: "squeeze-press-dumbbell", id: "149BACA9-4D85-48A5-9F3E-D9A092AE91C1", name: "Supino Squeeze (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral (contração)"),
+        DefaultExercise(key: "guillotine-press-barbell", id: "C4AC98AD-0733-4E62-92D4-AB3E70634E05", name: "Supino Guilhotina (Barra)", muscleGroup: .chest, equipment: .barbell, focus: "Peitoral superior"),
+        DefaultExercise(key: "floor-press-barbell", id: "D5CC21C9-E89D-4EE5-88B0-FFBF39DE7046", name: "Supino no Chão (Barra)", muscleGroup: .chest, equipment: .barbell, focus: "Peitoral e tríceps"),
+        DefaultExercise(key: "floor-press-dumbbell", id: "F67A1090-8E67-4F1C-B0E5-B4E1EAC18008", name: "Supino no Chão (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral e tríceps"),
+        DefaultExercise(key: "landmine-chest-press", id: "896B0866-605B-4B73-966C-758527F8FACF", name: "Supino Landmine (Barra)", muscleGroup: .chest, equipment: .barbell, focus: "Peitoral superior"),
+        DefaultExercise(key: "decline-fly-dumbbell", id: "8D79EF76-2A10-4A45-8273-5D251459D02E", name: "Crucifixo Declinado (Halter)", muscleGroup: .chest, equipment: .dumbbell, focus: "Peitoral inferior"),
+        DefaultExercise(key: "fly-band", id: "83B70343-0840-4F39-BE0B-58A2699AD118", name: "Crucifixo (Elástico)", muscleGroup: .chest, equipment: .band, focus: "Peitoral médio"),
+        DefaultExercise(key: "svend-press", id: "8E5B0429-5056-40F6-8D89-452DDEB220F9", name: "Svend Press (Anilha)", muscleGroup: .chest, equipment: .plate, focus: "Peitoral (contração)"),
+        DefaultExercise(key: "assisted-chest-dips", id: "5A1059F1-9BD4-4016-AE88-049B69A83489", name: "Peito na Paralela (Graviton)", muscleGroup: .chest, equipment: .machine, focus: "Peitoral inferior"),
+        DefaultExercise(key: "wide-push-up", id: "9A5F728D-0ED4-439F-9D92-4814B21AF25B", name: "Flexão Aberta", muscleGroup: .chest, equipment: .bodyweight, focus: "Peitoral médio"),
+        DefaultExercise(key: "weighted-push-up-plate", id: "AA6CC8B2-D59E-403E-89A7-2E14660B0BDD", name: "Flexão (Anilha)", muscleGroup: .chest, equipment: .plate, focus: "Peitoral e tríceps"),
+        DefaultExercise(key: "band-push-up", id: "8F9D2552-2E53-447F-B0FF-4C0073027EB2", name: "Flexão (Elástico)", muscleGroup: .chest, equipment: .band, focus: "Peitoral e tríceps"),
+        DefaultExercise(key: "archer-push-up", id: "E134E58A-96DA-443C-A6B1-619B2C70FFD0", name: "Flexão Arqueiro", muscleGroup: .chest, equipment: .bodyweight, focus: "Peitoral (um lado por vez)"),
+        DefaultExercise(key: "plyometric-push-up", id: "72C496DF-1E4F-483E-9230-CFB24BA20CB8", name: "Flexão Explosiva", muscleGroup: .chest, equipment: .bodyweight, focus: "Peitoral (potência)"),
 
         // MARK: Dorsais
         DefaultExercise(key: "pull-up", id: "B4C39763-E2C4-4115-86D8-46FDEB6897CD", name: "Barra Fixa (Pegada Aberta)", muscleGroup: .back, equipment: .bodyweight, focus: "Dorsal (largura)"),
@@ -78,11 +104,29 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "single-arm-row-cable", id: "24488176-1FE8-4030-8D4A-AF4F9C37C673", name: "Remada Unilateral (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal"),
         DefaultExercise(key: "single-arm-row-machine", id: "992C150B-3DF9-4B5D-8F40-E80836A7127A", name: "Remada Unilateral (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal"),
         DefaultExercise(key: "seated-cable-row", id: "96192D2A-5DD7-4CF0-9A09-7C7476B4BC0E", name: "Remada Baixa (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal e meio das costas"),
-        DefaultExercise(key: "high-row-machine", id: "6790D887-711C-4CA6-B5AD-86C60C439940", name: "Remada Alta (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal"),
+        DefaultExercise(key: "high-row-machine", id: "6790D887-711C-4CA6-B5AD-86C60C439940", name: "Remada Alta Articulada (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal"),
         DefaultExercise(key: "pullover-dumbbell", id: "343A595A-3830-4FA3-83BA-C7B7F7C5F8CA", name: "Pullover (Halter)", muscleGroup: .back, equipment: .dumbbell, focus: "Dorsal e peitoral"),
         DefaultExercise(key: "pullover-barbell", id: "7F8D6F93-5C43-4622-82D0-BC499D9A8F53", name: "Pullover (Barra)", muscleGroup: .back, equipment: .barbell, focus: "Dorsal e peitoral"),
         DefaultExercise(key: "straight-arm-pulldown", id: "4EC1E018-0130-4B5E-A989-DF527139405B", name: "Pullover (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal (isolado)"),
         DefaultExercise(key: "pullover-machine", id: "A5E6EA3B-0329-4CC8-A28D-2E0F7651432A", name: "Pullover (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal (isolado)"),
+        DefaultExercise(key: "neutral-grip-pull-up", id: "A4DB71B0-2375-41EB-B7F0-312CA0930792", name: "Barra Fixa (Pegada Neutra)", muscleGroup: .back, equipment: .bodyweight, focus: "Dorsal e bíceps"),
+        DefaultExercise(key: "weighted-pull-up", id: "EA086BE6-ABB0-4C76-BE0D-A6920117EF47", name: "Barra Fixa com Peso (Anilha)", muscleGroup: .back, equipment: .plate, focus: "Dorsal (largura)"),
+        DefaultExercise(key: "weighted-chin-up", id: "5DB9913E-F37C-4D94-B353-963D27525188", name: "Barra Fixa Supinada com Peso (Anilha)", muscleGroup: .back, equipment: .plate, focus: "Dorsal e bíceps"),
+        DefaultExercise(key: "band-assisted-pull-up", id: "A461D98B-58DE-4CD2-8130-77FADF126C72", name: "Barra Fixa (Elástico)", muscleGroup: .back, equipment: .band, focus: "Dorsal (largura)"),
+        DefaultExercise(key: "assisted-chin-up", id: "2C0A9E23-2038-440E-9ECE-963EC45915C1", name: "Barra Fixa Supinada (Graviton)", muscleGroup: .back, equipment: .machine, focus: "Dorsal e bíceps"),
+        DefaultExercise(key: "neutral-grip-lat-pulldown", id: "17A8F3DD-264A-4D21-99B3-D07FD2F824A0", name: "Puxada Alta Pegada Neutra (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal (parte baixa)"),
+        DefaultExercise(key: "behind-the-neck-lat-pulldown", id: "28E9476D-39AE-4B15-B126-AACF71B9A846", name: "Puxada Atrás da Nuca (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal (largura)"),
+        DefaultExercise(key: "reverse-grip-lat-pulldown-machine", id: "CB71DCBE-33C8-4C3A-8817-14F762492F6B", name: "Puxada Alta Supinada (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal e bíceps"),
+        DefaultExercise(key: "close-grip-lat-pulldown-machine", id: "9A79FD4D-7E44-46F6-9076-EF2D3D7B42F6", name: "Puxada Alta Fechada (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal (parte baixa)"),
+        DefaultExercise(key: "lat-pulldown-band", id: "D192B650-0C7D-4525-80D4-AC8BBDD52404", name: "Puxada Alta (Elástico)", muscleGroup: .back, equipment: .band, focus: "Dorsal (largura)"),
+        DefaultExercise(key: "rope-pullover-cable", id: "139D530C-AFCE-4D4C-B4F0-60C11437306D", name: "Pullover Corda (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal (isolado)"),
+        DefaultExercise(key: "single-arm-pullover-cable", id: "C1281954-00A3-4031-BBAC-663510BB5C4D", name: "Pullover Unilateral (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal (isolado)"),
+        DefaultExercise(key: "kroc-row", id: "57CDE3AC-3F16-4054-A2FA-1A51232D29AE", name: "Remada Kroc (Halter)", muscleGroup: .back, equipment: .dumbbell, focus: "Dorsal"),
+        DefaultExercise(key: "meadows-row", id: "5570942F-4458-4F66-8135-7881442BB7DF", name: "Remada Meadows (Barra)", muscleGroup: .back, equipment: .barbell, focus: "Dorsal"),
+        DefaultExercise(key: "single-arm-high-row-machine", id: "DE32238A-3687-408A-B6C5-938767B1B62C", name: "Remada Alta Articulada Unilateral (Máquina)", muscleGroup: .back, equipment: .machine, focus: "Dorsal"),
+        DefaultExercise(key: "reverse-grip-seated-cable-row", id: "D7B55485-851C-41C0-8C37-D20230E90EB6", name: "Remada Baixa Supinada (Polia)", muscleGroup: .back, equipment: .cable, focus: "Dorsal (parte baixa)"),
+        DefaultExercise(key: "reverse-grip-bent-over-row-dumbbell", id: "96D20437-22BF-456D-8423-67BB7E774BD0", name: "Remada Curvada Supinada (Halter)", muscleGroup: .back, equipment: .dumbbell, focus: "Dorsal (parte baixa)"),
+        DefaultExercise(key: "reverse-grip-bent-over-row-smith", id: "285E02C8-9E42-4557-A640-85A728BAD880", name: "Remada Curvada Supinada (Smith)", muscleGroup: .back, equipment: .smith, focus: "Dorsal (parte baixa)"),
 
         // MARK: Costas superiores
         DefaultExercise(key: "bent-over-row-barbell", id: "C4052FD4-1A83-4B58-A863-1C27F9E68B03", name: "Remada Curvada (Barra)", muscleGroup: .upperBack, equipment: .barbell, focus: "Espessura das costas"),
@@ -95,6 +139,16 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "row-machine", id: "F7C34293-0230-4D7E-93F8-A66EDAA878EB", name: "Remada Sentada Aberta (Máquina)", muscleGroup: .upperBack, equipment: .machine, focus: "Costas superiores e romboides"),
         DefaultExercise(key: "v-grip-row-machine", id: "CFA196F2-588C-4DDD-A56A-C553E1E24ECE", name: "Remada Sentada Pegada V (Máquina)", muscleGroup: .upperBack, equipment: .machine, focus: "Meio das costas"),
         DefaultExercise(key: "seal-row", id: "A6A4E293-7C3E-48B8-B042-675D3C12CD31", name: "Remada Apoiada no Banco (Halter)", muscleGroup: .upperBack, equipment: .dumbbell, focus: "Meio das costas"),
+        DefaultExercise(key: "pendlay-row", id: "267DEEBF-4E22-4E62-A4D6-1A4763046127", name: "Remada Pendlay (Barra)", muscleGroup: .upperBack, equipment: .barbell, focus: "Espessura das costas"),
+        DefaultExercise(key: "inverted-row", id: "87DCC79B-6A5C-4D4F-900F-3A10011006A2", name: "Remada Invertida", muscleGroup: .upperBack, equipment: .bodyweight, focus: "Meio das costas"),
+        DefaultExercise(key: "seal-row-barbell", id: "5F097598-C4A7-4A1C-A523-CCD7B3724059", name: "Remada Apoiada no Banco (Barra)", muscleGroup: .upperBack, equipment: .barbell, focus: "Meio das costas"),
+        DefaultExercise(key: "chest-supported-row-machine", id: "5CC53827-418E-48B2-8248-DBA45FB5647D", name: "Remada Apoiada (Máquina)", muscleGroup: .upperBack, equipment: .machine, focus: "Meio das costas"),
+        DefaultExercise(key: "single-arm-row-smith", id: "442BB5A9-81F4-4724-A87A-05A39109C6AB", name: "Remada Unilateral (Smith)", muscleGroup: .upperBack, equipment: .smith, focus: "Meio das costas"),
+        DefaultExercise(key: "bent-over-row-band", id: "FE22BFC8-DC9A-4ECE-8768-EAE9FE156AF6", name: "Remada Curvada (Elástico)", muscleGroup: .upperBack, equipment: .band, focus: "Meio das costas"),
+        DefaultExercise(key: "seated-row-band", id: "9AF8DE43-CC76-4F23-941D-7660C8BF1A27", name: "Remada Sentada (Elástico)", muscleGroup: .upperBack, equipment: .band, focus: "Meio das costas"),
+        DefaultExercise(key: "gorilla-row", id: "9882958F-199B-4A7B-802A-53A9511AED9E", name: "Remada Gorila (Kettlebell)", muscleGroup: .upperBack, equipment: .kettlebell, focus: "Meio das costas"),
+        DefaultExercise(key: "renegade-row", id: "5C029D5A-E7BE-4FD6-8530-ACB4F0846555", name: "Remada Renegada (Halter)", muscleGroup: .upperBack, equipment: .dumbbell, focus: "Costas e core"),
+        DefaultExercise(key: "scapular-pull-up", id: "9408ED0C-A25C-4FA4-9C3B-1682467C57C4", name: "Retração Escapular na Barra Fixa", muscleGroup: .upperBack, equipment: .bodyweight, focus: "Escápulas e trapézio inferior"),
 
         // MARK: Trapézio
         DefaultExercise(key: "shrug-barbell", id: "AF64B90F-C342-4466-A672-6236E54316A7", name: "Encolhimento (Barra)", muscleGroup: .traps, equipment: .barbell, focus: "Trapézio superior"),
@@ -102,6 +156,10 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "shrug-smith", id: "50590B97-3AA4-4B88-8825-49C2C9BDA4B6", name: "Encolhimento (Smith)", muscleGroup: .traps, equipment: .smith, focus: "Trapézio superior"),
         DefaultExercise(key: "shrug-machine", id: "20D4403C-6C92-427D-A6AB-986BC77C9179", name: "Encolhimento (Máquina)", muscleGroup: .traps, equipment: .machine, focus: "Trapézio superior"),
         DefaultExercise(key: "shrug-cable", id: "A3C747BD-8736-412A-A716-702604858160", name: "Encolhimento (Polia)", muscleGroup: .traps, equipment: .cable, focus: "Trapézio superior"),
+        DefaultExercise(key: "behind-the-back-shrug", id: "4AA4E858-9101-48E6-ACEC-855958B7EA97", name: "Encolhimento Atrás do Corpo (Barra)", muscleGroup: .traps, equipment: .barbell, focus: "Trapézio superior"),
+        DefaultExercise(key: "incline-shrug-dumbbell", id: "B34B36C5-4E70-443F-BFC1-15A416ECD6F1", name: "Encolhimento Inclinado (Halter)", muscleGroup: .traps, equipment: .dumbbell, focus: "Trapézio médio"),
+        DefaultExercise(key: "y-raise-dumbbell", id: "5E762F55-019E-407E-8F8D-EF4862985D79", name: "Elevação Y (Halter)", muscleGroup: .traps, equipment: .dumbbell, focus: "Trapézio inferior"),
+        DefaultExercise(key: "y-raise-cable", id: "D929C0D1-1EA4-4767-A2E3-0C2078F25869", name: "Elevação Y (Polia)", muscleGroup: .traps, equipment: .cable, focus: "Trapézio inferior"),
 
         // MARK: Lombar
         DefaultExercise(key: "back-extension", id: "D22B881D-624B-439F-9AE1-22EADD865A0D", name: "Extensão Lombar", muscleGroup: .lowerBack, equipment: .bodyweight, focus: "Lombar"),
@@ -110,6 +168,11 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "superman", id: "49CE5F30-05F6-4046-B224-6C9A4E67B0CD", name: "Super-Homem", muscleGroup: .lowerBack, equipment: .bodyweight, focus: "Lombar"),
         DefaultExercise(key: "deadlift", id: "CC2B68C8-727F-49C9-AFDC-8B338BE8C692", name: "Levantamento Terra (Barra)", muscleGroup: .lowerBack, equipment: .barbell, focus: "Lombar e cadeia posterior"),
         DefaultExercise(key: "deadlift-dumbbell", id: "B961FC90-D332-4077-9AC0-7CFF63D97C53", name: "Levantamento Terra (Halter)", muscleGroup: .lowerBack, equipment: .dumbbell, focus: "Lombar e cadeia posterior"),
+        DefaultExercise(key: "trap-bar-deadlift", id: "FE7C4B4E-EE85-4CF2-A4DA-B8437E7B0B00", name: "Levantamento Terra (Barra Hexagonal)", muscleGroup: .lowerBack, equipment: .barbell, focus: "Lombar e cadeia posterior"),
+        DefaultExercise(key: "deficit-deadlift", id: "50DB2074-1BC2-4EDE-9B79-A87BAB17A087", name: "Levantamento Terra Déficit (Barra)", muscleGroup: .lowerBack, equipment: .barbell, focus: "Lombar e cadeia posterior"),
+        DefaultExercise(key: "rack-pull", id: "7341EEB8-D433-4255-BE4C-AE9D8313C568", name: "Rack Pull (Barra)", muscleGroup: .lowerBack, equipment: .barbell, focus: "Lombar e trapézio"),
+        DefaultExercise(key: "deadlift-kettlebell", id: "818B76D7-9263-494A-B460-36D63D254B76", name: "Levantamento Terra (Kettlebell)", muscleGroup: .lowerBack, equipment: .kettlebell, focus: "Lombar e cadeia posterior"),
+        DefaultExercise(key: "bird-dog", id: "356570FF-2054-437E-8CD8-9CA7519AEDF7", name: "Bird Dog", muscleGroup: .lowerBack, equipment: .bodyweight, focus: "Lombar (estabilidade)"),
 
         // MARK: Ombros
         DefaultExercise(key: "overhead-press-barbell", id: "EBDDA760-71D6-4F7B-A96C-608A69A865D0", name: "Desenvolvimento (Barra)", muscleGroup: .shoulders, equipment: .barbell, focus: "Deltoide anterior"),
@@ -135,6 +198,31 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "upright-row-dumbbell", id: "770DA728-6956-4E8A-BDCB-9E66D645A6B0", name: "Remada Alta (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Deltoide lateral e trapézio"),
         DefaultExercise(key: "upright-row-cable", id: "8A98AE31-F2A6-4A12-BDC9-919347C016A8", name: "Remada Alta (Polia)", muscleGroup: .shoulders, equipment: .cable, focus: "Deltoide lateral e trapézio"),
         DefaultExercise(key: "external-rotation-cable", id: "E4274798-D911-4BCF-BABD-33FC00F37304", name: "Rotação Externa (Polia)", muscleGroup: .shoulders, equipment: .cable, focus: "Manguito rotador"),
+        DefaultExercise(key: "seated-overhead-press-barbell", id: "4939E190-2875-422D-96A3-B91A1C53B1CD", name: "Desenvolvimento Sentado (Barra)", muscleGroup: .shoulders, equipment: .barbell, focus: "Deltoide anterior"),
+        DefaultExercise(key: "behind-the-neck-press-barbell", id: "4903E1DC-3240-4681-B2C4-ABB810679924", name: "Desenvolvimento Atrás da Nuca (Barra)", muscleGroup: .shoulders, equipment: .barbell, focus: "Deltoides anterior e lateral"),
+        DefaultExercise(key: "behind-the-neck-press-smith", id: "D8E15EEB-E4EB-49AB-8542-364AF95A01E0", name: "Desenvolvimento Atrás da Nuca (Smith)", muscleGroup: .shoulders, equipment: .smith, focus: "Deltoides anterior e lateral"),
+        DefaultExercise(key: "single-arm-shoulder-press-dumbbell", id: "1D51D4BB-A75D-4F37-A730-0AE15D474277", name: "Desenvolvimento Unilateral (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Deltoide anterior e core"),
+        DefaultExercise(key: "neutral-grip-shoulder-press-dumbbell", id: "39529995-8B14-4797-9F12-2E4F6275AB63", name: "Desenvolvimento Pegada Neutra (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Deltoide anterior"),
+        DefaultExercise(key: "shoulder-press-lever", id: "00697E2A-1C03-4083-8394-1B46A1F29582", name: "Desenvolvimento Iso-Lateral (Máquina)", muscleGroup: .shoulders, equipment: .machine, focus: "Deltoide anterior"),
+        DefaultExercise(key: "single-arm-shoulder-press-machine", id: "75D815BB-566F-469D-9A94-CD111E7553EE", name: "Desenvolvimento Unilateral (Máquina)", muscleGroup: .shoulders, equipment: .machine, focus: "Deltoide anterior"),
+        DefaultExercise(key: "shoulder-press-kettlebell", id: "CC5D181B-0902-4ECB-8FA6-AAB472BEB8E1", name: "Desenvolvimento (Kettlebell)", muscleGroup: .shoulders, equipment: .kettlebell, focus: "Deltoide anterior"),
+        DefaultExercise(key: "shoulder-press-band", id: "75E569E5-F4B8-48B2-B1D9-2ED8E88DA922", name: "Desenvolvimento (Elástico)", muscleGroup: .shoulders, equipment: .band, focus: "Deltoide anterior"),
+        DefaultExercise(key: "landmine-shoulder-press", id: "03FA10BD-B78E-4D5C-9F9D-E998E9665189", name: "Desenvolvimento Landmine (Barra)", muscleGroup: .shoulders, equipment: .barbell, focus: "Deltoide anterior"),
+        DefaultExercise(key: "push-press", id: "072A69DE-7EFD-4FE3-9A55-C884F69AC9DD", name: "Push Press (Barra)", muscleGroup: .shoulders, equipment: .barbell, focus: "Ombros e pernas (potência)"),
+        DefaultExercise(key: "seated-lateral-raise-dumbbell", id: "C7883059-A317-41AE-8CF6-16C9E6B61181", name: "Elevação Lateral Sentado (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Deltoide lateral"),
+        DefaultExercise(key: "lateral-raise-band", id: "9A1FC1BE-537F-4BB0-8DDA-476B121E852C", name: "Elevação Lateral (Elástico)", muscleGroup: .shoulders, equipment: .band, focus: "Deltoide lateral"),
+        DefaultExercise(key: "alternating-front-raise-dumbbell", id: "733EEEE6-E24E-44A5-B7B3-C2857E6BB675", name: "Elevação Frontal Alternada (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Deltoide anterior"),
+        DefaultExercise(key: "single-arm-front-raise-cable", id: "4B16AD3B-F198-497C-B0F8-F7D7F51E3DC2", name: "Elevação Frontal Unilateral (Polia)", muscleGroup: .shoulders, equipment: .cable, focus: "Deltoide anterior"),
+        DefaultExercise(key: "front-raise-band", id: "E6F7E189-5921-4490-845B-62D59DC8E6DD", name: "Elevação Frontal (Elástico)", muscleGroup: .shoulders, equipment: .band, focus: "Deltoide anterior"),
+        DefaultExercise(key: "incline-reverse-fly-dumbbell", id: "8E5C22FD-761C-463D-A953-2109836049E6", name: "Crucifixo Invertido Inclinado (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Deltoide posterior"),
+        DefaultExercise(key: "reverse-fly-band", id: "7073E06F-0A94-4CB8-8DD0-BBC7C7D79982", name: "Crucifixo Invertido (Elástico)", muscleGroup: .shoulders, equipment: .band, focus: "Deltoide posterior"),
+        DefaultExercise(key: "face-pull-band", id: "DD4B7EE6-2FA8-4A9E-AAAD-5C6B437C2213", name: "Face Pull (Elástico)", muscleGroup: .shoulders, equipment: .band, focus: "Deltoide posterior e manguito rotador"),
+        DefaultExercise(key: "upright-row-smith", id: "686CEB1E-F69E-4E23-9941-F77A9A7BC566", name: "Remada Alta (Smith)", muscleGroup: .shoulders, equipment: .smith, focus: "Deltoide lateral e trapézio"),
+        DefaultExercise(key: "external-rotation-dumbbell", id: "8955FFBC-DF4D-41A2-8882-593F133E1AA1", name: "Rotação Externa (Halter)", muscleGroup: .shoulders, equipment: .dumbbell, focus: "Manguito rotador"),
+        DefaultExercise(key: "external-rotation-band", id: "BF07800A-5E19-496D-B8BD-A15C9EF18D12", name: "Rotação Externa (Elástico)", muscleGroup: .shoulders, equipment: .band, focus: "Manguito rotador"),
+        DefaultExercise(key: "internal-rotation-cable", id: "97F8BB8E-D813-4467-A0F9-BEDDA981BDA0", name: "Rotação Interna (Polia)", muscleGroup: .shoulders, equipment: .cable, focus: "Manguito rotador"),
+        DefaultExercise(key: "pike-push-up", id: "1CC05137-4836-46EB-AF9C-669BA7457123", name: "Flexão Pike", muscleGroup: .shoulders, equipment: .bodyweight, focus: "Deltoide anterior"),
+        DefaultExercise(key: "handstand-push-up", id: "ECD22BC8-899E-4F11-BF30-B1A82183FABD", name: "Flexão em Parada de Mão", muscleGroup: .shoulders, equipment: .bodyweight, focus: "Deltoide anterior e tríceps"),
 
         // MARK: Bíceps
         DefaultExercise(key: "curl-barbell", id: "5DE24313-22D9-4860-A20E-BC4593835349", name: "Rosca Direta (Barra)", muscleGroup: .biceps, equipment: .barbell, focus: "Bíceps (geral)"),
@@ -154,6 +242,19 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "incline-curl-dumbbell", id: "613574DD-43BB-4CAB-A56C-938BB9A22382", name: "Rosca Inclinada (Halter)", muscleGroup: .biceps, equipment: .dumbbell, focus: "Bíceps (cabeça longa)"),
         DefaultExercise(key: "spider-curl-ez-bar", id: "07956F8F-C361-4F10-84E2-7DDADAFE8B23", name: "Rosca Spider (Barra W)", muscleGroup: .biceps, equipment: .barbell, focus: "Bíceps (cabeça curta)"),
         DefaultExercise(key: "spider-curl-dumbbell", id: "080B9377-7A85-478C-9ABD-83831CFE03CA", name: "Rosca Spider (Halter)", muscleGroup: .biceps, equipment: .dumbbell, focus: "Bíceps (cabeça curta)"),
+        DefaultExercise(key: "curl-machine", id: "8F95ACDF-64FD-4AFF-84C8-7376F4FD7C45", name: "Rosca Direta (Máquina)", muscleGroup: .biceps, equipment: .machine, focus: "Bíceps (geral)"),
+        DefaultExercise(key: "curl-band", id: "730984C6-53E4-4B61-B47C-5A9831CF8382", name: "Rosca Direta (Elástico)", muscleGroup: .biceps, equipment: .band, focus: "Bíceps (geral)"),
+        DefaultExercise(key: "close-grip-curl-ez-bar", id: "F516869D-6226-434A-91C6-C684AD3B8D15", name: "Rosca Direta Pegada Fechada (Barra W)", muscleGroup: .biceps, equipment: .barbell, focus: "Bíceps (cabeça longa)"),
+        DefaultExercise(key: "curl-21s-barbell", id: "38B4CCCD-9B78-4842-A941-2DEA160FAC2A", name: "Rosca 21 (Barra)", muscleGroup: .biceps, equipment: .barbell, focus: "Bíceps (geral)"),
+        DefaultExercise(key: "drag-curl-barbell", id: "2284CB51-6D80-490B-80FB-2F67B804558D", name: "Rosca Arrastada (Barra)", muscleGroup: .biceps, equipment: .barbell, focus: "Bíceps (cabeça longa)"),
+        DefaultExercise(key: "alternating-hammer-curl-dumbbell", id: "BC357B72-4721-483F-9EE7-E76E7A16BABE", name: "Rosca Martelo Alternada (Halter)", muscleGroup: .biceps, equipment: .dumbbell, focus: "Braquial e braquiorradial"),
+        DefaultExercise(key: "cross-body-hammer-curl", id: "220DFE5B-DF34-49B4-944A-9E11BFCE27AC", name: "Rosca Martelo Cruzada (Halter)", muscleGroup: .biceps, equipment: .dumbbell, focus: "Braquial"),
+        DefaultExercise(key: "preacher-curl-barbell", id: "A7747478-AD64-4EF8-844F-D0B5A6AAB0F7", name: "Rosca Scott (Barra)", muscleGroup: .biceps, equipment: .barbell, focus: "Bíceps (cabeça curta)"),
+        DefaultExercise(key: "single-arm-preacher-curl-cable", id: "5EED939E-978C-4F81-AE9E-83848FC40377", name: "Rosca Scott Unilateral (Polia)", muscleGroup: .biceps, equipment: .cable, focus: "Bíceps (cabeça curta)"),
+        DefaultExercise(key: "single-arm-preacher-curl-machine", id: "475FC504-CB54-4DA3-8E97-0D510E057D95", name: "Rosca Scott Unilateral (Máquina)", muscleGroup: .biceps, equipment: .machine, focus: "Bíceps (cabeça curta)"),
+        DefaultExercise(key: "concentration-curl-cable", id: "BE74676F-2D09-46DD-8C1B-6885B3F93B39", name: "Rosca Concentrada (Polia)", muscleGroup: .biceps, equipment: .cable, focus: "Pico do bíceps"),
+        DefaultExercise(key: "zottman-curl", id: "10694303-1E8E-41C8-BC7C-526D9FF00E33", name: "Rosca Zottman (Halter)", muscleGroup: .biceps, equipment: .dumbbell, focus: "Bíceps e antebraço"),
+        DefaultExercise(key: "high-cable-curl", id: "CB6661BE-6028-4DCD-A828-D4175CF49196", name: "Rosca Alta (Polia)", muscleGroup: .biceps, equipment: .cable, focus: "Pico do bíceps"),
 
         // MARK: Tríceps
         DefaultExercise(key: "triceps-pushdown-bar", id: "129B6EDC-93B4-4969-AF26-8D014C4F23B5", name: "Tríceps Pulley (Polia)", muscleGroup: .triceps, equipment: .cable, focus: "Cabeças lateral e medial"),
@@ -179,6 +280,22 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "dips", id: "1CFDD592-1E38-4415-86D8-12553A8465FE", name: "Tríceps na Paralela", muscleGroup: .triceps, equipment: .bodyweight, focus: "Tríceps (geral)"),
         DefaultExercise(key: "bench-dips", id: "0F6C0D6E-0503-4BE7-AC99-20980E90FE79", name: "Tríceps no Banco", muscleGroup: .triceps, equipment: .bodyweight, focus: "Tríceps (geral)"),
         DefaultExercise(key: "diamond-push-up", id: "1825336D-B071-47C5-83C1-AB4563135044", name: "Flexão Diamante", muscleGroup: .triceps, equipment: .bodyweight, focus: "Tríceps e peitoral"),
+        DefaultExercise(key: "reverse-grip-pushdown", id: "AEF685CB-0EFA-4124-8EAF-D01C069B2C4B", name: "Tríceps Pulley Invertido (Polia)", muscleGroup: .triceps, equipment: .cable, focus: "Cabeça medial"),
+        DefaultExercise(key: "triceps-pushdown-v-bar", id: "F04DE973-11DA-48CA-A34C-6D6F8AB5D429", name: "Tríceps Pulley Barra V (Polia)", muscleGroup: .triceps, equipment: .cable, focus: "Cabeças lateral e medial"),
+        DefaultExercise(key: "cross-body-triceps-extension-cable", id: "EF2EC54C-BA82-4CBE-9B8A-DDDC12EC57E9", name: "Tríceps Cruzado (Polia)", muscleGroup: .triceps, equipment: .cable, focus: "Cabeça lateral"),
+        DefaultExercise(key: "triceps-pushdown-band", id: "F588831B-3944-4CA9-8F60-806DAABC44E3", name: "Tríceps (Elástico)", muscleGroup: .triceps, equipment: .band, focus: "Cabeça lateral"),
+        DefaultExercise(key: "single-arm-overhead-extension-cable", id: "41C546F6-858D-4228-8038-543BC7673F3C", name: "Extensão de Tríceps Acima da Cabeça Unilateral (Polia)", muscleGroup: .triceps, equipment: .cable, focus: "Cabeça longa"),
+        DefaultExercise(key: "overhead-extension-machine", id: "D9EDB1FF-AD39-4766-9E30-20F8CE1DE07F", name: "Extensão de Tríceps Acima da Cabeça (Máquina)", muscleGroup: .triceps, equipment: .machine, focus: "Cabeça longa"),
+        DefaultExercise(key: "overhead-extension-band", id: "4794F87D-69A0-400B-A944-B2E39A9ADDD6", name: "Extensão de Tríceps Acima da Cabeça (Elástico)", muscleGroup: .triceps, equipment: .band, focus: "Cabeça longa"),
+        DefaultExercise(key: "skull-crusher-straight-bar", id: "CBBECD32-E8A6-46E0-A193-EBB0A81C34DF", name: "Tríceps Testa (Barra)", muscleGroup: .triceps, equipment: .barbell, focus: "Cabeça longa"),
+        DefaultExercise(key: "incline-skull-crusher-ez-bar", id: "238ABAA2-6174-4BDD-8AFC-CF04BDE9BF0F", name: "Tríceps Testa Inclinado (Barra W)", muscleGroup: .triceps, equipment: .barbell, focus: "Cabeça longa"),
+        DefaultExercise(key: "single-arm-skull-crusher-dumbbell", id: "DE773437-FBDD-4FBB-85E4-A100235A991B", name: "Tríceps Testa Unilateral (Halter)", muscleGroup: .triceps, equipment: .dumbbell, focus: "Cabeça longa"),
+        DefaultExercise(key: "tate-press", id: "8345ADAD-FC96-46AA-B687-2BA765ACC8AF", name: "Tate Press (Halter)", muscleGroup: .triceps, equipment: .dumbbell, focus: "Cabeças lateral e medial"),
+        DefaultExercise(key: "close-grip-bench-press-dumbbell", id: "746382AB-51AE-4452-B72F-A57880160EDB", name: "Supino Fechado (Halter)", muscleGroup: .triceps, equipment: .dumbbell, focus: "Tríceps e peitoral"),
+        DefaultExercise(key: "weighted-dips", id: "EFB1DC35-37A9-4136-8997-3DF3DF7ABEAE", name: "Tríceps na Paralela com Peso (Anilha)", muscleGroup: .triceps, equipment: .plate, focus: "Tríceps (geral)"),
+        DefaultExercise(key: "assisted-dips", id: "D44471E5-0887-4750-85AA-2612CBDF612D", name: "Tríceps na Paralela (Graviton)", muscleGroup: .triceps, equipment: .machine, focus: "Tríceps (geral)"),
+        DefaultExercise(key: "weighted-bench-dips", id: "891CFE84-4D5B-41D6-B477-B24C8005B0C8", name: "Tríceps no Banco com Peso (Anilha)", muscleGroup: .triceps, equipment: .plate, focus: "Tríceps (geral)"),
+        DefaultExercise(key: "close-grip-push-up", id: "593637DD-8037-4208-92D7-901C3F8E31B1", name: "Flexão Fechada", muscleGroup: .triceps, equipment: .bodyweight, focus: "Tríceps e peitoral"),
 
         // MARK: Antebraços
         DefaultExercise(key: "wrist-curl-barbell", id: "0481D3C9-EAEB-4264-88CA-685EC556BE60", name: "Rosca de Punho (Barra)", muscleGroup: .forearms, equipment: .barbell, focus: "Flexores do antebraço"),
@@ -188,6 +305,11 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "reverse-curl-barbell", id: "B60B986C-37C2-49F0-9047-8F6C93AD6348", name: "Rosca Invertida (Barra W)", muscleGroup: .forearms, equipment: .barbell, focus: "Braquiorradial"),
         DefaultExercise(key: "reverse-curl-dumbbell", id: "EEE5EB96-6125-4896-9A61-56F84AE8C432", name: "Rosca Invertida (Halter)", muscleGroup: .forearms, equipment: .dumbbell, focus: "Braquiorradial"),
         DefaultExercise(key: "reverse-curl-cable", id: "7B240C7E-6DA9-45D0-A6AD-0BEFCEA9A576", name: "Rosca Invertida (Polia)", muscleGroup: .forearms, equipment: .cable, focus: "Braquiorradial"),
+        DefaultExercise(key: "wrist-curl-cable", id: "A7FBED22-BD31-4DBE-A30F-FC957358D35C", name: "Rosca de Punho (Polia)", muscleGroup: .forearms, equipment: .cable, focus: "Flexores do antebraço"),
+        DefaultExercise(key: "behind-the-back-wrist-curl", id: "E27AADEC-08B4-4DDA-8AC0-D55D25D6BD0B", name: "Rosca de Punho Atrás do Corpo (Barra)", muscleGroup: .forearms, equipment: .barbell, focus: "Flexores do antebraço"),
+        DefaultExercise(key: "reverse-curl-straight-bar", id: "48378A0A-2CAA-4130-B2DD-BFFFCA624EAD", name: "Rosca Invertida (Barra)", muscleGroup: .forearms, equipment: .barbell, focus: "Braquiorradial"),
+        DefaultExercise(key: "wrist-roller", id: "9262742A-3738-49E1-84E1-23C55BB461A7", name: "Rolo de Antebraço (Anilha)", muscleGroup: .forearms, equipment: .plate, focus: "Antebraço (geral)"),
+        DefaultExercise(key: "wrist-rotation-dumbbell", id: "C589F864-C491-45BB-933A-ADF0DAC0CE78", name: "Rotação de Punho (Halter)", muscleGroup: .forearms, equipment: .dumbbell, focus: "Pronadores e supinadores"),
 
         // MARK: Abdômen
         DefaultExercise(key: "crunch", id: "A281DFB5-CBE2-4467-B060-483E68E55F64", name: "Abdominal", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal (parte superior)"),
@@ -207,6 +329,24 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "russian-twist", id: "D82081B2-5DCC-4F63-AE83-F5BA93D70A9C", name: "Rotação Russa (Anilha)", muscleGroup: .abs, equipment: .plate, focus: "Oblíquos"),
         DefaultExercise(key: "cable-woodchop", id: "D185F7C8-060E-4C6D-A08A-6B0E6873DB5C", name: "Lenhador (Polia)", muscleGroup: .abs, equipment: .cable, focus: "Oblíquos (rotação)"),
         DefaultExercise(key: "dead-bug", id: "FCC96AF0-F1D0-46A0-AA66-D28CAC9E6251", name: "Dead Bug", muscleGroup: .abs, equipment: .bodyweight, focus: "Core (estabilidade)"),
+        DefaultExercise(key: "sit-up", id: "EFCADE80-10A1-46A7-9F97-5FCADEF2372A", name: "Abdominal Completo", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal"),
+        DefaultExercise(key: "weighted-decline-crunch", id: "A4010807-7B1B-4691-B523-24567C195D2C", name: "Abdominal Declinado (Anilha)", muscleGroup: .abs, equipment: .plate, focus: "Reto abdominal"),
+        DefaultExercise(key: "v-up", id: "1C007C7E-1596-4527-93EB-83B7F9DE34C8", name: "Abdominal Canivete", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal"),
+        DefaultExercise(key: "rowing-crunch", id: "5019E787-079A-4121-A035-C92F0FD306F9", name: "Abdominal Remador", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal"),
+        DefaultExercise(key: "heel-touch", id: "CB89A2D8-B9D8-4841-A57E-4EF671491641", name: "Abdominal Toque no Calcanhar", muscleGroup: .abs, equipment: .bodyweight, focus: "Oblíquos"),
+        DefaultExercise(key: "stability-ball-crunch", id: "7235E620-0306-4AE9-ABD6-8C54C3BCF724", name: "Abdominal na Bola Suíça", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal"),
+        DefaultExercise(key: "hanging-knee-raise", id: "087460FD-C5C7-40DD-8997-5A8FA3099EDA", name: "Elevação de Joelhos na Barra Fixa", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal (parte inferior)"),
+        DefaultExercise(key: "captains-chair-leg-raise", id: "EAF1CC34-3A39-4398-BAC6-C549B4D127B0", name: "Elevação de Pernas na Paralela", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal (parte inferior)"),
+        DefaultExercise(key: "decline-leg-raise", id: "91EAB8B9-671A-4BF3-A931-636F638DC7C1", name: "Elevação de Pernas no Banco Declinado", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal (parte inferior)"),
+        DefaultExercise(key: "toes-to-bar", id: "79439BA9-44D5-402A-8336-171E9C83EA2D", name: "Pés na Barra", muscleGroup: .abs, equipment: .bodyweight, focus: "Reto abdominal e flexores do quadril"),
+        DefaultExercise(key: "windshield-wiper", id: "91F005A1-74A6-4D41-9F33-15263216983C", name: "Limpador de Para-brisa", muscleGroup: .abs, equipment: .bodyweight, focus: "Oblíquos"),
+        DefaultExercise(key: "mountain-climber", id: "70ABB43F-4F7F-42CC-A629-EFDC179C664B", name: "Escalador", muscleGroup: .abs, equipment: .bodyweight, focus: "Core e condicionamento"),
+        DefaultExercise(key: "side-bend-dumbbell", id: "691DF7BA-94FB-43EB-B42E-B867B11151DB", name: "Flexão Lateral (Halter)", muscleGroup: .abs, equipment: .dumbbell, focus: "Oblíquos"),
+        DefaultExercise(key: "side-bend-cable", id: "D15395C4-9128-40E5-A566-E9982781804B", name: "Flexão Lateral (Polia)", muscleGroup: .abs, equipment: .cable, focus: "Oblíquos"),
+        DefaultExercise(key: "russian-twist-dumbbell", id: "833A426A-13EF-431E-A863-50858429AC6D", name: "Rotação Russa (Halter)", muscleGroup: .abs, equipment: .dumbbell, focus: "Oblíquos"),
+        DefaultExercise(key: "torso-rotation-machine", id: "9B3811FC-12B3-4ECD-9487-401972309CE5", name: "Rotação de Tronco (Máquina)", muscleGroup: .abs, equipment: .machine, focus: "Oblíquos"),
+        DefaultExercise(key: "reverse-cable-woodchop", id: "3E7F8F85-2F5E-4AF7-AC95-4E1730617011", name: "Lenhador Invertido (Polia)", muscleGroup: .abs, equipment: .cable, focus: "Oblíquos (rotação)"),
+        DefaultExercise(key: "pallof-press", id: "9AC40950-6C31-4C03-90CF-502B61E73258", name: "Pallof Press (Polia)", muscleGroup: .abs, equipment: .cable, focus: "Core (antirrotação)"),
 
         // MARK: Quadríceps
         DefaultExercise(key: "back-squat", id: "C517F588-CCE9-43C9-A1E9-2DBCFCAF2EB4", name: "Agachamento Livre (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e glúteos"),
@@ -231,6 +371,27 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "walking-lunge-dumbbell", id: "70B05664-01F6-4ABB-894A-40B97DA68216", name: "Passada (Halter)", muscleGroup: .quadriceps, equipment: .dumbbell, focus: "Quadríceps e glúteos"),
         DefaultExercise(key: "walking-lunge-barbell", id: "2ECDE858-BBD3-40D1-BC84-49B6418805EB", name: "Passada (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e glúteos"),
         DefaultExercise(key: "step-up-dumbbell", id: "9B8D4982-AD47-4B50-BBAB-57A67F6FEF44", name: "Subida no Banco (Halter)", muscleGroup: .quadriceps, equipment: .dumbbell, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "squat-dumbbell", id: "8045D489-74CF-4D75-9FD9-545912C6722A", name: "Agachamento (Halter)", muscleGroup: .quadriceps, equipment: .dumbbell, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "box-squat", id: "3F9F16F0-A0E1-4E23-8FB2-0DE73F919D7E", name: "Agachamento no Banco (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "zercher-squat", id: "C85FE94A-01E6-4009-A4AB-F529294744B5", name: "Agachamento Zercher (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e core"),
+        DefaultExercise(key: "overhead-squat", id: "D8C49719-BD95-4EC3-827D-CCE279F4A327", name: "Agachamento Overhead (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps, ombros e core"),
+        DefaultExercise(key: "front-squat-smith", id: "CACE2152-B0FA-4926-AE8C-0CB9FE11A3B0", name: "Agachamento Frontal (Smith)", muscleGroup: .quadriceps, equipment: .smith, focus: "Quadríceps"),
+        DefaultExercise(key: "v-squat-machine", id: "E1D2DB9C-33B2-476A-A7D6-B3E5DD0554F2", name: "Agachamento V-Squat (Máquina)", muscleGroup: .quadriceps, equipment: .machine, focus: "Quadríceps"),
+        DefaultExercise(key: "belt-squat-machine", id: "5301E290-9EFC-4464-8FC0-BC2733872D08", name: "Agachamento com Cinto (Máquina)", muscleGroup: .quadriceps, equipment: .machine, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "bulgarian-split-squat-barbell", id: "03B70297-C662-4F45-A569-32243A4F526B", name: "Agachamento Búlgaro (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "bulgarian-split-squat-bodyweight", id: "05782DDE-CD21-41FE-9650-AF987FBDCD30", name: "Agachamento Búlgaro", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "pistol-squat", id: "84CBD686-1D00-41D0-93DE-258F610B5513", name: "Agachamento Pistol", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps e equilíbrio"),
+        DefaultExercise(key: "cossack-squat", id: "FE459584-48DF-4BF1-96A0-5B27F44FDEED", name: "Agachamento Cossaco", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps e adutores"),
+        DefaultExercise(key: "jump-squat", id: "1CBA35C0-6C3E-467D-A4B5-D2CA694FB829", name: "Agachamento com Salto", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps (potência)"),
+        DefaultExercise(key: "vertical-leg-press", id: "E6CE1B9B-1F8D-452A-AD85-040A09BB5B14", name: "Leg Press Vertical (Máquina)", muscleGroup: .quadriceps, equipment: .machine, focus: "Quadríceps"),
+        DefaultExercise(key: "lunge-bodyweight", id: "35072D46-D3CA-4C2F-AE70-C9F6B5ED28C2", name: "Afundo", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "reverse-lunge-dumbbell", id: "96277DF1-0C3E-455C-9E45-11B5BCC81C5A", name: "Afundo Reverso (Halter)", muscleGroup: .quadriceps, equipment: .dumbbell, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "reverse-lunge-barbell", id: "D2018202-A7A1-4AF6-8056-8191AC650F1A", name: "Afundo Reverso (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "reverse-lunge-smith", id: "102C6327-0092-4B24-BB34-B3C742EB2758", name: "Afundo Reverso (Smith)", muscleGroup: .quadriceps, equipment: .smith, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "lateral-lunge-dumbbell", id: "BF0AF26F-0614-4F6E-99D3-A92093550C3B", name: "Afundo Lateral (Halter)", muscleGroup: .quadriceps, equipment: .dumbbell, focus: "Quadríceps e adutores"),
+        DefaultExercise(key: "walking-lunge-bodyweight", id: "EBFA0BC5-75DF-4EA9-9C1D-1D7C74D0591B", name: "Passada", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "step-up-bodyweight", id: "A274B4D6-6910-4A62-A665-EFA51E95ACEA", name: "Subida no Banco", muscleGroup: .quadriceps, equipment: .bodyweight, focus: "Quadríceps e glúteos"),
+        DefaultExercise(key: "step-up-barbell", id: "CCCBEE74-E23B-487B-8DC3-F681E2563F96", name: "Subida no Banco (Barra)", muscleGroup: .quadriceps, equipment: .barbell, focus: "Quadríceps e glúteos"),
 
         // MARK: Posteriores de coxa
         DefaultExercise(key: "lying-leg-curl", id: "BA642AA8-6477-47CB-BAD2-EE698617D7CC", name: "Mesa Flexora (Máquina)", muscleGroup: .hamstrings, equipment: .machine, focus: "Posteriores (isolado)"),
@@ -244,6 +405,14 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "good-morning", id: "A0FEF74E-FA04-419F-A24C-8373963B385B", name: "Good Morning (Barra)", muscleGroup: .hamstrings, equipment: .barbell, focus: "Posteriores e lombar"),
         DefaultExercise(key: "good-morning-smith", id: "260397E6-BC71-4C8D-9959-46AF7863C31A", name: "Good Morning (Smith)", muscleGroup: .hamstrings, equipment: .smith, focus: "Posteriores e lombar"),
         DefaultExercise(key: "nordic-curl", id: "B90F4F41-9ACB-4056-B550-E6F00969FC17", name: "Flexão Nórdica", muscleGroup: .hamstrings, equipment: .bodyweight, focus: "Posteriores (fase excêntrica)"),
+        DefaultExercise(key: "single-leg-lying-leg-curl", id: "5534EBDC-91C2-492E-A06F-3908A40AD972", name: "Mesa Flexora Unilateral (Máquina)", muscleGroup: .hamstrings, equipment: .machine, focus: "Posteriores (isolado)"),
+        DefaultExercise(key: "single-leg-seated-leg-curl", id: "E0D72F60-C42A-496F-A66B-A5BA0C5955A1", name: "Cadeira Flexora Unilateral (Máquina)", muscleGroup: .hamstrings, equipment: .machine, focus: "Posteriores (isolado)"),
+        DefaultExercise(key: "kneeling-leg-curl", id: "B9B2FBA4-E1A0-4D1A-9F20-E4EF0725D5CC", name: "Flexora Ajoelhada (Máquina)", muscleGroup: .hamstrings, equipment: .machine, focus: "Posteriores (isolado)"),
+        DefaultExercise(key: "lying-leg-curl-dumbbell", id: "120F4BFC-3232-4654-A20D-F1F8BFDAB0C5", name: "Mesa Flexora (Halter)", muscleGroup: .hamstrings, equipment: .dumbbell, focus: "Posteriores (isolado)"),
+        DefaultExercise(key: "standing-leg-curl-cable", id: "2E32153E-7E6C-482C-9FDA-7398943C1FB4", name: "Flexora em Pé (Polia)", muscleGroup: .hamstrings, equipment: .cable, focus: "Posteriores (isolado)"),
+        DefaultExercise(key: "stability-ball-leg-curl", id: "FEF97402-8059-441B-AED7-455D8AD3ADD2", name: "Flexora na Bola Suíça", muscleGroup: .hamstrings, equipment: .bodyweight, focus: "Posteriores e glúteos"),
+        DefaultExercise(key: "romanian-deadlift-kettlebell", id: "CF69D782-F259-44C2-A4F4-1105A2874016", name: "Stiff (Kettlebell)", muscleGroup: .hamstrings, equipment: .kettlebell, focus: "Posteriores e glúteos"),
+        DefaultExercise(key: "glute-ham-raise", id: "08837A9C-2DF3-495D-AB44-155FFFD90B28", name: "Glute Ham Raise (Máquina)", muscleGroup: .hamstrings, equipment: .machine, focus: "Posteriores e glúteos"),
 
         // MARK: Glúteos
         DefaultExercise(key: "hip-thrust-barbell", id: "BAA2E068-F397-42D3-B12B-21A9B3527ABC", name: "Elevação Pélvica (Barra)", muscleGroup: .glutes, equipment: .barbell, focus: "Glúteo máximo"),
@@ -258,10 +427,29 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "lateral-band-walk", id: "259F1AD8-9863-4C12-AF74-FD217AAABB9A", name: "Caminhada Lateral (Elástico)", muscleGroup: .glutes, equipment: .band, focus: "Glúteo médio"),
         DefaultExercise(key: "sumo-squat-dumbbell", id: "4EE5DACD-EC24-41CA-A98C-AD2E064FB437", name: "Agachamento Sumô (Halter)", muscleGroup: .glutes, equipment: .dumbbell, focus: "Glúteos e adutores"),
         DefaultExercise(key: "sumo-deadlift", id: "E8D7AA94-B91B-4232-9334-7DF6BCE89F6E", name: "Levantamento Terra Sumô (Barra)", muscleGroup: .glutes, equipment: .barbell, focus: "Glúteos, adutores e posteriores"),
+        DefaultExercise(key: "hip-thrust-dumbbell", id: "7B84F970-7CBB-4548-B691-49329FBFEF5C", name: "Elevação Pélvica (Halter)", muscleGroup: .glutes, equipment: .dumbbell, focus: "Glúteo máximo"),
+        DefaultExercise(key: "single-leg-hip-thrust", id: "FE38F720-2974-4F4D-9DDE-A2E701033562", name: "Elevação Pélvica Unilateral", muscleGroup: .glutes, equipment: .bodyweight, focus: "Glúteo máximo"),
+        DefaultExercise(key: "single-leg-hip-thrust-machine", id: "66692DAE-988A-4BFC-9B2F-F2F7CC9F5D1D", name: "Elevação Pélvica Unilateral (Máquina)", muscleGroup: .glutes, equipment: .machine, focus: "Glúteo máximo"),
+        DefaultExercise(key: "glute-bridge-barbell", id: "A803F344-CC5B-476C-AEBD-1C219A22CD9C", name: "Ponte de Glúteo (Barra)", muscleGroup: .glutes, equipment: .barbell, focus: "Glúteo máximo"),
+        DefaultExercise(key: "single-leg-glute-bridge", id: "B621FD84-9765-4E23-81ED-FC2D31692527", name: "Ponte de Glúteo Unilateral", muscleGroup: .glutes, equipment: .bodyweight, focus: "Glúteo máximo"),
+        DefaultExercise(key: "quadruped-kickback", id: "05B23B2F-2329-41E0-8F9C-E3072D831991", name: "Glúteo Quatro Apoios", muscleGroup: .glutes, equipment: .bodyweight, focus: "Glúteo máximo"),
+        DefaultExercise(key: "glute-kickback-smith", id: "B74F69B8-2BA5-4268-A6B3-AB0EE621B2D6", name: "Glúteo Coice (Smith)", muscleGroup: .glutes, equipment: .smith, focus: "Glúteo máximo"),
+        DefaultExercise(key: "reverse-hyperextension", id: "CD2244B9-52D7-4869-A222-CC224626F9DB", name: "Hiperextensão Reversa (Máquina)", muscleGroup: .glutes, equipment: .machine, focus: "Glúteos e lombar"),
+        DefaultExercise(key: "cable-pull-through", id: "D9395DE5-8675-404A-81D5-40DBAE5967B7", name: "Pull Through (Polia)", muscleGroup: .glutes, equipment: .cable, focus: "Glúteos e posteriores"),
+        DefaultExercise(key: "reverse-hack-squat", id: "E0905767-458C-458C-BDF7-7797FD90A634", name: "Agachamento Hack Invertido (Máquina)", muscleGroup: .glutes, equipment: .machine, focus: "Glúteos e posteriores"),
+        DefaultExercise(key: "sumo-squat-kettlebell", id: "D247B473-6B47-4464-AAC7-F05F7E23D44B", name: "Agachamento Sumô (Kettlebell)", muscleGroup: .glutes, equipment: .kettlebell, focus: "Glúteos e adutores"),
+        DefaultExercise(key: "sumo-squat-smith", id: "8BEAD648-CC95-4AB4-9710-2DD4B4EE5B09", name: "Agachamento Sumô (Smith)", muscleGroup: .glutes, equipment: .smith, focus: "Glúteos e adutores"),
+        DefaultExercise(key: "curtsy-lunge-dumbbell", id: "D87FC72F-FCFF-4274-9B5E-D31D70C10CAD", name: "Afundo Cruzado (Halter)", muscleGroup: .glutes, equipment: .dumbbell, focus: "Glúteo médio"),
+        DefaultExercise(key: "standing-hip-abduction-machine", id: "0C0BBF49-2B58-439B-8B35-B653A6068B25", name: "Abdução de Quadril em Pé (Máquina)", muscleGroup: .glutes, equipment: .machine, focus: "Glúteo médio"),
+        DefaultExercise(key: "side-lying-hip-abduction", id: "BFE45AFC-D496-4151-B647-6955361D2CBB", name: "Abdução Lateral Deitado", muscleGroup: .glutes, equipment: .bodyweight, focus: "Glúteo médio"),
+        DefaultExercise(key: "clamshell-band", id: "E015BF7B-89CC-4656-8716-B3921838418A", name: "Abdução Ostra (Elástico)", muscleGroup: .glutes, equipment: .band, focus: "Glúteo médio"),
+        DefaultExercise(key: "fire-hydrant", id: "D99D8F2C-FA96-41C1-9845-81A322661440", name: "Hidrante", muscleGroup: .glutes, equipment: .bodyweight, focus: "Glúteo médio"),
 
         // MARK: Adutores
         DefaultExercise(key: "hip-adduction-machine", id: "D70D3781-594F-4DD0-A391-A6491B960B06", name: "Cadeira Adutora (Máquina)", muscleGroup: .adductors, equipment: .machine, focus: "Adutores (parte interna da coxa)"),
         DefaultExercise(key: "hip-adduction-cable", id: "6C990FD1-E4AC-49EB-8ABC-C6FDA130AC20", name: "Adução de Quadril (Polia)", muscleGroup: .adductors, equipment: .cable, focus: "Adutores (parte interna da coxa)"),
+        DefaultExercise(key: "hip-adduction-band", id: "A852ECEE-53F0-437A-B531-27742133CCB6", name: "Adução de Quadril (Elástico)", muscleGroup: .adductors, equipment: .band, focus: "Adutores (parte interna da coxa)"),
+        DefaultExercise(key: "side-lying-hip-adduction", id: "F67FE5B5-F38F-4BED-9E52-5337B0F684E7", name: "Adução Lateral Deitado", muscleGroup: .adductors, equipment: .bodyweight, focus: "Adutores (parte interna da coxa)"),
 
         // MARK: Panturrilhas
         DefaultExercise(key: "standing-calf-raise", id: "7186818E-02B6-4AA3-88CD-5E3A9D4B243F", name: "Panturrilha em Pé (Máquina)", muscleGroup: .calves, equipment: .machine, focus: "Gastrocnêmio"),
@@ -269,6 +457,13 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "seated-calf-raise", id: "E8275D6E-BD2F-4D84-9B61-818997F78B5F", name: "Panturrilha Sentado (Máquina)", muscleGroup: .calves, equipment: .machine, focus: "Sóleo"),
         DefaultExercise(key: "leg-press-calf-raise", id: "23FD5256-DCB6-418D-8429-91F2E47CCF05", name: "Panturrilha no Leg Press (Máquina)", muscleGroup: .calves, equipment: .machine, focus: "Gastrocnêmio"),
         DefaultExercise(key: "single-leg-calf-raise-dumbbell", id: "0ADB917E-FE38-4460-8905-78A08B37AF41", name: "Panturrilha Unilateral (Halter)", muscleGroup: .calves, equipment: .dumbbell, focus: "Gastrocnêmio"),
+        DefaultExercise(key: "standing-calf-raise-bodyweight", id: "A5A80189-1A36-44B6-AEEB-2E991626D47D", name: "Panturrilha em Pé", muscleGroup: .calves, equipment: .bodyweight, focus: "Gastrocnêmio"),
+        DefaultExercise(key: "standing-calf-raise-dumbbell", id: "8155CC18-978D-4054-9B64-A2037B864510", name: "Panturrilha em Pé (Halter)", muscleGroup: .calves, equipment: .dumbbell, focus: "Gastrocnêmio"),
+        DefaultExercise(key: "standing-calf-raise-barbell", id: "99D5962A-78C8-4AD2-9FD0-62689B411B6A", name: "Panturrilha em Pé (Barra)", muscleGroup: .calves, equipment: .barbell, focus: "Gastrocnêmio"),
+        DefaultExercise(key: "seated-calf-raise-dumbbell", id: "1D092482-613C-4822-9161-40B6595883B6", name: "Panturrilha Sentado (Halter)", muscleGroup: .calves, equipment: .dumbbell, focus: "Sóleo"),
+        DefaultExercise(key: "hack-squat-calf-raise", id: "E5C908E8-18AB-489E-B4FE-8EC6244A1AFF", name: "Panturrilha no Hack (Máquina)", muscleGroup: .calves, equipment: .machine, focus: "Gastrocnêmio"),
+        DefaultExercise(key: "donkey-calf-raise", id: "6F8FF0BA-9879-4BC0-BA39-E98D72C08459", name: "Panturrilha Burrico (Máquina)", muscleGroup: .calves, equipment: .machine, focus: "Gastrocnêmio"),
+        DefaultExercise(key: "tibialis-raise", id: "F449F243-5DB1-4FE5-BA8B-AFED69DB9472", name: "Elevação de Ponta dos Pés", muscleGroup: .calves, equipment: .bodyweight, focus: "Tibial anterior"),
 
         // MARK: Corpo inteiro
         DefaultExercise(key: "kettlebell-swing", id: "5768F1BF-317F-4944-92EB-08C9E84BF197", name: "Kettlebell Swing", muscleGroup: .fullBody, equipment: .kettlebell, focus: "Glúteos e posteriores (potência)"),
@@ -278,6 +473,12 @@ enum DefaultExerciseLibrary {
         DefaultExercise(key: "thruster-dumbbell", id: "94F098B9-9AF6-4DCA-A9D1-0A96B5B5C1F5", name: "Thruster (Halter)", muscleGroup: .fullBody, equipment: .dumbbell, focus: "Pernas e ombros"),
         DefaultExercise(key: "power-clean", id: "372E8075-4DF9-4DC2-9EE2-4E50CFF9EA1A", name: "Power Clean (Barra)", muscleGroup: .fullBody, equipment: .barbell, focus: "Corpo inteiro (potência)"),
         DefaultExercise(key: "burpee", id: "E424EF0A-10C4-4C7C-97B4-944763A4884E", name: "Burpee", muscleGroup: .fullBody, equipment: .bodyweight, focus: "Condicionamento"),
+        DefaultExercise(key: "clean-and-jerk", id: "2055A6E7-3AB8-49A4-B20B-0D19FD953A93", name: "Arremesso (Barra)", muscleGroup: .fullBody, equipment: .barbell, focus: "Corpo inteiro (potência)"),
+        DefaultExercise(key: "snatch-barbell", id: "288DF240-84E6-4E11-8B22-570E18FB2937", name: "Arranco (Barra)", muscleGroup: .fullBody, equipment: .barbell, focus: "Corpo inteiro (potência)"),
+        DefaultExercise(key: "snatch-dumbbell", id: "C6396DC6-92CB-40DB-8B44-0B4FC3A794E3", name: "Arranco (Halter)", muscleGroup: .fullBody, equipment: .dumbbell, focus: "Corpo inteiro (potência)"),
+        DefaultExercise(key: "kettlebell-clean", id: "E99672D6-F4F3-40B1-B0A1-00BAB937F3FB", name: "Clean (Kettlebell)", muscleGroup: .fullBody, equipment: .kettlebell, focus: "Corpo inteiro (potência)"),
+        DefaultExercise(key: "thruster-kettlebell", id: "8FF8A8B1-A091-4141-BB6C-15B39D674C46", name: "Thruster (Kettlebell)", muscleGroup: .fullBody, equipment: .kettlebell, focus: "Pernas e ombros"),
+        DefaultExercise(key: "single-arm-kettlebell-swing", id: "1C46EB31-03EC-48F0-A776-C36324F3E1AB", name: "Kettlebell Swing Unilateral", muscleGroup: .fullBody, equipment: .kettlebell, focus: "Glúteos e posteriores (potência)"),
     ]
 
     /// The entries by key, built once: what the library says of a built-in exercise that the store does
