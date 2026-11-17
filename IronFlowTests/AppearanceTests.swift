@@ -40,6 +40,7 @@ struct AppearanceTests {
             // The main buttons: white with black text.
             ("PrimaryButton", [0xF5, 0xF5, 0xF7], 100),
             ("PrimaryButtonText", [0x00, 0x00, 0x00], 100),
+            ("SelectedTab", [0xFF, 0xFF, 0xFF], 100),
             // The highlight (today's workout).
             ("HighlightBackground", [0x0A, 0x0A, 0x0B], 100),
             ("HighlightBorder", [0xFF, 0xFF, 0xFF], 14),

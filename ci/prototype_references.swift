@@ -267,6 +267,11 @@ private func run(arguments: [String]) async -> Int32 {
         if !html.lowercased().contains("<meta charset") {
             html = "<meta charset=\"utf-8\">\n" + html
         }
+        // Nor does it start with a doctype: the artifact viewer shows it in standards mode, and without one
+        // WebKit would lay it out in quirks mode (lines with only small inline text come out shorter).
+        if !html.lowercased().hasPrefix("<!doctype") {
+            html = "<!DOCTYPE html>\n" + html
+        }
 
         let work = output.appendingPathComponent(".pagina", isDirectory: true)
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)

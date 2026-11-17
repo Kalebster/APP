@@ -9,6 +9,13 @@ name: Referências do protótipo
 # does not run or change here.
 on:
   workflow_dispatch:
+  # TEMPORÁRIO, só para gerar as referências de novo nesta etapa (o workflow ainda não está no main e não
+  # pode ser iniciado à mão). Sai no commit seguinte.
+  push:
+    branches:
+      - visual-novo
+    paths:
+      - ci/prototype_references.swift
 
 permissions:
   contents: read

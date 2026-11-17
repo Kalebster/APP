@@ -31,6 +31,8 @@ enum Theme {
         /// current working set.
         static let primaryButton = Color(.primaryButton)
         static let primaryButtonText = Color(.primaryButtonText)
+        /// The chosen tab of the tab bar (the bar is the system's; this is its tint).
+        static let selectedTab = Color(.selectedTab)
 
         /// The square behind an icon, and the light gray of icons and links.
         static let iconTileBackground = Color(.iconTileBackground)

@@ -83,7 +83,9 @@ private struct LockScreenPreview: View {
                     startRadius: 0,
                     endRadius: radius
                 )
-                .scaleEffect(x: max(size.width * 1.2 / radius, 1), y: 1, anchor: .top)
+                // Narrower than the picture when it is very tall: the black behind fills the sides, as
+                // the gradient's last color does.
+                .scaleEffect(x: size.width * 1.2 / radius, y: 1, anchor: .top)
             }
             .background(Theme.Colors.screenBackground)
             .clipShape(shape)

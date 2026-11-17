@@ -100,7 +100,7 @@ struct RootView: View {
         }
         // The chosen tab in white; inside each tab and on the session screen, the blue of the details
         // stays (switches, the text cursor).
-        .tint(.white)
+        .tint(Theme.Colors.selectedTab)
         .fullScreenCover(item: $openedSession) { session in
             SessionView(session: session, rest: rest, onFinish: showHomeAfterFinishing) {
                 openedSession = nil

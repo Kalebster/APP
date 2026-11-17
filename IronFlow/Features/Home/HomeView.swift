@@ -486,14 +486,15 @@ private struct HighlightMainButtonStyle: ButtonStyle {
 }
 
 /// A secondary action of the block: the system's glass, at least 34 points tall, with 5 more points
-/// above and below that respond to touches, so the touch area is 44 points. The glass answers the touch
-/// itself (interactive).
+/// above and below that respond to touches, so the touch area is 44 points. The glass answers a touch on
+/// it (interactive); the text dims on any press, also one in the 5 points around the glass.
 private struct HighlightGlassButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: 11, style: .continuous)
         return configuration.label
             .scaledFont(13, weight: .semibold)
             .foregroundStyle(Theme.Colors.highlightText)
+            .opacity(configuration.isPressed ? 0.6 : 1)
             .multilineTextAlignment(.center)
             .padding(.vertical, 7)
             .padding(.horizontal, 8)

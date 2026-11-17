@@ -43,6 +43,7 @@ Todas ficam em `Resources/Assets.xcassets` e são lidas por `Theme.Colors` (ou `
 | `Color.accentColor` | #3D7BF0 | `--accent` | O azul dos detalhes (seção 2) |
 | `lightAccent` | #D1D1D6 | `--accent-soft` | Links, ícones, "‹ Voltar", ✓ da série atual, ponto da barra do treino |
 | `primaryButton` / `primaryButtonText` | #F5F5F7 / #000000 | `--white` / `--bg` | Botão principal: "Iniciar", "Criar treino", "Concluir", os ▶, "Pular", "Adicionar", o botão de ação das folhas; também o quadrado do logo, o dia treinado, o número da série válida atual e o chip de grupo escolhido |
+| `selectedTab` | #FFFFFF | `.tab[aria-current]` | A aba escolhida da barra de abas do sistema (o `tint` da `TabView`) |
 | `iconTileBackground` | #1E1E21 | `--chip` | Quadradinho atrás dos ícones |
 | `setFieldBackground` | #1E1E21 | `--input` | Campos, botões cinza das folhas, avisos |
 | `unplannedDayBackground` | #1E1E21 | `--field` / `--plan-off` | Dia sem treino programado |
@@ -119,7 +120,7 @@ SF Pro, a fonte do sistema (`.system(size:weight:)` dentro do `scaledFont`), só
 | `.bold` | 700 |
 | `.heavy` | 800 |
 
-Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(.system(...))` direto na tela ou tamanho fixo. O "Texto em negrito" do iPhone deixa a fonte do sistema mais pesada sozinha; o app não faz nada para isso. O espaçamento entre letras (`.tracking`) é o `letter-spacing` do protótipo.
+Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(.system(...))` direto na tela ou tamanho fixo. A única exceção é a inicial de um exercício próprio no quadradinho do editor, que usa a fonte do sistema em negrito no tamanho do próprio quadradinho (que já cresce com o Dynamic Type). O "Texto em negrito" do iPhone deixa a fonte do sistema mais pesada sozinha; o app não faz nada para isso. O espaçamento entre letras (`.tracking`) é o `letter-spacing` do protótipo.
 
 **Altura de linha.** O `normal` do CSS é a altura de linha da própria SF Pro, que muda com o tamanho: o desenho troca de Text para Display a partir de 20 pt. Os textos que têm `line-height` próprio no CSS do protótipo passam o mesmo valor em `scaledFont(tamanho, weight:, lineHeight:)`: 1,05 nos títulos grandes, 1 no número do anel da semana, 1,4 nos textos das folhas e no treino sem exercícios, 1,35 no aviso e nos textos pequenos das linhas de Treinos, da meta e do tipo da série. A sobra (o que a linha ganha ou perde) é calculada sobre a altura real da SF Pro naquele tamanho e peso (`SystemFont.lineHeight`), nunca sobre uma razão fixa: metade acima e metade abaixo do texto, e toda ela entre duas linhas. Quando um título com altura de linha menor que a da fonte (1,05) quebra em duas linhas ou mais, as linhas ficam com a altura própria da SF Pro entre elas, uns 4 pt a mais por linha num título de 29: o SwiftUI não aproxima as linhas além disso, e o dono aceitou assim. O espaço acima da primeira linha e abaixo da última segue o protótipo. Os ícones não são texto: vêm do catálogo `Icons` pelo `AppIcon`, no tamanho do protótipo, e crescem com o texto (seção 6, Ícones).
 
