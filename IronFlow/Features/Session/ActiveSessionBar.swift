@@ -51,7 +51,9 @@ struct ActiveSessionBar: View {
                     .frame(minHeight: openHeight)
                     .background(Theme.Colors.highlightBadge, in: Capsule())
                 }
-                .highlightStyle(padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 10), cornerRadius: 18)
+                .padding(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 10))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

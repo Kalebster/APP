@@ -57,11 +57,11 @@ struct SheetSectionTitle: View {
     }
 }
 
-/// A sheet's full-width button: blue for the action ("Salvar", "Pronto"), gray for leaving
+/// A sheet's full-width button: white for the action ("Salvar", "Pronto"), gray for leaving
 /// ("Cancelar", "Fechar"), and gray with red text for a dangerous one ("Descartar treino").
 struct SheetButton: View {
     enum Kind {
-        /// The action: white on the accent.
+        /// The action: black on white.
         case primary
         /// Leaving: light text on gray.
         case secondary
@@ -91,7 +91,7 @@ struct SheetButton: View {
                 .padding(.horizontal, 12)
                 .frame(maxWidth: .infinity, minHeight: height)
                 .background(
-                    kind == .primary ? Color.accentColor : Theme.Colors.setFieldBackground,
+                    kind == .primary ? Theme.Colors.primaryButton : Theme.Colors.setFieldBackground,
                     in: RoundedRectangle(cornerRadius: 13, style: .continuous)
                 )
                 .opacity(isEnabled ? 1 : 0.4)
@@ -102,7 +102,7 @@ struct SheetButton: View {
 
     private var foreground: Color {
         switch kind {
-        case .primary: .white
+        case .primary: Theme.Colors.primaryButtonText
         case .secondary: Theme.Colors.brightText
         case .destructive: Theme.Colors.failureSet
         }
@@ -112,7 +112,9 @@ struct SheetButton: View {
 /// A sheet as tall as what it shows: its scrolling content and the buttons kept at its bottom (when it
 /// has them) are measured, and the sheet takes their height, never leaving empty space below. Content
 /// taller than the tallest sheet (the largest text sizes, the calculator) gets the tallest sheet and
-/// scrolls, so nothing is cut.
+/// scrolls, so nothing is cut. The sheet is the system's, of glass, with no background of its own; the
+/// buttons are a bar of the scroll view (`safeAreaBar`), so content that scrolls under them gets the
+/// system's edge effect and they stay legible.
 struct FittedSheet<Content: View, Bottom: View>: View {
     private let content: Content
     private let bottom: Bottom
@@ -148,7 +150,7 @@ struct FittedSheet<Content: View, Bottom: View>: View {
         Group {
             if hasBottom {
                 scrollingContent
-                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                    .safeAreaBar(edge: .bottom, spacing: 0) {
                         bottom
                             .onGeometryChange(for: CGFloat.self) { proxy in
                                 proxy.size.height
@@ -170,7 +172,6 @@ struct FittedSheet<Content: View, Bottom: View>: View {
         }
         .presentationDetents([detent], selection: $detent)
         .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.Colors.cardBackground)
     }
 
     private var scrollingContent: some View {
@@ -196,12 +197,12 @@ struct FittedSheet<Content: View, Bottom: View>: View {
 }
 
 extension View {
-    /// The bar of buttons at the bottom of a sheet: the sheet's background, a margin around them.
+    /// The bar of buttons at the bottom of a sheet: a margin around them, with no background of its own
+    /// (the sheet's glass shows through, and the system's edge effect keeps them legible).
     func sheetButtonBar() -> some View {
         padding(.horizontal, Theme.Metrics.screenPadding)
             .padding(.top, 8)
             .padding(.bottom, 8)
-            .background(Theme.Colors.cardBackground)
     }
 
     /// The margins of a sheet's scrolling content.

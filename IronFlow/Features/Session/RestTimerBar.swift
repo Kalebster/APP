@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The floating rest bar, above the bottom of the session screen while a rest runs: a ring with the
+/// The floating rest bar, of glass, above the bottom of the session screen while a rest runs: a ring with the
 /// time left, "−15", "+15" and "Pular". Its clock ticks once a second only while the bar is on screen
 /// and the rest runs. When the rest reaches zero it shows "PRÓXIMA SÉRIE" and "Pronto" for a moment
 /// (`isReady`), with the ring empty and the same buttons. Ending the rest when it reaches zero is the
@@ -52,9 +52,8 @@ struct RestTimerBar: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(EdgeInsets(top: 7, leading: 10, bottom: 7, trailing: 7))
-        .background(Theme.Colors.restBarBackground, in: shape)
-        .overlay(shape.strokeBorder(Theme.Colors.controlBorder, lineWidth: 1))
-        .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
+        // The system's glass, with its own edge and shadow, over the list that scrolls under it.
+        .glassEffect(.regular.interactive(), in: shape)
     }
 
     private func clock(remaining: TimeInterval, at now: Date) -> some View {

@@ -246,8 +246,7 @@ struct WorkoutEditorView: View {
                     AppIcon(.more, size: 16)
                         .foregroundStyle(Theme.Colors.mediumText)
                         .frame(width: menuSide, height: menuSide)
-                        .background(Theme.Colors.cardBackground, in: Circle())
-                        .overlay(Circle().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
+                        .glassEffect(.regular.interactive(), in: Circle())
                         .frame(width: max(44, menuSide), height: max(44, menuSide))
                         .contentShape(Rectangle())
                 }

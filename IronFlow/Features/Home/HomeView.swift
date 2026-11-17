@@ -393,12 +393,13 @@ private struct TodayWorkoutCard: View {
     }
 
     /// Side by side; stacked with the accessibility text sizes. Each keeps a 44-point touch area,
-    /// which reaches past its outline without moving it.
+    /// which reaches past its glass without moving it. Both in one glass container, which draws them
+    /// together; they are farther apart than its spacing, so they never merge.
     @ViewBuilder
     private var secondaryButtons: some View {
         let actions = state.secondaryActions
         if !actions.isEmpty {
-            Group {
+            GlassEffectContainer(spacing: 0) {
                 if dynamicTypeSize.isAccessibilitySize {
                     VStack(spacing: -2) {
                         ForEach(actions, id: \.self) { actionButton($0, isMain: false) }
@@ -431,7 +432,7 @@ private struct TodayWorkoutCard: View {
         if isMain {
             button.buttonStyle(HighlightMainButtonStyle())
         } else {
-            button.buttonStyle(HighlightOutlinedButtonStyle())
+            button.buttonStyle(HighlightGlassButtonStyle())
         }
     }
 
@@ -484,9 +485,10 @@ private struct HighlightMainButtonStyle: ButtonStyle {
     }
 }
 
-/// A secondary action of the block: outlined, at least 34 points tall, with 5 more points above and
-/// below that respond to touches, so the touch area is 44 points.
-private struct HighlightOutlinedButtonStyle: ButtonStyle {
+/// A secondary action of the block: the system's glass, at least 34 points tall, with 5 more points
+/// above and below that respond to touches, so the touch area is 44 points. The glass answers the touch
+/// itself (interactive).
+private struct HighlightGlassButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: 11, style: .continuous)
         return configuration.label
@@ -496,9 +498,8 @@ private struct HighlightOutlinedButtonStyle: ButtonStyle {
             .padding(.vertical, 7)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, minHeight: 34)
-            .overlay(shape.strokeBorder(Theme.Colors.highlightLine, lineWidth: 1))
+            .glassEffect(.regular.interactive(), in: shape)
             .padding(.vertical, 5)
             .contentShape(Rectangle())
-            .opacity(configuration.isPressed ? 0.6 : 1)
     }
 }
