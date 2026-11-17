@@ -5,9 +5,9 @@
 //
 // The page is 402 points wide and as tall as the screen below the top safe area: the image starts there, on
 // a black status bar area, as the screenshots are compared. The prototype file is never changed: the copy
-// that is loaded gets the iPhone 17 safe areas in place of env() (0 at the top, since the image already
-// starts below it, and 34 at the bottom), hides the prototype's notes and test buttons, and has no
-// animations, so an image never catches a movement halfway. The page has no access to the network.
+// that is loaded is read as UTF-8, gets the iPhone 17 safe areas in place of env() (0 at the top, since the
+// image already starts below it, and 34 at the bottom), hides the prototype's notes and test buttons, and
+// has no animations, so an image never catches a movement halfway. The page has no access to the network.
 //
 // Usage: prototype-references <prototype.html> <references.json> <output folder> [name filter]
 
@@ -258,6 +258,11 @@ private func run(arguments: [String]) async -> Int32 {
         }
         guard let styleEnd = html.range(of: "</style>") else { throw RenderError(description: "no <style> in the prototype") }
         html.replaceSubrange(styleEnd, with: "</style>\n" + injectedStyle)
+        // The prototype does not name its encoding (it is served as UTF-8); a file without it would be read
+        // as Latin-1, which breaks its text and its script.
+        if !html.lowercased().contains("<meta charset") {
+            html = "<meta charset=\"utf-8\">\n" + html
+        }
 
         let work = output.appendingPathComponent(".pagina", isDirectory: true)
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
