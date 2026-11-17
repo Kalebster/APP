@@ -6,8 +6,9 @@
 // The page is 402 points wide and as tall as the screen below the top safe area: the image starts there, on
 // a black status bar area, as the screenshots are compared. The prototype file is never changed: the copy
 // that is loaded is read as UTF-8, gets the iPhone 17 safe areas in place of env() (0 at the top, since the
-// image already starts below it, and 34 at the bottom), hides the prototype's notes and test buttons, and
-// has no animations, so an image never catches a movement halfway. The page has no access to the network.
+// image already starts below it, and 34 at the bottom), has no browser margin around the page (as in the
+// artifact viewer), hides the prototype's notes and test buttons, and has no animations, so an image never
+// catches a movement halfway. The page has no access to the network.
 //
 // Usage: prototype-references <prototype.html> <references.json> <output folder> [name filter]
 
@@ -16,9 +17,12 @@ import ImageIO
 import UniformTypeIdentifiers
 import WebKit
 
-/// What is added to the copy of the prototype that is loaded.
+/// What is added to the copy of the prototype that is loaded. The prototype is made for the artifact
+/// viewer, which shows it without the browser's default margin of 8 around the page: without it here too,
+/// the screens start at the edge, with the 16 of their own margins, as on the phone.
 private let injectedStyle = """
 <style>
+html, body { margin: 0 !important; }
 .foot, .vn-note, .vn-sheet-toggle, .desk-hint { display: none !important; }
 *, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }
 button:focus-visible, input:focus-visible { outline: none !important; }
