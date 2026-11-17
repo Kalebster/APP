@@ -848,9 +848,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         // A swipe from the left edge closes the editor; the problem is shown over the list.
         scrollToTop(in: app)
         replaceText(of: fields("workout.set.weight", in: app).element(boundBy: 0), with: "1500")
-        let window = app.windows.firstMatch
-        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
-        edge.press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        swipeBackFromTheEdge(closing: app.buttons["workout.back"], in: app)
         acceptLoadError(in: app)
         XCTAssertTrue(app.buttons["workouts.add"].waitForExistence(timeout: 10), "The swipe did not go back to Treinos")
 
@@ -881,9 +879,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         openWorkout(named: "Push", in: app)
         XCTAssertTrue(waitForHiddenTabBar(in: app), "Tab bar shown on the editor")
 
-        let window = app.windows.firstMatch
-        let edge = window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
-        edge.press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        swipeBackFromTheEdge(closing: app.buttons["workout.back"], in: app)
         XCTAssertTrue(app.buttons["workouts.add"].waitForExistence(timeout: 10), "The swipe did not go back to Treinos")
         XCTAssertTrue(element("workout.title", in: app).waitForNonExistence(timeout: 10), "Editor still shown")
     }
