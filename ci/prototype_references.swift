@@ -165,7 +165,12 @@ private struct Renderer {
         for step in try expand(steps) {
             let result: Any? = try await withCheckedThrowingContinuation { continuation in
                 webView.callAsyncJavaScript(stepScript, arguments: ["step": step], in: nil, in: .page) { result in
-                    continuation.resume(with: result.map { $0 })
+                    switch result {
+                    case .success(let value):
+                        continuation.resume(returning: value)
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    }
                 }
             }
             guard let text = result as? String, text == "ok" else {
