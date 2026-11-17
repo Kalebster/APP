@@ -129,7 +129,7 @@ struct SessionSetRow: View {
                 let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
                 shape
                     .fill(Theme.Colors.currentSetBackground)
-                    .overlay(shape.strokeBorder(Color.white.opacity(0.35), lineWidth: 1.5))
+                    .overlay(shape.strokeBorder(Theme.Colors.currentSetBorder, lineWidth: 1.5))
             }
         }
         .sensoryFeedback(.success, trigger: log.isCompleted) { wasCompleted, isCompleted in
@@ -253,7 +253,7 @@ struct SessionSetRow: View {
                     Circle().fill(Color.accentColor)
                 } else {
                     if isCurrent {
-                        Circle().strokeBorder(Color.white.opacity(0.55), lineWidth: 2)
+                        Circle().strokeBorder(Theme.Colors.currentCheckBorder, lineWidth: 2)
                     } else {
                         Circle().strokeBorder(Theme.Colors.controlBorder, lineWidth: 1.5)
                     }

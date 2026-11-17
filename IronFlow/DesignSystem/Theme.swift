@@ -23,6 +23,8 @@ enum Theme {
         static let highlightLabel = Color(.highlightLabel)
         /// The capsule badges ("Programado", "HOJE"): white at 10%.
         static let highlightBadge = Color(.highlightBadge)
+        /// The line of light along the top edge of the Início's "Treino de hoje": white at 10%.
+        static let highlightGlow = Color(.highlightGlow)
 
         /// The main buttons ("Iniciar", "Criar treino", "Concluir", the ▶, the sheets' action): white, with
         /// black text and icons. Also the logo's square, the day trained in the app and the number of the
@@ -66,6 +68,10 @@ enum Theme {
         static let currentSetBackground = Color(.currentSetBackground)
         static let currentFieldBackground = Color(.currentFieldBackground)
         static let currentSuggestionText = Color(.currentSuggestionText)
+        /// The outline of the current set's row (white at 35%, 1,5 points) and of its completion mark
+        /// still to do (white at 55%, 2 points).
+        static let currentSetBorder = Color(.currentSetBorder)
+        static let currentCheckBorder = Color(.currentCheckBorder)
 
         // The Exercícios model.
         /// Secondary text between `mediumText` and `dimText`: the counts, the search icon and the muscle
@@ -131,7 +137,7 @@ extension View {
                 shape.fill(Theme.Colors.highlightBackground)
                 if glow {
                     // CSS `inset 0 1px 0`: the part of the shape that the same shape, 1 point lower, leaves.
-                    shape.subtracting(shape.offset(y: 1)).fill(Color.white.opacity(0.1))
+                    shape.subtracting(shape.offset(y: 1)).fill(Theme.Colors.highlightGlow)
                 }
             }
             .overlay(shape.strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1))
