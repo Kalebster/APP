@@ -9,16 +9,6 @@ name: Referências do protótipo
 # does not run or change here.
 on:
   workflow_dispatch:
-  # TEMPORÁRIO, só nesta etapa: um workflow que ainda não está no main não pode ser iniciado à mão.
-  # Sai antes do fim da etapa.
-  push:
-    branches:
-      - visual-novo
-    paths:
-      - design/prototipo.html
-      - ci/prototype_references.swift
-      - ci/prototype-references.json
-      - .github/workflows/prototype-references.yml
 
 permissions:
   contents: read

@@ -280,8 +280,16 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 
 Sobre o vidro, o contraste depende do que passa por baixo; os valores abaixo foram medidos nos screenshots do CI (o pior caso de cada um):
 
-| Texto sobre vidro | Contraste medido | Situação |
+| Texto sobre vidro | Contraste medido (pior / típico) | Situação |
 |---|---|---|
-| (medições do fim da etapa Visual novo) | | |
+| Barra do descanso: "DESCANSO" / "PRÓXIMA SÉRIE" (`secondaryText`, 8 bold) | 4,9 / 6,7 | ok (o pior é com texto claro do cartão passando por baixo) |
+| Barra do descanso: o tempo e "Pronto" (`brightText`, 16 heavy) | 9,4 / 16,7 | ok |
+| Barra "Treino em andamento": nome (`brightText`) / "Descanso 1:24" (`highlightSecondaryText`) | 17,1 / 5,4 (típico 7,7) | ok |
+| Barra "Treino em andamento": "Abrir" (`highlightText` sobre `highlightBadge`) | 10,3 / 12,7 | ok |
+| Botões de vidro do destaque (`highlightText`) | 13,5 / 16,3 | ok |
+| Folhas: título (`brightText`) / explicação (`secondaryText`) / nota da calculadora (`dimText`) | 14,8 / 5,2 (típico 6,0) / 5,0 | ok (o vidro das folhas fica em cerca de #1C1C1E sobre o app escurecido) |
+| Tela bloqueada de exemplo: texto do aviso (`noticeText`) / "agora" (`noticeSecondaryText`) / data (`lightAccent`) | 10,7 / 6,7 / 11,4 | ok |
+
+Medidos nos screenshots do CI de `bfed25c` (iPhone 17, iOS 26.5, simulador), com o fundo logo acima e abaixo de cada linha de texto; o vidro muda com o que passa por baixo, então estes valores valem para os estados dos screenshots.
 
 `dimText`, `futureDayText` e `suggestionText` foram clareados em 29/10/2026, com aprovação do dono do projeto, para chegar a 4,5:1. Toda cor de texto nova precisa de pelo menos 4,5:1 sobre o fundo em que aparece.
