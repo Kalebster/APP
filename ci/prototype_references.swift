@@ -163,7 +163,11 @@ private struct Renderer {
         try await Task.sleep(for: .milliseconds(400))
 
         for step in try expand(steps) {
-            let result = try await webView.callAsyncJavaScript(stepScript, arguments: ["step": step], in: nil, in: .page)
+            let result: Any? = try await withCheckedThrowingContinuation { continuation in
+                webView.callAsyncJavaScript(stepScript, arguments: ["step": step], in: nil, in: .page) { result in
+                    continuation.resume(with: result.map { $0 })
+                }
+            }
             guard let text = result as? String, text == "ok" else {
                 throw RenderError(description: "\(name): \(String(describing: result))")
             }
