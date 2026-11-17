@@ -206,7 +206,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `TextBackButton` | "‹ Treinos", "‹ Início" | Seta e texto em `lightAccent`, 44 pt de toque |
 | `CapsuleBadge` | "Programado", "HOJE" | Fundo `highlightBadge`, texto `highlightText` |
 | `SheetHeader`, `SheetSectionTitle`, `SheetButton`, `FittedSheet` | Folhas | A folha do sistema, de vidro, sem fundo próprio (nada de `presentationBackground`), com a altura do conteúdo; os botões do pé numa `safeAreaBar` (`sheetButtonBar()`), sem fundo, legíveis com o efeito de borda do iOS 26 quando o conteúdo rola por baixo; botão branco (`primaryButton`) para a ação, cinza para sair e cinza com texto vermelho (`failureSet`) para a ação perigosa; desabilitado = opacidade 0,4 |
-| Vidro (`glassEffect(.regular.interactive(), in:)`) | Barra "Treino em andamento" (`ActiveSessionBar`, cantos 18), barra do descanso (`RestTimerBar`, cantos 17), botões redondos de 32 (⌄ e ⋯ do treino, ⋯ do editor), botões secundários do "Treino de hoje" (34 de altura, cantos 11) | O vidro do sistema na forma de cada um, sem fundo, contorno ou sombra próprios. Os que ficam juntos vão num `GlassEffectContainer` (os dois do cabeçalho do treino, os dois do destaque). Por cima do vidro, só preenchimentos (a cápsula "Abrir", os botões −15 e +15) e o botão branco, nunca outro vidro. A barra de abas é a do sistema, sem fundo próprio, com a aba escolhida em branco |
+| Vidro (`glassEffect(_:in:)`) | Barra "Treino em andamento" (`ActiveSessionBar`, cantos 18), barra do descanso (`RestTimerBar`, cantos 17), botões redondos de 32 (⌄ e ⋯ do treino, ⋯ do editor), botões secundários do "Treino de hoje" (34 de altura, cantos 11) | O vidro do sistema na forma de cada um, sem fundo, contorno ou sombra próprios. `.regular.interactive()` no que responde ao toque (a barra "Treino em andamento", os botões redondos e os botões do destaque); `.regular` na barra do descanso, que não é um botão (só o −15, o +15 e o "Pular" dentro dela respondem). Os que ficam juntos vão num `GlassEffectContainer` (os dois do cabeçalho do treino, os dois do destaque). Por cima do vidro, só preenchimentos (a cápsula "Abrir", os botões −15 e +15) e o botão branco, nunca outro vidro. A barra de abas é a do sistema, sem fundo próprio, com a aba escolhida em branco |
 | `toast(_:)` (`ToastMessage`) | Aviso curto de confirmação | No alto da tela, some em 2,5 s (em 4 s quando o texto tem mais de 40 caracteres), não bloqueia toques, não cobre o que mudou, o VoiceOver lê |
 | `GroupFilterChip`, `EquipmentFilterChip`, `FilterChipRow` | Filtros da tela Exercícios e do seletor | |
 | `FlowLayout` | Chips que quebram a linha | |
@@ -273,7 +273,8 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `highlightText` / `highlightSecondaryText` e `highlightLabel` sobre `highlightBackground` | 17,7 / 8,2 | ok |
 | `highlightText` sobre `highlightBadge` (no destaque / num cartão) | 14,2 / 12,8 | ok |
 | `lightAccent` sobre `cardBackground` / `screenBackground` | 12,3 / 13,8 | ok |
-| `primaryButtonText` sobre `primaryButton` | 19,3 | ok |
+| `primaryButtonText` sobre `primaryButton` (botões principais, também "Tentar novamente" da tela de erro) | 19,3 | ok (o "Tentar novamente" era branco sobre o azul novo, 4,0) |
+| Número de ordem em Personalizar: `primaryButtonText` sobre `accentColor` | 5,3 | ok (era #F5F5F7 sobre o azul, 3,65) |
 | `markedDayNumber` sobre `markedDayBackground` / `plannedDayLetter` sobre `plannedDayBackground` | 11,2 / 12,8 | ok |
 | `failureSet` sobre o próprio fundo de 16% num cartão / sobre `setFieldBackground` ("Descartar") | 4,9 / 5,4 | ok |
 | `warmupSet` e `feederSet` sobre o próprio fundo num cartão | 7,6 e 5,3 | ok |

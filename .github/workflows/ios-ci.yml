@@ -1,7 +1,8 @@
 name: iOS CI
 
 # Every push to any branch runs the full CI, so a branch has a result from its first push; only
-# ci-screenshots (images published by this workflow, no code) is left out. There is no pull_request
+# ci-screenshots and ci-prototipo (images published by this workflow and by "Referências do protótipo",
+# no code) are left out. There is no pull_request
 # trigger: a pull request shows the result of the push run of its head commit, and main runs again
 # on every merge. Started by hand, it is the full CI too, unless tests are typed: then it is the short
 # diagnostic run (see the job ui-tests), which never counts as the green CI of a stage.
@@ -9,6 +10,7 @@ on:
   push:
     branches-ignore:
       - ci-screenshots
+      - ci-prototipo
     paths-ignore:
       - "**.md"
   workflow_dispatch:
@@ -466,21 +468,15 @@ jobs:
           echo "The Release app is dark only and holds none of the test hooks."
 
           # The size of the Release app: the bundle as built, and zipped, close to what is downloaded (the
-          # App Store also thins it for each device). The Inter files are counted on their own.
+          # App Store also thins it for each device).
           app_kb="$(du -sk "$release_app" | cut -f1)"
           # Outside build/, so the logs artifact does not carry it.
           ditto -c -k --keepParent "$release_app" "$RUNNER_TEMP/release-app.zip"
           zip_kb="$(du -sk "$RUNNER_TEMP/release-app.zip" | cut -f1)"
-          fonts_kb=0
-          for font in "$release_app"/Inter-*.ttf; do
-            if [ -f "$font" ]; then
-              fonts_kb=$((fonts_kb + $(du -k "$font" | cut -f1)))
-            fi
-          done
-          echo "Release app size: ${app_kb} KB as built, ${zip_kb} KB zipped; Inter fonts: ${fonts_kb} KB"
+          echo "Release app size: ${app_kb} KB as built, ${zip_kb} KB zipped"
           {
             echo
-            echo "- Tamanho do app Release: ${app_kb} KB como compilado, ${zip_kb} KB compactado; as fontes Inter ocupam ${fonts_kb} KB"
+            echo "- Tamanho do app Release: ${app_kb} KB como compilado, ${zip_kb} KB compactado"
           } >> "$GITHUB_STEP_SUMMARY"
 
 

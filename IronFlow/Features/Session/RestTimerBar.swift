@@ -52,8 +52,9 @@ struct RestTimerBar: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(EdgeInsets(top: 7, leading: 10, bottom: 7, trailing: 7))
-        // The system's glass, with its own edge and shadow, over the list that scrolls under it.
-        .glassEffect(.regular.interactive(), in: shape)
+        // The system's glass, with its own edge and shadow, over the list that scrolls under it. Not
+        // interactive: the bar is not a button, only its −15, +15 and Pular are.
+        .glassEffect(.regular, in: shape)
     }
 
     private func clock(remaining: TimeInterval, at now: Date) -> some View {

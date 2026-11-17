@@ -152,7 +152,7 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - Com a folha "Concluir treino?" aberta por mais de 1 hora, a pergunta do treino esquecido (último registro ou agora) não aparece; ela só é feita quando a folha abre (do /code-review do PR #29).
 - Diferenças antigas com o DESIGN.md nas telas ainda sem modelo, a refazer na etapa de cada uma:
   - Histórico e Ajustes: a tela vazia do sistema (`ContentUnavailableView`) e o título do detalhe do Histórico com a fonte do sistema; o Histórico com tamanhos 17/15/13 adaptados; cores `.secondary` do sistema;
-  - tela de erro ao abrir os dados: botão `.borderedProminent` e o texto técnico em SF Mono;
+  - tela de erro ao abrir os dados: o texto técnico em SF Mono;
   - essas telas continuam com SF Symbols até ter modelo.
 - Opcional: um `.github/dependabot.yml`, para avisar de versões novas das ações do CI (hoje fixadas por SHA).
 - Antes do lançamento, o dono decide se o repositório continua público ou vira privado. Se virar privado, os minutos de macOS do CI passam a ser cobrados, e o CI em paralelo usa mais minutos no total do que um CI numa máquina só. Rever o CI antes de mudar.
@@ -188,6 +188,15 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Tela do treino: com "Manter a tela ligada", a tela pode apagar depois de 1 hora sem série marcada, o mesmo tempo do treino esquecido; hoje ela nunca apaga com um treino esquecido aberto (decisão do dono).
 - Tela do treino: desmarcar a série que começou o descanso atual encerra esse descanso, com a barra e o aviso; hoje eles continuam correndo (decisão do dono).
 - "Escolher treino" e Programação semanal: um treino com muitos grupos fica cortado com "…". Mostrar no máximo alguns grupos e "+N"; os detalhes se decidem quando a tela for mexida.
+- Medidas acima de 1 pt contra o protótipo, achadas na etapa Visual novo (screenshots do CI contra as referências do workflow "Referências do protótipo"). Parte delas vem de dados de exemplo diferentes entre o protótipo e os testes: na hora de corrigir, comparar com os mesmos dados.
+  - Início (screenshots 1, 22, 30, 38, 42, 50, 52, 53, 55 e 93): os cartões do resumo rápido estão 1,7 pt mais baixos que no protótipo (98,3 × 100). Nos estados "Descanso hoje", "Em andamento" e "Nada programado" (31, 32, 51, 54 e 83), o cartão da semana e o que vem abaixo ficam de 2,3 a 3,7 pt mais acima, porque o link "Programar semana" ocupa menos altura que no protótipo.
+  - Treinos (2, 11, 26, 56, 57 e 58): cada cartão da grade de treinos está 2,7 pt mais alto (143,7 × 141), e a segunda linha da grade desce de 3 a 4,3 pt; o cartão "Nenhum treino ainda" e a linha da Programação semanal ficam 1,3 pt abaixo.
+  - Programação semanal (41, 89 e 90): o cartão da meta da semana está 1,7 pt mais alto (72,7 × 71), e os dias abaixo dele descem de 1,3 a 1,7 pt.
+  - Exercícios (72): a mensagem de lista vazia fica 2,7 pt mais acima.
+  - Editor do treino (75, 78, 95 e 106): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt no fim da tela ou do segundo cartão); ao ordenar, de −1,3 a −2,0 pt; um nome longo quebra uma palavra antes, porque o app reserva mais espaço para o ⋯ que o protótipo.
+  - Seletor de exercícios (77): a barra de cima ("Cancelar" e o título) está 4,3 pt mais alta.
+  - Treino em andamento (25, 63 a 69, 80, 91, 92, 98 a 102 e 107): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt a partir do segundo cartão).
+  - Folha "Avisar quando o descanso acabar?" (97): a tela bloqueada de exemplo tem a data em 13 e a hora em 52 (no protótipo, 12 e 46), e o conteúdo fica de 1,3 a 2,7 pt fora de lugar.
 
 ## Pendências da vistoria
 
