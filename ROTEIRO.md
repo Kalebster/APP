@@ -35,12 +35,6 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 
 Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem protótipo aprovado antes de qualquer tela nova e começa numa conversa nova do Code. Sem recursos sociais.
 
-### Visual novo
-Entra assim que o dono aprovar o protótipo 'Iron Flow — visual novo', antes da próxima tela nova; até lá as etapas seguem na ordem.
-- Cores neutras (preto, branco e cinza, com o azul só em detalhes), a fonte SF Pro e o vidro do iOS 26 (Liquid Glass); o cartão "Treino de hoje" do Início em preto sólido com borda de vidro; o layout e os tamanhos ficam como estão.
-- Folhas de vidro: testar no protótipo as folhas com o vidro do sistema no lugar do fundo sólido. Até lá, todas as folhas ficam com o fundo sólido do protótipo (decisão do dono).
-- Na série atual do treino, o texto da coluna ÚLTIMA (`futureDayText` sobre `currentSetBackground`) tem contraste de cerca de 4,0:1, abaixo dos 4,5:1 do DESIGN.md. Corrigir com as cores novas.
-
 ### Detalhe do exercício e Mapa dos músculos
 - O detalhe do exercício vale para os exercícios da biblioteca e os próprios: equipamento, grupo, foco e o histórico da pessoa com aquele exercício (última vez, melhor série e evolução).
 - O › no fim de cada linha de Exercícios (13, `dimText`, como no protótipo), quando a linha passar a abrir o exercício.
@@ -57,6 +51,7 @@ Entra assim que o dono aprovar o protótipo 'Iron Flow — visual novo', antes d
 - Trocar exercício: no treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. No editor do treino, trocar mantém as séries planejadas.
 - M18 — Mover o treino de um dia para outro, sem mudar a programação semanal.
 - M4 — Ao concluir, salvar no treino planejado a carga nova, a série a mais ou a troca de exercício (conferir antes o que o app já faz).
+- Entram junto os 4 acabamentos da lista (deslizar série, tela acesa por 1 h, desmarcar encerra o descanso, '+N' dos grupos) (16/11).
 
 ### Notas e esforço
 - M3 — Nota fixa por exercício.
@@ -211,7 +206,9 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Sem recursos sociais no início: "Privacidade e social" fica fora até nova decisão.
 - O repositório é público para o CI rodar sem custo. Nunca colocar senhas, chaves ou dados pessoais nele.
 - Secret Protection e Push protection estão ligados no GitHub.
-- Identidade visual: preto, branco, cinza e azul-escuro.
+- Identidade visual: preto, branco e cinza, com o azul só em detalhes, e o vidro do iOS 26 (Liquid Glass) só nos controles que flutuam sobre o conteúdo e nas folhas do sistema.
+- Fonte: SF Pro, a fonte do sistema, em todo o app. A Inter saiu na etapa Visual novo (novembro de 2026).
+- O protótipo aprovado fica em `design/prototipo.html`, fora do app. As imagens de referência saem do workflow manual "Referências do protótipo" (o protótipo no WebKit do macOS, com a SF Pro, no tamanho dos screenshots do CI), no run e na pasta `prototipo/` do branch `ci-prototipo`.
 - O app é somente escuro: não há tema claro nem opção de tema nos Ajustes.
 - Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.

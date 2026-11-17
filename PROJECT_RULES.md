@@ -465,7 +465,7 @@ Revisões
 
 Protótipo e medidas
 - 1 px do protótipo = 1 pt no app, no texto padrão.
-- Comparar os screenshots com o protótipo no mesmo tamanho, com o protótipo começando no fim da área segura e renderizado com a mesma Inter do app.
+- Comparar os screenshots com o protótipo no mesmo tamanho, com o protótipo começando no fim da área segura e renderizado com a SF Pro, a fonte do app, pelo workflow 'Referências do protótipo' (protótipo em design/prototipo.html).
 - Diferença aceitável: até 1 pt.
 
 Relatório final de cada etapa
