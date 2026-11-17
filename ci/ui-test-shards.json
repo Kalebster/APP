@@ -45,6 +45,8 @@
       "HomeUITests/testCustomizeSummary": 26.6,
       "HomeUITests/testScrolledContentStaysBelowTheStatusBar": 10.5,
       "HomeWeekUITests/testMarkAndUnmarkToday": 21.3,
+      "PerformanceUITests/testOpeningTheApp": 60.0,
+      "PerformanceUITests/testScrollingTheSessionWithTheRestBar": 60.0,
       "RestUITests/testFirstRestOffersTheNoticeAndAllowing": 43.1,
       "RestUITests/testRestEndsOnTheSessionScreenAndOnAnotherScreen": 71.2,
       "RestUITests/testRestOfEachExerciseInTheEditor": 41.7,
