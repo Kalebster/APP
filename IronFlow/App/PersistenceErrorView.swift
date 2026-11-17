@@ -29,8 +29,8 @@ struct PersistenceErrorView: View {
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("persistence.error.retry")
 
-                // The technical detail stays in the system's fixed-width font, which Inter does not
-                // have, until it gives way to a friendly message (ROTEIRO, S10).
+                // The technical detail stays in the system's fixed-width font until it gives way to a
+                // friendly message (ROTEIRO, S10).
                 Text(verbatim: String(describing: error))
                     .font(.footnote.monospaced())
                     .foregroundStyle(.secondary)

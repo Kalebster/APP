@@ -13,8 +13,6 @@ struct IronFlowApp: App {
     @State private var store: Result<ModelContainer, any Error>
 
     init() {
-        // Before any screen, so the first one already uses Inter.
-        InterFont.register()
         _store = State(initialValue: Self.loadStore())
     }
 
@@ -32,9 +30,6 @@ struct IronFlowApp: App {
                     }
                 }
             }
-            // Inter also for the texts that set no font of their own. The system's own parts (tab bar,
-            // alerts, menus, confirmations, keyboard) keep the iPhone's font.
-            .defaultInterFont()
         }
     }
 
