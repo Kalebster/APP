@@ -171,9 +171,9 @@ struct HomeView: View {
     private func header(calendar: Calendar) -> some View {
         let brand = HStack(spacing: 10) {
             AppIcon(.logo, size: 19, relativeTo: .headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .frame(width: logoSide, height: logoSide)
-                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             Text(verbatim: "IRON FLOW")
                 .scaledFont(17, weight: .heavy)
                 .tracking(0.5)
@@ -371,7 +371,7 @@ private struct TodayWorkoutCard: View {
             }
             secondaryButtons
         }
-        .highlightStyle(padding: EdgeInsets(top: 15, leading: 15, bottom: 14, trailing: 15), cornerRadius: 20)
+        .highlightStyle(padding: EdgeInsets(top: 15, leading: 15, bottom: 14, trailing: 15), cornerRadius: 20, glow: true)
     }
 
     private var sectionLabel: some View {
@@ -473,12 +473,12 @@ private struct HighlightMainButtonStyle: ButtonStyle {
         let shape = RoundedRectangle(cornerRadius: 13, style: .continuous)
         return configuration.label
             .scaledFont(15, weight: .bold)
-            .foregroundStyle(Theme.Colors.screenBackground)
+            .foregroundStyle(Theme.Colors.primaryButtonText)
             .multilineTextAlignment(.center)
             .padding(.vertical, 11)
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: 42)
-            .background(.white, in: shape)
+            .background(Theme.Colors.primaryButton, in: shape)
             .contentShape(shape)
             .opacity(configuration.isPressed ? 0.7 : 1)
     }

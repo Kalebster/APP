@@ -242,8 +242,8 @@ private struct WeekGoalRing: View {
 
 /// One day: its letter, its number in a circle and, for a planned day still to do, a dot below.
 ///
-/// Blue always means trained: a solid circle for a workout in the app, a dashed one for a day marked
-/// outside the app. A day past without a workout is gray; today has a light ring; a future day shows
+/// A trained day is always marked: a solid white circle for a workout in the app, a dashed one for a day
+/// marked outside the app. A day past without a workout is gray; today has a light ring; a future day shows
 /// its number only. Only a day with an action is a button.
 private struct WeekDayCell: View {
     let day: WeekSummary.Day
@@ -330,12 +330,12 @@ private struct WeekDayCell: View {
     private var circle: some View {
         switch day.appearance {
         case .trainedInApp:
-            Circle().fill(Color.accentColor)
+            Circle().fill(Theme.Colors.primaryButton)
         case .markedOutside:
             Circle()
                 .fill(Theme.Colors.markedDayBackground)
                 .overlay {
-                    Circle().strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2]))
+                    Circle().strokeBorder(Theme.Colors.markedDayBorder, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2]))
                 }
         case .missed:
             Circle().fill(Theme.Colors.ringTrack)
@@ -353,7 +353,7 @@ private struct WeekDayCell: View {
 
     private var numberColor: Color {
         switch day.appearance {
-        case .trainedInApp: .white
+        case .trainedInApp: Theme.Colors.primaryButtonText
         case .markedOutside: Theme.Colors.markedDayNumber
         case .missed: Theme.Colors.mediumText
         case .todayWithoutWorkout: Theme.Colors.brightText

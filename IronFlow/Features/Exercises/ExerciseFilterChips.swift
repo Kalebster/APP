@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A muscle group filter of the Exercícios tab ("Todos", "Meus", "Peito"...): a capsule on the card fill
-/// with the card border; the selected one is white with dark text. It answers on 44 points.
+/// with the card border; the selected one is white with black text. It answers on 44 points.
 struct GroupFilterChip: View {
     let title: LocalizedStringResource
     let isSelected: Bool
@@ -14,11 +14,11 @@ struct GroupFilterChip: View {
         Button(action: action) {
             Text(title)
                 .scaledFont(13, weight: .semibold)
-                .foregroundStyle(isSelected ? Theme.Colors.screenBackground : Theme.Colors.mediumText)
+                .foregroundStyle(isSelected ? Theme.Colors.primaryButtonText : Theme.Colors.mediumText)
                 .lineLimit(1)
                 .padding(.horizontal, 13)
                 .frame(minHeight: height)
-                .background(isSelected ? Color.white : Theme.Colors.cardBackground, in: Capsule())
+                .background(isSelected ? Theme.Colors.primaryButton : Theme.Colors.cardBackground, in: Capsule())
                 .overlay {
                     if !isSelected {
                         Capsule().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1)

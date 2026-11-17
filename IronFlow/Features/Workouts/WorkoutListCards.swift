@@ -134,13 +134,12 @@ struct WorkoutGridCard: View {
     }
 
     /// The ▶ button: starts a session of the workout. Unavailable while the workout has no exercises.
-    /// White on today's workout, accent on the others.
     private func startButton(isEnabled: Bool) -> some View {
         Button(action: onStart) {
             AppIcon(.play, size: 13)
-                .foregroundStyle(isToday ? Theme.Colors.screenBackground : Color.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .frame(width: 34, height: 34)
-                .background(isToday ? Color.white : Color.accentColor, in: Circle())
+                .background(Theme.Colors.primaryButton, in: Circle())
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

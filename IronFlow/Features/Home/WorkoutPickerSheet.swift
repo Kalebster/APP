@@ -74,7 +74,7 @@ struct WorkoutPickerSheet: View {
 }
 
 /// A workout of the picker: its name ("HOJE" when planned for today), "4 exercícios · 15 séries" with
-/// its muscle groups, and the ▶, white for today's workout and blue for the others. A workout without
+/// its muscle groups, and the white ▶. A workout without
 /// exercises is faded, without ▶. VoiceOver reads all of it as one button.
 private struct WorkoutPickerRow: View {
     let workout: Workout
@@ -110,9 +110,9 @@ private struct WorkoutPickerRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             if !isEmpty {
                 AppIcon(.play, size: 12, relativeTo: .subheadline)
-                    .foregroundStyle(isToday ? Theme.Colors.screenBackground : Color.white)
+                    .foregroundStyle(Theme.Colors.primaryButtonText)
                     .frame(width: playSide, height: playSide)
-                    .background(isToday ? Color.white : Color.accentColor, in: Circle())
+                    .background(Theme.Colors.primaryButton, in: Circle())
                     .accessibilityHidden(true)
             }
         }

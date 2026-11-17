@@ -91,7 +91,7 @@ struct BMRCalculatorSheet: View {
         }
     }
 
-    /// Two or three options side by side, the chosen one in blue; one below the other with the
+    /// Two or three options side by side, the chosen one highlighted; one below the other with the
     /// largest text, so no name is cut.
     private func segments<Option: Hashable>(
         _ options: [Option],
@@ -229,7 +229,7 @@ struct BMRCalculatorSheet: View {
         .accessibilityIdentifier(identifier)
     }
 
-    /// The five levels in one block, a line between them, the chosen one with a blue check.
+    /// The five levels in one block, a line between them, the chosen one with a light gray check.
     private func activityLevels(selected: ActivityLevel) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(ActivityLevel.allCases.enumerated()), id: \.element) { index, level in
@@ -359,7 +359,7 @@ struct BMRCalculatorSheet: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        // The screen's dark at 45% over the blue of the result, as in the model.
+        // The screen's black at 45% over the fill of the result, as in the model.
         .background(Theme.Colors.screenBackground.opacity(0.45), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(String(localized: label)): \(number) kcal"))

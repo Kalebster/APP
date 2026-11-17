@@ -109,10 +109,10 @@ struct RestTimerBar: View {
             Button(action: onSkip) {
                 Text("Pular")
                     .scaledFont(11, weight: .bold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.Colors.primaryButtonText)
                     .padding(.horizontal, 9)
                     .frame(minWidth: buttonMinWidth, minHeight: buttonHeight)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .padding(.vertical, touchExtra)
                     .contentShape(Rectangle())
             }

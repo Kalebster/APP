@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Shown above the tab bar while a session is in progress (the Início offers "Continuar" instead), in
-/// the highlight's dark blue: a blue dot that pulses, the session's name and, below it, "Descanso 1:23"
+/// the system's glass: a light gray dot that pulses, the session's name and, below it, "Descanso 1:23"
 /// while a rest runs or "12:05 · 3 de 15 séries" otherwise, and "Abrir ˄". Tapping it opens the session
 /// again. VoiceOver reads it as one button.
 ///
@@ -94,8 +94,8 @@ struct ActiveSessionBar: View {
     }
 }
 
-/// The blue dot of the bar: it pulses while the session is in progress, and stays still with Reduce
-/// Motion. Decorative, so VoiceOver skips it.
+/// The light gray dot of the bar: it pulses while the session is in progress, and stays still with
+/// Reduce Motion. Decorative, so VoiceOver skips it.
 private struct PulsingDot: View {
     let isAnimated: Bool
 
@@ -104,7 +104,7 @@ private struct PulsingDot: View {
 
     var body: some View {
         Circle()
-            .fill(Color.accentColor)
+            .fill(Theme.Colors.lightAccent)
             .frame(width: side, height: side)
             .opacity(isAnimated && isDimmed ? 0.3 : 1)
             .animation(isAnimated ? .easeInOut(duration: 0.9).repeatForever(autoreverses: true) : nil, value: isDimmed)

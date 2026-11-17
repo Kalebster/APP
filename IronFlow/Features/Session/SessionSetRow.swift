@@ -67,7 +67,7 @@ struct SessionSetColumns: View {
 
 /// One set of the session: its number, what it did the last time ("ÚLTIMA"), its load and repetitions
 /// and the completion mark. An empty field shows the suggestion in gray, which checking the set records.
-/// A set done shows its number in light blue and its values in white; the current set (the first not
+/// A set done shows its number in light gray and its values in white; the current set (the first not
 /// done of the current exercise) is highlighted. A warm-up, feeder or failure set shows its number in the
 /// colors of its type; a tap on the number opens the set type sheet. In one line, or in two with the
 /// accessibility text sizes.
@@ -129,7 +129,7 @@ struct SessionSetRow: View {
                 let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
                 shape
                     .fill(Theme.Colors.currentSetBackground)
-                    .overlay(shape.strokeBorder(Color.accentColor, lineWidth: 1))
+                    .overlay(shape.strokeBorder(Color.white.opacity(0.35), lineWidth: 1.5))
             }
         }
         .sensoryFeedback(.success, trigger: log.isCompleted) { wasCompleted, isCompleted in
@@ -139,7 +139,7 @@ struct SessionSetRow: View {
         .accessibilityIdentifier("session.set")
     }
 
-    /// The number: a working set as before (in a blue circle when current, light blue once done); the
+    /// The number: a working set as before (in a white circle when current, light gray once done); the
     /// other types in a circle of their color, filled when current. A tap opens the set type sheet; it
     /// answers on the whole height of the row.
     private var numberView: some View {
@@ -153,7 +153,7 @@ struct SessionSetRow: View {
                 .background {
                     if type == .working {
                         if isCurrent {
-                            Circle().fill(Color.accentColor)
+                            Circle().fill(Theme.Colors.primaryButton)
                         }
                     } else {
                         Circle().fill(isCurrent ? type.numberColor : type.numberBackground)
@@ -171,7 +171,7 @@ struct SessionSetRow: View {
 
     private func numberColor(_ type: SetType) -> Color {
         if type == .working {
-            return isCurrent ? Color.white : isDone ? Theme.Colors.lightAccent : Theme.Colors.secondaryText
+            return isCurrent ? Theme.Colors.primaryButtonText : isDone ? Theme.Colors.lightAccent : Theme.Colors.secondaryText
         }
         return isCurrent ? Theme.Colors.screenBackground : type.numberColor
     }
@@ -192,7 +192,8 @@ struct SessionSetRow: View {
         Text(verbatim: LastPerformance.text(of: previous))
             .scaledFont(10)
             .monospacedDigit()
-            .foregroundStyle(Theme.Colors.futureDayText)
+            // Lighter on the current set: the gray of the future days reads at about 4.2:1 on its fill.
+            .foregroundStyle(isCurrent ? Theme.Colors.highlightSecondaryText : Theme.Colors.futureDayText)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .accessibilityLabel(Text(verbatim: LastPerformance.accessibilityText(of: previous)))
@@ -243,15 +244,19 @@ struct SessionSetRow: View {
         )
     }
 
-    /// The completion mark: an outlined circle, light blue on the current set, filled once the set is
-    /// done. It answers on the whole height of the row, and 6 points to each side of its column.
+    /// The completion mark: an outlined circle, white on the current set, filled with blue once the set
+    /// is done. It answers on the whole height of the row, and 6 points to each side of its column.
     private var checkButton: some View {
         Button(action: onToggle) {
             ZStack {
                 if isDone {
                     Circle().fill(Color.accentColor)
                 } else {
-                    Circle().strokeBorder(isCurrent ? Color.accentColor : Theme.Colors.controlBorder, lineWidth: 1.5)
+                    if isCurrent {
+                        Circle().strokeBorder(Color.white.opacity(0.55), lineWidth: 2)
+                    } else {
+                        Circle().strokeBorder(Theme.Colors.controlBorder, lineWidth: 1.5)
+                    }
                 }
                 AppIcon(.check, size: 13)
                     .foregroundStyle(isDone ? Color.white : isCurrent ? Theme.Colors.lightAccent : Theme.Colors.dimText)

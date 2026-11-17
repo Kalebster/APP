@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Asks for a workout name, to create or rename a workout, as in the model: the title, the name field,
-/// and the blue button ("Criar treino", "Salvar") above "Cancelar". The button always answers: with the
+/// and the white button ("Criar treino", "Salvar") above "Cancelar". The button always answers: with the
 /// name blank it saves nothing, says "Digite um nome para o treino." below the field and puts the
 /// keyboard back in it; the keyboard's Done does the same. `onSave` receives the typed name; when it
 /// throws, the sheet stays open and shows the error below the field. A message leaves as the name is
@@ -9,7 +9,7 @@ import SwiftUI
 struct WorkoutNameSheet: View {
     let title: LocalizedStringKey
     let initialName: String
-    /// The blue button's title: "Criar treino" for a new workout, "Salvar" when renaming.
+    /// The white button's title: "Criar treino" for a new workout, "Salvar" when renaming.
     let saveTitle: LocalizedStringKey
     let onSave: @MainActor (String) throws -> Void
 
@@ -69,7 +69,7 @@ struct WorkoutNameSheet: View {
         }
     }
 
-    /// The name, 16 semibold in a dark field 46 points tall; its border turns light blue while typing.
+    /// The name, 16 semibold in a dark field 46 points tall; its border turns light gray while typing.
     private var field: some View {
         let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
         return TextField(text: $name, prompt: Text("Ex.: Costas e Bíceps").foregroundStyle(Theme.Colors.dimText)) {

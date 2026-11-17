@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Iron Flow's visual base, shared by every screen: black, white, gray and dark blue.
+/// Iron Flow's visual base, shared by every screen: black, white and gray, with blue only in details.
 ///
 /// Colors live in the asset catalog with a single value each: the app is dark only, whatever the
-/// device appearance. The accent (dark blue) is the catalog's `AccentColor`.
+/// device appearance. The blue of the details is the catalog's `AccentColor`.
 enum Theme {
     enum Colors {
         static let screenBackground = Color(.screenBackground)
@@ -12,17 +12,25 @@ enum Theme {
 
         // The highlighted block of the Início (today's workout) and the card of today's workout in Treinos.
         static let highlightBackground = Color(.highlightBackground)
+        /// White at 14%.
         static let highlightBorder = Color(.highlightBorder)
-        /// Lines and outlines inside the highlight: chips and secondary buttons.
+        /// Lines and outlines inside the highlight (chips), and the outline of the current exercise in the
+        /// session: white at 18%.
         static let highlightLine = Color(.highlightLine)
         static let highlightText = Color(.highlightText)
         static let highlightSecondaryText = Color(.highlightSecondaryText)
         /// The small uppercase label of the highlight ("TREINO DE HOJE").
         static let highlightLabel = Color(.highlightLabel)
-        /// The capsule badges ("Programado", "HOJE").
+        /// The capsule badges ("Programado", "HOJE"): white at 10%.
         static let highlightBadge = Color(.highlightBadge)
 
-        /// The square behind an icon, and the light blue of icons and links.
+        /// The main buttons ("Iniciar", "Criar treino", "Concluir", the ▶, the sheets' action): white, with
+        /// black text and icons. Also the logo's square, the day trained in the app and the number of the
+        /// current working set.
+        static let primaryButton = Color(.primaryButton)
+        static let primaryButtonText = Color(.primaryButtonText)
+
+        /// The square behind an icon, and the light gray of icons and links.
         static let iconTileBackground = Color(.iconTileBackground)
         static let lightAccent = Color(.lightAccent)
 
@@ -31,6 +39,8 @@ enum Theme {
         static let ringTrack = Color(.ringTrack)
         static let markedDayBackground = Color(.markedDayBackground)
         static let markedDayNumber = Color(.markedDayNumber)
+        /// The dashed outline of a day marked as trained.
+        static let markedDayBorder = Color(.markedDayBorder)
         static let plannedDayBackground = Color(.plannedDayBackground)
         static let plannedDayLetter = Color(.plannedDayLetter)
         static let unplannedDayBackground = Color(.unplannedDayBackground)
@@ -50,14 +60,12 @@ enum Theme {
         static let setFieldBackground = Color(.setFieldBackground)
         /// The value offered in an empty field (the last time, or the plan).
         static let suggestionText = Color(.suggestionText)
-        /// The outline of a set's completion mark and of the rest bar.
+        /// The outline of a set's completion mark.
         static let controlBorder = Color(.controlBorder)
         /// The row of the current set, its fields and their suggestion.
         static let currentSetBackground = Color(.currentSetBackground)
         static let currentFieldBackground = Color(.currentFieldBackground)
         static let currentSuggestionText = Color(.currentSuggestionText)
-        /// The floating rest bar.
-        static let restBarBackground = Color(.restBarBackground)
 
         // The Exercícios model.
         /// Secondary text between `mediumText` and `dimText`: the counts, the search icon and the muscle
@@ -65,10 +73,19 @@ enum Theme {
         static let secondaryText = Color(.secondaryText)
 
         // The workout editor model.
-        /// The fill of an exercise chosen in the exercise picker, outlined in the accent color.
+        /// The fill of an exercise chosen in the exercise picker, outlined in blue.
         static let selectedCardBackground = Color(.selectedCardBackground)
         /// The border of the dashed "Adicionar exercícios" button.
         static let dashedBorder = Color(.dashedBorder)
+        // The lock screen drawn in the "Avisar quando o descanso acabar?" sheet, an illustration: a light
+        // from the top over black (`lockScreenTop` to `lockScreenMiddle` to `screenBackground`), and the
+        // notice on translucent gray.
+        static let lockScreenTop = Color(.lockScreenTop)
+        static let lockScreenMiddle = Color(.lockScreenMiddle)
+        static let noticeBackground = Color(.noticeBackground)
+        static let noticeText = Color(.noticeText)
+        static let noticeSecondaryText = Color(.noticeSecondaryText)
+
         /// The colors of the set types, for the number of a set; their fills are these colors at 16–17%.
         static let warmupSet = Color(.warmupSet)
         static let feederSet = Color(.feederSet)
@@ -103,12 +120,20 @@ extension View {
             .overlay(shape.strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
     }
 
-    /// Content inside the highlight: dark blue with a blue border. For today's workout.
-    func highlightStyle(padding: EdgeInsets, cornerRadius: CGFloat) -> some View {
+    /// Content inside the highlight: near black with a border of white at 14%, drawn inside. For today's
+    /// workout. With `glow`, a line of light of 1 point (white at 10%) along the top edge, inside the
+    /// border, as the model draws only on the "Treino de hoje" of the Início.
+    func highlightStyle(padding: EdgeInsets, cornerRadius: CGFloat, glow: Bool = false) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         return self.padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.Colors.highlightBackground, in: shape)
+            .background {
+                shape.fill(Theme.Colors.highlightBackground)
+                if glow {
+                    // CSS `inset 0 1px 0`: the part of the shape that the same shape, 1 point lower, leaves.
+                    shape.subtracting(shape.offset(y: 1)).fill(Color.white.opacity(0.1))
+                }
+            }
             .overlay(shape.strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1))
     }
 

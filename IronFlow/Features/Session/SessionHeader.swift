@@ -145,11 +145,11 @@ struct SessionHeader: View {
         Button(action: onFinish) {
             Text("Concluir")
                 .scaledFont(12, weight: .bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .lineLimit(1)
                 .padding(.horizontal, 13)
                 .frame(minHeight: buttonSide)
-                .background(Color.accentColor, in: Capsule())
+                .background(Theme.Colors.primaryButton, in: Capsule())
                 .padding(.vertical, touchExtra)
                 .contentShape(Rectangle())
         }

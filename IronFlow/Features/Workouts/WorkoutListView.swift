@@ -110,10 +110,10 @@ struct WorkoutListView: View {
                 Text("Criar treino")
                     .scaledFont(13, weight: .bold)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.Colors.primaryButtonText)
             .padding(.horizontal, 14)
             .frame(minHeight: 38)
-            .background(Color.accentColor, in: Capsule())
+            .background(Theme.Colors.primaryButton, in: Capsule())
             // 3 more points above and below respond to touches, for a 44-point touch area.
             .padding(.vertical, 3)
             .contentShape(Rectangle())
@@ -264,7 +264,7 @@ struct WorkoutListView: View {
     }
 }
 
-/// The weekly plan row: its icon, its name, the seven days with the planned ones in blue, how many
+/// The weekly plan row: its icon, its name, the seven days with the planned ones highlighted, how many
 /// days are planned and a disclosure chevron.
 private struct WeeklyPlanRow: View {
     let plannedWeekdays: Set<Int>
@@ -328,7 +328,7 @@ private struct WeeklyPlanRow: View {
     }
 }
 
-/// The seven days of the weekly plan row, Monday to Sunday, with the planned ones in blue. A view of
+/// The seven days of the weekly plan row, Monday to Sunday, with the planned ones highlighted. A view of
 /// its own, so the size of its tiles follows the text size limit set on it, like its letters.
 private struct WeekdayTiles: View {
     let plannedWeekdays: Set<Int>

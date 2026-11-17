@@ -3,7 +3,7 @@ import SwiftUI
 
 /// "Programação semanal": how many days have a workout, the week's goal it makes, and the seven days of
 /// the current week, Monday to Sunday, each with its date and its workout or "Descanso". Tapping a day
-/// opens its sheet, where choosing saves at once and closes it; the day then shows a blue outline for a
+/// opens its sheet, where choosing saves at once and closes it; the day then shows a light gray outline for a
 /// moment. A day has at most one workout; the same workout can be on several days.
 ///
 /// As in the model, the navigation and tab bars are hidden: the screen has its own "‹ Treinos" (or
@@ -125,7 +125,7 @@ struct WeeklyPlanView: View {
         .errorAlert($errorMessage)
     }
 
-    /// "Meta da semana: 4 treinos" on blue, with what it means.
+    /// "Meta da semana: 4 treinos" on the highlight, with what it means.
     private func goalCard(plannedDays: Int) -> some View {
         HStack(spacing: 12) {
             IconTile(
@@ -168,15 +168,15 @@ struct WeeklyPlanView: View {
     }
 }
 
-/// One day: its abbreviation and date in a square (blue with a workout), the workout with what it
-/// holds, or "Descanso" in gray, and a chevron. Today is on blue with "HOJE". VoiceOver reads the day,
+/// One day: its abbreviation and date in a square (lighter with a workout), the workout with what it
+/// holds, or "Descanso" in gray, and a chevron. Today is on the highlight with "HOJE". VoiceOver reads the day,
 /// "hoje" for today, the choice and what the workout holds.
 private struct WeeklyPlanDayRow: View {
     let row: WeeklyPlanSummary.Row
     let dayNumber: Int
     /// The day's workout; `nil` on a rest day.
     let workout: Workout?
-    /// Just changed: outlined in blue.
+    /// Just changed: outlined in light gray.
     let isChanged: Bool
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -218,7 +218,7 @@ private struct WeeklyPlanDayRow: View {
         .background(row.isToday ? Theme.Colors.highlightBackground : Theme.Colors.cardBackground, in: shape)
         // Only today's row has a border, as in the model.
         .overlay(shape.strokeBorder(Theme.Colors.highlightBorder, lineWidth: 1).opacity(row.isToday ? 1 : 0))
-        .overlay(shape.strokeBorder(Color.accentColor, lineWidth: 2).opacity(isChanged ? 1 : 0))
+        .overlay(shape.strokeBorder(Theme.Colors.lightAccent, lineWidth: 2).opacity(isChanged ? 1 : 0))
         .contentShape(shape)
     }
 
@@ -227,7 +227,7 @@ private struct WeeklyPlanDayRow: View {
         dynamicTypeSize.isAccessibilitySize ? nil : 2
     }
 
-    /// "SEG" over "12", blue on a day with a workout.
+    /// "SEG" over "12", lighter on a day with a workout.
     private var dateSquare: some View {
         VStack(spacing: 1) {
             Text(verbatim: WeeklyPlanSummary.dayAbbreviation(row.weekday))
