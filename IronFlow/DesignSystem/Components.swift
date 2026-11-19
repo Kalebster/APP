@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// An icon of the model on a rounded square, light blue on dark blue unless told otherwise: the icons
+/// An icon of the model on a rounded square, light gray on dark gray unless told otherwise: the icons
 /// of the Início summary cards, of Personalizar and of the Treinos rows. Decorative: the text next to
 /// it says what it is.
 struct IconTile: View {
@@ -51,7 +51,7 @@ struct TightLabelStyle: LabelStyle {
     }
 }
 
-/// "‹ Treinos": the blue back of the screens that hide the navigation bar for the model's own top row,
+/// "‹ Treinos": the light gray back of the screens that hide the navigation bar for the model's own top row,
 /// the workout editor and the weekly plan. Text 15, 3 after the ‹, and 4 to the left of the margin so
 /// the drawn ‹ lines up with the content below, as in the model.
 struct TextBackButton: View {
@@ -83,7 +83,7 @@ struct CapsuleBadge: View {
     let padding: EdgeInsets
     /// In points of the default text size: 10, or 9 on the rows of the sheets.
     var size: CGFloat = 10
-    /// Light blue on blue; "NO TREINO" of the exercise picker is gray on gray.
+    /// Light text on white at 10%; "NO TREINO" of the exercise picker is gray on gray.
     var foreground = Theme.Colors.highlightText
     var background = Theme.Colors.highlightBadge
 
@@ -148,7 +148,7 @@ struct FlowLayout: Layout {
     }
 }
 
-/// A section title with an action on the right in light blue, such as "Personalizar" or "Ver tudo".
+/// A section title with an action on the right in light gray, such as "Personalizar" or "Ver tudo".
 /// The action keeps a touch area of at least 44 points.
 struct SectionHeader: View {
     let title: LocalizedStringKey

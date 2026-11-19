@@ -21,22 +21,25 @@ struct SessionHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Side by side when they fit; with the largest text sizes the name goes below the buttons.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 8) {
-                    minimizeButton
-                    titles
-                    Spacer(minLength: 4)
-                    moreMenu
-                    finishButton
-                }
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 8) {
+            // The two glass buttons in one container, which draws them together.
+            GlassEffectContainer {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 8) {
                         minimizeButton
+                        titles
                         Spacer(minLength: 4)
                         moreMenu
                         finishButton
                     }
-                    titles
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 8) {
+                            minimizeButton
+                            Spacer(minLength: 4)
+                            moreMenu
+                            finishButton
+                        }
+                        titles
+                    }
                 }
             }
             progressView
@@ -103,13 +106,12 @@ struct SessionHeader: View {
         .accessibilityIdentifier("session.progress")
     }
 
-    /// A round 32-point button on the card fill with the card border; it answers on 44 points.
+    /// A round 32-point button of glass; it answers on 44 points.
     private func roundButton(_ icon: ImageResource, color: Color) -> some View {
         AppIcon(icon, size: 16)
             .foregroundStyle(color)
             .frame(width: buttonSide, height: buttonSide)
-            .background(Theme.Colors.cardBackground, in: Circle())
-            .overlay(Circle().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
+            .glassEffect(.regular.interactive(), in: Circle())
             .frame(width: max(44, buttonSide), height: max(44, buttonSide))
             .contentShape(Rectangle())
     }
@@ -145,11 +147,11 @@ struct SessionHeader: View {
         Button(action: onFinish) {
             Text("Concluir")
                 .scaledFont(12, weight: .bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .lineLimit(1)
                 .padding(.horizontal, 13)
                 .frame(minHeight: buttonSide)
-                .background(Color.accentColor, in: Capsule())
+                .background(Theme.Colors.primaryButton, in: Capsule())
                 .padding(.vertical, touchExtra)
                 .contentShape(Rectangle())
         }

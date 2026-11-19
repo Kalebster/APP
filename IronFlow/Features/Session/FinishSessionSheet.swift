@@ -149,7 +149,7 @@ struct FinishSessionSheet: View {
     // MARK: - End of a session left open
 
     /// "Seu último registro foi às 18:05. Usar esse horário como fim?" and the two ends side by side,
-    /// the chosen one in blue.
+    /// the chosen one highlighted.
     private func endChoice(_ suggestedEnd: Date) -> some View {
         let calendar = TrainingDay.calendar
         let layout = dynamicTypeSize >= .accessibility1 ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 4))

@@ -220,10 +220,10 @@ struct WorkoutEditorView: View {
                 } label: {
                     Text("Concluir")
                         .scaledFont(13, weight: .bold)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.Colors.primaryButtonText)
                         .padding(.horizontal, 14)
                         .frame(minHeight: 32)
-                        .background(Color.accentColor, in: Capsule())
+                        .background(Theme.Colors.primaryButton, in: Capsule())
                         .padding(.vertical, 6)
                         .contentShape(Rectangle())
                 }
@@ -246,8 +246,7 @@ struct WorkoutEditorView: View {
                     AppIcon(.more, size: 16)
                         .foregroundStyle(Theme.Colors.mediumText)
                         .frame(width: menuSide, height: menuSide)
-                        .background(Theme.Colors.cardBackground, in: Circle())
-                        .overlay(Circle().strokeBorder(Theme.Colors.cardBorder, lineWidth: 1))
+                        .glassEffect(.regular.interactive(), in: Circle())
                         .frame(width: max(44, menuSide), height: max(44, menuSide))
                         .contentShape(Rectangle())
                 }
@@ -386,12 +385,12 @@ struct WorkoutEditorView: View {
                     Text("Iniciar \(workout.name)")
                 }
                 .scaledFont(15, weight: .bold)
-                .foregroundStyle(Theme.Colors.screenBackground)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 12)
                 .frame(maxWidth: .infinity, minHeight: startHeight)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

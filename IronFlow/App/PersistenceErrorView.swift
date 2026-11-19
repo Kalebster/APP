@@ -25,12 +25,25 @@ struct PersistenceErrorView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
-                Button("Tentar novamente", action: retry)
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("persistence.error.retry")
+                // A main button of the app: white with black text, 34 high as the system's button it
+                // replaces; 5 more points above and below answer, for a 44-point touch area.
+                Button(action: retry) {
+                    Text("Tentar novamente")
+                        .scaledFont(17)
+                        .foregroundStyle(Theme.Colors.primaryButtonText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 34)
+                        .background(Theme.Colors.primaryButton, in: Capsule())
+                        .padding(.vertical, 5)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical, -5)
+                .accessibilityIdentifier("persistence.error.retry")
 
-                // The technical detail stays in the system's fixed-width font, which Inter does not
-                // have, until it gives way to a friendly message (ROTEIRO, S10).
+                // The technical detail stays in the system's fixed-width font until it gives way to a
+                // friendly message (ROTEIRO, S10).
                 Text(verbatim: String(describing: error))
                     .font(.footnote.monospaced())
                     .foregroundStyle(.secondary)

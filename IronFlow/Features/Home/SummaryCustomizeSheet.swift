@@ -110,7 +110,7 @@ struct SummaryCustomizeSheet: View {
         if let position {
             Text(verbatim: "\(position + 1)")
                 .scaledFont(12, weight: .heavy)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .frame(width: badgeSide, height: badgeSide)
                 .background(Color.accentColor, in: Circle())
         } else {

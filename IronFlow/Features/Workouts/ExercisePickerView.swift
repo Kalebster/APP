@@ -143,9 +143,9 @@ struct ExercisePickerView: View {
                     }
                 }
                 .scaledFont(15, weight: .bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .frame(maxWidth: .infinity, minHeight: addButtonHeight)
-                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 .opacity(isEnabled ? 1 : 0.4)
                 .contentShape(Rectangle())
             }

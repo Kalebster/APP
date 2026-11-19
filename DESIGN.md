@@ -4,78 +4,94 @@ Este guia diz como o Iron Flow deve parecer e se comportar. Ele vale para toda t
 
 ## 1. De onde vêm as medidas
 
-1. **O protótipo aprovado é a referência.** O artifact "Iron Flow no celular" mostra cada tela aprovada. Quando este guia e o protótipo divergirem, vale o protótipo, e o guia deve ser corrigido no mesmo PR.
-2. **1 px do protótipo = 1 pt no app**, no tamanho de texto padrão do iPhone. Os prints do CI usam o iPhone 17 (402 × 874 pt).
-3. **O prompt de cada etapa traz as medidas exatas das telas daquela etapa.** Este guia traz o que é comum a todas: cores, fonte, tamanhos de texto, espaçamentos, cantos e componentes.
-4. **Nada de valores soltos.** Use sempre `Theme.Colors`, `Theme.Metrics`, `scaledFont` e os componentes da seção 6. Uma cor ou um componente novo entra primeiro aqui e no `DesignSystem/`, e só depois na tela.
-5. **As notas do protótipo não entram no app.** As frases cinzas no pé das telas do protótipo (10, `--faint`), como "Protótipo · os números são exemplos" ou "Toque no ✓ para marcar a série · …", são notas para quem testa o protótipo e nunca entram no app.
-6. **Mudanças neste guia só com a aprovação do dono do projeto.**
+1. **O protótipo aprovado é a referência.** O protótipo "Iron Flow — visual novo" fica em `design/prototipo.html` (fora do app) e mostra cada tela aprovada. Quando este guia e o protótipo divergirem, vale o protótipo, e o guia deve ser corrigido no mesmo PR.
+2. **As imagens de referência saem do workflow "Referências do protótipo"** (manual, `.github/workflows/prototype-references.yml`): ele abre o protótipo no WebKit do macOS, com a SF Pro de verdade, e salva uma imagem de cada tela e estado que tem screenshot no CI, com o mesmo nome e o mesmo tamanho, com o protótipo começando no fim da área segura. Os passos de cada imagem ficam em `ci/prototype-references.json`; as imagens ficam no run e na pasta `prototipo/` do branch `ci-prototipo`.
+3. **1 px do protótipo = 1 pt no app**, no tamanho de texto padrão do iPhone. Os prints do CI usam o iPhone 17 (402 × 874 pt).
+4. **O prompt de cada etapa traz as medidas exatas das telas daquela etapa.** Este guia traz o que é comum a todas: cores, fonte, tamanhos de texto, espaçamentos, cantos e componentes.
+5. **Nada de valores soltos.** Use sempre `Theme.Colors`, `Theme.Metrics`, `scaledFont` e os componentes da seção 6. Uma cor ou um componente novo entra primeiro aqui e no `DesignSystem/`, e só depois na tela.
+6. **As notas do protótipo não entram no app.** As frases cinzas no pé das telas do protótipo (10, `--faint`), como "Protótipo · os números são exemplos" ou "Toque no ✓ para marcar a série · …", são notas para quem testa o protótipo e nunca entram no app.
+7. **Mudanças neste guia só com a aprovação do dono do projeto.**
 
 ## 2. Princípios
 
 - **Só modo escuro.** O app ignora a aparência do aparelho: cada cor tem um valor só no catálogo.
-- **Fonte Inter em todos os textos do app**, sempre por `scaledFont(_:weight:)`, que mantém o Dynamic Type (o texto cresce com a configuração do iPhone).
-- **Os componentes do próprio iOS continuam com a fonte do iPhone:** barra de abas, alertas, menus, folhas de confirmação e teclado.
-- **Um azul de destaque só** (`AccentColor`) para as ações principais. O azul-claro (`LightAccent`) é para links, ícones e o "‹ Voltar".
+- **SF Pro, a fonte do sistema, em todos os textos do app**, sempre por `scaledFont(_:weight:)`, que mantém o Dynamic Type (o texto cresce com a configuração do iPhone). A fonte do sistema acompanha sozinha o "Texto em negrito" do iPhone. O app não leva nenhum arquivo de fonte.
+- **Os componentes do próprio iOS continuam os do sistema:** barra de abas, alertas, menus, folhas de confirmação e teclado.
+- **Preto, branco e cinza, com o azul só em detalhes.** O botão principal é branco com texto e ícone pretos (`primaryButton` e `primaryButtonText`). O azul (`AccentColor`) fica só nos detalhes: anel da semana, ponto de dia programado, barra de progresso do treino, anel do descanso, ✓ da série feita (fundo azul, ✓ branco), contorno e marca do exercício escolhido no seletor, marcas de Personalizar e interruptores. O cinza-claro (`LightAccent`) é para links, ícones e o "‹ Voltar".
+- **Vidro do iOS 26 (Liquid Glass) só no que flutua sobre o conteúdo:** a barra de abas do sistema, a barra "Treino em andamento", a barra do descanso, os botões redondos (⌄ e ⋯ do treino, ⋯ do editor), os botões secundários do "Treino de hoje" e as folhas do sistema. Nada de vidro em cartões, linhas, fundos de tela ou avisos. Com "Reduzir transparência", o próprio iOS deixa o vidro fosco; o app não troca o vidro por cor sólida.
 - **Números com largura fixa** (`.monospacedDigit()`) onde mudam enquanto a pessoa olha: cronômetro, descanso, kg, contagens.
 - **Área de toque de pelo menos 44 × 44 pt** em tudo que se toca, mesmo quando o desenho é menor.
 - **Toda lista e toda tela que carrega dados tem estado vazio**, e toda ação que apaga algo pede confirmação, com a opção perigosa em vermelho.
 
 ## 3. Cores
 
-Todas ficam em `Resources/Assets.xcassets` e são lidas por `Theme.Colors` (ou `Color.accentColor`).
+Todas ficam em `Resources/Assets.xcassets` e são lidas por `Theme.Colors` (ou `Color.accentColor`). Os valores são os do protótipo "Iron Flow — visual novo" (novembro de 2026).
 
 ### Base
 
 | `Theme.Colors` | Hex | Protótipo | Uso |
 |---|---|---|---|
-| `screenBackground` | #0D0E11 | `--bg` | Fundo das telas |
-| `cardBackground` | #17181C | `--card` | Cartões e fundo das folhas |
-| `cardBorder` | #2A2C31 | `--border` | Borda de 1 pt dos cartões e dos avisos |
-| `rowSeparator` | #24262C | `--sep` | Linha entre as linhas de um cartão |
-| `brightText` | #F2F3F5 | `--fg` | Texto principal |
-| `mediumText` | #C9CBD1 | `--dim` | Texto entre o principal e o secundário (durações, contagens) |
-| `secondaryText` | #9A9CA3 | `--muted` | Texto secundário, explicações, rótulos |
-| `dimText` | #888B91 | `--faint` | Texto apagado: setas ›, datas, letras de dia sem treino |
-| `futureDayText` | #7E8186 | `--future` | Dias que ainda vão chegar |
-| `Color.accentColor` | #4472D8 | `--accent` | Botões principais, ▶, anel da semana, série atual |
-| `lightAccent` | #7FA3F2 | `--accent-soft` | Links, ícones, "‹ Voltar" |
-| `iconTileBackground` | #1E2638 | `--chip` | Quadradinho atrás dos ícones |
-| `setFieldBackground` | #1E1F24 | `--input` | Campos, botões cinza das folhas, avisos |
-| `unplannedDayBackground` | #22242A | `--field` / `--plan-off` | Dia sem treino programado |
+| `screenBackground` | #000000 | `--bg` | Fundo das telas; também o texto preto sobre as cores dos tipos de série |
+| `cardBackground` | #121214 | `--card` | Cartões |
+| `cardBorder` | #232326 | `--border` | Borda de 1 pt dos cartões e dos avisos; trilho do anel e −15/+15 do descanso |
+| `rowSeparator` | #1E1E21 | `--sep` | Linha entre as linhas de um cartão |
+| `brightText` | #F5F5F7 | `--fg` | Texto principal |
+| `mediumText` | #C8C8CD | `--dim` | Texto entre o principal e o secundário (durações, contagens) |
+| `secondaryText` | #9B9BA1 | `--muted` | Texto secundário, explicações, rótulos |
+| `dimText` | #8C8C92 | `--faint` | Texto apagado: setas ›, datas, letras de dia sem treino |
+| `futureDayText` | #7D7D83 | `--future` | Dias que ainda vão chegar, coluna ÚLTIMA |
+| `Color.accentColor` | #3D7BF0 | `--accent` | O azul dos detalhes (seção 2) |
+| `lightAccent` | #D1D1D6 | `--accent-soft` | Links, ícones, "‹ Voltar", ✓ da série atual, ponto da barra do treino |
+| `primaryButton` / `primaryButtonText` | #F5F5F7 / #000000 | `--white` / `--bg` | Botão principal: "Iniciar", "Criar treino", "Concluir", os ▶, "Pular", "Adicionar", o botão de ação das folhas; também o quadrado do logo, o dia treinado, o número da série válida atual e o chip de grupo escolhido |
+| `selectedTab` | #FFFFFF | `.tab[aria-current]` | A aba escolhida da barra de abas do sistema (o `tint` da `TabView`) |
+| `iconTileBackground` | #1E1E21 | `--chip` | Quadradinho atrás dos ícones |
+| `setFieldBackground` | #1E1E21 | `--input` | Campos, botões cinza das folhas, avisos |
+| `unplannedDayBackground` | #1E1E21 | `--field` / `--plan-off` | Dia sem treino programado |
 
-### Destaque (treino de hoje, barra do treino em andamento)
+### Destaque (treino de hoje, meta da semana)
 
-| `Theme.Colors` | Hex | Protótipo | Uso |
+| `Theme.Colors` | Valor | Protótipo | Uso |
 |---|---|---|---|
-| `highlightBackground` | #15213D | `--hero` | Fundo do destaque |
-| `highlightBorder` | #2A3D6A | `--hero-border` | Borda do destaque |
-| `highlightLine` | #34497A | `--hero-line` | Contornos dentro do destaque (chips, botão de contorno) |
-| `highlightText` | #DCE5FB | `--hero-text` | Texto no destaque |
-| `highlightSecondaryText` | #C3CEEA | `--hero-sub` | Texto secundário no destaque |
-| `highlightLabel` | #A9BEEF | `--hero-eyebrow` | "TREINO DE HOJE" |
-| `highlightBadge` | #24365F | `--pill` | Cápsulas "Programado", "HOJE", "Abrir ˄" |
+| `highlightBackground` | #0A0A0B | `--hero` | Fundo do destaque |
+| `highlightBorder` | branco 14% | `--hero-border` | Borda do destaque, por dentro |
+| `highlightLine` | branco 18% | `--hero-line` | Contornos dentro do destaque (chips), escolha de uma grade, cartão do exercício atual |
+| `highlightText` | #F2F2F4 | `--hero-text` | Texto no destaque |
+| `highlightSecondaryText` | #A6A6AC | `--hero-sub` | Texto secundário no destaque; coluna ÚLTIMA da série atual |
+| `highlightLabel` | #A6A6AC | `--hero-eyebrow` | "TREINO DE HOJE" |
+| `highlightBadge` | branco 10% | `--pill` | Cápsulas "Programado", "HOJE", "Abrir ˄"; escolha de uma grade |
+| `highlightGlow` | branco 10% | `inset 0 1px 0` | Brilho de 1 pt na borda de cima do "Treino de hoje" do Início, por dentro (`highlightStyle(…, glow: true)`) |
 
 ### Semana
 
 | `Theme.Colors` | Hex | Protótipo | Uso |
 |---|---|---|---|
-| `ringTrack` | #24262C | `--track` | Trilho do anel e dias passados sem treino |
-| `markedDayBackground` / `markedDayNumber` | #1A2440 / #A9C1F7 | `--manual-bg` / `--manual-text` | Dia marcado como treinado |
-| `plannedDayBackground` / `plannedDayLetter` | #22355F / #CFDCFA | `--plan-on` / `--plan-on-text` | Dia com treino programado |
+| `ringTrack` | #232326 | `--track` | Trilho do anel e dias passados sem treino |
+| `markedDayBackground` / `markedDayNumber` / `markedDayBorder` | #1C1C1F / #D1D1D6 / #8E8E94 | `--manual-bg` / `--manual-text` | Dia marcado como treinado (tracejado de 1,5 pt) |
+| `plannedDayBackground` / `plannedDayLetter` | #2A2A2D / #F2F2F4 | `--plan-on` / `--plan-on-text` | Dia com treino programado |
+
+O dia treinado no app é um círculo `primaryButton` com o número em `primaryButtonText`.
 
 ### Treino em andamento e editor
 
 | `Theme.Colors` | Hex | Uso |
 |---|---|---|
-| `currentSetBackground` | #162241 | Linha da série atual |
-| `currentFieldBackground` | #20305A | Campos da série atual |
-| `currentSuggestionText` | #7F92C2 | Sugestão nos campos da série atual |
+| `currentSetBackground` | #1C1C1F | Linha da série atual |
+| `currentSetBorder` | branco 35% | Contorno de 1,5 pt da linha da série atual, por dentro |
+| `currentCheckBorder` | branco 55% | Contorno de 2 pt do ✓ da série atual ainda não marcada (o ✓ em `lightAccent`) |
+| `currentFieldBackground` | #2C2C30 | Campos da série atual |
+| `currentSuggestionText` | #9B9BA1 | Sugestão nos campos da série atual |
 | `suggestionText` | #84868B | Sugestão (da última vez ou do plano) num campo vazio |
-| `controlBorder` | #34363C | Contorno do ✓ e da barra de descanso |
-| `restBarBackground` | #1C1D22 | Barra de descanso |
-| `selectedCardBackground` | #141B2C | Exercício escolhido no seletor (contorno azul) |
+| `controlBorder` | #34363C | Contorno de 1,5 pt do ✓ das séries que não são a atual |
+| `selectedCardBackground` | #1C1C1F | Exercício escolhido no seletor (contorno azul) |
 | `dashedBorder` | #3A3D44 | Borda tracejada de "Adicionar exercícios" |
+
+### Tela bloqueada de exemplo ("Avisar quando o descanso acabar?")
+
+| `Theme.Colors` | Valor | Uso |
+|---|---|---|
+| `lockScreenTop` / `lockScreenMiddle` | #2C2C30 / #141416 | Luz de cima da tela bloqueada, sobre preto (`radial-gradient(120% 90% at 50% 0%)`) |
+| `noticeBackground` | #30343E a 82% | Fundo do aviso |
+| `noticeText` / `noticeSecondaryText` | #DDE1EA / #AEB4C2 | Texto do aviso e "agora" |
 
 ### Tipos de série
 
@@ -86,23 +102,27 @@ Todas ficam em `Resources/Assets.xcassets` e são lidas por `Theme.Colors` (ou `
 | `failureSet` (falha) | #F36367 | a mesma cor a 16% |
 | válida | `mediumText` | `unplannedDayBackground` |
 
+Na série atual, o número fica na cor do tipo, cheia, com o número preto; a válida atual fica em `primaryButton`.
+
 O vermelho de ações perigosas ("Excluir", "Descartar") é o mesmo `failureSet` (#F36367).
 
 ## 4. Tipografia
 
 ### Fonte e pesos
 
-Inter (licença SIL OFL 1.1), só nestes cinco pesos:
+SF Pro, a fonte do sistema (`.system(size:weight:)` dentro do `scaledFont`), só nestes cinco pesos:
 
-| Peso no código | Arquivo da Inter | No protótipo |
-|---|---|---|
-| `.regular` | Inter Regular | 400 |
-| `.medium` | Inter Medium | 500 |
-| `.semibold` | Inter SemiBold | 600 |
-| `.bold` | Inter Bold | 700 |
-| `.heavy` | Inter ExtraBold | 800 |
+| Peso no código | No protótipo |
+|---|---|
+| `.regular` | 400 |
+| `.medium` | 500 |
+| `.semibold` | 600 |
+| `.bold` | 700 |
+| `.heavy` | 800 |
 
-Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(.system(...))` ou tamanho fixo. Os textos que têm `line-height` próprio no CSS do protótipo passam o mesmo valor em `scaledFont(tamanho, weight:, lineHeight:)`: 1,05 nos títulos grandes, 1 no número do anel da semana, 1,4 nos textos das folhas e no treino sem exercícios, 1,35 no aviso e nos textos pequenos das linhas de Treinos, da meta e do tipo da série. Os outros ficam com a altura da própria Inter (o `normal` do CSS, cerca de 1,21). Quando um título com altura de linha menor que a da Inter (1,05) quebra em duas linhas ou mais, as linhas ficam com a altura própria da Inter entre elas, uns 4,6 pt a mais por linha num título de 29: o SwiftUI não aproxima as linhas além disso, e o dono aceitou assim, sem código só do iOS 26. O espaço acima da primeira linha e abaixo da última segue o protótipo. Os ícones não são texto: vêm do catálogo `Icons` pelo `AppIcon`, no tamanho do protótipo, e crescem com o texto (seção 6, Ícones).
+Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(.system(...))` direto na tela ou tamanho fixo. A única exceção é a inicial de um exercício próprio no quadradinho do editor, que usa a fonte do sistema em negrito no tamanho do próprio quadradinho (que já cresce com o Dynamic Type). O "Texto em negrito" do iPhone deixa a fonte do sistema mais pesada sozinha; o app não faz nada para isso. O espaçamento entre letras (`.tracking`) é o `letter-spacing` do protótipo.
+
+**Altura de linha.** O `normal` do CSS é a altura de linha da própria SF Pro, que muda com o tamanho: o desenho troca de Text para Display a partir de 20 pt. Os textos que têm `line-height` próprio no CSS do protótipo passam o mesmo valor em `scaledFont(tamanho, weight:, lineHeight:)`: 1,05 nos títulos grandes, 1 no número do anel da semana, 1,4 nos textos das folhas e no treino sem exercícios, 1,35 no aviso e nos textos pequenos das linhas de Treinos, da meta e do tipo da série. A sobra (o que a linha ganha ou perde) é calculada sobre a altura real da SF Pro naquele tamanho e peso (`SystemFont.lineHeight`), nunca sobre uma razão fixa: metade acima e metade abaixo do texto, e toda ela entre duas linhas. Quando um título com altura de linha menor que a da fonte (1,05) quebra em duas linhas ou mais, as linhas ficam com a altura própria da SF Pro entre elas, uns 4 pt a mais por linha num título de 29: o SwiftUI não aproxima as linhas além disso, e o dono aceitou assim. O espaço acima da primeira linha e abaixo da última segue o protótipo. Os ícones não são texto: vêm do catálogo `Icons` pelo `AppIcon`, no tamanho do protótipo, e crescem com o texto (seção 6, Ícones).
 
 ### Papéis de texto (tamanho em pt no texto padrão)
 
@@ -120,7 +140,7 @@ Todo texto usa `scaledFont(tamanho, weight:)`. Nunca `.font(.headline)`, `.font(
 | Título de linha | 14 bold | | Linhas de lista |
 | Subtítulo de linha | 12 (Início) / 11 (Treinos e folhas) | `secondaryText`; altura de linha 1,35 nos cartões de Treinos | "5 exercícios · 55 min" |
 | Link / ação de seção | 13 semibold | `lightAccent` | "Personalizar", "Ver tudo" |
-| Botão de contorno | 13 semibold | | Botões secundários do destaque |
+| Botão de vidro do destaque | 13 semibold | `highlightText` | "Escolher outro", "Treino livre" |
 | Aviso (toast) | 13 semibold | altura de linha 1,35 | "Peso salvo" |
 | Rótulo de seção (tela) | 11 heavy | caixa alta, espaçamento 2,1 | "SUA SEMANA" (`SectionTitle`) |
 | Rótulo de seção (folha) | 10 heavy | caixa alta, espaçamento 1,8, `secondaryText` | "ÚLTIMOS REGISTROS" (`SheetSectionTitle`) |
@@ -146,6 +166,7 @@ Espaços internos comuns: 4, 6, 8, 10 e 12.
 
 - **Folhas no iOS 26:** as folhas que não ocupam a tela toda ficam soltas das bordas, e o sistema as desenha em escala de cerca de 0,957. Quem medir folhas nos screenshots precisa descontar essa escala (dividir a medida por 0,957) antes de comparar com o protótipo.
 - **Borda de 1 pt dos cartões:** é desenhada por dentro (`strokeBorder`) e não muda o tamanho do cartão. O protótipo foi ajustado para fazer igual.
+- **Referências:** compare cada screenshot com a imagem de mesmo nome do workflow "Referências do protótipo" (seção 1), lado a lado e no mesmo tamanho. Os componentes do sistema (barra de abas, a folha em si, menus, alertas, confirmações e teclado) não são medidos contra o protótipo, que só os imita.
 
 ### Cantos (sempre `style: .continuous`)
 
@@ -164,8 +185,8 @@ Espaços internos comuns: 4, 6, 8, 10 e 12.
 | Elemento | Tamanho |
 |---|---|
 | Botão de folha | 46 de altura (`SheetButton`) |
-| Botão "Iniciar" do destaque | 42 de altura, fundo branco, texto escuro |
-| Botão de contorno | 34 de altura |
+| Botão "Iniciar" do destaque | 42 de altura, `primaryButton` com texto `primaryButtonText` |
+| Botão de vidro do destaque | 34 de altura |
 | "Criar treino" / "Concluir" | 38 / 36 de altura |
 | ▶ de iniciar | 32–34 |
 | Quadradinho de ícone | 36 (listas), 29 (resumo) |
@@ -178,13 +199,14 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | Componente | Para quê | Regras |
 |---|---|---|
 | `cardStyle()` / `cardStyle(padding:cornerRadius:)` | Cartão com borda de 1 pt | Fundo `cardBackground`, borda `cardBorder` |
-| `highlightStyle(padding:cornerRadius:)` | Destaque azul-escuro | Só para o treino de hoje, o treino em andamento e a meta da semana |
+| `highlightStyle(padding:cornerRadius:glow:)` | Destaque quase preto | Fundo `highlightBackground` e borda `highlightBorder` por dentro; `glow` (brilho de 1 pt branco 10% na borda de cima) só no "Treino de hoje" do Início. Para o treino de hoje e a meta da semana |
 | `SectionTitle` / `SectionHeader` | Rótulo de seção e rótulo com ação à direita | A ação tem 44 pt de toque |
 | `AppIcon` | Ícone do protótipo (catálogo `Icons`) | No tamanho do protótipo, crescendo com o texto; a cor vem de `foregroundStyle`; decorativo: escondido do VoiceOver |
 | `IconTile` | Ícone do protótipo (catálogo `Icons`) num quadradinho | Decorativo: escondido do VoiceOver |
 | `TextBackButton` | "‹ Treinos", "‹ Início" | Seta e texto em `lightAccent`, 44 pt de toque |
 | `CapsuleBadge` | "Programado", "HOJE" | Fundo `highlightBadge`, texto `highlightText` |
-| `SheetHeader`, `SheetSectionTitle`, `SheetButton`, `FittedSheet` | Folhas | Folha com a altura do conteúdo; botão azul para a ação, cinza para sair e cinza com texto vermelho (`failureSet`) para a ação perigosa; desabilitado = opacidade 0,4 |
+| `SheetHeader`, `SheetSectionTitle`, `SheetButton`, `FittedSheet` | Folhas | A folha do sistema, de vidro, sem fundo próprio (nada de `presentationBackground`), com a altura do conteúdo; os botões do pé numa `safeAreaBar` (`sheetButtonBar()`), sem fundo, legíveis com o efeito de borda do iOS 26 quando o conteúdo rola por baixo; botão branco (`primaryButton`) para a ação, cinza para sair e cinza com texto vermelho (`failureSet`) para a ação perigosa; desabilitado = opacidade 0,4 |
+| Vidro (`glassEffect(_:in:)`) | Barra "Treino em andamento" (`ActiveSessionBar`, cantos 18), barra do descanso (`RestTimerBar`, cantos 17), botões redondos de 32 (⌄ e ⋯ do treino, ⋯ do editor), botões secundários do "Treino de hoje" (34 de altura, cantos 11) | O vidro do sistema na forma de cada um, sem fundo, contorno ou sombra próprios. `.regular.interactive()` no que responde ao toque (a barra "Treino em andamento", os botões redondos e os botões do destaque); `.regular` na barra do descanso, que não é um botão (só o −15, o +15 e o "Pular" dentro dela respondem). Os que ficam juntos vão num `GlassEffectContainer` (os dois do cabeçalho do treino, os dois do destaque). Por cima do vidro, só preenchimentos (a cápsula "Abrir", os botões −15 e +15) e o botão branco, nunca outro vidro. A barra de abas é a do sistema, sem fundo próprio, com a aba escolhida em branco |
 | `toast(_:)` (`ToastMessage`) | Aviso curto de confirmação | No alto da tela, some em 2,5 s (em 4 s quando o texto tem mais de 40 caracteres), não bloqueia toques, não cobre o que mudou, o VoiceOver lê |
 | `GroupFilterChip`, `EquipmentFilterChip`, `FilterChipRow` | Filtros da tela Exercícios e do seletor | |
 | `FlowLayout` | Chips que quebram a linha | |
@@ -202,17 +224,17 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
   - 16: chevron-left (voltar), chevron-down (minimizar), more (⋯), target, metric-* (Personalizar);
   - 17: calendar, bolt, eq-* (editor e ordenar);
   - 18: menu-close ("Remover série"), menu-arrow-up e menu-arrow-down (ordenar);
-  - 19: logo (no quadrado azul de 34), eq-* (listas de exercícios);
+  - 19: logo (preto, no quadrado branco de 34), eq-* (listas de exercícios);
   - 24: tab-* (barra de abas).
 - Ícones iguais do protótipo ficam num arquivo só: clock (também no lugar de timer), calendar (também em "Treinos no mês"), eq-halteres (também em "Kg na semana") e plus (também no lugar de plus-small).
 - Ícones do sistema (SF Symbols) só nos componentes do próprio iOS (alertas, menus, teclado) e nas telas que ainda não têm modelo aprovado (Histórico, Ajustes, tela de erro), até a etapa delas.
-- O − e o + do editor de peso e altura são texto, em Inter Medium 26, como no protótipo.
+- O − e o + do editor de peso e altura são texto, em SF Pro Medium 26, como no protótipo.
 
 ### Padrões de tela
 
 - **Telas das abas:** título grande próprio ou o topo do modelo; a barra de abas é a do iOS.
 - **Telas empilhadas (editor, Programação):** "‹ Treinos" ou "‹ Início" no alto, à esquerda, sem barra de navegação do sistema, e o gesto de voltar deslizando da borda continua funcionando.
-- **Folhas:** título, explicação, conteúdo e botões no pé. Os botões ficam fixos no fim quando o conteúdo rola.
+- **Folhas:** a folha do sistema, de vidro; título, explicação, conteúdo e botões no pé. Os botões ficam fixos no fim quando o conteúdo rola. Dentro das folhas, os blocos (grupos de opções, grades, campos) seguem o protótipo, com os fundos sólidos dele.
 - **Menu ⋯ (ou ⋮):** abre o menu do próprio iOS (`Menu`), com SF Symbols e os textos do protótipo. A exceção é o ⋯ do treino em andamento, que abre a folha "Opções do treino" (as opções e "Descartar treino"), como no protótipo.
 - **Grade de escolhas numa folha ("Descanso entre séries"):** 3 colunas com 8 entre elas, cada opção com 48 de altura, cantos 12, texto 16 bold em `mediumText` sobre `screenBackground`; a escolhida em `highlightText` sobre `highlightBadge` com contorno de 1 pt `highlightLine`.
 - **Confirmação de apagar:** o `confirmationDialog` do iOS (o balão que sai do botão), com os textos do protótipo: o título diz o que sai ("Excluir “Push”?"), a mensagem explica, e a opção perigosa fica em vermelho (`role: .destructive`), com o botão de voltar ("Cancelar", ou "Voltar ao treino" ao descartar um treino).
@@ -228,7 +250,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 ## 8. Movimento
 
 - As transições padrão do iOS: empurrar a tela, abrir a folha, fade do aviso.
-- O ponto azul pulsando da barra do treino em andamento é a única animação contínua, e para quando "Reduzir movimento" estiver ligado.
+- O ponto cinza-claro pulsando da barra do treino em andamento é a única animação contínua, e para quando "Reduzir movimento" estiver ligado.
 - Nada de animação em cada toque. Vibração só onde o protótipo ou o prompt da etapa pedir: hoje, uma vibração leve, sem som, no fim do descanso, e a vibração de sucesso do sistema ao marcar uma série com o ✓ (só ao marcar, não ao desmarcar).
 
 ## 9. Acessibilidade
@@ -236,17 +258,40 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 - **Dynamic Type:** todo texto cresce com `scaledFont`. Com letra grande, as linhas quebram ou empilham, sem cortar texto.
 - **Toque de 44 pt** em tudo que se toca.
 - **VoiceOver:** botões só com ícone têm rótulo; ícones decorativos ficam escondidos; avisos são anunciados.
-- **Contraste** (texto normal precisa de 4,5:1; texto grande ou negrito de 14 pt para cima, de 3:1):
+- **Contraste** (texto normal precisa de 4,5:1; texto grande ou negrito de 14 pt para cima, de 3:1; ícones e contornos que dizem algo, de 3:1). Cores do visual novo, cada texto sobre cada fundo em que aparece:
 
 | Texto sobre fundo | Contraste | Situação |
 |---|---|---|
-| `brightText` sobre `cardBackground` | 16,0 | ok |
-| `secondaryText` sobre `cardBackground` | 6,5 | ok |
-| `lightAccent` sobre `cardBackground` | 7,1 | ok |
-| branco sobre `accentColor` (botões) | 4,5 | ok |
-| `failureSet` sobre o próprio fundo de 16% (número da série de falha) | 4,6 | ok |
-| `dimText` sobre `cardBackground` e sobre `unplannedDayBackground` | 5,2 e 4,5 | ok |
-| `futureDayText` sobre `cardBackground` | 4,5 | ok |
-| `suggestionText` sobre `setFieldBackground` | 4,5 | ok |
+| `brightText` sobre `cardBackground` / sobre `screenBackground` | 17,2 / 19,3 | ok |
+| `mediumText` sobre `cardBackground` / sobre `cardBorder` (−15, +15) / sobre `setFieldBackground` | 11,2 / 9,4 / 10,0 | ok |
+| `secondaryText` sobre `cardBackground` / `setFieldBackground` / `screenBackground` / `currentSetBackground` | 6,8 / 6,0 / 7,6 / 6,2 | ok |
+| `dimText` sobre `cardBackground` / `unplannedDayBackground` / `screenBackground` | 5,6 / 5,0 / 6,3 | ok |
+| `futureDayText` sobre `cardBackground` / `screenBackground` | 4,6 / 5,1 | ok |
+| `suggestionText` sobre `setFieldBackground` | 4,6 | ok |
+| `currentSuggestionText` sobre `currentFieldBackground` | 5,0 | ok |
+| `highlightSecondaryText` (ÚLTIMA da série atual) sobre `currentSetBackground` | 7,0 | ok (era 4,0 com `futureDayText`) |
+| `highlightText` / `highlightSecondaryText` e `highlightLabel` sobre `highlightBackground` | 17,7 / 8,2 | ok |
+| `highlightText` sobre `highlightBadge` (no destaque / num cartão) | 14,2 / 12,8 | ok |
+| `lightAccent` sobre `cardBackground` / `screenBackground` | 12,3 / 13,8 | ok |
+| `primaryButtonText` sobre `primaryButton` (botões principais, também "Tentar novamente" da tela de erro) | 19,3 | ok (o "Tentar novamente" era branco sobre o azul novo, 4,0) |
+| Número de ordem em Personalizar: `primaryButtonText` sobre `accentColor` | 5,3 | ok (era #F5F5F7 sobre o azul, 3,65) |
+| `markedDayNumber` sobre `markedDayBackground` / `plannedDayLetter` sobre `plannedDayBackground` | 11,2 / 12,8 | ok |
+| `failureSet` sobre o próprio fundo de 16% num cartão / sobre `setFieldBackground` ("Descartar") | 4,9 / 5,4 | ok |
+| `warmupSet` e `feederSet` sobre o próprio fundo num cartão | 7,6 e 5,3 | ok |
+| ✓ branco sobre `accentColor` (ícone, 3:1) / anel azul sobre `cardBackground` | 4,0 / 4,7 | ok |
 
-`dimText`, `futureDayText` e `suggestionText` foram clareados em 29/10/2026, com aprovação do dono do projeto, para chegar a 4,5:1 (antes: 3,6, 2,8 e 2,3). O `dimText` passou de #7E8187 para #888B91 para chegar a 4,5:1 também sobre os campos e os dias sem treino. Na mesma data, o azul de destaque passou de #4A7BEA para #4472D8 (texto branco dos botões de 3,9 para 4,5) e o vermelho da falha de #F2555A para #F36367. Toda cor de texto nova precisa de pelo menos 4,5:1 sobre o fundo em que aparece.
+Sobre o vidro, o contraste depende do que passa por baixo; os valores abaixo foram medidos nos screenshots do CI (o pior caso de cada um):
+
+| Texto sobre vidro | Contraste medido (pior / típico) | Situação |
+|---|---|---|
+| Barra do descanso: "DESCANSO" / "PRÓXIMA SÉRIE" (`secondaryText`, 8 bold) | 4,9 / 6,7 | ok (o pior é com texto claro do cartão passando por baixo) |
+| Barra do descanso: o tempo e "Pronto" (`brightText`, 16 heavy) | 9,4 / 16,7 | ok |
+| Barra "Treino em andamento": nome (`brightText`) / "Descanso 1:24" (`highlightSecondaryText`) | 17,1 / 5,4 (típico 7,7) | ok |
+| Barra "Treino em andamento": "Abrir" (`highlightText` sobre `highlightBadge`) | 10,3 / 12,7 | ok |
+| Botões de vidro do destaque (`highlightText`) | 13,5 / 16,3 | ok |
+| Folhas: título (`brightText`) / explicação (`secondaryText`) / nota da calculadora (`dimText`) | 14,8 / 5,2 (típico 6,0) / 5,0 | ok (o vidro das folhas fica em cerca de #1C1C1E sobre o app escurecido) |
+| Tela bloqueada de exemplo: texto do aviso (`noticeText`) / "agora" (`noticeSecondaryText`) / data (`lightAccent`) | 10,7 / 6,7 / 11,4 | ok |
+
+Medidos nos screenshots do CI de `bfed25c` (iPhone 17, iOS 26.5, simulador), com o fundo logo acima e abaixo de cada linha de texto; o vidro muda com o que passa por baixo, então estes valores valem para os estados dos screenshots.
+
+`dimText`, `futureDayText` e `suggestionText` foram clareados em 29/10/2026, com aprovação do dono do projeto, para chegar a 4,5:1. Toda cor de texto nova precisa de pelo menos 4,5:1 sobre o fundo em que aparece.

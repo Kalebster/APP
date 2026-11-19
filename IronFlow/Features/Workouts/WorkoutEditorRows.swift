@@ -85,7 +85,7 @@ struct EditorExerciseHeader: View {
     }
 }
 
-/// The equipment icon in light blue on the dark blue square, the initial of a custom exercise, or the
+/// The equipment icon in light gray on the dark gray square, the initial of a custom exercise, or the
 /// dumbbells for an exercise that no longer exists. 32 points at the default text size; it grows with the
 /// text up to the largest standard size and stops there, so with the accessibility sizes the exercise's
 /// name keeps the room it needs beside it.
@@ -113,9 +113,9 @@ struct EditorExerciseTile: View {
                     EquipmentIcon(equipment: equipment)
                         .frame(width: iconSide, height: iconSide)
                 } else if let exercise, let initial = exercise.name.first {
-                    // Inter Bold at a size fixed by the tile, which already follows Dynamic Type.
+                    // Bold at a size fixed by the tile, which already follows Dynamic Type.
                     Text(verbatim: String(initial).uppercased())
-                        .font(.custom(InterFont.bold, fixedSize: iconSide * 0.8))
+                        .font(.system(size: iconSide * 0.8, weight: .bold))
                 } else {
                     Image(.eqHalteres)
                         .renderingMode(.template)
@@ -319,7 +319,7 @@ struct PlannedSetRow: View {
 /// area goes on 3 points into the space below the card.
 struct EditorAddSetRow: View {
     let restSeconds: Int
-    /// Whether the rest was just chosen: its capsule shows a light blue outline for a moment.
+    /// Whether the rest was just chosen: its capsule shows a light gray outline for a moment.
     let isRestHighlighted: Bool
     let onRest: @MainActor () -> Void
     let action: @MainActor () -> Void
@@ -355,7 +355,7 @@ struct EditorAddSetRow: View {
 }
 
 /// "⏱ Descanso 1:30" (or "Sem timer" in gray), a capsule 28 points tall at the default text size that
-/// answers on 44. After a new rest is chosen it shows a light blue outline for 0,9 s (set by the editor;
+/// answers on 44. After a new rest is chosen it shows a light gray outline for 0,9 s (set by the editor;
 /// without the fade when Reduce Motion is on).
 struct RestCapsuleButton: View {
     let seconds: Int
@@ -512,10 +512,10 @@ struct EditorEmptyCard: View {
                     Text("Adicionar exercícios")
                 }
                 .scaledFont(13, weight: .bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.Colors.primaryButtonText)
                 .padding(.horizontal, 18)
                 .frame(minHeight: 40)
-                .background(Color.accentColor, in: Capsule())
+                .background(Theme.Colors.primaryButton, in: Capsule())
                 .padding(.vertical, 2)
                 .contentShape(Rectangle())
             }

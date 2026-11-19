@@ -288,7 +288,7 @@ struct MetricEditorSheet: View {
 
     // MARK: - Buttons
 
-    /// "Salvar" in blue and "Cancelar" below it, above the keyboard while it is open.
+    /// "Salvar" in white and "Cancelar" below it, above the keyboard while it is open.
     private var buttons: some View {
         VStack(spacing: 8) {
             SheetButton(Text("Salvar"), kind: .primary, action: saveTapped)

@@ -9,7 +9,7 @@ struct ExerciseCard: View {
     enum Selection: Equatable {
         /// Nothing: the Exercícios tab.
         case none
-        /// The selection circle of the picker; a chosen card is outlined in blue on a blue fill.
+        /// The selection circle of the picker; a chosen card is outlined in blue on a lighter fill.
         case selectable(isSelected: Bool)
         /// Already in the workout: "NO TREINO", at half opacity.
         case inWorkout
@@ -104,7 +104,7 @@ struct ExerciseCard: View {
         .accessibilityHidden(true)
     }
 
-    /// The equipment icon in light blue on the dark blue square, or the initial of the name.
+    /// The equipment icon in light gray on the dark gray square, or the initial of the name.
     private var tile: some View {
         Group {
             if let equipment = item.equipment {

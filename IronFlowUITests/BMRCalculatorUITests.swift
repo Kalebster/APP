@@ -124,6 +124,8 @@ final class BMRCalculatorUITests: IronFlowUITestCase {
         XCTAssertTrue(items.firstMatch.waitForExistence(timeout: 5), "No '\(option)' in \(menu)")
         let item = items.allElementsBoundByIndex.first { $0.isHittable } ?? items.firstMatch
         item.tap()
-        XCTAssertTrue(box.waitForValue(option), "\(menu) shows \(String(describing: box.value))")
+        // Up to 10 s, as the other waits for a value: with the menu closing over the sheet's glass, the
+        // box has taken more than 5 s to show the choice on a slow machine (seen in CI).
+        XCTAssertTrue(box.waitForValue(option, timeout: 10), "\(menu) shows \(String(describing: box.value))")
     }
 }

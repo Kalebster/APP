@@ -235,7 +235,7 @@ struct SessionCardSegment: View {
                 if isCurrent {
                     // The edges shared with the rows above and below are pushed out and clipped away.
                     shape
-                        .strokeBorder(Theme.Colors.highlightBadge, lineWidth: 1)
+                        .strokeBorder(Theme.Colors.highlightLine, lineWidth: 1)
                         .padding(.top, isTop ? 0 : -2)
                         .padding(.bottom, isBottom ? 0 : -2)
                 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// "Descanso entre séries": the rest of one exercise of the workout. The explanation names the exercise;
 /// below it, the choices in three columns (1:30 with "PADRÃO" below), "Sem timer" across the whole row,
-/// and "Cancelar" at the bottom. The chosen one is on the highlight's blue. Choosing closes the sheet and
+/// and "Cancelar" at the bottom. The chosen one is on the highlight's fill. Choosing closes the sheet and
 /// saves the choice.
 struct RestPickerSheet: View {
     let exerciseName: String

@@ -48,6 +48,7 @@ struct RootView: View {
                         .accessibilityIdentifier("tab.home.root")
                         .navigationTitle("Início")
                 }
+                .tint(Color.accentColor)
                 .id(homeStackID)
             }
 
@@ -61,6 +62,7 @@ struct RootView: View {
                         .navigationTitle("Treinos")
                 }
                 .activeSessionBar(currentSession, rest: rest) { openSession() }
+                .tint(Color.accentColor)
             }
 
             Tab("Exercícios", image: "tab-exercises", value: AppTab.exercises) {
@@ -71,6 +73,7 @@ struct RootView: View {
                         .navigationTitle("Exercícios")
                 }
                 .activeSessionBar(currentSession, rest: rest) { openSession() }
+                .tint(Color.accentColor)
             }
 
             Tab("Histórico", image: "tab-history", value: AppTab.history) {
@@ -81,6 +84,7 @@ struct RootView: View {
                         .navigationTitle("Histórico")
                 }
                 .activeSessionBar(currentSession, rest: rest) { openSession() }
+                .tint(Color.accentColor)
             }
 
             Tab("Ajustes", image: "tab-settings", value: AppTab.settings) {
@@ -91,12 +95,17 @@ struct RootView: View {
                         .navigationTitle("Ajustes")
                 }
                 .activeSessionBar(currentSession, rest: rest) { openSession() }
+                .tint(Color.accentColor)
             }
         }
+        // The chosen tab in white; inside each tab and on the session screen, the blue of the details
+        // stays (switches, the text cursor).
+        .tint(Theme.Colors.selectedTab)
         .fullScreenCover(item: $openedSession) { session in
             SessionView(session: session, rest: rest, onFinish: showHomeAfterFinishing) {
                 openedSession = nil
             }
+            .tint(Color.accentColor)
         }
         // A session finished or discarded elsewhere is never left on screen, and its rest ends.
         .onChange(of: activeSessions.map(\.id)) { _, activeIDs in

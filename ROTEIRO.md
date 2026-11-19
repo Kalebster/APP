@@ -30,16 +30,11 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - CI: primeiro teste de cada parte num simulador frio — a apresentação do teclado é tocada de novo até sumir (até 30 s); gancho só de teste `-ui-toast-seconds` (só no Debug com `-ui-testing`), que deixa o aviso 15 s em 10 testes de interface sem mudar nenhum screenshot; o app é aberto e fechado uma vez antes dos testes de cada parte. Corrige as duas falhas do CI do main em 711820f (PR #34).
 - Lista de exercícios: biblioteca de 157 para 220 exercícios, com os nomes no padrão do Hevy (equipamento entre parênteses; os de peso do corpo sem parênteses), cada um no grupo do músculo que mais trabalha; "Costas" vira quatro grupos (Dorsais, que mantém o valor gravado "back", Costas superiores, Trapézio e Lombar) e entra Adutores, nos filtros na ordem aprovada; keys, ids e equipamentos de antes não mudam, e o histórico continua com o nome e o grupo de cada dia; busca por palavras na aba Exercícios e no seletor, em qualquer ordem, sem diferenciar maiúsculas, acentos e espaços a mais; os 6 testes de interface que conferiam um aviso sem o gancho -ui-toast-seconds passam a usá-lo e, antes de um screenshot tirado sem o aviso, esperam ele sumir; o toque na barra "Treino em andamento" logo depois de abrir o app é repetido quando se perde, como já acontecia com as abas (PR #35).
 - Lista de exercícios, parte 2: biblioteca de 220 para 420 exercícios, com os 200 da segunda lista aprovada, cada um com key e UUID novos, no fim do bloco do seu grupo; "Remada Alta (Máquina)" passa a "Remada Alta Articulada (Máquina)"; keys e ids de antes não mudam e não há schema novo; o seeder decide cada nome com os nomes que ficam no fim da passada, então um exercício recebe o nome que outro deixa, dois trocam de nome e o "Agachamento Búlgaro" novo é criado ativo (testado de 71, 157 e 220 para 420, sem nome mantido nem exercício escondido); a busca acha também pelo nome do equipamento ("halteres", "peso do corpo"); a contagem mostra "0 exercícios"; falha ao salvar registrada com Logger (tipo, domínio e código públicos, descrição privada); a verificação do Release confere os 12 textos dos ganchos de teste (todos no Debug, nenhum no Release); README; vibração ao marcar a série no DESIGN.md; ROTEIRO com o plano novo de etapas (PR da lista de exercícios, parte 2).
+- Visual novo — o protótipo aprovado "Iron Flow — visual novo" em todas as telas que já existiam, sem mudar layout, textos, medidas nem funções: cores neutras (preto, branco e cinza, com o azul #3D7BF0 só em detalhes; botões principais brancos com texto preto); a fonte SF Pro, a do sistema, no lugar da Inter, com as alturas de linha do protótipo calculadas sobre a altura real da fonte; o vidro do iOS 26 nas barras "Treino em andamento" e do descanso, nos botões redondos, nos botões secundários do "Treino de hoje" e nas folhas do sistema; a coluna ÚLTIMA da série atual em #A6A6AC (7,0:1); o protótipo em `design/prototipo.html` e o workflow manual "Referências do protótipo", que gera as imagens de comparação com a SF Pro (PR #38).
 
 ## Próximas etapas
 
 Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem protótipo aprovado antes de qualquer tela nova e começa numa conversa nova do Code. Sem recursos sociais.
-
-### Visual novo
-Entra assim que o dono aprovar o protótipo 'Iron Flow — visual novo', antes da próxima tela nova; até lá as etapas seguem na ordem.
-- Cores neutras (preto, branco e cinza, com o azul só em detalhes), a fonte SF Pro e o vidro do iOS 26 (Liquid Glass); o cartão "Treino de hoje" do Início em preto sólido com borda de vidro; o layout e os tamanhos ficam como estão.
-- Folhas de vidro: testar no protótipo as folhas com o vidro do sistema no lugar do fundo sólido. Até lá, todas as folhas ficam com o fundo sólido do protótipo (decisão do dono).
-- Na série atual do treino, o texto da coluna ÚLTIMA (`futureDayText` sobre `currentSetBackground`) tem contraste de cerca de 4,0:1, abaixo dos 4,5:1 do DESIGN.md. Corrigir com as cores novas.
 
 ### Detalhe do exercício e Mapa dos músculos
 - O detalhe do exercício vale para os exercícios da biblioteca e os próprios: equipamento, grupo, foco e o histórico da pessoa com aquele exercício (última vez, melhor série e evolução).
@@ -57,6 +52,7 @@ Entra assim que o dono aprovar o protótipo 'Iron Flow — visual novo', antes d
 - Trocar exercício: no treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. No editor do treino, trocar mantém as séries planejadas.
 - M18 — Mover o treino de um dia para outro, sem mudar a programação semanal.
 - M4 — Ao concluir, salvar no treino planejado a carga nova, a série a mais ou a troca de exercício (conferir antes o que o app já faz).
+- Entram junto os 4 acabamentos da lista (deslizar série, tela acesa por 1 h, desmarcar encerra o descanso, '+N' dos grupos) (16/11).
 
 ### Notas e esforço
 - M3 — Nota fixa por exercício.
@@ -156,7 +152,7 @@ Entra assim que o dono aprovar o protótipo 'Iron Flow — visual novo', antes d
 - Com a folha "Concluir treino?" aberta por mais de 1 hora, a pergunta do treino esquecido (último registro ou agora) não aparece; ela só é feita quando a folha abre (do /code-review do PR #29).
 - Diferenças antigas com o DESIGN.md nas telas ainda sem modelo, a refazer na etapa de cada uma:
   - Histórico e Ajustes: a tela vazia do sistema (`ContentUnavailableView`) e o título do detalhe do Histórico com a fonte do sistema; o Histórico com tamanhos 17/15/13 adaptados; cores `.secondary` do sistema;
-  - tela de erro ao abrir os dados: botão `.borderedProminent` e o texto técnico em SF Mono;
+  - tela de erro ao abrir os dados: o texto técnico em SF Mono;
   - essas telas continuam com SF Symbols até ter modelo.
 - Opcional: um `.github/dependabot.yml`, para avisar de versões novas das ações do CI (hoje fixadas por SHA).
 - Antes do lançamento, o dono decide se o repositório continua público ou vira privado. Se virar privado, os minutos de macOS do CI passam a ser cobrados, e o CI em paralelo usa mais minutos no total do que um CI numa máquina só. Rever o CI antes de mudar.
@@ -192,6 +188,15 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Tela do treino: com "Manter a tela ligada", a tela pode apagar depois de 1 hora sem série marcada, o mesmo tempo do treino esquecido; hoje ela nunca apaga com um treino esquecido aberto (decisão do dono).
 - Tela do treino: desmarcar a série que começou o descanso atual encerra esse descanso, com a barra e o aviso; hoje eles continuam correndo (decisão do dono).
 - "Escolher treino" e Programação semanal: um treino com muitos grupos fica cortado com "…". Mostrar no máximo alguns grupos e "+N"; os detalhes se decidem quando a tela for mexida.
+- Medidas acima de 1 pt contra o protótipo, achadas na etapa Visual novo (screenshots do CI contra as referências do workflow "Referências do protótipo"). Parte delas vem de dados de exemplo diferentes entre o protótipo e os testes: na hora de corrigir, comparar com os mesmos dados.
+  - Início (screenshots 1, 22, 30, 38, 42, 50, 52, 53, 55 e 93): os cartões do resumo rápido estão 1,7 pt mais baixos que no protótipo (98,3 × 100). Nos estados "Descanso hoje", "Em andamento" e "Nada programado" (31, 32, 51, 54 e 83), o cartão da semana e o que vem abaixo ficam de 2,3 a 3,7 pt mais acima, porque o link "Programar semana" ocupa menos altura que no protótipo.
+  - Treinos (2, 11, 26, 56, 57 e 58): cada cartão da grade de treinos está 2,7 pt mais alto (143,7 × 141), e a segunda linha da grade desce de 3 a 4,3 pt; o cartão "Nenhum treino ainda" e a linha da Programação semanal ficam 1,3 pt abaixo.
+  - Programação semanal (41, 89 e 90): o cartão da meta da semana está 1,7 pt mais alto (72,7 × 71), e os dias abaixo dele descem de 1,3 a 1,7 pt.
+  - Exercícios (72): a mensagem de lista vazia fica 2,7 pt mais acima.
+  - Editor do treino (75, 78, 95 e 106): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt no fim da tela ou do segundo cartão); ao ordenar, de −1,3 a −2,0 pt; um nome longo quebra uma palavra antes, porque o app reserva mais espaço para o ⋯ que o protótipo.
+  - Seletor de exercícios (77): a barra de cima ("Cancelar" e o título) está 4,3 pt mais alta.
+  - Treino em andamento (25, 63 a 69, 80, 91, 92, 98 a 102 e 107): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt a partir do segundo cartão).
+  - Folha "Avisar quando o descanso acabar?" (97): a tela bloqueada de exemplo tem a data em 13 e a hora em 52 (no protótipo, 12 e 46), e o conteúdo fica de 1,3 a 2,7 pt fora de lugar.
 
 ## Pendências da vistoria
 
@@ -211,7 +216,9 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Sem recursos sociais no início: "Privacidade e social" fica fora até nova decisão.
 - O repositório é público para o CI rodar sem custo. Nunca colocar senhas, chaves ou dados pessoais nele.
 - Secret Protection e Push protection estão ligados no GitHub.
-- Identidade visual: preto, branco, cinza e azul-escuro.
+- Identidade visual: preto, branco e cinza, com o azul só em detalhes, e o vidro do iOS 26 (Liquid Glass) só nos controles que flutuam sobre o conteúdo e nas folhas do sistema.
+- Fonte: SF Pro, a fonte do sistema, em todo o app. A Inter saiu na etapa Visual novo (novembro de 2026).
+- O protótipo aprovado fica em `design/prototipo.html`, fora do app. As imagens de referência saem do workflow manual "Referências do protótipo" (o protótipo no WebKit do macOS, com a SF Pro, no tamanho dos screenshots do CI), no run e na pasta `prototipo/` do branch `ci-prototipo`.
 - O app é somente escuro: não há tema claro nem opção de tema nos Ajustes.
 - Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.

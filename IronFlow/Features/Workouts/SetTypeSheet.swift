@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// "Tipo da série N": the four set types, each with the number in its colors, its name and what it
-/// means, the chosen one with a blue check, and "Remover série" below. Choosing a type saves it and
+/// means, the chosen one with a light gray check, and "Remover série" below. Choosing a type saves it and
 /// closes the sheet. Used by the workout editor and by the session in progress.
 struct SetTypeSheet: View {
     let number: Int
