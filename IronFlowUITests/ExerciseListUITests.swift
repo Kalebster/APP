@@ -26,8 +26,15 @@ final class ExerciseListUITests: IronFlowUITestCase {
         return field
     }
 
+    /// The count of the filtered exercises, shown while a group or an equipment is chosen.
+    @MainActor
+    private func count(in app: XCUIApplication) -> XCUIElement {
+        element("exercises.count", in: app)
+    }
+
     /// Taps a chip of a row that scrolls sideways, first dragging the row until the chip is on the
-    /// screen: the test does not scroll a SwiftUI row by itself.
+    /// screen: the test does not scroll a SwiftUI row by itself. The tap is repeated if it is lost
+    /// (`tapFilter`), so it waits for the count to change.
     @MainActor
     private func tapChip(_ chip: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(chip.waitForExistence(timeout: 10), "Chip not found: \(chip)")
@@ -41,7 +48,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
             start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: distance, dy: 0)))
             drags += 1
         }
-        chip.tap()
+        tapFilter(chip, changing: count(in: app))
     }
 
     /// Types in the search and waits until the field holds it, so a lost key shows as a wrong text.
@@ -72,7 +79,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         attachScreenshot(named: "70-exercises-all", of: app)
 
         let chest = groupChip("chest", in: app)
-        chest.tap()
+        tapFilter(chest, changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "58 exercícios"), "Chest count not shown")
         XCTAssertTrue(chest.isSelected, "Peito is not selected")
         XCTAssertFalse(all.isSelected, "Todos is still selected")
@@ -85,7 +92,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         let app = launchOnTab("Exercícios")
         let chest = groupChip("chest", in: app)
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Peito not shown")
-        chest.tap()
+        tapFilter(chest, changing: count(in: app))
 
         // Only the equipment of the chest exercises: every one but Kettlebell.
         for key in ["barbell", "dumbbell", "machine", "cable", "smith", "bodyweight", "band", "plate"] {
@@ -94,7 +101,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertFalse(equipmentChip("kettlebell", in: app).exists, "kettlebell offered for Peito")
 
         let dumbbell = equipmentChip("dumbbell", in: app)
-        dumbbell.tap()
+        tapFilter(dumbbell, changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "12 exercícios"), "Peito + Halteres count")
         XCTAssertTrue(dumbbell.isSelected, "Halteres is not selected")
         XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Crucifixo (Halter), Peito, Peitoral (alongamento), Halteres")
@@ -102,7 +109,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         attachScreenshot(named: "71-exercises-chest-dumbbells", of: app)
 
         // A second tap unselects it.
-        dumbbell.tap()
+        tapFilter(dumbbell, changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "58 exercícios"), "Halteres not unselected")
         XCTAssertFalse(dumbbell.isSelected, "Halteres still selected")
 
@@ -126,11 +133,11 @@ final class ExerciseListUITests: IronFlowUITestCase {
         continueAfterFailure = false
         let app = launchOnTab("Exercícios")
         search("supino", in: app)
-        groupChip("chest", in: app).tap()
-        equipmentChip("barbell", in: app).tap()
+        tapFilter(groupChip("chest", in: app), changing: count(in: app))
+        tapFilter(equipmentChip("barbell", in: app), changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "7 exercícios"), "Peito + Barra + supino count")
 
-        app.buttons["exercises.clearFilters"].tap()
+        tapFilter(app.buttons["exercises.clearFilters"], changing: count(in: app))
 
         XCTAssertTrue(element("exercises.count", in: app).waitForNonExistence(timeout: 10), "Count row still shown")
         XCTAssertTrue(groupChip("all", in: app).isSelected, "Todos not selected again")
@@ -174,7 +181,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
             searchField(in: app).typeText("\n")
             XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         }
-        groupChip("chest", in: app).tap()
+        tapFilter(groupChip("chest", in: app), changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "0 exercícios"), "Count without results: \(element("exercises.count", in: app).label)")
     }
 
@@ -206,7 +213,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         }
 
         // The words and a group together: Peito leaves out Supino Fechado (Barra), of Tríceps.
-        groupChip("chest", in: app).tap()
+        tapFilter(groupChip("chest", in: app), changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "7 exercícios"), "Peito with the search")
         XCTAssertEqual(cards(in: app).element(boundBy: 0).label, benchWithBarbell[0])
         XCTAssertEqual(cards(in: app).element(boundBy: 1).label, benchWithBarbell[2])
@@ -249,7 +256,7 @@ final class ExerciseListUITests: IronFlowUITestCase {
         XCTAssertEqual(element("exercises.total", in: app).label, "421 exercícios")
         let mine = groupChip("mine", in: app)
         XCTAssertTrue(mine.exists, "No Meus with a custom exercise")
-        mine.tap()
+        tapFilter(mine, changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "1 exercício"), "Meus count")
         XCTAssertTrue(mine.isSelected, "Meus is not selected")
         XCTAssertEqual(cards(in: app).count, 1)
@@ -259,9 +266,9 @@ final class ExerciseListUITests: IronFlowUITestCase {
         attachScreenshot(named: "73-exercises-mine", of: app)
 
         // With an equipment chosen, the custom exercise is not shown.
-        groupChip("chest", in: app).tap()
+        tapFilter(groupChip("chest", in: app), changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "59 exercícios"), "Peito count with the custom exercise")
-        equipmentChip("dumbbell", in: app).tap()
+        tapFilter(equipmentChip("dumbbell", in: app), changing: count(in: app))
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "12 exercícios"), "The custom exercise counted with Halteres")
         search("meu", in: app)
         XCTAssertTrue(element("exercises.empty", in: app).waitForExistence(timeout: 10), "The custom exercise shown with Halteres")
