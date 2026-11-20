@@ -154,6 +154,27 @@ extension XCTestCase {
         XCTAssertTrue(name.waitForExistence(timeout: 10), "Session not opened from the bar", file: file, line: line)
     }
 
+    /// Taps a filter of the exercise list or picker (a group or equipment chip, or "Limpar filtros") and
+    /// waits for its effect: the text of `effect` changing, or `effect` appearing or leaving. A tap can be
+    /// lost on a slow machine, as on the tabs (main at 99d88c8, run 44635190069: Peito was tapped and the
+    /// count never showed), so when after 5 s the text is the same and the filter's selection did not
+    /// change either (the app never got the tap) it is tapped once more. The selection keeps a tap that
+    /// came late from being undone: a second tap on an equipment chip unselects it. Nothing waits when
+    /// the first tap works; the caller checks the result as before.
+    @MainActor
+    func tapFilter(_ filter: XCUIElement, changing effect: XCUIElement) {
+        let before = effect.exists ? effect.label : nil
+        let wasSelected = filter.isSelected
+        filter.tap()
+        let changed = before.map { NSPredicate(format: "exists == false OR label != %@", $0) } ?? NSPredicate(format: "exists == true")
+        let expectation = XCTNSPredicateExpectation(predicate: changed, object: effect)
+        if XCTWaiter().wait(for: [expectation], timeout: 5) != .completed, filter.exists, filter.isSelected == wasSelected {
+            XCTContext.runActivity(named: "Tap lost: tapping the filter once more") { _ in
+                filter.tap()
+            }
+        }
+    }
+
     @MainActor
     private func waitUntilSelected(_ tab: XCUIElement, timeout: TimeInterval) -> Bool {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: tab)

@@ -285,7 +285,8 @@ final class WorkoutUITests: IronFlowUITestCase {
         app.buttons["workout.addExercises"].tap()
         let chest = app.buttons["picker.filter.chest"]
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest filter not shown")
-        chest.tap()
+        // The picker has no count: the first card changes from the first exercise of all to the first of the chest.
+        tapFilter(chest, changing: app.buttons.matching(identifier: "picker.card").element(boundBy: 0))
         let inWorkout = pickerCard("Crossover (Polia Alta)", in: app)
         XCTAssertTrue(inWorkout.waitForExistence(timeout: 10), "Exercise not found in the picker")
         XCTAssertTrue(inWorkout.label.hasSuffix("Já está no treino"), "Missing 'NO TREINO': \(inWorkout.label)")
