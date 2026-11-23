@@ -17,7 +17,7 @@ Este guia diz como o Iron Flow deve parecer e se comportar. Ele vale para toda t
 - **Só modo escuro.** O app ignora a aparência do aparelho: cada cor tem um valor só no catálogo.
 - **SF Pro, a fonte do sistema, em todos os textos do app**, sempre por `scaledFont(_:weight:)`, que mantém o Dynamic Type (o texto cresce com a configuração do iPhone). A fonte do sistema acompanha sozinha o "Texto em negrito" do iPhone. O app não leva nenhum arquivo de fonte.
 - **Os componentes do próprio iOS continuam os do sistema:** barra de abas, alertas, menus, folhas de confirmação e teclado.
-- **Preto, branco e cinza, com o azul só em detalhes.** O botão principal é branco com texto e ícone pretos (`primaryButton` e `primaryButtonText`). O azul (`AccentColor`) fica só nos detalhes: anel da semana, ponto de dia programado, barra de progresso do treino, anel do descanso, ✓ da série feita (fundo azul, ✓ branco), contorno e marca do exercício escolhido no seletor, marcas de Personalizar e interruptores. O cinza-claro (`LightAccent`) é para links, ícones e o "‹ Voltar".
+- **Preto, branco e cinza, com o azul só em detalhes.** O botão principal é branco com texto e ícone pretos (`primaryButton` e `primaryButtonText`). O azul (`AccentColor`) fica só nos detalhes: anel da semana, ponto de dia programado, barra de progresso do treino, anel do descanso, ✓ da série feita (fundo azul, ✓ branco), contorno e marca do exercício escolhido no seletor, marcas de Personalizar, interruptores, os músculos principais do boneco e a linha e os pontos do gráfico de evolução. Nada de azul escrito direto no código: sempre `Color.accentColor`, porque a cor do destaque vai poder ser escolhida (etapa S7). O cinza-claro (`LightAccent`) é para links, ícones e o "‹ Voltar".
 - **Vidro do iOS 26 (Liquid Glass) só no que flutua sobre o conteúdo:** a barra de abas do sistema, a barra "Treino em andamento", a barra do descanso, os botões redondos (⌄ e ⋯ do treino, ⋯ do editor), os botões secundários do "Treino de hoje" e as folhas do sistema. Nada de vidro em cartões, linhas, fundos de tela ou avisos. Com "Reduzir transparência", o próprio iOS deixa o vidro fosco; o app não troca o vidro por cor sólida.
 - **Números com largura fixa** (`.monospacedDigit()`) onde mudam enquanto a pessoa olha: cronômetro, descanso, kg, contagens.
 - **Área de toque de pelo menos 44 × 44 pt** em tudo que se toca, mesmo quando o desenho é menor.
@@ -92,6 +92,19 @@ O dia treinado no app é um círculo `primaryButton` com o número em `primaryBu
 | `lockScreenTop` / `lockScreenMiddle` | #2C2C30 / #141416 | Luz de cima da tela bloqueada, sobre preto (`radial-gradient(120% 90% at 50% 0%)`) |
 | `noticeBackground` | #30343E a 82% | Fundo do aviso |
 | `noticeText` / `noticeSecondaryText` | #DDE1EA / #AEB4C2 | Texto do aviso e "agora" |
+
+### Detalhe do exercício (boneco e gráfico)
+
+| `Theme.Colors` | Valor | Protótipo | Uso |
+|---|---|---|---|
+| `Color.accentColor` | #3D7BF0 | `--m-pri`, `--accent` | Músculos principais no boneco e o quadradinho de PRINCIPAL; linha e pontos do gráfico; o fundo da linha é a mesma cor a 12% |
+| `muscleSecondary` | #30569C | `--m-sec` | Músculos secundários no boneco e o quadradinho de SECUNDÁRIOS |
+| `muscleInactive` | #2C2C30 (o mesmo valor de `currentFieldBackground`) | `--m-off` | Músculo que o exercício não usa |
+| `figureBase` | #1E1E21 (o mesmo valor de `iconTileBackground`) | `--m-skin` | Cabeça, pescoço, mãos, joelhos e pés |
+| `chartRule` | #3A3A3F | `#3A3A3F` | Risquinho dos meses e linha vertical do ponto escolhido |
+| `sheetListSeparator` | branco 8% | `rgba(255, 255, 255, .08)` | Linha entre os tipos da folha "Tipos de máquina" |
+
+As linhas horizontais do gráfico são `cardBorder`; os valores do eixo e os meses, `dimText`; o ponto escolhido é `brightText` com contorno azul, e os outros pontos têm contorno `cardBackground`.
 
 ### Tipos de série
 
@@ -210,6 +223,8 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `toast(_:)` (`ToastMessage`) | Aviso curto de confirmação | No alto da tela, some em 2,5 s (em 4 s quando o texto tem mais de 40 caracteres), não bloqueia toques, não cobre o que mudou, o VoiceOver lê |
 | `GroupFilterChip`, `EquipmentFilterChip`, `FilterChipRow` | Filtros da tela Exercícios e do seletor | |
 | `FlowLayout` | Chips que quebram a linha | |
+| `BalancedTextLayout` | Título com as linhas do mesmo tamanho (o `text-wrap: balance` do protótipo) | O texto fica com a largura mais estreita que mantém o número de linhas; numa linha só, nada muda. Usado no título do detalhe do exercício |
+| `BodyFigure` | Boneco de frente e de costas do detalhe do exercício | Desenho original do protótipo (caminhos do `FIG`, viewBox 18 2 84 228, cada região desenhada do lado esquerdo e espelhada em x = 120), 81 × 220 pt, desenhado de uma vez com `Canvas`; escondido do VoiceOver (o cartão lê os músculos) |
 | `OptionGroup`, `OptionRow`, `OptionToggle` | Linhas de opções numa folha ("Opções do treino") | Grupo com fundo `screenBackground`, cantos 14 e linha `rowSeparator` entre as linhas; cada linha com 11 em cima e embaixo e 14 dos lados, título 14 bold, explicação 11 `secondaryText` que quebra linha, e à direita o `Toggle` do iOS na cor de destaque (rótulo lido pelo VoiceOver, não mostrado) ou um link em `lightAccent` com 44 pt de toque |
 | `RestCapsuleButton` | "⏱ Descanso 1:30" do editor | 28 de altura, 44 de toque; texto 12 bold com números de largura fixa em `mediumText` ("Sem timer" em `dimText`), fundo `unplannedDayBackground`; contorno `lightAccent` por 0,9 s depois de escolher |
 
@@ -226,6 +241,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
   - 18: menu-close ("Remover série"), menu-arrow-up e menu-arrow-down (ordenar);
   - 19: logo (preto, no quadrado branco de 34), eq-* (listas de exercícios);
   - 24: tab-* (barra de abas).
+- No detalhe do exercício: info 20 (ⓘ do tipo de máquina, em `mediumText`), chart 18 (exercício nunca feito), chevron-down 11 (menu de período) e chevron-right 12 (cartões do histórico); o › das linhas de Exercícios é o chevron-right-list 13 em `futureDayText` (#7D7D83), como no protótipo.
 - Ícones iguais do protótipo ficam num arquivo só: clock (também no lugar de timer), calendar (também em "Treinos no mês"), eq-halteres (também em "Kg na semana") e plus (também no lugar de plus-small).
 - Ícones do sistema (SF Symbols) só nos componentes do próprio iOS (alertas, menus, teclado) e nas telas que ainda não têm modelo aprovado (Histórico, Ajustes, tela de erro), até a etapa delas.
 - O − e o + do editor de peso e altura são texto, em SF Pro Medium 26, como no protótipo.
@@ -233,6 +249,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 ### Padrões de tela
 
 - **Telas das abas:** título grande próprio ou o topo do modelo; a barra de abas é a do iOS.
+- **Detalhe do exercício:** abre pela linha da aba Exercícios (com a barra de abas e Exercícios marcada; tocar na aba volta à lista) e pelo "Ver exercício" (ícone `info.circle`, primeiro item do menu ⋯ do exercício) do editor e do treino em andamento, sem a barra de abas e com o nome do treino no "‹". O treino continua correndo; o fim do descanso aparece no alto, como nas outras telas. Seções MÚSCULOS (boneco, legenda e tipo de máquina, que abre a folha "Tipos de máquina"), EVOLUÇÃO (ÚLTIMA VEZ, MELHOR SÉRIE ★ e o gráfico em Swift Charts, com o menu de período do iOS e os botões de métrica de 32 de altura e 44 de toque) e HISTÓRICO (5 treinos e "Mostrar mais"; cada cartão abre o detalhe do treino). Com texto de acessibilidade, a legenda vai para baixo do boneco, e os dois blocos e as séries do histórico ficam em uma coluna.
 - **Telas empilhadas (editor, Programação):** "‹ Treinos" ou "‹ Início" no alto, à esquerda, sem barra de navegação do sistema, e o gesto de voltar deslizando da borda continua funcionando.
 - **Folhas:** a folha do sistema, de vidro; título, explicação, conteúdo e botões no pé. Os botões ficam fixos no fim quando o conteúdo rola. Dentro das folhas, os blocos (grupos de opções, grades, campos) seguem o protótipo, com os fundos sólidos dele.
 - **Menu ⋯ (ou ⋮):** abre o menu do próprio iOS (`Menu`), com SF Symbols e os textos do protótipo. A exceção é o ⋯ do treino em andamento, que abre a folha "Opções do treino" (as opções e "Descartar treino"), como no protótipo.
@@ -257,7 +274,7 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 
 - **Dynamic Type:** todo texto cresce com `scaledFont`. Com letra grande, as linhas quebram ou empilham, sem cortar texto.
 - **Toque de 44 pt** em tudo que se toca.
-- **VoiceOver:** botões só com ícone têm rótulo; ícones decorativos ficam escondidos; avisos são anunciados.
+- **VoiceOver:** botões só com ícone têm rótulo; ícones decorativos ficam escondidos; avisos são anunciados. Gráficos têm um resumo ("Maior carga: de 56 kg em qui, 23 jul a 62 kg em sex, 9 out") e a acessibilidade do Swift Charts (cada ponto com a data e o valor, e o gráfico de áudio).
 - **Contraste** (texto normal precisa de 4,5:1; texto grande ou negrito de 14 pt para cima, de 3:1; ícones e contornos que dizem algo, de 3:1). Cores do visual novo, cada texto sobre cada fundo em que aparece:
 
 | Texto sobre fundo | Contraste | Situação |
@@ -279,6 +296,10 @@ Use estes antes de criar outro. Se precisar de uma variação, acrescente um par
 | `failureSet` sobre o próprio fundo de 16% num cartão / sobre `setFieldBackground` ("Descartar") | 4,9 / 5,4 | ok |
 | `warmupSet` e `feederSet` sobre o próprio fundo num cartão | 7,6 e 5,3 | ok |
 | ✓ branco sobre `accentColor` (ícone, 3:1) / anel azul sobre `cardBackground` | 4,0 / 4,7 | ok |
+| Detalhe do exercício: ★ (`warmupSet`) / mudança (`lightAccent`) / ▼ e textos secundários (`secondaryText`) / eixo do gráfico (`dimText`) sobre `cardBackground` | 10,5 / 12,3 / 6,8 / 5,6 | ok |
+| › das linhas de Exercícios (`futureDayText`, ícone) / linha do gráfico (`accentColor`) sobre `cardBackground` | 4,6 / 4,7 | ok |
+| "ESTE" (`primaryButtonText` sobre `primaryButton`) / textos da folha "Tipos de máquina" (`secondaryText` sobre `screenBackground`) | 19,3 / 7,6 | ok |
+| Boneco: principal / secundário sobre músculo sem uso; principal sobre secundário | 3,5 / 1,9; 1,8 | o boneco é decorativo: a legenda escreve os músculos e o VoiceOver lê o cartão, então a cor não é a única forma de saber |
 
 Sobre o vidro, o contraste depende do que passa por baixo; os valores abaixo foram medidos nos screenshots do CI (o pior caso de cada um):
 

@@ -31,22 +31,17 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Lista de exercícios: biblioteca de 157 para 220 exercícios, com os nomes no padrão do Hevy (equipamento entre parênteses; os de peso do corpo sem parênteses), cada um no grupo do músculo que mais trabalha; "Costas" vira quatro grupos (Dorsais, que mantém o valor gravado "back", Costas superiores, Trapézio e Lombar) e entra Adutores, nos filtros na ordem aprovada; keys, ids e equipamentos de antes não mudam, e o histórico continua com o nome e o grupo de cada dia; busca por palavras na aba Exercícios e no seletor, em qualquer ordem, sem diferenciar maiúsculas, acentos e espaços a mais; os 6 testes de interface que conferiam um aviso sem o gancho -ui-toast-seconds passam a usá-lo e, antes de um screenshot tirado sem o aviso, esperam ele sumir; o toque na barra "Treino em andamento" logo depois de abrir o app é repetido quando se perde, como já acontecia com as abas (PR #35).
 - Lista de exercícios, parte 2: biblioteca de 220 para 420 exercícios, com os 200 da segunda lista aprovada, cada um com key e UUID novos, no fim do bloco do seu grupo; "Remada Alta (Máquina)" passa a "Remada Alta Articulada (Máquina)"; keys e ids de antes não mudam e não há schema novo; o seeder decide cada nome com os nomes que ficam no fim da passada, então um exercício recebe o nome que outro deixa, dois trocam de nome e o "Agachamento Búlgaro" novo é criado ativo (testado de 71, 157 e 220 para 420, sem nome mantido nem exercício escondido); a busca acha também pelo nome do equipamento ("halteres", "peso do corpo"); a contagem mostra "0 exercícios"; falha ao salvar registrada com Logger (tipo, domínio e código públicos, descrição privada); a verificação do Release confere os 12 textos dos ganchos de teste (todos no Debug, nenhum no Release); README; vibração ao marcar a série no DESIGN.md; ROTEIRO com o plano novo de etapas (PR da lista de exercícios, parte 2).
 - Visual novo — o protótipo aprovado "Iron Flow — visual novo" em todas as telas que já existiam, sem mudar layout, textos, medidas nem funções: cores neutras (preto, branco e cinza, com o azul #3D7BF0 só em detalhes; botões principais brancos com texto preto); a fonte SF Pro, a do sistema, no lugar da Inter, com as alturas de linha do protótipo calculadas sobre a altura real da fonte; o vidro do iOS 26 nas barras "Treino em andamento" e do descanso, nos botões redondos, nos botões secundários do "Treino de hoje" e nas folhas do sistema; a coluna ÚLTIMA da série atual em #A6A6AC (7,0:1); o protótipo em `design/prototipo.html` e o workflow manual "Referências do protótipo", que gera as imagens de comparação com a SF Pro (PR #38).
+- Detalhe do exercício e Mapa dos músculos: tela nova pela linha da aba Exercícios (com o ›) e pelo "Ver exercício" do ⋯ do editor e do treino; boneco de frente e de costas com os músculos principais e secundários dos 420 exercícios (dados no código, pela key) e o músculo do grupo nos exercícios próprios; tipo de máquina com a folha "Tipos de máquina"; última vez, melhor série, gráfico de evolução em Swift Charts (3 meses, 1 ano e Tudo; maior carga e volume, ou menor ajuda e mais repetições no Graviton, ou repetições sem carga) e o histórico do exercício; as séries dos 4 exercícios Graviton deixam de contar nos kg levantados, também nos treinos antigos; gancho só de teste `-ui-today` (PR da etapa Detalhe do exercício).
 
 ## Próximas etapas
 
 Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem protótipo aprovado antes de qualquer tela nova e começa numa conversa nova do Code. Sem recursos sociais.
 
-### Detalhe do exercício e Mapa dos músculos
-- O detalhe do exercício vale para os exercícios da biblioteca e os próprios: equipamento, grupo, foco e o histórico da pessoa com aquele exercício (última vez, melhor série e evolução).
-- O › no fim de cada linha de Exercícios (13, `dimText`, como no protótipo), quando a linha passar a abrir o exercício.
-- O tipo de máquina numa linha curta no detalhe (por exemplo, "Máquina de placas" ou "Articulada (anilhas)"), sem desenho de cada máquina.
-- Mapa dos músculos: os músculos principais e secundários de cada exercício e um boneco de frente e de costas, com desenho original, no detalhe. A M8 reaproveita o mesmo desenho.
-- Exercícios com Graviton ("Barra Fixa (Graviton)", "Barra Fixa Supinada (Graviton)", "Peito na Paralela (Graviton)" e "Tríceps na Paralela (Graviton)"): o kg é a ajuda da máquina, então mais kg deixa o exercício mais fácil. A evolução e os recordes tratam isso (decisão do dono).
-
 ### S4-C — Exercícios próprios
 - + Novo, editar e arquivar, com o equipamento dos exercícios próprios.
 - Duplicar um exercício da biblioteca numa versão própria, com nome, evolução e recordes próprios (para as variações de máquina).
 - Remover um exercício próprio que tem histórico arquiva o exercício, mas ele continua nos treinos. Decidir no modelo se o app pergunta se quer tirar dos treinos também.
+- O exercício próprio escolhe os músculos principais e secundários e o tipo de máquina; até lá, o detalhe mostra o músculo do grupo.
 
 ### Ajustar o treino na hora
 - Trocar exercício: no treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. No editor do treino, trocar mantém as séries planejadas.
@@ -74,6 +69,7 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - Filtros; apagar ou corrigir um treino concluído.
 - O detalhe de um treino concluído mostra o tipo de cada série e os kg só das séries válidas e de falha.
 - Os recordes (os 3 recentes do resumo e os de cada treino da lista) entram na etapa Recordes e progresso.
+- Os recordes recentes do Histórico abrem o detalhe do exercício.
 - Mudança do banco, numa versão nova do schema e numa migração só:
   - índices (sessões por data, pesos por data, dias marcados);
   - em cada sessão, o dia local e o fuso de quando ela começou, para um treino não mudar de dia quando o iPhone está em outro fuso (hoje o dia é recalculado com o fuso atual do aparelho; as sessões antigas recebem o fuso do aparelho na migração);
@@ -87,8 +83,10 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 
 ### Recordes e progresso
 - Recordes pessoais e 1RM estimado, com o aviso de recorde na hora, durante o treino; os 3 recordes recentes do Histórico e os recordes de cada treino da lista.
+- O 1RM estimado e a lista de recordes entram no detalhe do exercício (o gráfico ganha a métrica 1RM).
+- Nos 4 exercícios Graviton o kg é a ajuda da máquina: o recorde é com menos kg, como a melhor série do detalhe (decisão do dono).
 - M6 — Recordes pessoais comemorados e cartão do treino para os Stories.
-- M8 — Resumo da semana e do mês com mapa do corpo: as séries válidas e de falha por grupo principal, semana contra semana, sem pontuar músculos secundários.
+- M8 — Resumo da semana e do mês com mapa do corpo: as séries válidas e de falha por grupo principal, semana contra semana, sem pontuar músculos secundários. Reaproveita o boneco do detalhe do exercício.
 - M17 — Gráfico do peso do corpo com a linha da meta e o ritmo por semana.
 - Apagar um registro de peso errado, com confirmação (hoje só dá para mudar o de hoje, e um peso errado de outro dia fica para sempre).
 
@@ -106,6 +104,7 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - Desenho no protótipo 'Iron Flow — visual novo': Conta e assinatura; Perfil (peso, altura e meta de calorias pela calculadora); Treino (meta por semana, primeiro dia da semana, descanso padrão, aviso do fim do descanso, som ou só vibrar, vibrar, tela acesa, aquecimento nas estatísticas e lembrete de treino); Unidades e idioma (kg ou lb; o idioma segue o do iPhone); Apple Saúde; Seus dados; Fale com a gente; Sobre e ajuda; Zona de perigo (apagar tudo, com confirmação dupla).
 - Apple Saúde: gravar o treino como treino de força e ler o peso. (A antiga M10 era a mesma coisa e saiu.)
 - Unidades e idioma: um lugar só para o idioma (hoje `pt_BR` fixo em 6 arquivos) e para a unidade de carga (hoje "kg" fixo nos textos).
+- Aparência: a pessoa escolhe a cor de destaque (rosa, vermelho, amarelo, verde e outras); tudo o que hoje é azul segue a cor escolhida, inclusive o boneco dos músculos. Protótipo antes, cuidando do contraste de cada cor em cada uso e da confusão com o amarelo do aquecimento e do recorde e com o vermelho da falha (decisão do dono, 23/11).
 - Fale com a gente: enviar feedback e "Seja um influenciador", pelo app de e-mail do iPhone, para um e-mail só do app que o dono vai criar antes desta etapa (nunca um e-mail pessoal). O mesmo e-mail serve para o suporte da App Store e a política de privacidade.
 
 ### Seus dados
@@ -192,7 +191,6 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
   - Início (screenshots 1, 22, 30, 38, 42, 50, 52, 53, 55 e 93): os cartões do resumo rápido estão 1,7 pt mais baixos que no protótipo (98,3 × 100). Nos estados "Descanso hoje", "Em andamento" e "Nada programado" (31, 32, 51, 54 e 83), o cartão da semana e o que vem abaixo ficam de 2,3 a 3,7 pt mais acima, porque o link "Programar semana" ocupa menos altura que no protótipo.
   - Treinos (2, 11, 26, 56, 57 e 58): cada cartão da grade de treinos está 2,7 pt mais alto (143,7 × 141), e a segunda linha da grade desce de 3 a 4,3 pt; o cartão "Nenhum treino ainda" e a linha da Programação semanal ficam 1,3 pt abaixo.
   - Programação semanal (41, 89 e 90): o cartão da meta da semana está 1,7 pt mais alto (72,7 × 71), e os dias abaixo dele descem de 1,3 a 1,7 pt.
-  - Exercícios (72): a mensagem de lista vazia fica 2,7 pt mais acima.
   - Editor do treino (75, 78, 95 e 106): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt no fim da tela ou do segundo cartão); ao ordenar, de −1,3 a −2,0 pt; um nome longo quebra uma palavra antes, porque o app reserva mais espaço para o ⋯ que o protótipo.
   - Seletor de exercícios (77): a barra de cima ("Cancelar" e o título) está 4,3 pt mais alta.
   - Treino em andamento (25, 63 a 69, 80, 91, 92, 98 a 102 e 107): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt a partir do segundo cartão).
