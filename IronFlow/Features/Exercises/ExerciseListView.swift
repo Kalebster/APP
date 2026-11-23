@@ -49,6 +49,9 @@ struct ExerciseListView: View {
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
         .scrollDismissesKeyboard(.immediately)
+        #if DEBUG
+        .tapDiagnosticsScrollPhases("list")
+        #endif
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
     }

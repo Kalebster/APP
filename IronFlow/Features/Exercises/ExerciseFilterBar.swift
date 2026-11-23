@@ -70,6 +70,9 @@ struct ExerciseFilterBar: View {
 
     /// Chooses a group; the equipment chosen stays only if the group has exercises with it.
     private func choose(_ filter: ExerciseCatalog.GroupFilter) {
+        #if DEBUG
+        TapDiagnostics.shared.record("group action \(identifier(of: filter))")
+        #endif
         chosenGroup = filter
         chosenEquipment = ExerciseCatalog.equipment(chosenEquipment, for: filter, in: items)
     }
