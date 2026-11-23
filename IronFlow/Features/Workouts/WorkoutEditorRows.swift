@@ -10,8 +10,8 @@ let editorCardInset: CGFloat = 12
 
 /// The first row of an exercise card in the workout editor: the equipment icon (the initial of a custom
 /// exercise), the name, "Grupo · Foco", "Arquivado" when the exercise was archived, and the ⋯ menu with
-/// "Ordenar exercícios" and "Remover do treino". The question before removing opens from the ⋯ itself,
-/// so it points to the exercise it is about.
+/// "Ver exercício", "Ordenar exercícios" and "Remover do treino". The question before removing opens from
+/// the ⋯ itself, so it points to the exercise it is about.
 struct EditorExerciseHeader: View {
     let item: WorkoutExercise
     let canReorder: Bool
@@ -19,6 +19,8 @@ struct EditorExerciseHeader: View {
     @Binding var isConfirmingRemoval: Bool
     /// The exercise's name in the question, taken when it was asked.
     let removalName: String
+    /// "Ver exercício": opens the exercise screen; offered while the exercise exists.
+    let onShowExercise: @MainActor () -> Void
     let onReorder: @MainActor () -> Void
     /// Asks before removing: sets `isConfirmingRemoval`.
     let onRemove: @MainActor () -> Void
@@ -52,6 +54,9 @@ struct EditorExerciseHeader: View {
                     .background(Theme.Colors.unplannedDayBackground, in: Capsule())
             }
             Menu {
+                if exercise != nil {
+                    Button("Ver exercício", systemImage: "info.circle", action: onShowExercise)
+                }
                 if canReorder {
                     Button("Ordenar exercícios", systemImage: "arrow.up.arrow.down", action: onReorder)
                 }

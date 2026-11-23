@@ -3,7 +3,8 @@ import SwiftUI
 
 /// The Exercícios tab: the active exercises in one alphabetical list, with a search, the group filters
 /// ("Todos", "Meus" and the muscle groups) and the equipment of the chosen group. "Limpar filtros" goes
-/// back to "Todos" without equipment and keeps the search. Read-only: the cards open nothing yet.
+/// back to "Todos" without equipment and keeps the search. A row opens the exercise screen, with the tab
+/// bar still there; tapping the tab again goes back to the list.
 struct ExerciseListView: View {
     @Query(filter: #Predicate<Exercise> { !$0.isArchived }) private var exercises: [Exercise]
     /// The items built from the exercises, kept until one of them changes: typing a search or choosing a
@@ -49,6 +50,11 @@ struct ExerciseListView: View {
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
         .scrollDismissesKeyboard(.immediately)
+        .navigationDestination(for: ExerciseRoute.self) { route in
+            if let exercise = exercises.first(where: { $0.id == route.exerciseID }) {
+                ExerciseDetailView(exercise: exercise, origin: .exercises)
+            }
+        }
         #if DEBUG
         .tapDiagnosticsScrollPhases("list")
         #endif
@@ -60,10 +66,13 @@ struct ExerciseListView: View {
     private func cards(_ shown: [ExerciseCatalog.Item]) -> some View {
         LazyVStack(spacing: 8) {
             if shown.isEmpty {
-                ExerciseEmptyCard()
+                ExerciseEmptyCard(spacing: 8)
             } else {
                 ForEach(shown) { (item: ExerciseCatalog.Item) in
-                    ExerciseCard(item: item)
+                    NavigationLink(value: ExerciseRoute(exerciseID: item.id)) {
+                        ExerciseCard(item: item)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

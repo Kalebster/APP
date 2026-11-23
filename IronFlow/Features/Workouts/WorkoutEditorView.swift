@@ -37,6 +37,8 @@ struct WorkoutEditorView: View {
     @State private var highlightedRest: UUID?
     /// The exercise whose rest was chosen in the sheet, outlined once the sheet has closed.
     @State private var chosenRest: UUID?
+    /// The exercise whose screen "Ver exercício" opened.
+    @State private var shownExercise: Exercise?
     /// Set right before the workout is deleted, so the view stops reading it.
     @State private var isDeleted = false
     @State private var errorMessage: String?
@@ -166,6 +168,9 @@ struct WorkoutEditorView: View {
             ExercisePickerView(workoutExerciseIDs: Set(workout.exercises.compactMap { $0.exercise?.id })) { exercises in
                 try service.addExercises(exercises, to: workout)
             }
+        }
+        .navigationDestination(item: $shownExercise) { exercise in
+            ExerciseDetailView(exercise: exercise, origin: .workout(name: workout.name))
         }
         .sheet(isPresented: $isRenaming) {
             WorkoutNameSheet(title: "Renomear treino", initialName: workout.name) { name in
@@ -304,6 +309,7 @@ struct WorkoutEditorView: View {
                 canReorder: canReorder,
                 isConfirmingRemoval: isConfirmingRemoval(of: item),
                 removalName: removal.flatMap { $0.item.id == item.id ? $0.name : nil } ?? EditorExerciseInfo.name(of: item.exercise),
+                onShowExercise: { showExercise(of: item) },
                 onReorder: startOrdering,
                 onRemove: { confirmRemoval(of: item) },
                 onConfirmRemoval: confirmedRemoval
@@ -534,6 +540,13 @@ struct WorkoutEditorView: View {
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
+    }
+
+    /// "Ver exercício": the typed values are saved first, as when the screen closes.
+    private func showExercise(of item: WorkoutExercise) {
+        focusedField = nil
+        commitAll()
+        shownExercise = item.exercise
     }
 
     private func confirmRemoval(of item: WorkoutExercise) {

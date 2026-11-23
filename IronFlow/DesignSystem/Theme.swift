@@ -98,6 +98,19 @@ enum Theme {
         static let warmupSet = Color(.warmupSet)
         static let feederSet = Color(.feederSet)
         static let failureSet = Color(.failureSet)
+        // The exercise screen.
+        /// The main muscles on the body figure are the accent color (`Color.accentColor`); the secondary ones
+        /// a darker blue (#30569C).
+        static let muscleSecondary = Color(.muscleSecondary)
+        /// A muscle the exercise does not use (#2C2C30, the same value as `currentFieldBackground`).
+        static let muscleInactive = Color(.currentFieldBackground)
+        /// The head, neck, hands, knees and feet of the body figure (#1E1E21, the same value as
+        /// `iconTileBackground`).
+        static let figureBase = Color(.iconTileBackground)
+        /// The ticks of the months below the evolution chart and the line of the chosen point (#3A3A3F).
+        static let chartRule = Color(.chartRule)
+        /// The lines between the rows of the "Tipos de máquina" sheet: white at 8%.
+        static let sheetListSeparator = Color(.sheetListSeparator)
     }
 
     enum Metrics {
