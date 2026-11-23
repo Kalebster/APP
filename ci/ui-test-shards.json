@@ -8,6 +8,9 @@
   "parts": {
     "1": {
       "AppearanceUITests/testSheetAndKeyboardAreDarkWithTheDeviceInLightMode": 62.2,
+      "ExerciseDetailUITests/testGravitonShowsTheHelp": 40.0,
+      "ExerciseDetailUITests/testOpenFromTheEditorAndBack": 35.0,
+      "ExerciseDetailUITests/testOpenFromTheListBackAndTheTab": 45.0,
       "ExerciseListUITests/testAllExercisesAndGroupChips": 20.2,
       "HomeScreenUITests/testChooseAnotherWorkoutListsTodaysFirst": 17.2,
       "HomeScreenUITests/testFinishedTodayShowsTheDuration": 10.9,
@@ -37,6 +40,10 @@
     },
     "2": {
       "BMRCalculatorUITests/testChoicesUpToUsingTheGoal": 53.5,
+      "ExerciseDetailUITests/testDoneOnceAndNeverDone": 50.0,
+      "ExerciseDetailUITests/testGravitonSetsStayOutOfTheKgLifted": 45.0,
+      "ExerciseDetailUITests/testPeriodMetricChartHistoryAndShowMore": 60.0,
+      "ExerciseDetailUITests/testThreeYearsOpenWithoutHanging": 40.0,
       "ExerciseListUITests/testClearFiltersKeepsTheSearch": 27.5,
       "ExerciseListUITests/testMineShowsTheCustomExercise": 32.0,
       "FilterTapDiagnosticsUITests/testDiagnosticTapAfterTheOriginalChecks": 20.0,
@@ -68,6 +75,9 @@
     },
     "3": {
       "BMRCalculatorUITests/testCalculatorWithSavedChoices": 29.6,
+      "ExerciseDetailUITests/testLargeTextKeepsTheScreenReadable": 40.0,
+      "ExerciseDetailUITests/testMachineTypeAndItsSheet": 35.0,
+      "ExerciseDetailUITests/testOpenFromTheSessionWhileTheRestGoesOn": 50.0,
       "ExerciseListUITests/testEquipmentFollowsTheGroup": 62.1,
       "ExerciseListUITests/testLargeTextKeepsTheExercisesOnScreen": 23.6,
       "ExerciseListUITests/testNewGroupsAndSearchByWords": 59.4,

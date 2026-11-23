@@ -4,7 +4,7 @@
     "Cada imagem tem o tamanho dos screenshots do CI (iPhone 17, 402 × 874 pt em escala 3): o protótipo começa no fim da área segura de cima (62 pt) e a área segura de baixo vale 34 pt.",
     "Cada entrada abre o protótipo no endereço 'url' e segue os passos, tocando nos mesmos botões que uma pessoa tocaria. Passos: click (seletor CSS e, se houver mais de um, 'index'), reveal (rola até o elemento), focus, type (seletor e texto), select (seletor e valor), scroll (número ou 'bottom'), scrollIn (seletor e número ou 'bottom'), wait (ms) e do (uma sequência de 'sequences'). Depois de cada passo o renderizador espera 'stepWait' ms.",
     "Os dados do protótipo são exemplos e diferem dos dados dos testes: a comparação é de medidas, posições, fontes e cores.",
-    "Sem referência (o protótipo não tem o equivalente): Histórico (4, 27, 37), Ajustes (5-settings), tela de erro (5-persistence-error), texto grande (29, 47, 59, 60, 61, 62, 66, 67, 74, 81) e o teclado (48)."
+    "Sem referência (o protótipo não tem o equivalente): Histórico (4, 27, 37), Ajustes (5-settings), tela de erro (5-persistence-error), texto grande (29, 47, 59, 60, 61, 62, 66, 67, 74, 81, 116) e o teclado (48). Do detalhe do exercício, só os 5 estados (108 a 112) têm referência: a folha Tipos de máquina (113), o gráfico com um treino escolhido (114), o histórico rolado (115) e o detalhe aberto pelo treino (117) não têm."
   ],
   "screen": { "width": 402, "height": 874, "safeTop": 62, "safeBottom": 34, "scale": 3 },
   "stepWait": 350,
@@ -275,6 +275,11 @@
     ] },
     { "name": "105-long-name-exercises", "url": "#exercicios", "steps": [{ "focus": "#q" }, { "type": ["#q", "acima unilateral"] }] },
     { "name": "106-long-name-editor", "url": "", "steps": [{ "do": "treino-de-nome-longo" }] },
-    { "name": "107-long-name-session", "url": "", "steps": [{ "do": "treino-de-nome-longo" }, { "click": "[data-act=\"ed-start\"]" }] }
+    { "name": "107-long-name-session", "url": "", "steps": [{ "do": "treino-de-nome-longo" }, { "click": "[data-act=\"ed-start\"]" }] },
+    { "name": "108-exercise-detail", "url": "#exercicio", "steps": [] },
+    { "name": "109-exercise-detail-graviton", "url": "#exercicio-graviton", "steps": [] },
+    { "name": "110-exercise-detail-machine", "url": "#exercicio-maquina", "steps": [] },
+    { "name": "111-exercise-detail-once", "url": "#exercicio-uma-vez", "steps": [] },
+    { "name": "112-exercise-detail-never", "url": "#exercicio-novo", "steps": [] }
   ]
 }

@@ -36,7 +36,15 @@ import SwiftData
 ///   of day ("81.2@14|80.6@7"), with a decimal point;
 /// - `profile:<height cm>:<calorie goal kcal>`: the height and the daily calorie goal;
 /// - `bmr:<sex>:<age>:<goal>`: the calculator's choices: the sex and goal by storage key ("male",
-///   "lose"), and a date of birth on 1 January that gives that age in full years today.
+///   "lose"), and a date of birth on 1 January that gives that age in full years today;
+/// - `prototype-history`: the finished sessions of the approved prototype's history ("Push", "Pull" and
+///   "Pernas", 24 April to 15 October 2026, at 18:00), with the sets of its 15 exercises
+///   (`UITestPrototypeHistory`), for the exercise screen with `-ui-today 2026-10-16`;
+/// - `exercise-years:<exercise>:<years>`: that many years of finished sessions of one exercise, two a week
+///   up to yesterday, each with a warm-up, three working sets and a failure set, the load growing slowly.
+///
+/// The two histories are written straight into the store, in one save, rather than through the session
+/// service: the service saves at every set, and hundreds of sessions would take most of a test's time.
 @MainActor
 enum UITestSeed {
     /// A body weight of `weights`.
@@ -60,6 +68,8 @@ enum UITestSeed {
         case weights([WeightRecord])
         case profile(heightCm: Int, goalKcal: Int)
         case bmr(sex: BiologicalSex, age: Int, goal: WeightGoal)
+        case prototypeHistory
+        case exerciseYears(exercise: String, years: Int)
     }
 
     /// The planned sets of `set-types`, in order.
@@ -161,6 +171,11 @@ enum UITestSeed {
                       let age = Int(parts[2]), age >= 0,
                       let goal = WeightGoal(rawValue: String(parts[3])) else { throw SeedError.unknownItem(String(token)) }
                 return .bmr(sex: sex, age: age, goal: goal)
+            case ("prototype-history", 1):
+                return .prototypeHistory
+            case ("exercise-years", 3):
+                guard let years = Int(parts[2]), (1...5).contains(years) else { throw SeedError.unknownItem(String(token)) }
+                return .exerciseYears(exercise: parts[1], years: years)
             default:
                 throw SeedError.unknownItem(String(token))
             }
@@ -287,6 +302,76 @@ enum UITestSeed {
                 try service.setSex(sex)
                 try service.setBirthDate(BirthDate(day: 1, month: 1, year: year))
                 try service.setWeightGoal(goal)
+            case .prototypeHistory:
+                try insertPrototypeHistory(in: context)
+            case .exerciseYears(let name, let years):
+                try insertYears(years, of: name, in: context)
+            }
+        }
+    }
+
+    /// The prototype's sessions, at 18:00 of their days, finished after their duration.
+    private static func insertPrototypeHistory(in context: ModelContext) throws {
+        let calendar = TrainingDay.calendar
+        var exercises: [String: Exercise] = [:]
+        for session in UITestPrototypeHistory.sessions().reversed() {
+            var components = session.day
+            components.hour = 18
+            guard let start = calendar.date(from: components) else { continue }
+            var performed: [(Exercise, [(SetType, Double?, Int)])] = []
+            for item in session.exercises {
+                let exercise = try exercises[item.name] ?? findExercise(named: item.name, in: context)
+                exercises[item.name] = exercise
+                performed.append((exercise, item.sets.map { ($0.type, $0.weightKg > 0 ? $0.weightKg : nil, $0.reps) }))
+            }
+            insertFinishedSession(name: session.name, start: start, minutes: session.durationMinutes, performed: performed, in: context)
+        }
+        try context.save()
+    }
+
+    /// Two sessions a week of one exercise for `years` years, up to yesterday.
+    private static func insertYears(_ years: Int, of name: String, in context: ModelContext) throws {
+        let exercise = try findExercise(named: name, in: context)
+        let calendar = TrainingDay.calendar
+        let today = calendar.startOfDay(for: .now)
+        let count = years * 52 * 2
+        for index in 0..<count {
+            // Every 3 or 4 days, the oldest first, at 18:00.
+            let daysAgo = (count - index) * 7 / 2
+            guard let day = calendar.date(byAdding: .day, value: -daysAgo, to: today),
+                  let start = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: day) else { continue }
+            let load = 40 + Double(index / 8) * 2.5
+            let sets: [(SetType, Double?, Int)] = [
+                (.warmup, load / 2, 12), (.working, load, 10), (.working, load, 9), (.working, load, 8), (.failure, load - 5, 12),
+            ]
+            insertFinishedSession(name: "Push", start: start, minutes: 50, performed: [(exercise, sets)], in: context)
+        }
+        try context.save()
+    }
+
+    /// A finished session with its exercises and their sets, all done.
+    private static func insertFinishedSession(
+        name: String,
+        start: Date,
+        minutes: Int,
+        performed: [(Exercise, [(SetType, Double?, Int)])],
+        in context: ModelContext
+    ) {
+        let session = Session(startedAt: start, workoutNameSnapshot: name)
+        context.insert(session)
+        session.endedAt = start.addingTimeInterval(Double(minutes) * 60)
+        for (position, item) in performed.enumerated() {
+            let (exercise, sets) = item
+            let row = SessionExercise(sortIndex: position, exerciseNameSnapshot: exercise.name, muscleGroupSnapshot: exercise.muscleGroup)
+            context.insert(row)
+            row.session = session
+            row.exercise = exercise
+            for (index, values) in sets.enumerated() {
+                let log = SetLog(sortIndex: index, weightKg: values.1, reps: values.2, setType: values.0)
+                context.insert(log)
+                log.sessionExercise = row
+                log.isCompleted = true
+                log.completedAt = start.addingTimeInterval(Double(position * 600 + index * 120))
             }
         }
     }

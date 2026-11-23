@@ -742,6 +742,78 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
 .vn-sheet-toggle button[aria-pressed="true"] { background: #F5F5F7; color: #000000; border-color: #F5F5F7; }
 /* Visual novo (17/11): barra do descanso de vidro, como as outras barras; campos e sugestões ajustados */
 #s-session .rest { background: rgba(28, 28, 30, .55); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); border-color: rgba(255, 255, 255, .14); outline-color: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 8px 24px rgba(0, 0, 0, .45); }
+/* Detalhe do exercício e Mapa dos músculos (etapa "Detalhe do exercício e Mapa dos músculos") */
+#s-exd { --m-off: #2C2C30; --m-skin: #1E1E21; --m-pri: #3D7BF0; --m-sec: #30569C; gap: 24px; padding-block: 8px 120px; }
+body.has-mini #s-exd { padding-bottom: 184px; }
+#s-exd .ed-top { display: flex; align-items: center; height: 36px; }
+#s-exd .ed-back { display: flex; align-items: center; gap: 3px; min-height: 44px; font-size: 15px; color: var(--accent-soft); margin-left: -4px; }
+#s-exd .ed-head { display: flex; flex-direction: column; gap: 3px; margin-top: -16px; }
+#s-exd .ed-head h1 { margin: 0; font-size: 29px; font-weight: 800; letter-spacing: -.5px; line-height: 1.05; text-wrap: balance; }
+#s-exd .ed-head p { margin: 0; font-size: 13px; color: var(--muted); }
+#s-exd .js-exd-body { display: contents; }
+#s-exd .sec { gap: 10px; }
+/* Músculos: o boneco à esquerda e a lista à direita */
+#s-exd .x-mus { display: flex; align-items: center; gap: 14px; padding: 14px 14px 12px; }
+#s-exd .x-figs { display: flex; gap: 4px; flex-shrink: 0; }
+#s-exd .x-fig { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#s-exd .x-fig svg { width: 81px; height: 220px; display: block; }
+#s-exd .x-fig small { font-size: 11px; color: var(--faint); }
+#s-exd .x-leg { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+#s-exd .x-leg > div { display: flex; flex-direction: column; gap: 5px; }
+#s-exd .x-k { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: var(--muted); }
+#s-exd .x-k i { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+#s-exd .x-k i.pri { background: var(--m-pri); }
+#s-exd .x-k i.sec { background: var(--m-sec); }
+#s-exd .x-v { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 600; line-height: 1.25; }
+#s-exd .x-note { font-size: 12px; color: var(--muted); line-height: 1.35; }
+#s-exd .x-mach { min-height: 60px; }
+/* Evolução */
+#s-exd .x-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+#s-exd .x-tile { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+#s-exd .x-tile small { font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: var(--muted); display: flex; align-items: center; gap: 5px; height: 13px; line-height: 13px; }
+#s-exd .x-tile b { font-size: 19px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#s-exd .x-tile span { font-size: 12px; color: var(--muted); }
+#s-exd .x-star { color: var(--warm); font-style: normal; font-size: 11px; line-height: 1; letter-spacing: 0; }
+#s-exd .x-chart { padding: 12px 12px 12px 14px; display: flex; flex-direction: column; }
+#s-exd .x-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+#s-exd .x-hv { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#s-exd .x-hv b { font-size: 28px; font-weight: 800; letter-spacing: -.4px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+#s-exd .x-hv b small { font-size: 15px; font-weight: 700; color: var(--muted); letter-spacing: 0; }
+#s-exd .x-hv span { font-size: 12px; color: var(--muted); }
+#s-exd .x-per { display: flex; align-items: center; gap: 4px; min-height: 44px; margin: -8px -4px 0 0; padding: 0 6px; font-size: 13px; font-weight: 600; color: var(--accent-soft); white-space: nowrap; flex-shrink: 0; }
+#s-exd .x-change { margin: 6px 0 0; font-size: 12px; font-weight: 600; color: var(--accent-soft); font-variant-numeric: tabular-nums; }
+#s-exd .x-change.bad { color: var(--muted); }
+#s-exd .x-chart > svg { display: block; width: 100%; height: auto; margin-top: 8px; cursor: pointer; }
+#s-exd .x-chart text { font-family: var(--font); }
+#s-exd .x-inv { margin: 0 0 2px; font-size: 11px; color: var(--faint); }
+#s-exd .x-msg { margin: 14px 0 6px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+#s-exd .x-mets { display: flex; gap: 6px; margin-top: 8px; }
+#s-exd .x-met { height: 32px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--border); font-size: 13px; font-weight: 600; color: var(--dim); }
+#s-exd .x-met[aria-pressed="true"] { background: var(--white); border-color: var(--white); color: #000000; }
+#s-exd .x-empty { padding: 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+#s-exd .x-empty b { font-size: 15px; font-weight: 700; }
+#s-exd .x-empty > span:last-child { font-size: 13px; color: var(--muted); line-height: 1.4; }
+/* Histórico do exercício */
+#s-exd .sec-head .x-count { font-size: 12px; color: var(--muted); }
+#s-exd .x-hist { display: flex; flex-direction: column; gap: 9px; }
+#s-exd .x-sess { width: 100%; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; text-align: left; }
+#s-exd .x-sh { display: flex; align-items: center; gap: 8px; width: 100%; }
+#s-exd .x-sh b { font-size: 14px; font-weight: 700; flex: 1; min-width: 0; }
+#s-exd .x-sh > span { font-size: 12px; color: var(--muted); }
+#s-exd .x-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+#s-exd .x-row { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; }
+#s-exd .x-n { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+#s-exd .x-n.t-warm { background: var(--warm-bg); color: var(--warm); }
+#s-exd .x-n.t-prep { background: var(--prep-bg); color: var(--prep); }
+#s-exd .x-n.t-fail { background: var(--fail-bg); color: var(--fail); }
+#s-exd .x-more { height: 44px; border-radius: 999px; border: 1px solid var(--border); font-size: 14px; font-weight: 600; color: var(--accent-soft); }
+/* Folha "Tipos de máquina" */
+.x-mt { display: flex; flex-direction: column; }
+.x-mt-row { display: flex; flex-direction: column; gap: 3px; padding: 11px 14px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.x-mt-row:last-child { border-bottom: 0; }
+.x-mt-row b { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.x-mt-row b span { font-size: 10px; font-weight: 800; letter-spacing: .8px; color: #000000; background: #F5F5F7; border-radius: 999px; padding: 2px 7px; }
+.x-mt-row small { font-size: 13px; color: var(--muted); line-height: 1.35; }
 </style>
 
 <div class="app">
@@ -920,6 +992,13 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
       <button type="button" class="rest-btn skip" data-act="rest-skip">Pular</button>
     </div>
   </section>
+  <!-- DETALHE DO EXERCÍCIO -->
+  <section class="screen hs" id="s-exd" aria-label="Exercício" hidden>
+    <div class="ed-top"><button type="button" class="ed-back" data-act="exd-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D1D1D6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg><span class="js-exd-back">Exercícios</span></button></div>
+    <div class="ed-head"><h1 class="js-exd-title">Exercício</h1><p class="js-exd-sub"></p></div>
+    <div class="js-exd-body"></div>
+    <p class="foot">Protótipo · os números são exemplos · toque no gráfico para ver cada treino</p>
+  </section>
 </div>
 
 <button type="button" class="mini" data-act="open-session" hidden>
@@ -1047,7 +1126,7 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
   function toast(msg) { var top = current === 'session' ? $('#s-session .s-top') : null; toastEl.style.top = top ? Math.round(top.getBoundingClientRect().bottom + 8) + 'px' : ''; toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.hidden = true; }, msg.length > 40 ? 4000 : 2500); }
 
   /* ---------- Navegação ---------- */
-  var SCREENS = { home: $('#s-home'), treinos: $('#s-treinos'), ex: $('#s-ex'), editor: $('#s-editor'), plan: $('#s-plan'), session: $('#s-session'), hist: $('#s-hist'), set: $('#s-set') };
+  var SCREENS = { home: $('#s-home'), treinos: $('#s-treinos'), ex: $('#s-ex'), editor: $('#s-editor'), plan: $('#s-plan'), session: $('#s-session'), hist: $('#s-hist'), set: $('#s-set'), exd: $('#s-exd') };
   var current = 'home', lastTab = 'home', pos = {};
   var tabsEl = $('.tabs'), miniEl = $('.mini');
   var isTabScreen = function (id) { return id === 'home' || id === 'treinos' || id === 'ex' || id === 'hist' || id === 'set'; };
@@ -1103,10 +1182,10 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
       r.setAttribute('aria-pressed', String(on)); $('.cz-mark', r).textContent = on ? pos + 1 : ''; r.disabled = !on && full;
     });
   }
-  var H_EX = { Push: ['Supino Reto (Barra)', 'Supino Inclinado (Halter)', 'Desenvolvimento (Halter)', 'Tríceps na Polia'], Pull: ['Puxada Frontal', 'Remada Curvada (Barra)', 'Rosca Direta', 'Face Pull'], Pernas: ['Agachamento Livre', 'Leg Press 45° (Máquina)', 'Cadeira Extensora (Máquina)', 'Mesa Flexora (Máquina)'] };
+  var H_EX = { Push: ['Supino Reto (Barra)', 'Supino Inclinado (Halter)', 'Desenvolvimento (Halter)', 'Tríceps Corda (Polia)', 'Flexão'], Pull: ['Puxada Alta Aberta (Polia)', 'Barra Fixa (Graviton)', 'Remada Curvada (Barra)', 'Rosca Direta (Barra)'], Pernas: ['Agachamento Livre (Barra)', 'Leg Press 45° (Máquina)', 'Cadeira Extensora (Máquina)', 'Mesa Flexora (Máquina)', 'Stiff (Barra)'] };
   var H_MON = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   var H_WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-  var H_REC = [['Agachamento Livre', '100 kg × 8', 'qui, 15 out'], ['Puxada Frontal', '70 kg × 10', 'seg, 12 out'], ['Supino Reto (Barra)', '62 kg × 10', 'sex, 9 out']];
+  var H_REC = [['Agachamento Livre (Barra)', '100 kg × 8', 'qui, 15 out'], ['Puxada Alta Aberta (Polia)', '70 kg × 10', 'seg, 12 out'], ['Supino Reto (Barra)', '62 kg × 10', 'sex, 9 out']];
   var H_S = (function () {
     var out = [{ n: 'Pernas', d: new Date(2026, 9, 15), dur: 55, vol: 8.1, rec: 1, sets: 16, reps: 152 }, { n: 'Pull', d: new Date(2026, 9, 12), dur: 48, vol: 5.6, rec: 1, sets: 15, reps: 158 }, { n: 'Push', d: new Date(2026, 9, 9), dur: 62, vol: 6.2, rec: 1, sets: 15, reps: 147 }];
     var names = ['Pernas', 'Pull', 'Push'], k = 0, d = new Date(2026, 9, 7), seed = 11;
@@ -1153,7 +1232,7 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
     }).join('');
     $('.js-h-chart').innerHTML = hChart(list);
     $('.js-h-rec').innerHTML = H_REC.map(function (r) {
-      return '<button type="button" class="row-btn h-recrow" data-act="todo" data-msg="A evolução do exercício fica no detalhe do exercício (S4-C)"><span class="h-star"><svg width="15" height="15" viewBox="0 0 24 24" fill="#F5B83D" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8L3.6 9.6l5.8-.8z"></path></svg></span><span class="row-text"><span class="row-title">' + esc(r[0]) + '</span><span class="row-sub">' + esc(r[1]) + ' · ' + esc(r[2]) + '</span></span>' + CHEV_R + '</button>';
+      return '<button type="button" class="row-btn h-recrow" data-act="exd-open" data-from="hist" data-n="' + esc(r[0]) + '"><span class="h-star"><svg width="15" height="15" viewBox="0 0 24 24" fill="#F5B83D" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8L3.6 9.6l5.8-.8z"></path></svg></span><span class="row-text"><span class="row-title">' + esc(r[0]) + '</span><span class="row-sub">' + esc(r[1]) + ' · ' + esc(r[2]) + '</span></span>' + CHEV_R + '</button>';
     }).join('');
     var groups = [], key = '';
     H_S.forEach(function (s) { var k2 = s.d.getFullYear() + '-' + s.d.getMonth(); if (k2 !== key) { groups.push({ k: k2, t: H_MON[s.d.getMonth()] + (s.d.getFullYear() !== H_TODAY.getFullYear() ? ' ' + s.d.getFullYear() : ''), s: [] }); key = k2; } groups[groups.length - 1].s.push(s); });
@@ -1162,7 +1241,7 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
       g.s.forEach(function (s) { mins += s.dur; vol += s.vol; });
       var head = '<button type="button" class="row-btn h-mhead" data-act="hist-month" data-k="' + g.k + '" aria-expanded="' + open + '"><span class="row-text"><span class="row-title">' + esc(g.t) + '</span><span class="row-sub">' + g.s.length + (g.s.length === 1 ? ' treino' : ' treinos') + ' · ' + hDur(mins) + ' · ' + hNum(vol) + ' t</span></span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8C92" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>';
       var body = open ? '<div class="list">' + g.s.map(function (s) {
-        return '<button type="button" class="row-btn" data-act="todo" data-msg="O detalhe do treino vem na próxima rodada"><span class="row-text"><span class="h-top"><span class="row-title">' + esc(s.n) + '</span><span class="h-date">' + H_WD[s.d.getDay()] + ', ' + s.d.getDate() + '</span></span><span class="row-sub">' + hDur(s.dur) + ' · ' + hNum(s.vol) + ' t' + (s.rec ? ' · <span class="h-rec">★ ' + s.rec + (s.rec === 1 ? ' recorde' : ' recordes') + '</span>' : '') + '</span><span class="h-ex">' + esc(H_EX[s.n].join(', ')) + '</span></span>' + CHEV_R + '</button>';
+        return '<button type="button" class="row-btn" data-act="todo" data-msg="O detalhe do treino vem na próxima rodada"><span class="row-text"><span class="h-top"><span class="row-title">' + esc(s.n) + '</span><span class="h-date">' + H_WD[s.d.getDay()] + ', ' + s.d.getDate() + '</span></span><span class="row-sub">' + hDur(s.dur) + ' · ' + hNum(s.vol) + ' t' + (s.rec ? ' · <span class="h-rec">★ ' + s.rec + (s.rec === 1 ? ' recorde' : ' recordes') + '</span>' : '') + '</span><span class="h-ex">' + esc((s.ex && s.ex.length ? s.ex : H_EX[s.n]).join(', ')) + '</span></span>' + CHEV_R + '</button>';
       }).join('') + '</div>' : '';
       return '<div class="card h-month">' + head + body + '</div>';
     }).join('');
@@ -1295,12 +1374,14 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
     if (id === 'home') renderHero();
     if (id === 'hist') renderHist();
     if (id === 'set') renderSet();
-    $$('.tab').forEach(function (t) { if (t.dataset.to === id) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+    /* No detalhe do exercício, a aba de onde ele foi aberto continua marcada */
+    var hl = id === 'exd' ? EXD.from : id;
+    $$('.tab').forEach(function (t) { if (t.dataset.to === hl) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
     chrome();
     window.scrollTo(0, y === undefined ? (pos[id] || 0) : y);
   }
   function chrome() {
-    var isTab = isTabScreen(current);
+    var isTab = isTabScreen(current) || (current === 'exd' && (EXD.from === 'ex' || EXD.from === 'hist'));
     tabsEl.hidden = !isTab;
     /* No Início não aparece: o Treino de hoje já mostra "Continuar" (como no app) */
     var showMini = !!(S && isTab && current !== 'home');
@@ -1483,6 +1564,9 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
   var IOS_IC = {
     edit: '<path d="M4 7h9M19 7h1M4 12h3M13 12h7M4 17h11M20 17h0"></path><circle cx="16" cy="7" r="2.2"></circle><circle cx="10" cy="12" r="2.2"></circle><circle cx="18" cy="17" r="2.2"></circle>',
     rename: '<path d="M4 20h4L19 9l-4-4L4 16z"></path>',
+    info: '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.8h.01"></path>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"></path>',
+    none: '',
     reorder: '<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"></path>',
     trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path>'
   };
@@ -2224,6 +2308,301 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
     toast(n === 1 ? '1 exercício adicionado' : n + ' exercícios adicionados');
   }
 
+  /* ---------- Detalhe do exercício e Mapa dos músculos ---------- */
+  /* Boneco de frente e de costas, desenho original: cada região é desenhada do lado esquerdo e espelhada. */
+  var FIG = {
+    /* músculo -> regiões */
+    map: {
+      peitoral: ['f_pec'], delt_ant: ['f_dant'], delt_lat: ['f_dlat', 'b_dlat'], delt_post: ['b_dpost'],
+      biceps: ['f_bic'], triceps: ['b_tri'], antebracos: ['f_fore', 'b_fore'], abdomen: ['f_abs'], obliquos: ['f_obl', 'b_obl'],
+      quadriceps: ['f_quad', 'f_vmo'], adutores: ['f_add', 'b_add'], tibial: ['f_tib'], trapezio: ['f_trap', 'b_trap'],
+      costas_sup: ['b_scap', 'b_rhom'], manguito: ['b_scap'], dorsais: ['b_lat', 'f_lat'], lombar: ['b_low'],
+      gluteos: ['b_glu'], gluteo_medio: ['b_gmed'], posteriores: ['b_ham'], panturrilhas: ['b_calf', 'f_calf']
+    },
+    front: {
+      f_trap: 'M55.2 27.6C53.4 31.6 49.6 34.2 42.6 36.6C46.6 37.4 50.4 37.2 53.6 35.8C55 33.6 56 31.2 56.4 28.6Z',
+      f_dlat: 'M40.6 37.2C34.2 37.6 29.6 41.8 28.6 48.8C28 53.6 28.6 57.6 30.4 60.8C31.4 55.4 32.6 49.2 35 44C36.4 41.2 38.4 38.8 40.6 37.2Z',
+      f_dant: 'M41.6 37.6C38.8 39.4 36.6 42.4 35.4 45.6C33.8 50 32.6 55 31.8 60.2C33.4 59.6 35 58.2 36.4 56.4C37.4 50.6 39.8 44.6 45.2 39.6C44.2 38.6 43 38 41.6 37.6Z',
+      f_pec: 'M46.6 40C51.4 38.6 56 38.6 59.2 39.6V58.4C55 61.8 48.6 62.2 43.4 60.2C40.6 59.2 38.6 57.8 37.6 56.4C38.6 49.8 41.4 44 46.6 40Z',
+      f_lat: 'M38.4 59.4C39.2 63.8 40.6 67.8 42.6 71.4C43 67.6 43.2 64.4 43.4 61.8C41.6 61.4 40 60.6 38.4 59.4Z',
+      f_bic: 'M30.6 62.6C28.4 67.8 27.4 74.4 27.8 81C28 84.2 29.2 86.2 31.2 86.4C33.4 86.6 34.8 84.6 35.4 81.6C36.6 75.4 36.6 68.6 35.8 60.6C34.2 61.8 32.4 62.4 30.6 62.6Z',
+      f_fore: 'M28.4 88.6C25.6 95.4 23 104.6 21.4 117.6L25.6 118.4C28.4 108.8 31.6 99.6 34.6 90.8C34.8 89.4 34.4 88.4 33.4 88C31.8 87.6 30 87.8 28.4 88.6Z',
+      f_obl: 'M43.8 63.8C43.2 69.6 43 75.4 43.6 81.4C44.2 87.2 45.6 92.6 47.8 97.4L49.8 99V66.4C47.8 65.8 45.8 65 43.8 63.8Z',
+      f_abs: 'M51 63.4H59.2V72.6H51.2ZM51.2 74H59.2V83.2H51.4ZM51.4 84.6H59.2V93.6H51.6ZM51.6 95H59.2V108.6C56.2 107.4 53.6 104.6 51.8 100.6Z',
+      f_quad: 'M41.4 104.8C38.6 113.6 37.8 124.6 39 136C40 145.4 42.4 153.4 45.6 159.2L49.2 157.8C48 149 48 139.4 49.4 129.6C50.6 121.6 52.8 114.4 55.4 109C51 108.4 46 107 41.4 104.8Z',
+      f_vmo: 'M55.4 110.2C53.4 116.4 52 123.6 51.4 131.4C50.8 140 51.2 148.6 52.6 156.6C54.6 155.4 56.2 153.2 57 150.4C56.2 146.6 55.6 142.6 55.8 138.6C56.4 129.8 57.2 120.6 57.4 111.6Z',
+      f_add: 'M57.6 111.4C57.8 118 57.6 124.4 57.2 130.8C58 125.6 58.8 120 59.4 114.6Z',
+      f_tib: 'M45.8 169.2C44.4 178.8 44.6 190.4 46.6 203.6C47.4 208.4 48.2 212.4 49.2 215.6L50.6 215.4C50 205.6 49.8 195.4 50.2 185.4C50.4 179.4 50.4 174 50 169.4C48.6 168.8 47.2 168.8 45.8 169.2Z',
+      f_calf: 'M51.6 169.6C54.6 174.4 56.4 181.2 56.2 189.4C56 196.4 54.4 202.8 52 207.8C51.4 199.6 51.2 191 51.4 182.6C51.4 178 51.4 173.6 51.6 169.6Z'
+    },
+    back: {
+      b_trap: 'M56.2 26.6C54.8 31.4 50 34.6 41.6 36.8C46.8 39.8 50.6 44.8 53 51.6C55.6 59.2 57.8 67.6 60 76.6V26.6Z',
+      b_dlat: 'M39.6 37.4C33.6 38.2 29.6 42.2 28.6 48.8C28 53.6 28.6 57.6 30.4 60.8C31.2 54.6 32.6 48.6 35.4 43.6C36.6 41.2 38 39.2 39.6 37.4Z',
+      b_dpost: 'M41.2 37.6C38.6 39.6 36.6 42.6 35.4 46.2C34 50.2 33 54.6 32.4 59.4C34.6 58.6 36.4 57 37.8 55C39.2 50.8 41 47 43.4 43.8C44.4 42.6 45.4 41.6 46.6 40.6C45 39.4 43.2 38.4 41.2 37.6Z',
+      b_scap: 'M47.4 41.6C43.6 45 40.6 50.2 39.4 56.2C41.8 58.6 45 59.6 48.4 59.4C50.4 59.2 52 58.4 53.2 57.2C52.4 51.4 50.4 46 47.4 41.6Z',
+      b_rhom: 'M54 56.6C55.6 61.6 57.4 67 59.2 72.4L56.6 61.6C55.8 59.8 55 58 54 56.6Z',
+      b_lat: 'M39 58.4C38.8 66.2 40.4 74.4 43.6 82.2C45.2 86.2 47.2 89.6 49.4 92.4C52.6 89 55.6 85.2 58.4 80.6C57 74.4 55.4 67.6 53.6 60.6C52 61 50.2 61.2 48.4 61.2C45 61.2 41.8 60.2 39 58.4Z',
+      b_obl: 'M43.6 85.4C43.8 90.6 44.4 95.4 45.4 99.8L48.6 94.4C46.8 91.8 45.2 88.8 43.6 85.4Z',
+      b_low: 'M59.2 81C56.8 85.4 53.6 89.6 50.4 93.4C51.8 97.6 52.6 101.8 52.8 106.2C55 107 57.4 107.4 59.8 107.4V81Z',
+      b_tri: 'M30.4 62.4C28.4 67.8 27.4 74.4 27.8 81C28 84.2 29.2 86.2 31.2 86.4C33.4 86.6 34.8 84.6 35.4 81.6C36.6 75.4 36.8 68.6 36.2 60.2C34.4 61.6 32.6 62.2 30.4 62.4Z',
+      b_fore: 'M28.4 88.6C25.6 95.4 23 104.6 21.4 117.6L25.6 118.4C28.4 108.8 31.6 99.6 34.6 90.8C34.8 89.4 34.4 88.4 33.4 88C31.8 87.6 30 87.8 28.4 88.6Z',
+      b_gmed: 'M45.6 100.4C42.8 103 41.2 106.6 41 110.8C40.8 113.4 41.2 115.8 42 118C45 113.4 48.6 110.2 52.2 108.4C50.4 105.4 48.2 102.8 45.6 100.4Z',
+      b_glu: 'M53 109.2C48.2 111.2 44.6 114.8 42.6 119.6C41.8 122 41.6 124.6 42 127.2C45.4 131.6 51.4 133.4 59.2 132.6V109.6C57 109.8 54.8 109.6 53 109.2Z',
+      b_ham: 'M42.2 130.4C40.6 138.2 40.8 146.4 43 154.2C44 157.6 45.2 160.4 46.6 162.6L50.6 161.4C50.4 155.6 51.2 149.6 53 143.8C54.4 139.6 56 136.4 57.6 134.2C51.6 134.8 46.4 133.4 42.2 130.4Z',
+      b_add: 'M58.2 135C56.6 138.6 55.4 142.6 54.6 147C56.6 143.4 58.2 139.6 59.4 135.6Z',
+      b_calf: 'M45.4 168.6C42.8 174.4 42 181.4 43.2 188.6C44 193.4 45.6 197.4 47.8 200.4C49.2 197.4 50.2 193.6 50.4 189.4L50.6 168.4C48.8 167.8 47 168 45.4 168.6ZM51.6 168.8C54.8 172.6 56.6 178.2 56.6 184.6C56.6 190.6 55 195.8 52.6 199.8C51.6 196.6 51.2 193 51.2 189.4Z'
+    },
+    /* partes sem músculo (cabeça, mãos, joelhos, pés), iguais nas duas vistas */
+    base: 'M60 4.2C66.2 4.2 70.6 9 70.6 15.4C70.6 21.6 66.4 26.6 60 26.6C53.6 26.6 49.4 21.6 49.4 15.4C49.4 9 53.8 4.2 60 4.2Z' +
+      'M21.2 119.6L25.8 120.4C26.4 124.4 26 128.6 24.4 132.2C23.4 134.4 21 134.6 19.8 132.4C18.6 128.4 19.6 123.6 21.2 119.6Z' +
+      'M98.8 119.6L94.2 120.4C93.6 124.4 94 128.6 95.6 132.2C96.6 134.4 99 134.6 100.2 132.4C101.4 128.4 100.4 123.6 98.8 119.6Z' +
+      'M45.8 161.4C47.6 160.6 49.6 160.2 51.6 160.6C52.4 162.8 52.4 165.2 51.6 167.4C49.6 167.8 47.6 167.6 45.8 166.8C45.2 165 45.2 163.2 45.8 161.4Z' +
+      'M74.2 161.4C72.4 160.6 70.4 160.2 68.4 160.6C67.6 162.8 67.6 165.2 68.4 167.4C70.4 167.8 72.4 167.6 74.2 166.8C74.8 165 74.8 163.2 74.2 161.4Z' +
+      'M47.6 217C46 219.6 44.4 222.4 44.2 225.2C44 227.4 46 228.2 49.4 228C51.6 227.8 52.6 226.6 52.4 224.6C52.2 222 51.6 219.4 50.8 217Z' +
+      'M72.4 217C74 219.6 75.6 222.4 75.8 225.2C76 227.4 74 228.2 70.6 228C68.4 227.8 67.4 226.6 67.6 224.6C67.8 222 68.4 219.4 69.2 217Z',
+    neck: 'M55.6 25.4H64.4V31.4C61.6 32.6 58.4 32.6 55.6 31.4Z'
+  };
+  /* Músculos de cada exercício da biblioteca: [principais, secundários]. Exercício próprio: o músculo do grupo. */
+  var MUS = {"Supino Reto (Barra)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto (Smith)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto (Polia)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto Iso-Lateral (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado (Barra)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado (Smith)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado (Polia)":[["peitoral"],["triceps","delt_ant"]],"Supino Declinado (Barra)":[["peitoral"],["triceps","delt_ant"]],"Supino Declinado (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Declinado (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Declinado (Smith)":[["peitoral"],["triceps","delt_ant"]],"Supino Declinado (Polia)":[["peitoral"],["triceps","delt_ant"]],"Supino Sentado (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Sentado (Polia)":[["peitoral"],["triceps","delt_ant"]],"Crucifixo (Halter)":[["peitoral"],["delt_ant"]],"Crucifixo (Máquina)":[["peitoral"],["delt_ant"]],"Crucifixo (Polia)":[["peitoral"],["delt_ant"]],"Crucifixo Inclinado (Halter)":[["peitoral"],["delt_ant"]],"Crucifixo Inclinado (Máquina)":[["peitoral"],["delt_ant"]],"Crucifixo Inclinado (Polia)":[["peitoral"],["delt_ant"]],"Crossover (Polia Alta)":[["peitoral"],["delt_ant"]],"Crossover (Polia Média)":[["peitoral"],["delt_ant"]],"Crossover (Polia Baixa)":[["peitoral"],["delt_ant"]],"Crossover Unilateral (Polia)":[["peitoral"],["delt_ant"]],"Flexão":[["peitoral"],["triceps","delt_ant"]],"Flexão Declinada":[["peitoral"],["triceps","delt_ant"]],"Flexão Inclinada":[["peitoral"],["triceps","delt_ant"]],"Flexão com Joelhos Apoiados":[["peitoral"],["triceps","delt_ant"]],"Peito na Paralela":[["peitoral"],["triceps","delt_ant"]],"Supino Reto Unilateral (Halter)":[["peitoral"],["triceps","delt_ant","obliquos"]],"Supino Reto Pegada Neutra (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto Pegada Aberta (Barra)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto Unilateral (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Reto Unilateral (Polia)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado Unilateral (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado Pegada Neutra (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado Iso-Lateral (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado Unilateral (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Inclinado Unilateral (Polia)":[["peitoral"],["triceps","delt_ant"]],"Supino Declinado Iso-Lateral (Máquina)":[["peitoral"],["triceps","delt_ant"]],"Supino Squeeze (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Guilhotina (Barra)":[["peitoral"],["triceps","delt_ant"]],"Supino no Chão (Barra)":[["peitoral"],["triceps","delt_ant"]],"Supino no Chão (Halter)":[["peitoral"],["triceps","delt_ant"]],"Supino Landmine (Barra)":[["peitoral"],["triceps","delt_ant"]],"Crucifixo Declinado (Halter)":[["peitoral"],["delt_ant"]],"Crucifixo (Elástico)":[["peitoral"],["delt_ant"]],"Svend Press (Anilha)":[["peitoral"],["delt_ant"]],"Peito na Paralela (Graviton)":[["peitoral"],["triceps","delt_ant"]],"Flexão Aberta":[["peitoral"],["triceps","delt_ant"]],"Flexão (Anilha)":[["peitoral"],["triceps","delt_ant"]],"Flexão (Elástico)":[["peitoral"],["triceps","delt_ant"]],"Flexão Arqueiro":[["peitoral"],["triceps","delt_ant"]],"Flexão Explosiva":[["peitoral"],["triceps","delt_ant"]],"Barra Fixa (Pegada Aberta)":[["dorsais"],["costas_sup","biceps"]],"Barra Fixa (Pegada Fechada)":[["dorsais"],["costas_sup","biceps"]],"Barra Fixa (Pegada Supinada)":[["dorsais"],["biceps","costas_sup"]],"Barra Fixa (Graviton)":[["dorsais"],["costas_sup","biceps"]],"Puxada Alta Aberta (Polia)":[["dorsais"],["costas_sup","biceps"]],"Puxada Alta Fechada (Polia)":[["dorsais"],["costas_sup","biceps"]],"Puxada Alta Supinada (Polia)":[["dorsais"],["biceps","costas_sup"]],"Puxada Alta (Máquina)":[["dorsais"],["costas_sup","biceps"]],"Puxada Unilateral (Polia)":[["dorsais"],["costas_sup","biceps"]],"Puxada Unilateral (Máquina)":[["dorsais"],["costas_sup","biceps"]],"Remada Curvada Supinada (Barra)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Serrote (Halter)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Unilateral (Polia)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Unilateral (Máquina)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Baixa (Polia)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Alta Articulada (Máquina)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Pullover (Halter)":[["dorsais"],["peitoral","triceps"]],"Pullover (Barra)":[["dorsais"],["peitoral","triceps"]],"Pullover (Polia)":[["dorsais"],["triceps","delt_post"]],"Pullover (Máquina)":[["dorsais"],["triceps","delt_post"]],"Barra Fixa (Pegada Neutra)":[["dorsais"],["biceps","costas_sup"]],"Barra Fixa com Peso (Anilha)":[["dorsais"],["costas_sup","biceps"]],"Barra Fixa Supinada com Peso (Anilha)":[["dorsais"],["biceps","costas_sup"]],"Barra Fixa (Elástico)":[["dorsais"],["costas_sup","biceps"]],"Barra Fixa Supinada (Graviton)":[["dorsais"],["biceps","costas_sup"]],"Puxada Alta Pegada Neutra (Polia)":[["dorsais"],["costas_sup","biceps"]],"Puxada Atrás da Nuca (Polia)":[["dorsais"],["costas_sup","biceps"]],"Puxada Alta Supinada (Máquina)":[["dorsais"],["biceps","costas_sup"]],"Puxada Alta Fechada (Máquina)":[["dorsais"],["costas_sup","biceps"]],"Puxada Alta (Elástico)":[["dorsais"],["costas_sup","biceps"]],"Pullover Corda (Polia)":[["dorsais"],["triceps","delt_post"]],"Pullover Unilateral (Polia)":[["dorsais"],["triceps","delt_post"]],"Remada Kroc (Halter)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Meadows (Barra)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Alta Articulada Unilateral (Máquina)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Baixa Supinada (Polia)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Curvada Supinada (Halter)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Curvada Supinada (Smith)":[["dorsais"],["costas_sup","biceps","delt_post"]],"Remada Curvada (Barra)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada Curvada (Halter)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada Curvada (Smith)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada Cavalinho (Barra)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada T-Bar (Máquina)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Baixa Iso-Lateral (Máquina)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Sentada Aberta (Polia)":[["costas_sup"],["delt_post","trapezio","biceps"]],"Remada Sentada Aberta (Máquina)":[["costas_sup"],["delt_post","trapezio","biceps"]],"Remada Sentada Pegada V (Máquina)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Apoiada no Banco (Halter)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Pendlay (Barra)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada Invertida":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Apoiada no Banco (Barra)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Apoiada (Máquina)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Unilateral (Smith)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Curvada (Elástico)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada Sentada (Elástico)":[["costas_sup"],["dorsais","delt_post","biceps"]],"Remada Gorila (Kettlebell)":[["costas_sup"],["dorsais","delt_post","biceps","lombar"]],"Remada Renegada (Halter)":[["costas_sup"],["dorsais","abdomen","biceps"]],"Retração Escapular na Barra Fixa":[["costas_sup","trapezio"],["dorsais"]],"Encolhimento (Barra)":[["trapezio"],["antebracos"]],"Encolhimento (Halter)":[["trapezio"],["antebracos"]],"Encolhimento (Smith)":[["trapezio"],["antebracos"]],"Encolhimento (Máquina)":[["trapezio"],["antebracos"]],"Encolhimento (Polia)":[["trapezio"],["antebracos"]],"Encolhimento Atrás do Corpo (Barra)":[["trapezio"],["antebracos"]],"Encolhimento Inclinado (Halter)":[["trapezio"],["costas_sup"]],"Elevação Y (Halter)":[["trapezio"],["delt_lat","delt_post"]],"Elevação Y (Polia)":[["trapezio"],["delt_lat","delt_post"]],"Extensão Lombar":[["lombar"],["gluteos","posteriores"]],"Extensão Lombar (Anilha)":[["lombar"],["gluteos","posteriores"]],"Extensão Lombar (Máquina)":[["lombar"],["gluteos","posteriores"]],"Super-Homem":[["lombar"],["gluteos","posteriores"]],"Levantamento Terra (Barra)":[["lombar","gluteos","posteriores"],["quadriceps","trapezio","antebracos"]],"Levantamento Terra (Halter)":[["lombar","gluteos","posteriores"],["quadriceps","trapezio","antebracos"]],"Levantamento Terra (Barra Hexagonal)":[["lombar","gluteos","posteriores"],["quadriceps","trapezio","antebracos"]],"Levantamento Terra Déficit (Barra)":[["lombar","gluteos","posteriores"],["quadriceps","trapezio","antebracos"]],"Rack Pull (Barra)":[["lombar","trapezio"],["gluteos","posteriores","antebracos"]],"Levantamento Terra (Kettlebell)":[["lombar","gluteos","posteriores"],["quadriceps","trapezio","antebracos"]],"Bird Dog":[["lombar"],["gluteos","abdomen"]],"Desenvolvimento (Barra)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento (Halter)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento (Máquina)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento (Smith)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento Arnold (Halter)":[["delt_ant","delt_lat"],["triceps"]],"Elevação Lateral (Halter)":[["delt_lat"],["trapezio"]],"Elevação Lateral (Polia)":[["delt_lat"],["trapezio"]],"Elevação Lateral (Máquina)":[["delt_lat"],["trapezio"]],"Elevação Lateral Unilateral (Halter)":[["delt_lat"],["trapezio"]],"Elevação Lateral Unilateral (Polia)":[["delt_lat"],["trapezio"]],"Elevação Frontal (Halter)":[["delt_ant"],["delt_lat"]],"Elevação Frontal (Barra)":[["delt_ant"],["delt_lat"]],"Elevação Frontal (Anilha)":[["delt_ant"],["delt_lat"]],"Elevação Frontal (Polia)":[["delt_ant"],["delt_lat"]],"Crucifixo Invertido (Halter)":[["delt_post"],["costas_sup","trapezio"]],"Crucifixo Invertido (Máquina)":[["delt_post"],["costas_sup","trapezio"]],"Crucifixo Invertido (Polia)":[["delt_post"],["costas_sup","trapezio"]],"Crucifixo Invertido Unilateral (Polia)":[["delt_post"],["costas_sup","trapezio"]],"Face Pull (Polia)":[["delt_post","manguito"],["costas_sup","trapezio"]],"Remada Alta (Barra)":[["delt_lat","trapezio"],["delt_ant","biceps"]],"Remada Alta (Halter)":[["delt_lat","trapezio"],["delt_ant","biceps"]],"Remada Alta (Polia)":[["delt_lat","trapezio"],["delt_ant","biceps"]],"Rotação Externa (Polia)":[["manguito"],["delt_post"]],"Desenvolvimento Sentado (Barra)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento Atrás da Nuca (Barra)":[["delt_ant","delt_lat"],["triceps","trapezio"]],"Desenvolvimento Atrás da Nuca (Smith)":[["delt_ant","delt_lat"],["triceps","trapezio"]],"Desenvolvimento Unilateral (Halter)":[["delt_ant"],["delt_lat","triceps","obliquos"]],"Desenvolvimento Pegada Neutra (Halter)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento Iso-Lateral (Máquina)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento Unilateral (Máquina)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento (Kettlebell)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento (Elástico)":[["delt_ant"],["delt_lat","triceps"]],"Desenvolvimento Landmine (Barra)":[["delt_ant"],["peitoral","triceps"]],"Push Press (Barra)":[["delt_ant"],["triceps","delt_lat","quadriceps","gluteos"]],"Elevação Lateral Sentado (Halter)":[["delt_lat"],["trapezio"]],"Elevação Lateral (Elástico)":[["delt_lat"],["trapezio"]],"Elevação Frontal Alternada (Halter)":[["delt_ant"],["delt_lat"]],"Elevação Frontal Unilateral (Polia)":[["delt_ant"],["delt_lat"]],"Elevação Frontal (Elástico)":[["delt_ant"],["delt_lat"]],"Crucifixo Invertido Inclinado (Halter)":[["delt_post"],["costas_sup","trapezio"]],"Crucifixo Invertido (Elástico)":[["delt_post"],["costas_sup","trapezio"]],"Face Pull (Elástico)":[["delt_post","manguito"],["costas_sup","trapezio"]],"Remada Alta (Smith)":[["delt_lat","trapezio"],["delt_ant","biceps"]],"Rotação Externa (Halter)":[["manguito"],["delt_post"]],"Rotação Externa (Elástico)":[["manguito"],["delt_post"]],"Rotação Interna (Polia)":[["manguito"],["delt_ant"]],"Flexão Pike":[["delt_ant"],["triceps","delt_lat"]],"Flexão em Parada de Mão":[["delt_ant","triceps"],["delt_lat","trapezio"]],"Rosca Direta (Barra)":[["biceps"],["antebracos"]],"Rosca Direta (Barra W)":[["biceps"],["antebracos"]],"Rosca Direta (Halter)":[["biceps"],["antebracos"]],"Rosca Alternada (Halter)":[["biceps"],["antebracos"]],"Rosca Direta (Polia)":[["biceps"],["antebracos"]],"Rosca Unilateral (Polia)":[["biceps"],["antebracos"]],"Rosca Bayesiana (Polia)":[["biceps"],["antebracos"]],"Rosca Scott (Barra W)":[["biceps"],["antebracos"]],"Rosca Scott (Máquina)":[["biceps"],["antebracos"]],"Rosca Scott (Polia)":[["biceps"],["antebracos"]],"Rosca Scott Unilateral (Halter)":[["biceps"],["antebracos"]],"Rosca Concentrada (Halter)":[["biceps"],["antebracos"]],"Rosca Martelo (Halter)":[["biceps","antebracos"],[]],"Rosca Martelo (Polia)":[["biceps","antebracos"],[]],"Rosca Inclinada (Halter)":[["biceps"],["antebracos"]],"Rosca Spider (Barra W)":[["biceps"],["antebracos"]],"Rosca Spider (Halter)":[["biceps"],["antebracos"]],"Rosca Direta (Máquina)":[["biceps"],["antebracos"]],"Rosca Direta (Elástico)":[["biceps"],["antebracos"]],"Rosca Direta Pegada Fechada (Barra W)":[["biceps"],["antebracos"]],"Rosca 21 (Barra)":[["biceps"],["antebracos"]],"Rosca Arrastada (Barra)":[["biceps"],["antebracos"]],"Rosca Martelo Alternada (Halter)":[["biceps","antebracos"],[]],"Rosca Martelo Cruzada (Halter)":[["biceps"],["antebracos"]],"Rosca Scott (Barra)":[["biceps"],["antebracos"]],"Rosca Scott Unilateral (Polia)":[["biceps"],["antebracos"]],"Rosca Scott Unilateral (Máquina)":[["biceps"],["antebracos"]],"Rosca Concentrada (Polia)":[["biceps"],["antebracos"]],"Rosca Zottman (Halter)":[["biceps","antebracos"],[]],"Rosca Alta (Polia)":[["biceps"],["antebracos"]],"Tríceps Pulley (Polia)":[["triceps"],[]],"Tríceps Corda (Polia)":[["triceps"],[]],"Tríceps Unilateral (Polia)":[["triceps"],[]],"Tríceps Unilateral Invertido (Polia)":[["triceps"],[]],"Extensão de Tríceps Acima da Cabeça (Halter)":[["triceps"],[]],"Extensão de Tríceps Acima da Cabeça (Barra W)":[["triceps"],[]],"Extensão de Tríceps Acima da Cabeça (Polia)":[["triceps"],[]],"Extensão de Tríceps Unilateral (Halter)":[["triceps"],[]],"Extensão de Tríceps (Máquina)":[["triceps"],[]],"Tríceps Testa (Barra W)":[["triceps"],[]],"Tríceps Testa (Halter)":[["triceps"],[]],"Tríceps Testa (Polia)":[["triceps"],[]],"Tríceps Testa (Smith)":[["triceps"],[]],"Tríceps Coice (Halter)":[["triceps"],[]],"Tríceps Coice (Polia)":[["triceps"],[]],"JM Press (Barra)":[["triceps"],["peitoral"]],"JM Press (Smith)":[["triceps"],["peitoral"]],"Supino Fechado (Barra)":[["triceps"],["peitoral","delt_ant"]],"Supino Fechado (Smith)":[["triceps"],["peitoral","delt_ant"]],"Mergulho Sentado (Máquina)":[["triceps"],["peitoral","delt_ant"]],"Tríceps na Paralela":[["triceps"],["peitoral","delt_ant"]],"Tríceps no Banco":[["triceps"],["peitoral","delt_ant"]],"Flexão Diamante":[["triceps"],["peitoral","delt_ant"]],"Tríceps Pulley Invertido (Polia)":[["triceps"],[]],"Tríceps Pulley Barra V (Polia)":[["triceps"],[]],"Tríceps Cruzado (Polia)":[["triceps"],[]],"Tríceps (Elástico)":[["triceps"],[]],"Extensão de Tríceps Acima da Cabeça Unilateral (Polia)":[["triceps"],[]],"Extensão de Tríceps Acima da Cabeça (Máquina)":[["triceps"],[]],"Extensão de Tríceps Acima da Cabeça (Elástico)":[["triceps"],[]],"Tríceps Testa (Barra)":[["triceps"],[]],"Tríceps Testa Inclinado (Barra W)":[["triceps"],[]],"Tríceps Testa Unilateral (Halter)":[["triceps"],[]],"Tate Press (Halter)":[["triceps"],[]],"Supino Fechado (Halter)":[["triceps"],["peitoral","delt_ant"]],"Tríceps na Paralela com Peso (Anilha)":[["triceps"],["peitoral","delt_ant"]],"Tríceps na Paralela (Graviton)":[["triceps"],["peitoral","delt_ant"]],"Tríceps no Banco com Peso (Anilha)":[["triceps"],["peitoral","delt_ant"]],"Flexão Fechada":[["triceps"],["peitoral","delt_ant"]],"Rosca de Punho (Barra)":[["antebracos"],[]],"Rosca de Punho (Halter)":[["antebracos"],[]],"Rosca de Punho Invertida (Barra)":[["antebracos"],[]],"Rosca de Punho Invertida (Halter)":[["antebracos"],[]],"Rosca Invertida (Barra W)":[["antebracos"],["biceps"]],"Rosca Invertida (Halter)":[["antebracos"],["biceps"]],"Rosca Invertida (Polia)":[["antebracos"],["biceps"]],"Rosca de Punho (Polia)":[["antebracos"],[]],"Rosca de Punho Atrás do Corpo (Barra)":[["antebracos"],[]],"Rosca Invertida (Barra)":[["antebracos"],["biceps"]],"Rolo de Antebraço (Anilha)":[["antebracos"],[]],"Rotação de Punho (Halter)":[["antebracos"],[]],"Abdominal":[["abdomen"],["obliquos"]],"Abdominal (Anilha)":[["abdomen"],["obliquos"]],"Abdominal (Polia)":[["abdomen"],["obliquos"]],"Abdominal (Máquina)":[["abdomen"],["obliquos"]],"Abdominal Declinado":[["abdomen"],["obliquos"]],"Abdominal Infra":[["abdomen"],["obliquos"]],"Abdominal Oblíquo":[["obliquos"],["abdomen"]],"Abdominal Bicicleta":[["obliquos"],["abdomen"]],"Abdominal Tesoura":[["abdomen"],["obliquos"]],"Roda Abdominal":[["abdomen"],["obliquos","dorsais"]],"Dragon Flag":[["abdomen"],["obliquos"]],"Elevação de Pernas Deitado":[["abdomen"],["obliquos"]],"Elevação de Pernas na Barra Fixa":[["abdomen"],["obliquos","antebracos"]],"Elevação de Joelhos na Paralela":[["abdomen"],["obliquos"]],"Rotação Russa (Anilha)":[["obliquos"],["abdomen"]],"Lenhador (Polia)":[["obliquos"],["abdomen"]],"Dead Bug":[["abdomen"],["obliquos"]],"Abdominal Completo":[["abdomen"],["obliquos"]],"Abdominal Declinado (Anilha)":[["abdomen"],["obliquos"]],"Abdominal Canivete":[["abdomen"],["obliquos"]],"Abdominal Remador":[["abdomen"],["obliquos"]],"Abdominal Toque no Calcanhar":[["obliquos"],["abdomen"]],"Abdominal na Bola Suíça":[["abdomen"],["obliquos"]],"Elevação de Joelhos na Barra Fixa":[["abdomen"],["obliquos","antebracos"]],"Elevação de Pernas na Paralela":[["abdomen"],["obliquos"]],"Elevação de Pernas no Banco Declinado":[["abdomen"],["obliquos"]],"Pés na Barra":[["abdomen"],["obliquos","antebracos"]],"Limpador de Para-brisa":[["obliquos"],["abdomen"]],"Escalador":[["abdomen"],["quadriceps","delt_ant"]],"Flexão Lateral (Halter)":[["obliquos"],["abdomen"]],"Flexão Lateral (Polia)":[["obliquos"],["abdomen"]],"Rotação Russa (Halter)":[["obliquos"],["abdomen"]],"Rotação de Tronco (Máquina)":[["obliquos"],["abdomen"]],"Lenhador Invertido (Polia)":[["obliquos"],["abdomen"]],"Pallof Press (Polia)":[["obliquos"],["abdomen"]],"Agachamento Livre (Barra)":[["quadriceps","gluteos"],["adutores","posteriores"]],"Agachamento Frontal (Barra)":[["quadriceps"],["gluteos","abdomen"]],"Agachamento (Smith)":[["quadriceps"],["gluteos","adutores"]],"Agachamento Hack (Máquina)":[["quadriceps"],["gluteos","adutores"]],"Agachamento Pendular (Máquina)":[["quadriceps"],["gluteos","adutores"]],"Agachamento Goblet (Kettlebell)":[["quadriceps"],["gluteos","adutores"]],"Agachamento Goblet (Halter)":[["quadriceps"],["gluteos","adutores"]],"Agachamento Búlgaro (Halter)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Agachamento Búlgaro (Smith)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Agachamento sem Peso":[["quadriceps"],["gluteos","adutores"]],"Sissy Squat":[["quadriceps"],[]],"Leg Press 45° (Máquina)":[["quadriceps","gluteos"],["adutores","posteriores"]],"Leg Press Horizontal (Máquina)":[["quadriceps"],["gluteos","adutores"]],"Leg Press Unilateral (Máquina)":[["quadriceps","gluteos"],["adutores","posteriores"]],"Cadeira Extensora (Máquina)":[["quadriceps"],[]],"Cadeira Extensora Unilateral (Máquina)":[["quadriceps"],[]],"Afundo (Halter)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Afundo (Barra)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Afundo (Smith)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Passada (Halter)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Passada (Barra)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Subida no Banco (Halter)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Agachamento (Halter)":[["quadriceps","gluteos"],["adutores","posteriores"]],"Agachamento no Banco (Barra)":[["quadriceps","gluteos"],["adutores","posteriores"]],"Agachamento Zercher (Barra)":[["quadriceps"],["gluteos","abdomen"]],"Agachamento Overhead (Barra)":[["quadriceps"],["gluteos","delt_ant","abdomen"]],"Agachamento Frontal (Smith)":[["quadriceps"],["gluteos","abdomen"]],"Agachamento V-Squat (Máquina)":[["quadriceps"],["gluteos","adutores"]],"Agachamento com Cinto (Máquina)":[["quadriceps","gluteos"],["adutores","posteriores"]],"Agachamento Búlgaro (Barra)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Agachamento Búlgaro":[["quadriceps","gluteos"],["posteriores","adutores"]],"Agachamento Pistol":[["quadriceps"],["gluteos","adutores"]],"Agachamento Cossaco":[["quadriceps","adutores"],["gluteos"]],"Agachamento com Salto":[["quadriceps"],["gluteos","panturrilhas"]],"Leg Press Vertical (Máquina)":[["quadriceps"],["gluteos","adutores"]],"Afundo":[["quadriceps","gluteos"],["posteriores","adutores"]],"Afundo Reverso (Halter)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Afundo Reverso (Barra)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Afundo Reverso (Smith)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Afundo Lateral (Halter)":[["quadriceps","adutores"],["gluteos"]],"Passada":[["quadriceps","gluteos"],["posteriores","adutores"]],"Subida no Banco":[["quadriceps","gluteos"],["posteriores","adutores"]],"Subida no Banco (Barra)":[["quadriceps","gluteos"],["posteriores","adutores"]],"Mesa Flexora (Máquina)":[["posteriores"],["panturrilhas"]],"Cadeira Flexora (Máquina)":[["posteriores"],["panturrilhas"]],"Flexora Unilateral em Pé (Máquina)":[["posteriores"],["panturrilhas"]],"Stiff (Barra)":[["posteriores","gluteos"],["lombar"]],"Stiff (Halter)":[["posteriores","gluteos"],["lombar"]],"Stiff (Smith)":[["posteriores","gluteos"],["lombar"]],"Stiff Unilateral (Halter)":[["posteriores","gluteos"],["lombar"]],"Levantamento Terra Romeno (Barra)":[["posteriores","gluteos"],["lombar"]],"Good Morning (Barra)":[["posteriores","lombar"],["gluteos"]],"Good Morning (Smith)":[["posteriores","lombar"],["gluteos"]],"Flexão Nórdica":[["posteriores"],["panturrilhas"]],"Mesa Flexora Unilateral (Máquina)":[["posteriores"],["panturrilhas"]],"Cadeira Flexora Unilateral (Máquina)":[["posteriores"],["panturrilhas"]],"Flexora Ajoelhada (Máquina)":[["posteriores"],["panturrilhas"]],"Mesa Flexora (Halter)":[["posteriores"],["panturrilhas"]],"Flexora em Pé (Polia)":[["posteriores"],["panturrilhas"]],"Flexora na Bola Suíça":[["posteriores"],["gluteos"]],"Stiff (Kettlebell)":[["posteriores","gluteos"],["lombar"]],"Glute Ham Raise (Máquina)":[["posteriores","gluteos"],["lombar","panturrilhas"]],"Elevação Pélvica (Barra)":[["gluteos"],["posteriores"]],"Elevação Pélvica (Máquina)":[["gluteos"],["posteriores"]],"Elevação Pélvica (Smith)":[["gluteos"],["posteriores"]],"Ponte de Glúteo":[["gluteos"],["posteriores"]],"Glúteo Coice (Polia)":[["gluteos"],["posteriores"]],"Glúteo Coice (Máquina)":[["gluteos"],["posteriores"]],"Cadeira Abdutora (Máquina)":[["gluteo_medio"],["gluteos"]],"Abdução de Quadril (Polia)":[["gluteo_medio"],["gluteos"]],"Abdução de Quadril (Elástico)":[["gluteo_medio"],["gluteos"]],"Caminhada Lateral (Elástico)":[["gluteo_medio"],["gluteos"]],"Agachamento Sumô (Halter)":[["gluteos","adutores"],["quadriceps"]],"Levantamento Terra Sumô (Barra)":[["gluteos","adutores","posteriores"],["quadriceps","lombar"]],"Elevação Pélvica (Halter)":[["gluteos"],["posteriores"]],"Elevação Pélvica Unilateral":[["gluteos"],["posteriores"]],"Elevação Pélvica Unilateral (Máquina)":[["gluteos"],["posteriores"]],"Ponte de Glúteo (Barra)":[["gluteos"],["posteriores"]],"Ponte de Glúteo Unilateral":[["gluteos"],["posteriores"]],"Glúteo Quatro Apoios":[["gluteos"],["posteriores"]],"Glúteo Coice (Smith)":[["gluteos"],["posteriores"]],"Hiperextensão Reversa (Máquina)":[["gluteos"],["lombar","posteriores"]],"Pull Through (Polia)":[["gluteos"],["posteriores"]],"Agachamento Hack Invertido (Máquina)":[["gluteos"],["posteriores","quadriceps"]],"Agachamento Sumô (Kettlebell)":[["gluteos","adutores"],["quadriceps"]],"Agachamento Sumô (Smith)":[["gluteos","adutores"],["quadriceps"]],"Afundo Cruzado (Halter)":[["gluteo_medio","gluteos"],["quadriceps"]],"Abdução de Quadril em Pé (Máquina)":[["gluteo_medio"],["gluteos"]],"Abdução Lateral Deitado":[["gluteo_medio"],["gluteos"]],"Abdução Ostra (Elástico)":[["gluteo_medio"],["gluteos"]],"Hidrante":[["gluteo_medio"],["gluteos"]],"Cadeira Adutora (Máquina)":[["adutores"],[]],"Adução de Quadril (Polia)":[["adutores"],[]],"Adução de Quadril (Elástico)":[["adutores"],[]],"Adução Lateral Deitado":[["adutores"],[]],"Panturrilha em Pé (Máquina)":[["panturrilhas"],[]],"Panturrilha em Pé (Smith)":[["panturrilhas"],[]],"Panturrilha Sentado (Máquina)":[["panturrilhas"],[]],"Panturrilha no Leg Press (Máquina)":[["panturrilhas"],[]],"Panturrilha Unilateral (Halter)":[["panturrilhas"],[]],"Panturrilha em Pé":[["panturrilhas"],[]],"Panturrilha em Pé (Halter)":[["panturrilhas"],[]],"Panturrilha em Pé (Barra)":[["panturrilhas"],[]],"Panturrilha Sentado (Halter)":[["panturrilhas"],[]],"Panturrilha no Hack (Máquina)":[["panturrilhas"],[]],"Panturrilha Burrico (Máquina)":[["panturrilhas"],[]],"Elevação de Ponta dos Pés":[["tibial"],[]],"Kettlebell Swing":[["gluteos","posteriores"],["lombar","abdomen"]],"Arranco (Kettlebell)":[["gluteos","posteriores","quadriceps"],["delt_ant","trapezio","lombar"]],"Levantamento Turco (Kettlebell)":[["abdomen","delt_ant"],["obliquos","gluteos","triceps"]],"Thruster (Barra)":[["quadriceps","delt_ant"],["gluteos","triceps"]],"Thruster (Halter)":[["quadriceps","delt_ant"],["gluteos","triceps"]],"Power Clean (Barra)":[["gluteos","posteriores","quadriceps"],["trapezio","lombar","panturrilhas"]],"Burpee":[["quadriceps","peitoral"],["gluteos","delt_ant","triceps"]],"Arremesso (Barra)":[["gluteos","quadriceps","delt_ant"],["posteriores","trapezio","triceps"]],"Arranco (Barra)":[["gluteos","posteriores","quadriceps"],["delt_ant","trapezio","lombar"]],"Arranco (Halter)":[["gluteos","posteriores","quadriceps"],["delt_ant","trapezio","lombar"]],"Clean (Kettlebell)":[["gluteos","posteriores","quadriceps"],["trapezio","lombar","panturrilhas"]],"Thruster (Kettlebell)":[["quadriceps","delt_ant"],["gluteos","triceps"]],"Kettlebell Swing Unilateral":[["gluteos","posteriores"],["lombar","abdomen"]],"Puxada na Máquina Articulada":[["dorsais"],[]],"Agachamento Pêndulo":[["quadriceps"],[]]};
+  /* Tipo de máquina dos exercícios com equipamento Máquina (e os Graviton) */
+  var MACH = {"Supino Reto (Máquina)":"placas","Supino Reto Iso-Lateral (Máquina)":"articulada","Supino Inclinado (Máquina)":"placas","Supino Declinado (Máquina)":"placas","Supino Sentado (Máquina)":"placas","Crucifixo (Máquina)":"placas","Crucifixo Inclinado (Máquina)":"placas","Supino Reto Unilateral (Máquina)":"placas","Supino Inclinado Iso-Lateral (Máquina)":"articulada","Supino Inclinado Unilateral (Máquina)":"placas","Supino Declinado Iso-Lateral (Máquina)":"articulada","Peito na Paralela (Graviton)":"graviton","Barra Fixa (Graviton)":"graviton","Puxada Alta (Máquina)":"placas","Puxada Unilateral (Máquina)":"placas","Remada Unilateral (Máquina)":"placas","Remada Alta Articulada (Máquina)":"articulada","Pullover (Máquina)":"placas","Barra Fixa Supinada (Graviton)":"graviton","Puxada Alta Supinada (Máquina)":"placas","Puxada Alta Fechada (Máquina)":"placas","Remada Alta Articulada Unilateral (Máquina)":"articulada","Remada T-Bar (Máquina)":"articulada","Remada Baixa Iso-Lateral (Máquina)":"articulada","Remada Sentada Aberta (Máquina)":"placas","Remada Sentada Pegada V (Máquina)":"placas","Remada Apoiada (Máquina)":"articulada","Encolhimento (Máquina)":"articulada","Extensão Lombar (Máquina)":"placas","Desenvolvimento (Máquina)":"placas","Elevação Lateral (Máquina)":"placas","Crucifixo Invertido (Máquina)":"placas","Desenvolvimento Iso-Lateral (Máquina)":"articulada","Desenvolvimento Unilateral (Máquina)":"placas","Rosca Scott (Máquina)":"placas","Rosca Direta (Máquina)":"placas","Rosca Scott Unilateral (Máquina)":"placas","Extensão de Tríceps (Máquina)":"placas","Mergulho Sentado (Máquina)":"placas","Extensão de Tríceps Acima da Cabeça (Máquina)":"placas","Tríceps na Paralela (Graviton)":"graviton","Abdominal (Máquina)":"placas","Rotação de Tronco (Máquina)":"placas","Agachamento Hack (Máquina)":"trilho","Agachamento Pendular (Máquina)":"articulada","Leg Press 45° (Máquina)":"trilho","Leg Press Horizontal (Máquina)":"placas","Leg Press Unilateral (Máquina)":"trilho","Cadeira Extensora (Máquina)":"placas","Cadeira Extensora Unilateral (Máquina)":"placas","Agachamento V-Squat (Máquina)":"articulada","Agachamento com Cinto (Máquina)":"articulada","Leg Press Vertical (Máquina)":"trilho","Mesa Flexora (Máquina)":"placas","Cadeira Flexora (Máquina)":"placas","Flexora Unilateral em Pé (Máquina)":"placas","Mesa Flexora Unilateral (Máquina)":"placas","Cadeira Flexora Unilateral (Máquina)":"placas","Flexora Ajoelhada (Máquina)":"placas","Glute Ham Raise (Máquina)":"ghd","Elevação Pélvica (Máquina)":"articulada","Glúteo Coice (Máquina)":"placas","Cadeira Abdutora (Máquina)":"placas","Elevação Pélvica Unilateral (Máquina)":"articulada","Hiperextensão Reversa (Máquina)":"articulada","Agachamento Hack Invertido (Máquina)":"trilho","Abdução de Quadril em Pé (Máquina)":"placas","Cadeira Adutora (Máquina)":"placas","Panturrilha em Pé (Máquina)":"placas","Panturrilha Sentado (Máquina)":"articulada","Panturrilha no Leg Press (Máquina)":"trilho","Panturrilha no Hack (Máquina)":"trilho","Panturrilha Burrico (Máquina)":"articulada","Puxada na Máquina Articulada":"articulada","Agachamento Pêndulo":"articulada"};
+  var M_NAME = { peitoral: 'Peitoral', delt_ant: 'Deltoide anterior', delt_lat: 'Deltoide lateral', delt_post: 'Deltoide posterior', biceps: 'Bíceps', triceps: 'Tríceps', antebracos: 'Antebraços', abdomen: 'Abdômen', obliquos: 'Oblíquos', quadriceps: 'Quadríceps', adutores: 'Adutores', tibial: 'Tibial anterior', trapezio: 'Trapézio', costas_sup: 'Costas superiores', manguito: 'Manguito rotador', dorsais: 'Dorsais', lombar: 'Lombar', gluteos: 'Glúteos', gluteo_medio: 'Glúteo médio', posteriores: 'Posteriores de coxa', panturrilhas: 'Panturrilhas' };
+  var MACH_T = {
+    placas: ['Máquina de placas', 'O peso é uma pilha de placas, escolhido com o pino.'],
+    articulada: ['Articulada (anilhas)', 'Você coloca anilhas e o braço da máquina gira num eixo.'],
+    trilho: ['Trilho (anilhas)', 'Você coloca anilhas e a plataforma corre num trilho, como no leg press.'],
+    graviton: ['Graviton (contrapeso)', 'O peso ajuda você a subir: mais kg deixa o exercício mais fácil.'],
+    ghd: ['Banco GHD', 'Banco com apoio para os pés. O kg é o peso extra que você segura.']
+  };
+  var MON3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  var xDate = function (d) { return H_WD[d.getDay()] + ', ' + d.getDate() + ' ' + MON3[d.getMonth()]; };
+  function figureSVG(view, level) {
+    var R = FIG[view], out = '<path d="' + FIG.base + FIG.neck + '" fill="var(--m-skin)"></path>';
+    Object.keys(R).forEach(function (k) {
+      var l = level[k], c = l === 1 ? 'var(--m-pri)' : l === 2 ? 'var(--m-sec)' : 'var(--m-off)';
+      out += '<path d="' + R[k] + '" fill="' + c + '"></path><path d="' + R[k] + '" fill="' + c + '" transform="matrix(-1 0 0 1 120 0)"></path>';
+    });
+    return '<svg viewBox="18 2 84 228" aria-hidden="true">' + out + '</svg>';
+  }
+  function musOf(d) {
+    if (d.mine) return [{ 'Peito': ['peitoral'], 'Dorsais': ['dorsais'], 'Costas superiores': ['costas_sup'], 'Trapézio': ['trapezio'], 'Lombar': ['lombar'], 'Ombros': ['delt_ant', 'delt_lat', 'delt_post'], 'Bíceps': ['biceps'], 'Tríceps': ['triceps'], 'Antebraços': ['antebracos'], 'Abdômen': ['abdomen'], 'Quadríceps': ['quadriceps'], 'Posteriores de coxa': ['posteriores'], 'Glúteos': ['gluteos'], 'Adutores': ['adutores'], 'Panturrilhas': ['panturrilhas'] }[d.g] || [], []];
+    return MUS[d.n] || [[], []];
+  }
+
+  /* Histórico de exemplo: as séries de cada exercício nos treinos do Histórico (H_S), do mais antigo ao mais novo */
+  var EX_PROF = {
+    'Supino Reto (Barra)': { w: 'Push', a: 50, b: 62, st: 2, r: [8, 10], v: 2, warm: [40, 15], prep: [50, 6], fail: -7, drop: 1 },
+    'Supino Inclinado (Halter)': { w: 'Push', a: 16, b: 22, st: 2, r: [8, 12], v: 3 },
+    'Desenvolvimento (Halter)': { w: 'Push', a: 14, b: 18, st: 2, r: [8, 12], v: 3, warm: [10, 15] },
+    'Elevação Lateral (Halter)': { w: 'Push', a: 10, b: 10, st: 2, r: [12, 12], v: 3, last: 1 },
+    'Tríceps Corda (Polia)': { w: 'Push', a: 17.5, b: 25, st: 2.5, r: [10, 15], v: 2, fail: -5 },
+    'Flexão': { w: 'Push', bw: [12, 24], v: 3 },
+    'Puxada Alta Aberta (Polia)': { w: 'Pull', a: 55, b: 70, st: 5, r: [8, 10], v: 3 },
+    'Barra Fixa (Graviton)': { w: 'Pull', a: 45, b: 25, st: 5, r: [6, 8], v: 3 },
+    'Remada Curvada (Barra)': { w: 'Pull', a: 40, b: 50, st: 2, r: [8, 10], v: 3 },
+    'Rosca Direta (Barra)': { w: 'Pull', a: 24, b: 30, st: 2, r: [8, 12], v: 2, fail: -5 },
+    'Agachamento Livre (Barra)': { w: 'Pernas', a: 80, b: 100, st: 5, r: [6, 8], v: 3, warm: [40, 10] },
+    'Leg Press 45° (Máquina)': { w: 'Pernas', a: 140, b: 180, st: 10, r: [10, 15], v: 3 },
+    'Cadeira Extensora (Máquina)': { w: 'Pernas', a: 35, b: 45, st: 5, r: [10, 15], v: 2, fail: -5 },
+    'Mesa Flexora (Máquina)': { w: 'Pernas', a: 30, b: 40, st: 5, r: [10, 15], v: 3 },
+    'Stiff (Barra)': { w: 'Pernas', a: 40, b: 50, st: 2, r: [8, 12], v: 3 }
+  };
+  var EXH = {};
+  (function () {
+    var seed = 7, byW = {};
+    function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    H_S.forEach(function (s) { (byW[s.n] = byW[s.n] || []).push(s); s.ex = []; });
+    Object.keys(EX_PROF).forEach(function (n) {
+      var P = EX_PROF[n], list = byW[P.w].slice(0, P.last || 999).reverse(), N = list.length;
+      EXH[n] = list.map(function (s, i) {
+        var t = N > 1 ? i / (N - 1) : 1, fin = i === N - 1, sets = [], k;
+        if (P.bw) {
+          var top = fin ? P.bw[1] : Math.round(P.bw[0] + (P.bw[1] - P.bw[0]) * t - rnd() * 2);
+          for (k = 0; k < P.v; k++) sets.push({ t: 'valid', kg: 0, r: Math.max(P.bw[0] - 2, top - k * 2 - (k && rnd() < .5 ? 1 : 0)) });
+        } else {
+          var kg = Math.round((P.a + (P.b - P.a) * Math.pow(t, .85)) / P.st) * P.st;
+          if (!fin && i > 1 && rnd() < (P.b >= P.a ? .14 : .07)) kg += P.b >= P.a ? -P.st : P.st;
+          if (fin) kg = P.b;
+          var r = fin ? P.r[1] : P.r[0] + Math.floor(rnd() * (P.r[1] - P.r[0] + 1));
+          if (P.warm) sets.push({ t: 'warm', kg: P.warm[0], r: P.warm[1] });
+          if (P.prep) sets.push({ t: 'prep', kg: P.prep[0], r: P.prep[1] });
+          for (k = 0; k < P.v; k++) sets.push({ t: 'valid', kg: Math.round((kg - (P.drop && k ? P.st : 0)) * 100) / 100, r: Math.max(P.r[0] - 1, r - k) });
+          if (P.fail) sets.push({ t: 'fail', kg: kg + P.fail, r: r + 2 });
+        }
+        s.ex.push(n);
+        return { d: s.d, w: s.n, sets: sets };
+      });
+    });
+  })();
+
+  /* Tipo do gráfico: Graviton (o kg é ajuda), peso do corpo (sem kg) ou com carga */
+  function xKind(n) {
+    if (MACH[n] === 'graviton') return 'grav';
+    var h = EXH[n];
+    return h && h.every(function (x) { return x.sets.every(function (y) { return !y.kg; }); }) ? 'bw' : 'kg';
+  }
+  var X_MET = {
+    kg: [['max', 'Maior carga'], ['vol', 'Volume']],
+    grav: [['help', 'Menor ajuda'], ['reps', 'Mais repetições']],
+    bw: [['reps', 'Mais repetições'], ['tot', 'Repetições no treino']]
+  };
+  function xVal(h, m) {
+    var c = h.sets.filter(function (x) { return counts(x.t); });
+    var kgs = c.map(function (x) { return x.kg; }), reps = c.map(function (x) { return x.r; });
+    if (m === 'max') return Math.max.apply(null, kgs);
+    if (m === 'help') return Math.min.apply(null, kgs);
+    if (m === 'reps') return Math.max.apply(null, reps);
+    if (m === 'vol') return c.reduce(function (a, x) { return a + x.kg * x.r; }, 0);
+    return reps.reduce(function (a, x) { return a + x; }, 0);
+  }
+  var xNum = function (v, m) { return m === 'vol' ? Math.round(v).toLocaleString('pt-BR') : m === 'reps' || m === 'tot' ? String(v) : fmtKg(v); };
+  var xFmt = function (v, m) { return xNum(v, m) + (m === 'reps' || m === 'tot' ? ' reps' : ' kg'); };
+  var xSet = function (x) { return x.kg ? fmtKg(x.kg) + ' kg × ' + x.r : x.r + ' reps'; };
+  /* Melhor série: mais kg e, no empate, mais repetições. No Graviton, menos kg (menos ajuda). Sem kg, mais repetições. Só válidas e de falha. */
+  function xBest(list, kind) {
+    var best = null;
+    list.forEach(function (h) {
+      h.sets.forEach(function (x) {
+        if (!counts(x.t)) return;
+        var b = best && best.x, better = !b || (kind === 'bw' ? x.r > b.r : kind === 'grav' ? x.kg < b.kg || (x.kg === b.kg && x.r > b.r) : x.kg > b.kg || (x.kg === b.kg && x.r > b.r));
+        if (better) best = { x: x, h: h };
+      });
+    });
+    return best;
+  }
+
+  var EXD = { n: '', from: 'ex', m: '', per: 90, sel: null, more: 5 };
+  var exdEl = $('#s-exd');
+  function openExd(n, from) {
+    EXD = { n: n, from: from || 'ex', m: X_MET[xKind(n)][0][0], per: 90, sel: null, more: 5 };
+    renderExd();
+    go('exd', 0);
+  }
+  function renderExd() {
+    var d = info(EXD.n), mus = musOf(d), kind = xKind(EXD.n), hist = EXH[EXD.n] || [], mach = d.mine ? null : MACH[EXD.n];
+    var back = EXD.from === 'ex' ? 'Exercícios' : EXD.from === 'hist' ? 'Histórico' : EXD.from === 'session' ? S.name : EW().name;
+    $('.js-exd-back', exdEl).textContent = back;
+    $('.js-exd-title', exdEl).textContent = d.n;
+    $('.js-exd-sub', exdEl).textContent = d.g + ' · ' + (d.mine ? 'Meu exercício' : d.e);
+    /* Músculos */
+    var lv = {};
+    mus[1].forEach(function (m) { FIG.map[m].forEach(function (r) { lv[r] = 2; }); });
+    mus[0].forEach(function (m) { FIG.map[m].forEach(function (r) { lv[r] = 1; }); });
+    var names = function (l) { return l.map(function (m) { return '<span>' + esc(M_NAME[m]) + '</span>'; }).join(''); };
+    var leg = '<div><span class="x-k"><i class="pri"></i>' + (mus[0].length > 1 ? 'PRINCIPAIS' : 'PRINCIPAL') + '</span><span class="x-v">' + (mus[0].length ? names(mus[0]) : '<span>Corpo inteiro</span>') + '</span></div>' +
+      (mus[1].length ? '<div><span class="x-k"><i class="sec"></i>SECUNDÁRIOS</span><span class="x-v">' + names(mus[1]) + '</span></div>' : '') +
+      (d.mine ? '<div><span class="x-note">Exercício seu: o boneco mostra o grupo dele.</span></div>' : (d.f ? '<div><span class="x-k">FOCO</span><span class="x-v"><span>' + esc(d.f) + '</span></span></div>' : ''));
+    var musLabel = 'Músculos principais: ' + (mus[0].map(function (m) { return M_NAME[m]; }).join(', ') || 'corpo inteiro') + (mus[1].length ? '. Secundários: ' + mus[1].map(function (m) { return M_NAME[m]; }).join(', ') : '') + '.';
+    var html = '<div class="sec"><h2>MÚSCULOS</h2><div class="card x-mus" role="group" aria-label="' + esc(musLabel) + '"><div class="x-figs"><span class="x-fig">' + figureSVG('front', lv) + '<small>Frente</small></span><span class="x-fig">' + figureSVG('back', lv) + '<small>Costas</small></span></div><div class="x-leg">' + leg + '</div></div>';
+    if (mach) {
+      var mt = MACH_T[mach];
+      html += '<button type="button" class="card row-btn x-mach" data-act="exd-mach"><span class="ico">' + eqIcon(mach === 'graviton' ? 'Peso do corpo' : 'Máquina', 17) + '</span><span class="row-text"><span class="row-title">' + esc(mt[0]) + '</span><span class="row-sub">' + (mach === 'graviton' ? 'Mais kg = mais ajuda. Menos kg é progresso.' : 'Tipo de máquina') + '</span></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8C8CD" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.8h.01"></path></svg></button>';
+    }
+    html += '</div>';
+    /* Evolução */
+    if (!hist.length) {
+      html += '<div class="sec"><h2>EVOLUÇÃO</h2><div class="card x-empty"><span class="ico">' + ICON('<path d="M4 19h16M7 15l4-4 3 3 5-6"></path>', '#D1D1D6') + '</span><b>Você ainda não fez este exercício</b><span>Quando concluir um treino com ele, a última vez, a melhor série, a evolução e o histórico aparecem aqui.</span></div></div>';
+    } else {
+      var last = hist[hist.length - 1], bl = xBest([last], kind), bb = xBest(hist, kind), sub = kind === 'grav' ? 'de ajuda · ' : '';
+      html += '<div class="sec"><h2>EVOLUÇÃO</h2><div class="x-tiles">' +
+        '<div class="card x-tile"><small>ÚLTIMA VEZ</small><b>' + xSet(bl.x) + '</b><span>' + sub + xDate(last.d) + '</span></div>' +
+        '<div class="card x-tile"><small>MELHOR SÉRIE <i class="x-star" aria-hidden="true">★</i></small><b>' + xSet(bb.x) + '</b><span>' + sub + xDate(bb.h.d) + '</span></div></div>' +
+        '<div class="card x-chart js-x-chart"></div></div>';
+      html += '<div class="sec"><div class="sec-head"><h2>HISTÓRICO</h2><span class="x-count">' + plural(hist.length, 'treino', 'treinos') + (kind === 'grav' ? ' · kg é a ajuda' : '') + '</span></div><div class="x-hist js-x-hist"></div></div>';
+    }
+    $('.js-exd-body', exdEl).innerHTML = html;
+    if (hist.length) { xPaintChart(); xPaintHist(); }
+  }
+  function xRange() {
+    var t1 = +H_TODAY, hist = EXH[EXD.n] || [];
+    var t0 = EXD.per ? t1 - EXD.per * 864e5 : (hist.length ? +hist[0].d : t1);
+    return [t0, t1];
+  }
+  var X_PER = { 90: '3 meses', 365: '1 ano', 0: 'Tudo' };
+  var X_PHR = { 90: 'nos últimos 3 meses', 365: 'no último ano', 0: 'desde o primeiro treino' };
+  function niceStep(x) { var p = Math.pow(10, Math.floor(Math.log10(x))), f = x / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+  function xPaintChart() {
+    var el = $('.js-x-chart', exdEl); if (!el) return;
+    var n = EXD.n, kind = xKind(n), hist = EXH[n], m = EXD.m, inv = m === 'help', rg = xRange();
+    var pts = hist.filter(function (h) { return +h.d >= rg[0]; }).map(function (h) { return { t: +h.d, d: h.d, v: xVal(h, m) }; });
+    var metName = X_MET[kind].filter(function (x) { return x[0] === m; })[0][1];
+    var chips = '<div class="x-mets" role="group" aria-label="O que o gráfico mostra">' + X_MET[kind].map(function (x) { return '<button type="button" class="x-met" data-act="exd-met" data-m="' + x[0] + '" aria-pressed="' + (x[0] === m) + '">' + x[1] + '</button>'; }).join('') + '</div>';
+    var perBtn = hist.length > 1 ? '<button type="button" class="x-per" data-act="exd-per" aria-label="Período: ' + X_PER[EXD.per] + '">' + X_PER[EXD.per] + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>' : '';
+    var sel = pts.length ? (EXD.sel === null || EXD.sel >= pts.length ? pts.length - 1 : EXD.sel) : -1, p = pts[sel];
+    var head = '<div class="x-head"><div class="x-hv">' + (p ? '<b>' + xNum(p.v, m) + '<small>' + (m === 'reps' || m === 'tot' ? ' reps' : ' kg') + '</small></b><span>' + metName + ' · ' + xDate(p.d) + '</span>' : '<b class="x-none">—</b><span>' + metName + '</span>') + '</div>' + perBtn + '</div>';
+    var body = '';
+    if (hist.length < 2) body = '<p class="x-msg">Faça este exercício em mais um treino para ver a evolução.</p>';
+    else if (pts.length < 2) body = '<p class="x-msg">' + (pts.length ? 'Só 1 treino' : 'Nenhum treino') + ' com este exercício ' + X_PHR[EXD.per] + '. Escolha um período maior para ver a evolução.</p>';
+    else {
+      var first = pts[0].v, lastV = pts[pts.length - 1].v, diff = lastV - first, good = inv ? diff < 0 : diff > 0, bad = inv ? diff > 0 : diff < 0;
+      var amt = xFmt(Math.abs(Math.round(diff * 100) / 100), m) + (inv ? (diff < 0 ? ' a menos de ajuda' : ' a mais de ajuda') : '');
+      var ch = diff === 0 ? 'Igual ' + X_PHR[EXD.per] : (good ? '▲ ' : '▼ ') + amt + ' ' + X_PHR[EXD.per];
+      body = (sel === pts.length - 1 ? '<p class="x-change' + (bad ? ' bad' : '') + '">' + ch + '</p>' : '<p class="x-change" style="visibility:hidden" aria-hidden="true">·</p>') + xChartSVG(pts, sel, m, inv, rg, metName) +
+        (inv ? '<p class="x-inv">Menos ajuda fica mais alto no gráfico.</p>' : '');
+    }
+    el.innerHTML = head + body + chips;
+  }
+  function xChartSVG(pts, sel, m, inv, rg, metName) {
+    var W = 340, H = 150, L = 6, R = W - 42, T = 12, B = 118;
+    var vs = pts.map(function (p) { return p.v; }), lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
+    if (hi === lo) { hi += m === 'vol' ? 100 : 2; lo = Math.max(0, lo - (m === 'vol' ? 100 : 2)); }
+    var step = niceStep((hi - lo) / 3); if ((m === 'reps' || m === 'tot') && step < 1) step = 1;
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    var Y = function (v) { var f = (v - lo) / (hi - lo); return inv ? T + f * (B - T) : B - f * (B - T); };
+    var X = function (t) { return L + (t - rg[0]) / Math.max(1, rg[1] - rg[0]) * (R - L); };
+    var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(metName + ': de ' + xFmt(vs[0], m) + ' em ' + xDate(pts[0].d) + ' a ' + xFmt(vs[vs.length - 1], m) + ' em ' + xDate(pts[pts.length - 1].d)) + '">';
+    for (var v = lo; v <= hi + 1e-9; v += step) {
+      var y = Y(v).toFixed(1);
+      out += '<line x1="0" x2="' + R + '" y1="' + y + '" y2="' + y + '" stroke="#232326" stroke-width="1"></line><text x="' + W + '" y="' + (+y + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#8C8C92">' + xNum(Math.round(v * 100) / 100, m) + '</text>';
+    }
+    /* meses embaixo */
+    var d0 = new Date(rg[0]), mm = new Date(d0.getFullYear(), d0.getMonth() + 1, 1), lastX = -99, labs = [];
+    while (+mm <= rg[1]) { labs.push(mm); mm = new Date(mm.getFullYear(), mm.getMonth() + 1, 1); }
+    var every = labs.length > 7 ? 2 : 1;
+    labs.forEach(function (dt, k) {
+      var x = X(+dt); if (k % every || x - lastX < 24 || x > R - 8) return; lastX = x;
+      out += '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + B + '" y2="' + (B + 4) + '" stroke="#3A3A3F"></line><text x="' + x.toFixed(1) + '" y="' + (H - 14) + '" text-anchor="middle" font-size="10" fill="#8C8C92">' + MON3[dt.getMonth()] + '</text>';
+    });
+    var line = pts.map(function (p, k) { return (k ? 'L' : 'M') + X(p.t).toFixed(1) + ' ' + Y(p.v).toFixed(1); }).join('');
+    out += '<path d="' + line + 'L' + X(pts[pts.length - 1].t).toFixed(1) + ' ' + B + 'L' + X(pts[0].t).toFixed(1) + ' ' + B + 'Z" fill="rgba(61, 123, 240, .12)"></path>';
+    out += '<path d="' + line + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>';
+    var sx = X(pts[sel].t).toFixed(1);
+    out += '<line x1="' + sx + '" x2="' + sx + '" y1="' + T + '" y2="' + B + '" stroke="#3A3A3F" stroke-width="1"></line>';
+    pts.forEach(function (p, k) {
+      if (k === sel) return;
+      out += '<circle cx="' + X(p.t).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="2.6" fill="var(--accent)" stroke="#121214" stroke-width="1.5"></circle>';
+    });
+    out += '<circle cx="' + sx + '" cy="' + Y(pts[sel].v).toFixed(1) + '" r="5" fill="#F5F5F7" stroke="var(--accent)" stroke-width="2.5"></circle>';
+    return out + '</svg>';
+  }
+  function xPaintHist() {
+    var el = $('.js-x-hist', exdEl); if (!el) return;
+    var n = EXD.n, kind = xKind(n), hist = EXH[n].slice().reverse(), best = xBest(EXH[n], kind);
+    var shown = hist.slice(0, EXD.more);
+    el.innerHTML = shown.map(function (h) {
+      var rowsH = h.sets.map(function (x, j) {
+        var star = best && best.x === x ? '<span class="x-star" aria-label="melhor série">★</span>' : '';
+        return '<span class="x-row"><i class="x-n t-' + x.t + '" aria-label="Série ' + (j + 1) + ', ' + TNAME[x.t] + '">' + (j + 1) + '</i><span class="num">' + xSet(x) + '</span>' + star + '</span>';
+      }).join('');
+      return '<button type="button" class="card x-sess" data-act="exd-sess"><span class="x-sh"><b>' + esc(h.w) + '</b><span>' + xDate(h.d) + '</span>' + CHEV_R + '</span><span class="x-rows">' + rowsH + '</span></button>';
+    }).join('') + (hist.length > shown.length ? '<button type="button" class="x-more" data-act="exd-more">Mostrar mais</button>' : '');
+  }
+  function machSheet() {
+    var cur = MACH[EXD.n];
+    openSheet('Tipos de máquina', '<p>O mesmo exercício muda de academia para academia. Este é o tipo mais comum para ele.</p><div class="wp x-mt">' + Object.keys(MACH_T).map(function (k) {
+      return '<div class="x-mt-row' + (k === cur ? ' on' : '') + '"><b>' + esc(MACH_T[k][0]) + (k === cur ? '<span>ESTE</span>' : '') + '</b><small>' + esc(MACH_T[k][1]) + '</small></div>';
+    }).join('') + '</div><p>O kg de uma máquina não vale para outra: compare sua evolução sempre na mesma máquina.</p>' + btn('sheet-close', 'Entendi', 'sb-primary'));
+  }
+  exdEl.addEventListener('click', function (ev) {
+    var svg = ev.target.closest('.x-chart > svg[role="img"]'); if (!svg) return;
+    var hist = EXH[EXD.n], rg = xRange(), pts = hist.filter(function (h) { return +h.d >= rg[0]; });
+    if (pts.length < 2) return;
+    var rect = svg.getBoundingClientRect(), x = (ev.clientX - rect.left) * 340 / rect.width, bestK = 0, bestD = 1e9;
+    pts.forEach(function (h, k) { var px = 6 + (+h.d - rg[0]) / Math.max(1, rg[1] - rg[0]) * (340 - 42 - 6), dd = Math.abs(px - x); if (dd < bestD) { bestD = dd; bestK = k; } });
+    EXD.sel = bestK === pts.length - 1 ? null : bestK;
+    xPaintChart();
+  });
+
   /* ---------- Toques ---------- */
   document.addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-act]'); if (!b || b.disabled) return;
@@ -2294,7 +2673,7 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
       case 'ord-done': ordering = false; renderEditor(); break;
       case 'ord-up': list = EW().ex; if (i > 0) list.splice(i - 1, 0, list.splice(i, 1)[0]); renderEditor(); break;
       case 'ord-down': list = EW().ex; if (i < list.length - 1) list.splice(i + 1, 0, list.splice(i, 1)[0]); renderEditor(); break;
-      case 'ex-menu': iosMenu(b, [EW().ex.length > 1 ? iosItem('ord-start', 'reorder', 'Ordenar exercícios') : '', iosItem('e-remove-ask', 'trash', 'Remover do treino', ' data-ex="' + i + '"', true)], 'Opções de ' + EW().ex[i].n); break;
+      case 'ex-menu': iosMenu(b, [iosItem('exd-open', 'info', 'Ver exercício', ' data-from="editor" data-n="' + esc(EW().ex[i].n) + '"'), EW().ex.length > 1 ? iosItem('ord-start', 'reorder', 'Ordenar exercícios') : '', iosItem('e-remove-ask', 'trash', 'Remover do treino', ' data-ex="' + i + '"', true)], 'Opções de ' + EW().ex[i].n); break;
       case 'e-remove-ask': iosConfirm(src, 'Remover ' + EW().ex[i].n + '?', 'As séries planejadas dele também saem deste treino. O histórico não muda.', 'e-remove', 'Remover do treino', ' data-ex="' + i + '"'); break;
       case 'e-remove': EW().ex.splice(i, 1); closeSheet(); renderEditor(); renderWorkouts(); renderHero(); toast('Exercício removido do treino'); break;
       case 'e-rest': restSheet(i); break;
@@ -2310,7 +2689,7 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
       case 'check': checkSet(i, j); break;
       case 'add-set': { var LS = S.ex[i].sets[S.ex[i].sets.length - 1]; S.ex[i].sets.push({ t: LS && LS.t === 'fail' ? 'fail' : 'valid', prev: null, kg: '', reps: '', done: false }); } S.ex[i].open = true; renderSession(); break;
       case 'toggle-ex': S.ex[i].open = !S.ex[i].open; renderSession(); break;
-      case 'ex-menu-s': iosMenu(b, [iosItem('s-remove', 'trash', 'Remover do treino', ' data-ex="' + i + '"', true)], 'Opções de ' + S.ex[i].n); break;
+      case 'ex-menu-s': iosMenu(b, [iosItem('exd-open', 'info', 'Ver exercício', ' data-from="session" data-n="' + esc(S.ex[i].n) + '"'), iosItem('s-remove', 'trash', 'Remover do treino', ' data-ex="' + i + '"', true)], 'Opções de ' + S.ex[i].n); break;
       case 's-remove':
         if (S.ex[i].sets.some(function (x) { return x.done; }) && !b.dataset.ok) { iosConfirm(null, 'Remover ' + S.ex[i].n + '?', 'As séries já feitas dele saem deste treino. O treino planejado não muda.', 's-remove', 'Remover exercício', ' data-ex="' + i + '" data-ok="1"'); break; }
         S.ex.splice(i, 1); closeSheet(); renderSession(); toast('Exercício removido do treino'); break;
@@ -2333,13 +2712,27 @@ body.vn-sheet-glass .sheet { border-radius: 34px; border: 1px solid rgba(255, 25
       case 'pick': openPicker(b.dataset.target); break;
       case 'pk-cancel': closePicker(); break;
       case 'pk-add': pkConfirm(); break;
-      case 'ex-item': toast('O detalhe do exercício fica para a S4-C'); break;
+      case 'ex-item': openExd(DATA[+b.dataset.i].n, 'ex'); break;
+      case 'exd-open': openExd(b.dataset.n, b.dataset.from); break;
+      case 'exd-back': go(EXD.from); break;
+      case 'exd-per': iosMenu(b, [[90, '3 meses'], [365, '1 ano'], [0, 'Tudo']].map(function (p) { return iosItem('exd-per-set', EXD.per === p[0] ? 'check' : 'none', p[1], ' data-p="' + p[0] + '"'); }), 'Período do gráfico'); break;
+      case 'exd-per-set': EXD.per = +b.dataset.p; EXD.sel = null; xPaintChart(); break;
+      case 'exd-met': EXD.m = b.dataset.m; EXD.sel = null; xPaintChart(); break;
+      case 'exd-mach': machSheet(); break;
+      case 'exd-more': EXD.more += 10; xPaintHist(); break;
+      case 'exd-sess': toast('No app, abre o detalhe deste treino, o mesmo do Histórico'); break;
     }
   });
 
   planSync(); renderPlanRow(); renderHero(); renderMetrics(); renderWeek(); renderWorkouts(); renderRecent(); chips(); renderEx();
   var h = location.hash.slice(1);
-  if (h === 'treinos') go('treinos', 0); else if (h === 'exercicios') go('ex', 0); else if (h === 'editar') { go('treinos', 0); openEditor('push'); } else if (h === 'treino') startWorkout('push'); else chrome();
+  if (h === 'treinos') go('treinos', 0); else if (h === 'exercicios') go('ex', 0); else if (h === 'editar') { go('treinos', 0); openEditor('push'); } else if (h === 'treino') startWorkout('push');
+  else if (h === 'exercicio') { go('ex', 0); openExd('Supino Reto (Barra)', 'ex'); }
+  else if (h === 'exercicio-graviton') { go('ex', 0); openExd('Barra Fixa (Graviton)', 'ex'); }
+  else if (h === 'exercicio-maquina') { go('ex', 0); openExd('Leg Press 45° (Máquina)', 'ex'); }
+  else if (h === 'exercicio-uma-vez') { go('ex', 0); openExd('Elevação Lateral (Halter)', 'ex'); }
+  else if (h === 'exercicio-novo') { go('ex', 0); openExd('Cadeira Flexora (Máquina)', 'ex'); }
+  else chrome();
 })();
 </script>
 <script>function vnCard(v){document.body.classList.toggle('vn-b',v==='b');document.querySelectorAll('.js-vn-a').forEach(function(x){x.setAttribute('aria-pressed',String(v==='a'))});document.querySelectorAll('.js-vn-b').forEach(function(x){x.setAttribute('aria-pressed',String(v==='b'))});}</script>
