@@ -49,11 +49,14 @@ struct SessionProgress: Equatable {
     }
 
     /// The load lifted: the sum of load × repetitions of the working and failure sets done. Warm-up and
-    /// feeder sets, and sets without a load, do not count (`SetType.countsTowardLiftedLoad`).
+    /// feeder sets, and sets without a load, do not count (`SetType.countsTowardLiftedLoad`); nor do the
+    /// sets of the Graviton exercises, whose kg is the help of the machine (`DefaultExerciseMuscles.isAssisted`).
+    /// Computed each time from the sets, so it holds for sessions finished before this rule too.
     static func volumeKg(of sets: [SetLog]) -> Double {
         sets.reduce(0) { total, log in
             guard log.isCompleted, log.setType.countsTowardLiftedLoad,
-                  let weightKg = log.weightKg, let reps = log.reps else { return total }
+                  let weightKg = log.weightKg, let reps = log.reps,
+                  !DefaultExerciseMuscles.isAssisted(log.sessionExercise?.exercise) else { return total }
             return total + weightKg * Double(reps)
         }
     }

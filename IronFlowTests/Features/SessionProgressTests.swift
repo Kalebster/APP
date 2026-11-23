@@ -90,6 +90,41 @@ struct SessionProgressTests {
         #expect(SessionFormatting.volumeText(0) == "0 kg levantados")
     }
 
+    /// A set done of `exercise`, through the performed exercise of a session, as the app keeps it.
+    private func set(of exercise: Exercise, weight: Double?, reps: Int) -> SetLog {
+        let performed = SessionExercise(sortIndex: 0, exerciseNameSnapshot: exercise.name, muscleGroupSnapshot: exercise.muscleGroup)
+        container.mainContext.insert(performed)
+        performed.exercise = exercise
+        let log = set(done: true, weight: weight, reps: reps)
+        log.sessionExercise = performed
+        return log
+    }
+
+    @Test("The sets of the Graviton exercises, whose kg is the help of the machine, stay out of the load lifted")
+    func gravitonOutOfTheLoadLifted() {
+        let bench = Exercise(name: "Supino Reto (Barra)", muscleGroup: .chest, isCustom: false, libraryKey: "bench-press-barbell")
+        let assistedPullUp = Exercise(name: "Barra Fixa (Graviton)", muscleGroup: .back, isCustom: false, libraryKey: "assisted-pull-up")
+        let assistedDips = Exercise(name: "Tríceps na Paralela (Graviton)", muscleGroup: .triceps, isCustom: false, libraryKey: "assisted-dips")
+        // A custom exercise never counts as Graviton, even with a key of one.
+        let custom = Exercise(name: "Minha Barra", muscleGroup: .back, isCustom: true, libraryKey: "assisted-pull-up")
+        for exercise in [bench, assistedPullUp, assistedDips, custom] {
+            container.mainContext.insert(exercise)
+        }
+        let sets = [
+            set(of: bench, weight: 60, reps: 10),
+            set(of: assistedPullUp, weight: 25, reps: 8),
+            set(of: assistedDips, weight: 30, reps: 10),
+            set(of: custom, weight: 20, reps: 5),
+        ]
+        #expect(SessionProgress.volumeKg(of: sets) == 60 * 10 + 20 * 5)
+        #expect(SessionProgress.volumeKg(of: [sets[1], sets[2]]) == 0)
+
+        // The same total in "Concluir treino?" and in "Treino salvo".
+        let summary = SessionFinishSummary(sets: sets, startedAt: .now, now: .now, suggestedEnd: nil)
+        #expect(summary.volumeKg == 700)
+        #expect(SessionFinishSummary.savedText(doneSets: summary.doneSets, volumeKg: summary.volumeKg) == "Treino salvo · 4 séries · 700 kg")
+    }
+
     @Test("Warm-up and feeder sets stay out of the load lifted; working and failure sets count; every set counts as a set")
     func volumeByType() {
         let sets = [
