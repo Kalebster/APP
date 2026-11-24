@@ -242,8 +242,12 @@ struct SessionView: View {
             // notice).
             .navigationDestination(item: $shownExercise) { exercise in
                 ExerciseDetailView(exercise: exercise, origin: .workout(name: SessionFormatting.name(session.workoutNameSnapshot)))
-                    .toast($exerciseScreenNotice)
-                    .sensoryFeedback(.impact(weight: .light), trigger: restsEndedOnExerciseScreen)
+            }
+            // Back on the session, a notice of the exercise screen not seen to its end is not shown again.
+            .onChange(of: shownExercise) { _, exercise in
+                if exercise == nil {
+                    exerciseScreenNotice = nil
+                }
             }
             .sheet(isPresented: $isShowingOptions, onDismiss: actAfterOptions) {
                 SessionOptionsSheet(rest: rest) {
@@ -315,6 +319,10 @@ struct SessionView: View {
             }
             .errorAlert($errorMessage)
         }
+        // The end of the rest over the exercise screen, or over a session it opened: over the whole stack, so
+        // it shows whatever screen is on top.
+        .toast($exerciseScreenNotice)
+        .sensoryFeedback(.impact(weight: .light), trigger: restsEndedOnExerciseScreen)
     }
 
     /// The card of one exercise, with its "Última vez" and the screen's actions. Built here rather than
@@ -648,6 +656,7 @@ struct SessionView: View {
     private func showExercise(of performed: SessionExercise) {
         focusedField = nil
         guard commitAll() else { return }
+        exerciseScreenNotice = nil
         shownExercise = performed.exercise
     }
 

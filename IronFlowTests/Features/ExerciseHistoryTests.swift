@@ -147,6 +147,11 @@ struct ExerciseHistoryTests {
             == .init(text: "▲ 4 reps nos últimos 3 meses", isWorse: false))
         #expect(ExerciseChart.change(from: 60, to: 60, metric: .maxLoad, period: .oneYear)
             == .init(text: "Igual no último ano", isWorse: false))
+        // A change too small to write is the same: the volume is written in whole kg.
+        #expect(ExerciseChart.change(from: 1_000, to: 1_000.25, metric: .volume, period: .threeMonths)
+            == .init(text: "Igual nos últimos 3 meses", isWorse: false))
+        #expect(ExerciseChart.change(from: 60, to: 60.25, metric: .maxLoad, period: .threeMonths)
+            == .init(text: "▲ 0,25 kg nos últimos 3 meses", isWorse: false))
     }
 
     @Test("Graviton, less help: less kg is ▲, with 'a menos de ajuda'; more help is ▼")
@@ -209,6 +214,8 @@ struct ExerciseHistoryTests {
         #expect(ExerciseChart.ticks(for: [1_000, 1_000], metric: .volume) == [900, 1_000, 1_100])
         // Repetitions never go by less than 1.
         #expect(ExerciseChart.ticks(for: [12, 13], metric: .maxReps) == [12, 13])
+        // Nor does the volume, written in whole kg: no label is repeated.
+        #expect(ExerciseChart.ticks(for: [1_000, 1_001], metric: .volume) == [1_000, 1_001])
         #expect(ExerciseChart.ticks(for: [], metric: .maxLoad).isEmpty)
         for values in [[50.0, 62], [140, 180], [17.5, 25], [1_200, 4_310], [6, 8]] {
             let count = ExerciseChart.ticks(for: values, metric: .maxLoad).count

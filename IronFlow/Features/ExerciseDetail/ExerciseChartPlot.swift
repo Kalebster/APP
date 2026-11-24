@@ -43,7 +43,9 @@ struct ExerciseChartPlot: View {
     /// The marks, with scales that place the whole SVG box in the frame: the domain is widened by the
     /// prototype's margins around its plot (6 and 42 on the sides, 12 above and 32 below).
     private func marks(scale: CGFloat) -> some View {
-        let span = chart.end.timeIntervalSince(chart.start)
+        // At least a second wide, as `ExerciseChart.fraction(of:)`: every session today, with "Tudo", puts
+        // them all at the start, as in the prototype.
+        let span = max(chart.end.timeIntervalSince(chart.start), 1)
         let plotWidth = PrototypeChart.plotRight - PrototypeChart.plotLeft
         let xStart = chart.start.addingTimeInterval(-span * PrototypeChart.plotLeft / plotWidth)
         let xEnd = chart.start.addingTimeInterval(span * (PrototypeChart.width - PrototypeChart.plotLeft) / plotWidth)

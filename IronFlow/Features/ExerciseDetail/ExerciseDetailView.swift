@@ -127,7 +127,9 @@ struct ExerciseDetailView: View {
         return DefaultExerciseLibrary.byKey[key]?.focus
     }
 
+    /// Reads the history once: coming back from a session's detail does not read it again.
     private func loadHistory() {
+        guard history == nil else { return }
         do {
             history = try ExerciseHistoryLoader(context: context).history(of: exercise)
         } catch {

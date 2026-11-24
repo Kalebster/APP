@@ -303,7 +303,8 @@ struct ExerciseChart: Equatable {
             low = max(0, low - room)
         }
         var step = niceStep((high - low) / 3)
-        if metric.isRepetitions, step < 1 {
+        // Repetitions and volume are written as whole numbers: a step under 1 would repeat a label.
+        if metric.isRepetitions || metric == .volume, step < 1 {
             step = 1
         }
         low = (low / step).rounded(.down) * step
@@ -355,7 +356,11 @@ struct ExerciseChart: Equatable {
     /// "▲ 12 kg nos últimos 3 meses"; for "Menor ajuda", "▲ 10 kg a menos de ajuda …"; "Igual …" when
     /// nothing changed. Worse is ▼ (in the help, more help).
     static func change(from first: Double, to last: Double, metric: ExerciseMetric, period: ExercisePeriod) -> Change {
-        let difference = ((last - first) * 100).rounded() / 100
+        // Rounded as it is written: kg to 2 decimals, volume and repetitions to whole numbers, so a change too
+        // small to write is "Igual", never "▲ 0 kg".
+        let difference = metric == .maxLoad || metric == .leastHelp
+            ? ((last - first) * 100).rounded() / 100
+            : (last - first).rounded()
         if difference == 0 {
             return Change(text: String(localized: "Igual \(period.phrase)"), isWorse: false)
         }

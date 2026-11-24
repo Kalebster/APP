@@ -542,10 +542,11 @@ struct WorkoutEditorView: View {
         }
     }
 
-    /// "Ver exercício": the typed values are saved first, as when the screen closes.
+    /// "Ver exercício": the typed values are saved first; a value that cannot be saved keeps the editor on
+    /// screen with its error, as "‹ Treinos" and "Iniciar" do.
     private func showExercise(of item: WorkoutExercise) {
         focusedField = nil
-        commitAll()
+        guard commitAll() else { return }
         shownExercise = item.exercise
     }
 
