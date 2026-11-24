@@ -21,6 +21,8 @@ struct SessionExerciseCard: View {
     /// Opens the set type sheet of a set, with its number.
     let onChooseType: @MainActor (SetLog, Int) -> Void
     let onRemoveExercise: @MainActor () -> Void
+    /// "Ver exercício": opens the exercise screen; offered while the exercise exists.
+    let onShowExercise: @MainActor () -> Void
     let onOpenOrClose: @MainActor () -> Void
 
     @ScaledMetric(relativeTo: .body) private var menuSide: CGFloat = 26
@@ -112,6 +114,9 @@ struct SessionExerciseCard: View {
             }
 
             Menu {
+                if performed.exercise != nil {
+                    Button("Ver exercício", systemImage: "info.circle", action: onShowExercise)
+                }
                 Button("Remover do treino", systemImage: "trash", role: .destructive, action: onRemoveExercise)
             } label: {
                 roundIcon(.more, size: 16, color: Theme.Colors.secondaryText)

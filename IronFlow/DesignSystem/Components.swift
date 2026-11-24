@@ -55,14 +55,25 @@ struct TightLabelStyle: LabelStyle {
 /// the workout editor and the weekly plan. Text 15, 3 after the ‹, and 4 to the left of the margin so
 /// the drawn ‹ lines up with the content below, as in the model.
 struct TextBackButton: View {
-    let title: LocalizedStringKey
+    let title: Text
     let action: () -> Void
+
+    init(title: LocalizedStringKey, action: @escaping () -> Void) {
+        self.title = Text(title)
+        self.action = action
+    }
+
+    /// A title that is not translated, such as the name of a workout ("‹ Push").
+    init(verbatim title: String, action: @escaping () -> Void) {
+        self.title = Text(verbatim: title)
+        self.action = action
+    }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 3) {
                 AppIcon(.chevronLeft, size: 16)
-                Text(title)
+                title
                     .scaledFont(15)
             }
             .foregroundStyle(Theme.Colors.lightAccent)

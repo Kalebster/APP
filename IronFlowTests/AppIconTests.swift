@@ -7,20 +7,21 @@ import UIKit
 struct AppIconTests {
     /// The icons the app uses: the model's 50, without menu-edit, menu-rename and menu-reorder (the ⋯
     /// menus are the iOS ones) and without the 4 identical to another one kept (timer is clock,
-    /// metric-month is calendar, metric-wkg is eq-halteres, plus-small is plus).
+    /// metric-month is calendar, metric-wkg is eq-halteres, plus-small is plus); and the 2 of the exercise
+    /// screen: info (the ⓘ of the kind of machine) and chart (the exercise never done).
     static let names = [
-        "bolt", "calculator", "calendar", "check", "chevron-down", "chevron-left", "chevron-right",
+        "bolt", "calculator", "calendar", "chart", "check", "chevron-down", "chevron-left", "chevron-right",
         "chevron-right-list", "chevron-up", "clock", "eq-anilha", "eq-barra", "eq-elastico", "eq-halteres",
-        "eq-kettlebell", "eq-maquina", "eq-peso-do-corpo", "eq-polia", "eq-smith", "logo", "menu-arrow-down",
+        "eq-kettlebell", "eq-maquina", "eq-peso-do-corpo", "eq-polia", "eq-smith", "info", "logo", "menu-arrow-down",
         "menu-arrow-up", "menu-close", "metric-bmr", "metric-height", "metric-kcal", "metric-last",
         "metric-streak", "metric-wdelta", "metric-weight", "metric-wtime", "more", "more-vertical", "play",
         "play-hero", "plus", "search", "tab-exercises", "tab-history", "tab-home", "tab-settings",
         "tab-workouts", "target",
     ]
 
-    @Test("The 43 icons are in the app as 24 × 24 templates")
+    @Test("The 45 icons are in the app as 24 × 24 templates")
     func iconsAreTemplates() throws {
-        #expect(Self.names.count == 43)
+        #expect(Self.names.count == 45)
         for name in Self.names {
             let image = try #require(UIImage(named: name, in: .main, compatibleWith: nil), "\(name) is not in the app")
             #expect(image.renderingMode == .alwaysTemplate, "\(name) is not a template")

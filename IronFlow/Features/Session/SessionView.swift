@@ -68,6 +68,12 @@ struct SessionView: View {
     /// The set "Remover série" of the type sheet asked to remove, removed once the sheet has closed (a
     /// set done asks for a confirmation first, which cannot show while the sheet closes).
     @State private var removalAfterTypeSheet: UUID?
+    /// The exercise whose screen "Ver exercício" opened over the session.
+    @State private var shownExercise: Exercise?
+    /// The notice of the end of the rest on the exercise screen, as on the app's other screens.
+    @State private var exerciseScreenNotice: ToastMessage?
+    /// Rests that reached zero while the exercise screen was open, for the vibration.
+    @State private var restsEndedOnExerciseScreen = 0
     /// Set once the session is finished or discarded, so the view stops reading it.
     @State private var isClosed = false
     @State private var errorMessage: String?
@@ -210,8 +216,14 @@ struct SessionView: View {
                 rest.updateNextSet(text, for: session.id)
             }
             // The rest reached zero on screen: "Pronto" for 2,5 s, a light vibration and the announcement.
+            // Over the exercise screen, the notice at the top and the vibration of the app's other screens.
             .onChange(of: rest.lastEnd) { _, end in
                 guard let end, end.sessionID == session.id else { return }
+                if shownExercise != nil {
+                    exerciseScreenNotice = ToastMessage(RestAlertText.notice(nextSet: end.nextSet))
+                    restsEndedOnExerciseScreen += 1
+                    return
+                }
                 readyRest = end
                 restsEnded += 1
                 AccessibilityNotification.Announcement(RestAlertText.title).post()
@@ -226,6 +238,17 @@ struct SessionView: View {
                 readyRest = nil
             }
             .sensoryFeedback(.impact(weight: .light), trigger: restsEnded)
+            // "Ver exercício": the screen opens over the session, which goes on (the clock, the rest and its
+            // notice).
+            .navigationDestination(item: $shownExercise) { exercise in
+                ExerciseDetailView(exercise: exercise, origin: .workout(name: SessionFormatting.name(session.workoutNameSnapshot)))
+            }
+            // Back on the session, a notice of the exercise screen not seen to its end is not shown again.
+            .onChange(of: shownExercise) { _, exercise in
+                if exercise == nil {
+                    exerciseScreenNotice = nil
+                }
+            }
             .sheet(isPresented: $isShowingOptions, onDismiss: actAfterOptions) {
                 SessionOptionsSheet(rest: rest) {
                     afterOptions = .discard
@@ -296,6 +319,10 @@ struct SessionView: View {
             }
             .errorAlert($errorMessage)
         }
+        // The end of the rest over the exercise screen, or over a session it opened: over the whole stack, so
+        // it shows whatever screen is on top.
+        .toast($exerciseScreenNotice)
+        .sensoryFeedback(.impact(weight: .light), trigger: restsEndedOnExerciseScreen)
     }
 
     /// The card of one exercise, with its "Última vez" and the screen's actions. Built here rather than
@@ -319,6 +346,7 @@ struct SessionView: View {
             onRemoveSet: { (log: SetLog) in requestRemoval(of: log) },
             onChooseType: { (log: SetLog, number: Int) in openTypeSheet(for: log, number: number) },
             onRemoveExercise: { requestRemoval(of: performed) },
+            onShowExercise: { showExercise(of: performed) },
             onOpenOrClose: { openOrClose(performed) }
         )
     }
@@ -622,6 +650,14 @@ struct SessionView: View {
         } catch {
             errorMessage = UserFacingError.message(for: error)
         }
+    }
+
+    /// "Ver exercício": the typed values are saved first, as when the screen is minimized.
+    private func showExercise(of performed: SessionExercise) {
+        focusedField = nil
+        guard commitAll() else { return }
+        exerciseScreenNotice = nil
+        shownExercise = performed.exercise
     }
 
     private func minimize() {

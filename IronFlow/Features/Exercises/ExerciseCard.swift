@@ -2,12 +2,13 @@ import SwiftUI
 
 /// An exercise of the Exercícios tab and of the exercise picker: the icon of its equipment (or the
 /// initial of a custom exercise, which has none), the name, "Grupo · Foco" and the "MEU" badge of a custom
-/// exercise. VoiceOver reads it as one item. In the Exercícios tab it opens nothing for now; in the picker
-/// it shows whether it is chosen, or "NO TREINO" when the workout already has it.
+/// exercise. VoiceOver reads it as one item. In the Exercícios tab it ends with the › of the row that
+/// opens the exercise screen; in the picker it shows whether it is chosen, or "NO TREINO" when the
+/// workout already has it.
 struct ExerciseCard: View {
     /// What the card shows about choosing it.
     enum Selection: Equatable {
-        /// Nothing: the Exercícios tab.
+        /// Nothing: the Exercícios tab, where the row opens the exercise (the ›).
         case none
         /// The selection circle of the picker; a chosen card is outlined in blue on a lighter fill.
         case selectable(isSelected: Bool)
@@ -43,7 +44,9 @@ struct ExerciseCard: View {
             }
             switch selection {
             case .none:
-                EmptyView()
+                // The › of the row, 13 points, in the prototype's gray (#7D7D83).
+                AppIcon(.chevronRightList, size: 13)
+                    .foregroundStyle(Theme.Colors.futureDayText)
             case .selectable(let isSelected):
                 selectionCircle(isSelected: isSelected)
             case .inWorkout:
@@ -159,9 +162,11 @@ struct ExerciseCard: View {
 /// The card shown when nothing matches the search and the filters.
 struct ExerciseEmptyCard: View {
     var identifier = "exercises.empty"
+    /// Between the two lines: 8 in the Exercícios tab, 6 in the exercise picker, as in the prototype.
+    var spacing: CGFloat = 6
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: spacing) {
             Text("Nenhum exercício encontrado")
                 .scaledFont(14, weight: .bold)
             Text("Tente outro nome ou outro filtro.")
