@@ -42,7 +42,6 @@ struct MachineTypesSheet: View {
             .accessibilityIdentifier("machineTypes.done")
             .sheetButtonBar()
         }
-        .accessibilityIdentifier("machineTypes.sheet")
     }
 
     private func row(_ machine: MachineType) -> some View {

@@ -60,15 +60,23 @@ struct ExerciseChartCard: View {
         .accessibilityIdentifier("exercise.chart")
     }
 
-    /// "▲ 12 kg nos últimos 3 meses" while the most recent session is chosen; otherwise its room stays.
+    /// "▲ 12 kg nos últimos 3 meses" while the most recent session is chosen. With an older one chosen the
+    /// phrase goes, for the eye and for VoiceOver, and its line keeps its room, so nothing below moves: the
+    /// prototype's hidden "·" of the same size. (Made only transparent, the phrase was still read.)
+    @ViewBuilder
     private func changeLine(isLastSelected: Bool) -> some View {
-        Text(verbatim: chart.change?.text ?? "·")
-            .scaledFont(12, weight: .semibold)
-            .monospacedDigit()
-            .foregroundStyle(chart.change?.isWorse == true ? Theme.Colors.secondaryText : Theme.Colors.lightAccent)
-            .opacity(isLastSelected ? 1 : 0)
-            .accessibilityHidden(!isLastSelected)
-            .accessibilityIdentifier("exercise.chart.change")
+        if isLastSelected, let change = chart.change {
+            Text(verbatim: change.text)
+                .scaledFont(12, weight: .semibold)
+                .monospacedDigit()
+                .foregroundStyle(change.isWorse ? Theme.Colors.secondaryText : Theme.Colors.lightAccent)
+                .accessibilityIdentifier("exercise.chart.change")
+        } else {
+            Text(verbatim: "·")
+                .scaledFont(12, weight: .semibold)
+                .hidden()
+                .accessibilityHidden(true)
+        }
     }
 
     /// "3 meses ⌄": the iOS menu with the 3 periods and a ✓ on the one chosen.
