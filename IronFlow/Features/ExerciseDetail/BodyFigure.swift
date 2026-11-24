@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// One view of the body figure, 81 × 220 points as in the prototype: the main muscles in the accent color,
-/// the secondary ones in the darker blue, the others in gray and the parts without muscle darker still.
+/// One view of the body figure, 81 × 220 points as in the prototype: the main muscles in the accent color
+/// (`Theme.Colors.accent`), the secondary ones in the darker blue, the others in gray and the parts without
+/// muscle darker still.
 /// Drawn in one pass from paths read once. Decorative: the card says the muscles to VoiceOver.
 struct BodyFigure: View {
     enum Side {
@@ -34,7 +35,7 @@ struct BodyFigure: View {
     /// A region shows a main muscle first, then a secondary one, else none.
     private func color(of region: BodyFigurePaths.DrawnRegion) -> Color {
         if region.muscles.contains(where: primary.contains) {
-            return .accentColor
+            return Theme.Colors.accent
         }
         if region.muscles.contains(where: secondary.contains) {
             return Theme.Colors.muscleSecondary

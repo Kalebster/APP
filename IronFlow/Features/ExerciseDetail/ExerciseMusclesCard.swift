@@ -77,7 +77,7 @@ private struct MusclesLegend: View {
         VStack(alignment: .leading, spacing: 14) {
             group(
                 title: primary.count > 1 ? "PRINCIPAIS" : "PRINCIPAL",
-                swatch: .accentColor,
+                swatch: Theme.Colors.accent,
                 values: primary.isEmpty ? [String(localized: "Corpo inteiro")] : primary.map { String(localized: $0.displayName) }
             )
             if !secondary.isEmpty {

@@ -22,6 +22,8 @@ struct MachineTypeRow: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // The prototype's rows keep 20 more between the text and what is on its right.
+                .padding(.trailing, 20)
                 AppIcon(.info, size: 20)
                     .foregroundStyle(Theme.Colors.mediumText)
             }

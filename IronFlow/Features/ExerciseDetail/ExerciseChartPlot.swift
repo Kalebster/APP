@@ -64,12 +64,12 @@ struct ExerciseChartPlot: View {
                     yStart: .value("Base", low),
                     yEnd: .value(chart.metric.title, plotted(point.value))
                 )
-                .foregroundStyle(Color.accentColor.opacity(0.12))
+                .foregroundStyle(Theme.Colors.accent.opacity(0.12))
                 .accessibilityHidden(true)
             }
             ForEach(chart.points) { point in
                 LineMark(x: .value("Dia", point.day), y: .value(chart.metric.title, plotted(point.value)))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Theme.Colors.accent)
                     .lineStyle(StrokeStyle(lineWidth: 2 * scale, lineCap: .round, lineJoin: .round))
                     .accessibilityHidden(true)
             }
@@ -84,12 +84,12 @@ struct ExerciseChartPlot: View {
                             // r 5, white, with a 2,5 outline in the accent color.
                             Circle()
                                 .fill(Theme.Colors.brightText)
-                                .stroke(Color.accentColor, lineWidth: 2.5 * scale)
+                                .stroke(Theme.Colors.accent, lineWidth: 2.5 * scale)
                                 .frame(width: 10 * scale, height: 10 * scale)
                         } else {
                             // r 2,6 in the accent color, with a 1,5 outline of the card's color.
                             Circle()
-                                .fill(Color.accentColor)
+                                .fill(Theme.Colors.accent)
                                 .stroke(Theme.Colors.cardBackground, lineWidth: 1.5 * scale)
                                 .frame(width: 5.2 * scale, height: 5.2 * scale)
                         }

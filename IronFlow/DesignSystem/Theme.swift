@@ -99,8 +99,11 @@ enum Theme {
         static let feederSet = Color(.feederSet)
         static let failureSet = Color(.failureSet)
         // The exercise screen.
-        /// The main muscles on the body figure are the accent color (`Color.accentColor`); the secondary ones
-        /// a darker blue (#30569C).
+        /// The accent color of the catalog (`AccentColor`, #3D7BF0) itself, whatever the tint around it. Inside
+        /// the tabs the tint is the white of the chosen tab, and `Color.accentColor` follows the tint, so a
+        /// drawing that must be in the accent color (the main muscles, the evolution chart) uses this.
+        static let accent = Color("AccentColor")
+        /// The secondary muscles on the body figure: a darker blue (#30569C); the main ones are `accent`.
         static let muscleSecondary = Color(.muscleSecondary)
         /// A muscle the exercise does not use (#2C2C30, the same value as `currentFieldBackground`).
         static let muscleInactive = Color(.currentFieldBackground)

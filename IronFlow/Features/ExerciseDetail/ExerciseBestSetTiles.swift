@@ -8,6 +8,8 @@ struct ExerciseBestSetTiles: View {
     let calendar: Calendar
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The row of the title (and ★), 13 points tall as in the prototype, so both tiles have the same height.
+    @ScaledMetric(relativeTo: .caption2) private var titleRowHeight: CGFloat = 13
 
     var body: some View {
         let layout = dynamicTypeSize.isAccessibilitySize
@@ -38,6 +40,7 @@ struct ExerciseBestSetTiles: View {
                         .foregroundStyle(Theme.Colors.warmupSet)
                 }
             }
+            .frame(height: titleRowHeight)
             Text(verbatim: ExerciseHistoryFormatting.setText(best.set))
                 .scaledFont(19, weight: .heavy, lineHeight: 1.15)
                 .monospacedDigit()
