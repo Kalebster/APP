@@ -148,11 +148,25 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         XCTAssertTrue(sessions.element(boundBy: 0).label.hasPrefix("Push, sex, 9 out. Série 1, Aquecimento: 40 kg × 15. Série 2, Preparatória: 50 kg × 6. Série 3, Válida: 62 kg × 10, melhor série"), "First session: \(sessions.element(boundBy: 0).label)")
         attachScreenshot(named: "115-exercise-detail-history", of: app)
         app.buttons["exercise.history.more"].tap()
-        let fifteen = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 15"), object: sessions)
-        XCTAssertEqual(XCTWaiter().wait(for: [fifteen], timeout: 10), .completed, "Sessions after Mostrar mais: \(sessions.count)")
+        // The list is lazy: a card is made as it comes into sight, so the 15 are checked by scrolling down to
+        // the 15th (1 July) and seeing that the 16th (25 June) is not there and that Mostrar mais still is.
+        func card(_ prefix: String) -> XCUIElement {
+            app.buttons.matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercise.history.session", prefix)).firstMatch
+        }
+        let fifteenth = card("Push, qua, 1 jul.")
+        let more = app.buttons["exercise.history.more"]
+        // Down to the end of the screen: Mostrar mais, right below the last card shown.
+        var swipes = 0
+        while swipes < 10, !(fifteenth.exists && more.exists && more.isHittable && more.frame.maxY < app.frame.maxY - 60) {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(fifteenth.exists && fifteenth.isHittable, "The 15th session is not shown after Mostrar mais")
+        XCTAssertTrue(more.exists, "No Mostrar mais with 9 sessions left")
+        XCTAssertFalse(card("Push, qui, 25 jun.").exists, "A 16th session is shown")
 
         // A session opens its detail, the one of the Histórico.
-        sessions.element(boundBy: 0).tap()
+        fifteenth.tap()
         XCTAssertTrue(element("history.detail", in: app).waitForExistence(timeout: 10), "The session detail did not open")
     }
 
