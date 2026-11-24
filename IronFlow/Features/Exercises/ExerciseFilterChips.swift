@@ -82,9 +82,6 @@ struct FilterChipRow<Content: View>: View {
             }
         }
         .scrollIndicators(.hidden)
-        #if DEBUG
-        .tapDiagnosticsScrollPhases("chips h\(Int(chipHeight))")
-        #endif
         .contentMargins(.horizontal, Theme.Metrics.screenPadding, for: .scrollContent)
         .padding(.vertical, -ChipMetrics.touchExtra(for: chipHeight))
     }

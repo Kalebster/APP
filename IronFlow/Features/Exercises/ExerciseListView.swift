@@ -55,9 +55,6 @@ struct ExerciseListView: View {
                 ExerciseDetailView(exercise: exercise, origin: .exercises)
             }
         }
-        #if DEBUG
-        .tapDiagnosticsScrollPhases("list")
-        #endif
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
     }

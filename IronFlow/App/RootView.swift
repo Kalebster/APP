@@ -160,10 +160,6 @@ struct RootView: View {
         .toast($feedback.toast)
         .errorAlert($feedback.errorMessage)
         .environment(feedback)
-        #if DEBUG
-        // TEMPORARY: the investigation of the lost first tap on the filters (TapDiagnostics).
-        .overlay(alignment: .topLeading) { TapDiagnosticsOverlay() }
-        #endif
     }
 
     /// "Manter a tela ligada": the screen does not dim while a session is in progress and the app is on
