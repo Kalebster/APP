@@ -35,9 +35,14 @@ struct ExerciseMusclesCard: View {
     private func figure(_ side: BodyFigure.Side, title: LocalizedStringKey) -> some View {
         VStack(spacing: 6) {
             BodyFigure(side: side, primary: Set(primary), secondary: Set(secondary))
+            // The drawing keeps its size, so its name never goes wider than it: with the largest text sizes
+            // "Frente" and "Costas" would run into each other.
             Text(title)
                 .scaledFont(11)
                 .foregroundStyle(Theme.Colors.dimText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .frame(maxWidth: BodyFigure.size.width)
         }
     }
 
