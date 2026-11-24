@@ -187,6 +187,9 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Tela do treino: com "Manter a tela ligada", a tela pode apagar depois de 1 hora sem série marcada, o mesmo tempo do treino esquecido; hoje ela nunca apaga com um treino esquecido aberto (decisão do dono).
 - Tela do treino: desmarcar a série que começou o descanso atual encerra esse descanso, com a barra e o aviso; hoje eles continuam correndo (decisão do dono).
 - "Escolher treino" e Programação semanal: um treino com muitos grupos fica cortado com "…". Mostrar no máximo alguns grupos e "+N"; os detalhes se decidem quando a tela for mexida.
+- Início: o ponto do dia programado fica branco dentro das abas, e na referência 42 ele é azul. O `Color.accentColor` segue o tint, que nas abas é o branco da aba escolhida; o ponto passa a usar o `Theme.Colors.accent`. Conferir também o arco do anel da semana, que deve ter o mesmo problema (achado na etapa Detalhe do exercício).
+- Detalhe do exercício: dois treinos no mesmo dia, só o primeiro pode ser escolhido no gráfico (sugestão do /code-review do PR #40, não aplicada).
+- Detalhe do exercício: tocar num treino que foi apagado não mostra mensagem; precisa de texto novo, com protótipo antes (sugestão do /code-review do PR #40, não aplicada).
 - Medidas acima de 1 pt contra o protótipo, achadas na etapa Visual novo (screenshots do CI contra as referências do workflow "Referências do protótipo"). Parte delas vem de dados de exemplo diferentes entre o protótipo e os testes: na hora de corrigir, comparar com os mesmos dados.
   - Início (screenshots 1, 22, 30, 38, 42, 50, 52, 53, 55 e 93): os cartões do resumo rápido estão 1,7 pt mais baixos que no protótipo (98,3 × 100). Nos estados "Descanso hoje", "Em andamento" e "Nada programado" (31, 32, 51, 54 e 83), o cartão da semana e o que vem abaixo ficam de 2,3 a 3,7 pt mais acima, porque o link "Programar semana" ocupa menos altura que no protótipo.
   - Treinos (2, 11, 26, 56, 57 e 58): cada cartão da grade de treinos está 2,7 pt mais alto (143,7 × 141), e a segunda linha da grade desce de 3 a 4,3 pt; o cartão "Nenhum treino ainda" e a linha da Programação semanal ficam 1,3 pt abaixo.
@@ -195,6 +198,11 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
   - Seletor de exercícios (77): a barra de cima ("Cancelar" e o título) está 4,3 pt mais alta.
   - Treino em andamento (25, 63 a 69, 80, 91, 92, 98 a 102 e 107): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt a partir do segundo cartão).
   - Folha "Avisar quando o descanso acabar?" (97): a tela bloqueada de exemplo tem a data em 13 e a hora em 52 (no protótipo, 12 e 46), e o conteúdo fica de 1,3 a 2,7 pt fora de lugar.
+  - Exercícios (71): com filtros, os cartões ficam 6 pt abaixo do protótipo; já era assim antes da etapa Detalhe do exercício (o screenshot do main antes dela é igual).
+  - Detalhe do exercício (108 a 111), achadas na etapa dele:
+    - do bloco EVOLUÇÃO para baixo, tudo fica de +1,3 a +2,0 pt: três textos de 11 pt acima (MÚSCULOS, Frente/Costas e EVOLUÇÃO) são 0,33 pt mais altos no iOS que no WebKit, mais 0,3 pt nos blocos;
+    - o primeiro músculo da legenda fica de −1,3 a −1,7 pt;
+    - no Graviton (109), a frase "Mais kg = mais ajuda. Menos kg é progresso." quebra antes do "é", porque o iOS evita uma palavra sozinha na última linha; a altura é a mesma (aceito pelo dono).
 
 ## Pendências da vistoria
 
