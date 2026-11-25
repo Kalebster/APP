@@ -53,7 +53,19 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "No name field")
         field.tapAndWaitForKeyboardFocus()
         field.typeText(name)
-        field.typeText("\n")
+        submit(field, in: app)
+    }
+
+    /// Ends the typing in `field` with the return key and waits for the keyboard to go. On a slow machine
+    /// the field can lose the keyboard focus while the app is busy (run 45679941197: 20 s before the app
+    /// was idle after typing the search, then no focus for the return key, which failed the test), and the
+    /// keyboard goes with it, so the return key is typed only while the field still has the focus.
+    @MainActor
+    private func submit(_ field: XCUIElement, in app: XCUIApplication) {
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        if XCTWaiter().wait(for: [focused], timeout: 2) == .completed {
+            field.typeText("\n")
+        }
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
     }
 
@@ -67,8 +79,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
         field.typeText(name)
         XCTAssertTrue(field.waitForValue(name), "The name holds \(String(describing: field.value))")
-        field.typeText("\n")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
+        submit(field, in: app)
     }
 
     /// Taps a chip of the form, bringing it above the bottom bar first.
@@ -164,8 +175,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         field.tapAndWaitForKeyboardFocus()
         field.typeText(search)
         XCTAssertTrue(field.waitForValue(search), "The search field holds \(String(describing: field.value))")
-        field.typeText("\n")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
+        submit(field, in: app)
         let card = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "\(name), "))
             .firstMatch
@@ -267,7 +277,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         field.tapAndWaitForKeyboardFocus()
         field.typeText("Crucifixo Sentado Livre")
         XCTAssertTrue(field.waitForValue("Crucifixo Sentado Livre"), "Search not typed")
-        field.typeText("\n")
+        submit(field, in: app)
         let create = app.buttons["exercises.empty.create"]
         XCTAssertTrue(create.waitForExistence(timeout: 10), "No + Criar in the empty search")
         XCTAssertEqual(create.label, "+ Criar \"Crucifixo Sentado Livre\"")
