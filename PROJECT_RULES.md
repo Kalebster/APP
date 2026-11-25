@@ -447,7 +447,7 @@ Repositório público
 - Os commits usam um e-mail noreply (o do ambiente do Claude serve), nunca um e-mail pessoal.
 
 Conversas e economia
-- Cada etapa começa numa conversa nova do Code. Ao começar, leia o CLAUDE.md, o PROJECT_RULES.md, o DESIGN.md e o ROTEIRO.md, e confira o main e o último PR. Não precisa ler conversas antigas.
+- Cada etapa começa com /clear na mesma conversa do Code (nunca uma conversa nova); dentro da etapa, sem /clear. Ao começar, leia o CLAUDE.md, o PROJECT_RULES.md, o DESIGN.md e o ROTEIRO.md, e confira o main e o último PR. Não precisa ler conversas antigas.
 - Leia só o necessário: busque antes de abrir arquivos grandes, leia os trechos que importam e não releia um arquivo que não mudou.
 - Do log do CI, extraia só o erro e as linhas em volta, sem trazer o log inteiro para a conversa.
 - Espere o CI terminar sem consultar o estado a cada minuto: um único acompanhamento até o fim, com prazo maior que o CI inteiro. Se a espera acabar antes do CI, avise em uma linha em vez de ficar em silêncio.
@@ -507,6 +507,8 @@ Erros
 Testes e regressões
 - Testes de interface esperam o estado real da tela (o elemento aparecer, o texto mudar), nunca um tempo fixo.
 - Não mude um teste existente só para a implementação parecer certa.
+- Bug: primeiro um teste que reproduz o problema e falha; depois a correção, com o mesmo teste passando.
+- Botões que criam, salvam, apagam ou concluem agem uma vez só, mesmo com toque duplo.
 - Conta, pagamentos, migrações e segurança pedem testes de falha e de acesso indevido.
 - Se um teste não puder rodar, diga por quê e qual risco fica.
 - Antes de concluir, revise o diff completo e procure mudanças fora do escopo. Nunca declare ausência absoluta de regressões: diga o que foi conferido e as limitações.

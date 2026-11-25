@@ -32,16 +32,11 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Lista de exercícios, parte 2: biblioteca de 220 para 420 exercícios, com os 200 da segunda lista aprovada, cada um com key e UUID novos, no fim do bloco do seu grupo; "Remada Alta (Máquina)" passa a "Remada Alta Articulada (Máquina)"; keys e ids de antes não mudam e não há schema novo; o seeder decide cada nome com os nomes que ficam no fim da passada, então um exercício recebe o nome que outro deixa, dois trocam de nome e o "Agachamento Búlgaro" novo é criado ativo (testado de 71, 157 e 220 para 420, sem nome mantido nem exercício escondido); a busca acha também pelo nome do equipamento ("halteres", "peso do corpo"); a contagem mostra "0 exercícios"; falha ao salvar registrada com Logger (tipo, domínio e código públicos, descrição privada); a verificação do Release confere os 12 textos dos ganchos de teste (todos no Debug, nenhum no Release); README; vibração ao marcar a série no DESIGN.md; ROTEIRO com o plano novo de etapas (PR da lista de exercícios, parte 2).
 - Visual novo — o protótipo aprovado "Iron Flow — visual novo" em todas as telas que já existiam, sem mudar layout, textos, medidas nem funções: cores neutras (preto, branco e cinza, com o azul #3D7BF0 só em detalhes; botões principais brancos com texto preto); a fonte SF Pro, a do sistema, no lugar da Inter, com as alturas de linha do protótipo calculadas sobre a altura real da fonte; o vidro do iOS 26 nas barras "Treino em andamento" e do descanso, nos botões redondos, nos botões secundários do "Treino de hoje" e nas folhas do sistema; a coluna ÚLTIMA da série atual em #A6A6AC (7,0:1); o protótipo em `design/prototipo.html` e o workflow manual "Referências do protótipo", que gera as imagens de comparação com a SF Pro (PR #38).
 - Detalhe do exercício e Mapa dos músculos: tela nova pela linha da aba Exercícios (com o ›) e pelo "Ver exercício" do ⋯ do editor e do treino; boneco de frente e de costas com os músculos principais e secundários dos 420 exercícios (dados no código, pela key) e o músculo do grupo nos exercícios próprios; tipo de máquina com a folha "Tipos de máquina"; última vez, melhor série, gráfico de evolução em Swift Charts (3 meses, 1 ano e Tudo; maior carga e volume, ou menor ajuda e mais repetições no Graviton, ou repetições sem carga) e o histórico do exercício; as séries dos 4 exercícios Graviton deixam de contar nos kg levantados, também nos treinos antigos; gancho só de teste `-ui-today` (PR #40).
+- S4-C — Exercícios próprios: criar, editar, duplicar e "Criar minha versão" de um exercício da lista, com nome (até 60 letras, único sem diferença de maiúsculas e acentos, contando os próprios arquivados), grupo, equipamento ("Outro" vale, com ícone novo), tipo de máquina (só com Máquina) e músculos principais e secundários (vindos do grupo até a pessoa mexer, nenhum nas duas listas), no formulário em tela cheia e nas folhas dos músculos; remover (decisão do dono, 1A): com histórico ou no treino em andamento o exercício é arquivado, sem histórico é apagado, e nos dois ele sai de todos os treinos planejados, com a ordem renumerada e o histórico com o nome do dia; restaurar volta para a lista e não para os treinos, com alerta se um exercício ativo tem o nome; Meus com os arquivados no fim; + Novo e + Criar na aba e no seletor (volta marcado); ⋯ no detalhe, selos MEU e ARQUIVADO e cartão do arquivado; Graviton próprio fora dos kg levantados e com a evolução invertida; busca pelo equipamento do próprio; SchemaV8 com migração testada; dois treinos no mesmo dia viram dois pontos do gráfico; treino apagado avisa no detalhe (gancho só de teste `-ui-delete-tapped-session`) (PR da S4-C).
 
 ## Próximas etapas
 
 Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem protótipo aprovado antes de qualquer tela nova e começa numa conversa nova do Code. Sem recursos sociais.
-
-### S4-C — Exercícios próprios
-- + Novo, editar e arquivar, com o equipamento dos exercícios próprios.
-- Duplicar um exercício da biblioteca numa versão própria, com nome, evolução e recordes próprios (para as variações de máquina).
-- Remover um exercício próprio que tem histórico arquiva o exercício, mas ele continua nos treinos. Decidir no modelo se o app pergunta se quer tirar dos treinos também.
-- O exercício próprio escolhe os músculos principais e secundários e o tipo de máquina; até lá, o detalhe mostra o músculo do grupo.
 
 ### Ajustar o treino na hora
 - Trocar exercício: no treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. No editor do treino, trocar mantém as séries planejadas.
@@ -112,26 +107,45 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - Exportar os dados em planilha (CSV).
 - Backup completo: um arquivo com todos os dados, que dá para guardar fora do iPhone, e "Restaurar backup", com teste de ida e volta. O backup leva também as preferências guardadas fora do banco (indicadores escolhidos e opções do treino). O "Restaurar" confere os ids que já existem antes de gravar, porque um id repetido substituiria o registro em silêncio.
 - Lembrete periódico de fazer o backup.
-- Se o Firebase entrar, as exclusões passam a deixar uma marca, para a sincronização saber apagar nos outros aparelhos.
+- O arquivo de backup e a importação do Hevy e do Strong são tratados como não confiáveis: um arquivo malfeito, gigante ou com valores absurdos não trava o app nem estraga os dados. Testes com arquivos ruins e checagem do Claude Security.
+- Com a conta, as exclusões deixam uma marca, para a sincronização apagar nos outros aparelhos.
+
+### Conta e sincronização
+- Antes desta etapa, o chat lembra o dono da decisão do repositório: ele fica público enquanto isso não pesa na segurança (nenhuma chave secreta no repositório) e vira privado perto do lançamento.
+- Firebase ou Supabase se decide no começo desta etapa, com uma comparação feita pelo chat com os números reais do app.
+- Conta obrigatória na primeira abertura, com Entrar com a Apple; os dados de login só no Keychain, sem guardar senhas no app.
+- Regras do servidor fechadas por padrão (cada pessoa só vê e altera os próprios dados), testadas com tentativas de acesso indevido; os dados também são validados no servidor, e os campos protegidos (por exemplo, a assinatura) o app não pode alterar.
+- App Check, alerta de gasto e limite de pedidos.
+- Nenhuma chave de administrador no app, e o arquivo de configuração do servidor fora do repositório público.
+- Funcionar sem sinal e sincronizar depois, sem perder nem duplicar, inclusive com dois aparelhos; sincronizar só o que mudou e tentar de novo com espera crescente.
+- Teste de carga no emulador do servidor.
+- Apagar a conta dentro do app.
+- Política de privacidade (LGPD) e relatório de privacidade do app atualizado.
+- Relatório de travamentos.
+- Avaliação do SDK do servidor (licença, tamanho e falhas conhecidas), com os alertas de dependências do GitHub ligados quando ele entrar.
+- Checagem do Claude Security nas mudanças.
 
 ### Assinatura
-- Assinatura pela App Store (StoreKit), com o ID Apple e sem conta: 30 dias grátis e depois pago, "Restaurar compras" e "Gerenciar assinatura". O preço é decidido pelo dono perto do lançamento.
+- Assinatura pela App Store (StoreKit), presa à conta e conferida no servidor pelos avisos da App Store: 30 dias grátis e depois pago, "Restaurar compras" e "Gerenciar assinatura". O preço é decidido pelo dono perto do lançamento.
+- Um reembolso volta ao modo só leitura.
 - Sem assinatura, o histórico, os recordes e a exportação continuam liberados, só para ler; registrar treinos novos pede a assinatura. Os dados nunca são apagados.
 - A assinatura é sempre conferida com a Apple (transações assinadas do StoreKit), nunca por um valor salvo no iPhone.
 - Um único lugar inicia sessões (`RootView.startSession`): é ali que entra a conferência da assinatura.
-- Usar o plugin finecomb (revisão de código e de segurança) nesta etapa.
+- Checagem do Claude Security nesta etapa.
 
 ### Primeira abertura e planos prontos
 - M19 — Boas-vindas na primeira abertura: meta por semana, peso (opcional) e começar por um plano pronto.
 - M15 — Planos prontos: Push/Pull/Legs, Superior/Inferior, Corpo inteiro e 5×5.
-- O fluxo termina na tela da assinatura: a pessoa começa o teste grátis de 30 dias (ou assina) antes de usar o app, sem pular.
+- O fluxo começa com Entrar com a Apple (conta obrigatória) e termina na tela da assinatura: a pessoa começa o teste grátis de 30 dias (ou assina) antes de usar o app, sem pular.
 
 ### M9 — Cardio
 - Área de cardio: a pessoa cronometra a corrida e o histórico guarda pace, gasto calórico aproximado e dados parecidos; calorias aproximadas também na musculação.
 
 ### S10 — Revisão final e TestFlight
 - Revisão completa do app inteiro antes do TestFlight, e de novo antes do lançamento (as duas únicas revisões do app inteiro; nas outras etapas, o /code-review e as conferências olham só o que mudou).
-- Plugins finecomb (revisão de código e de segurança) e Mobile Release Check, instalados só nesta etapa.
+- Varredura completa do Claude Security, com simulação de ataques, no lugar do finecomb; o plugin Mobile Release Check fica, instalado só nesta etapa.
+- Nova busca por ferramentas de segurança feitas para apps de iPhone e Swift.
+- Etiquetas de privacidade da App Store.
 - Regressão completa, uso offline, acessibilidade e desempenho.
 - Build Release, tamanho do app e envio ao TestFlight.
 - Nome novo do app e bundle ID novo antes do envio (ver Pendências).
@@ -154,28 +168,13 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
   - tela de erro ao abrir os dados: o texto técnico em SF Mono;
   - essas telas continuam com SF Symbols até ter modelo.
 - Opcional: um `.github/dependabot.yml`, para avisar de versões novas das ações do CI (hoje fixadas por SHA).
-- Antes do lançamento, o dono decide se o repositório continua público ou vira privado. Se virar privado, os minutos de macOS do CI passam a ser cobrados, e o CI em paralelo usa mais minutos no total do que um CI numa máquina só. Rever o CI antes de mudar.
-
-### Firebase (opcional)
-Decidido pelo dono e pelo chat juntos, depois de testar o app no TestFlight. Se não entrar agora, vem com o projeto Android.
-- Conta opcional (e-mail e senha, Google e Apple) que sobe os dados do iPhone, com sincronização. Ao criar a conta, os dados do aparelho são enviados para ela, nunca apagados.
-- Usar o plugin finecomb nesta etapa.
-- Lista de segurança obrigatória:
-  - regras de segurança do Firebase: cada pessoa só lê e grava os próprios dados;
-  - App Check e limites de uso, para que só o app fale com o servidor;
-  - nenhuma chave de administrador no app, e o arquivo de configuração do Firebase fora do repositório público;
-  - os dados também são validados no servidor;
-  - campos protegidos que o app não pode alterar (por exemplo, a assinatura);
-  - login sem guardar senhas no app;
-  - apagar a conta dentro do app;
-  - alertas de dependências do GitHub ligados quando entrar o SDK do Firebase;
-  - política de privacidade e relatório de privacidade atualizados.
+- Antes do lançamento, o dono decide se o repositório continua público ou vira privado. Se virar privado, os minutos de macOS do CI passam a ser cobrados, e o CI em paralelo usa mais minutos no total do que um CI numa máquina só. Rever o CI antes de mudar, comparando na hora o CI pago do GitHub com menos runs, o Xcode Cloud (25 h por mês com a conta de desenvolvedor) e um Mac próprio.
 
 ### Depois do lançamento
 - M11 — Importar a ficha de treino por foto.
 - M12 — Apple Watch.
 - M13 — Strava.
-- Projeto Android, com o Firebase (conta, sincronização entre iPhone e Android e assinatura valendo nos dois), se ele não tiver entrado antes.
+- Projeto Android, com a mesma conta e a mesma sincronização (e a assinatura valendo nos dois).
 
 Fora do plano: desafios entre amigos e feed social. Ideias avaliadas e não escolhidas: exercício reserva, repetições por lado, mapa de recuperação, fotos de progresso, rodízio A/B/C e instruções de execução dos exercícios.
 
@@ -230,11 +229,13 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - Cada tela é construída a partir de um modelo visual aprovado pelo dono antes.
 - Toda etapa que mudar o banco de dados cria uma nova versão do schema, com teste de migração.
 - Os 6 commits iniciais com e-mail pessoal ficam como estão; commits novos usam um e-mail noreply (o do ambiente do Claude serve), nunca um e-mail pessoal.
-- O app lança com a assinatura pela App Store, com o ID Apple e sem conta (a Apple não permite exigir cadastro para uma assinatura que não precisa de conta): 30 dias grátis, depois pago, e "Restaurar compras". A primeira abertura termina na tela do teste grátis, sem pular. Substitui o plano antigo de lançar grátis e ter o teste de 14 dias depois.
-- Lançamento só com a Apple: os dados ficam no iPhone, protegidos pelo backup do iPhone e pelo arquivo de backup do app, com lembrete. O Firebase (conta opcional e sincronização) é uma etapa opcional, decidida junto depois do TestFlight, ou vem com o projeto Android.
+- Conta obrigatória com Entrar com a Apple, com os dados na nuvem e sincronização entre aparelhos antes do lançamento (decisão do dono, 23/11).
+- Assinatura pela App Store presa à conta, com 30 dias grátis e "Restaurar compras"; a primeira abertura termina na tela do teste grátis, sem pular.
+- Sem assinatura, o histórico, os recordes e a exportação ficam só para ler.
 - O banco usa a proteção de arquivo padrão do iOS (protegido até o primeiro desbloqueio depois de ligar o iPhone), porque a M1 grava séries com o iPhone bloqueado.
 - Sem assinatura, o histórico, os recordes e a exportação continuam liberados, só para ler; registrar treinos novos pede a assinatura. Os dados nunca são apagados.
 - Sem calculadora de anilhas.
+- Remover um exercício próprio (decisão 1A): com histórico, ou se estiver no treino em andamento, ele é arquivado; sem histórico, é apagado; nos dois casos, sai de todos os treinos planejados em que está, e a confirmação mostra esses treinos. O histórico continua com o nome do dia, e restaurar não o devolve aos treinos.
 - Revisões: em cada etapa, o /code-review e as conferências olham só o que mudou. O app inteiro é revisado só em dois momentos, antes do TestFlight e antes do lançamento.
 - O app pede o iOS 26.0 ou mais novo (app e alvos de teste): ele só é testado e medido no iOS 26.
 - Nomes dos exercícios no padrão do Hevy, com o equipamento entre parênteses (os de peso do corpo ficam sem parênteses). Exceções aprovadas: a pegada ou a máquina entre parênteses quando é isso que diferencia (por exemplo, "Barra Fixa (Pegada Aberta)" e "Barra Fixa (Graviton)"), e nomes conhecidos sem parênteses (por exemplo, "Kettlebell Swing"). Cada exercício fica no grupo do músculo que ele mais trabalha.
