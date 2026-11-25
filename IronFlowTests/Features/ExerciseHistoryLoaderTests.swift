@@ -88,6 +88,22 @@ struct ExerciseHistoryLoaderTests {
         #expect(try ExerciseHistoryLoader(context: context).history(of: never).isEmpty)
     }
 
+    @Test("An exercise of the user's own on a Graviton is read as assisted: less kg is the best set")
+    func customGraviton() throws {
+        let custom = exercise("Minha Barra Graviton", key: nil, group: .back)
+        custom.equipment = .machine
+        custom.machineType = .graviton
+        session("Pull", at: .now.addingTimeInterval(-2 * 86_400), [(custom, [(30, 8, .working, true)])])
+        session("Pull", at: .now.addingTimeInterval(-86_400), [(custom, [(20, 8, .working, true)])])
+        try context.save()
+        let history = try ExerciseHistoryLoader(context: context).history(of: custom)
+        #expect(history.kind == .assisted)
+        #expect(history.bestSet?.set.weightKg == 20)
+
+        custom.machineType = .lever
+        #expect(try ExerciseHistoryLoader(context: context).history(of: custom).kind == .load)
+    }
+
     @Test("Three years of one exercise, two sessions a week, are read and charted quickly")
     func threeYears() throws {
         let bench = exercise("Supino Reto (Barra)", key: "bench-press-barbell")

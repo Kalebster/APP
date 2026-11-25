@@ -114,7 +114,7 @@ enum FrozenSchemaFingerprints {
 
     /// Version 8 only changes `Exercise` (its equipment, kind of machine and muscles); every other entity
     /// keeps its version 7 fingerprint.
-    static let v8: [String: String] = v7.merging(["Exercise": "PENDING"]) { _, new in new }
+    static let v8: [String: String] = v7.merging(["Exercise": "w3fujKEUSrE3TBvXYFpH4VXxE5aKTQvo8y1QKnEOmzA="]) { _, new in new }
 
     /// One fingerprint per version of `IronFlowMigrationPlan.schemas`, in the same order.
     static let byVersion: [[String: String]] = [v1, v2, v3, v4, v5, v6, v7, v8]

@@ -93,6 +93,44 @@ struct DefaultExerciseMusclesTests {
         #expect(DefaultExerciseMuscles.machine(of: legPress) == .track)
     }
 
+    @Test("An exercise of the user's own with muscles, equipment and kind of machine of its own")
+    func customExerciseChoices() {
+        let custom = Exercise(name: "Puxada na Máquina Articulada", muscleGroup: .back, isCustom: true)
+        custom.equipment = .machine
+        custom.machineType = .lever
+        custom.primaryMuscles = [.lats]
+        custom.secondaryMuscles = [.biceps, .upperBack]
+        #expect(DefaultExerciseMuscles.muscles(of: custom).primary == [.lats])
+        #expect(DefaultExerciseMuscles.muscles(of: custom).secondary == [.biceps, .upperBack])
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: custom) == false)
+        #expect(DefaultExerciseMuscles.machine(of: custom) == .lever)
+        #expect(DefaultExerciseMuscles.equipment(of: custom) == .machine)
+        #expect(DefaultExerciseMuscles.isAssisted(custom) == false)
+
+        // Graviton: assisted, as the 4 of the library.
+        custom.machineType = .graviton
+        #expect(DefaultExerciseMuscles.isAssisted(custom))
+        // A kind of machine stored without the machine as equipment does not count.
+        custom.equipment = .dumbbell
+        #expect(DefaultExerciseMuscles.machine(of: custom) == nil)
+        #expect(DefaultExerciseMuscles.isAssisted(custom) == false)
+
+        // Only secondary muscles: no group muscle is added ("Corpo inteiro" with helpers).
+        let fullBody = Exercise(name: "Circuito", muscleGroup: .fullBody, isCustom: true)
+        fullBody.secondaryMuscles = [.abs]
+        #expect(DefaultExerciseMuscles.muscles(of: fullBody).primary.isEmpty)
+        #expect(DefaultExerciseMuscles.muscles(of: fullBody).secondary == [.abs])
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: fullBody) == false)
+
+        // Without muscles of its own: the group's, as before version 8; the library's equipment for a built-in.
+        let old = Exercise(name: "Meu Supino", muscleGroup: .chest, isCustom: true)
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: old))
+        #expect(DefaultExerciseMuscles.equipment(of: old) == nil)
+        let legPress = Exercise(name: "Leg Press 45° (Máquina)", muscleGroup: .quadriceps, isCustom: false, libraryKey: "leg-press")
+        #expect(DefaultExerciseMuscles.equipment(of: legPress) == .machine)
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: legPress) == false)
+    }
+
     @Test("The kinds of machine in the order of the sheet, with the prototype's names")
     func machineTypes() {
         #expect(MachineType.allCases == [.plates, .lever, .track, .graviton, .ghd])

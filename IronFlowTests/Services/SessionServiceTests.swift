@@ -86,7 +86,7 @@ struct SessionServiceTests {
 
         try harness.workouts.rename(workout, to: "Push B")
         try harness.workouts.updatePlannedSet(workout.orderedExercises[0].orderedPlannedSets[0], values: .reps(3, 5, kg: 50))
-        try harness.exercises.updateCustomExercise(curl, name: "Rosca Martelo", muscleGroup: .forearms)
+        try harness.exercises.update(curl, with: ExerciseDraft(name: "Rosca Martelo", group: .forearms, equipment: .equipment(.dumbbell), primary: [.forearms]))
         try harness.workouts.removeExercise(workout.orderedExercises[1])
         try harness.workouts.delete(workout)
 

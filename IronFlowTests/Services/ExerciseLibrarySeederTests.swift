@@ -733,7 +733,7 @@ struct ExerciseLibrarySeederTests {
         let curl = try #require(try exercise(key: "curl-barbell"))
 
         #expect(throws: ExerciseError.systemExerciseNotEditable) {
-            try harness.exercises.updateCustomExercise(bench, name: "Outro", muscleGroup: .chest)
+            try harness.exercises.update(bench, with: ExerciseDraft(name: "Outro", group: .chest, equipment: .other, primary: [.chest]))
         }
         #expect(throws: ExerciseError.systemExerciseNotDeletable) { try harness.exercises.remove(bench) }
         #expect(throws: ValidationError.duplicateExerciseName) {

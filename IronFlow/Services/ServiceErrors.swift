@@ -32,6 +32,18 @@ enum ExerciseError: Error, Equatable {
     case systemExerciseNotDeletable
     /// The exercise is used in these workouts; removing it needs explicit confirmation.
     case confirmationRequired(workoutIDs: [UUID])
+    /// An exercise of the user's own needs a muscle group.
+    case muscleGroupMissing
+    /// An exercise of the user's own needs an equipment ("Outro" counts).
+    case equipmentMissing
+    /// An exercise of the user's own needs a main muscle, except for "Corpo inteiro".
+    case primaryMuscleMissing
+    /// A muscle cannot be both main and secondary.
+    case muscleInBothLists
+    /// An archived exercise of the user's own has the name; restoring it is the way to use the name.
+    case archivedExerciseHasName(name: String)
+    /// An archived exercise cannot be restored: an active exercise has its name.
+    case nameTakenByActiveExercise(name: String)
 }
 
 /// A workout operation that the business rules do not allow.

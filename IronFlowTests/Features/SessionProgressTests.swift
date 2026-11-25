@@ -125,6 +125,25 @@ struct SessionProgressTests {
         #expect(SessionFinishSummary.savedText(doneSets: summary.doneSets, volumeKg: summary.volumeKg) == "Treino salvo · 4 séries · 700 kg")
     }
 
+    @Test("An exercise of the user's own on a Graviton stays out of the load lifted, as the library's")
+    func customGravitonOutOfTheLoadLifted() {
+        let custom = Exercise(name: "Minha Barra Graviton", muscleGroup: .back, isCustom: true)
+        custom.equipment = .machine
+        custom.machineType = .graviton
+        let lever = Exercise(name: "Minha Puxada", muscleGroup: .back, isCustom: true)
+        lever.equipment = .machine
+        lever.machineType = .lever
+        for exercise in [custom, lever] {
+            container.mainContext.insert(exercise)
+        }
+        let sets = [set(of: custom, weight: 25, reps: 8), set(of: lever, weight: 40, reps: 10)]
+        #expect(SessionProgress.volumeKg(of: sets) == 400)
+
+        // Changing the kind of machine changes the count.
+        custom.machineType = .plates
+        #expect(SessionProgress.volumeKg(of: sets) == 600)
+    }
+
     @Test("Warm-up and feeder sets stay out of the load lifted; working and failure sets count; every set counts as a set")
     func volumeByType() {
         let sets = [
