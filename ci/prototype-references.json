@@ -280,6 +280,14 @@
     { "name": "109-exercise-detail-graviton", "url": "#exercicio-graviton", "steps": [] },
     { "name": "110-exercise-detail-machine", "url": "#exercicio-maquina", "steps": [] },
     { "name": "111-exercise-detail-once", "url": "#exercicio-uma-vez", "steps": [] },
-    { "name": "112-exercise-detail-never", "url": "#exercicio-novo", "steps": [] }
+    { "name": "112-exercise-detail-never", "url": "#exercicio-novo", "steps": [] },
+    { "name": "118-new-exercise", "url": "#novo-exercicio", "steps": [] },
+    { "name": "119-new-exercise-machine", "url": "#novo-exercicio-maquina", "steps": [] },
+    { "name": "120-muscles-sheet", "url": "#musculos", "steps": [] },
+    { "name": "121-my-version", "url": "#minha-versao", "steps": [] },
+    { "name": "122-edit-exercise", "url": "#editar-exercicio", "steps": [] },
+    { "name": "123-exercise-mine", "url": "#exercicio-meu", "steps": [] },
+    { "name": "124-exercise-archived", "url": "#exercicio-arquivado", "steps": [] },
+    { "name": "125-exercises-mine-archived", "url": "#exercicios-meus", "steps": [] }
   ]
 }

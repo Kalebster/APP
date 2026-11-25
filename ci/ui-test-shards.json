@@ -36,7 +36,12 @@
       "WorkoutUITests/testRenameWorkout": 40.6,
       "WorkoutUITests/testReorderExercises": 52.0,
       "WorkoutUITests/testTheLongestExerciseNameWrapsInTwoLines": 70.6,
-      "WorkoutsScreenUITests/testRenameAndDeleteFromTheMenu": 55.0
+      "WorkoutsScreenUITests/testRenameAndDeleteFromTheMenu": 55.0,
+      "CustomExerciseUITests/testEditDuplicateAndMyVersion": 110.0,
+      "CustomExerciseUITests/testNamesTakenAndCancel": 60.0,
+      "CustomExerciseUITests/testDeleteWithoutHistoryGoesBack": 60.0,
+      "ExerciseDetailUITests/testTwoSessionsOnTheSameDayAreTwoPoints": 35.0,
+      "CustomExerciseUITests/testLargeTextKeepsTheFormReadable": 30.0
     },
     "2": {
       "BMRCalculatorUITests/testChoicesUpToUsingTheGoal": 53.5,
@@ -68,7 +73,11 @@
       "WorkoutsScreenUITests/testEmptyStateOffersCreatingAndTheFreeWorkout": 11.1,
       "WorkoutsScreenUITests/testLargeTextKeepsTheWorkoutsOnScreen": 24.8,
       "WorkoutsScreenUITests/testRecentWorkoutsShowOnlyTheLastThree": 32.9,
-      "WorkoutsScreenUITests/testStartFromTheCardAndFreeWorkout": 36.9
+      "WorkoutsScreenUITests/testStartFromTheCardAndFreeWorkout": 36.9,
+      "CustomExerciseUITests/testArchiveLeavesTheWorkoutAndRestore": 100.0,
+      "CustomExerciseUITests/testCreateFromThePickerComesBackChosen": 60.0,
+      "CustomExerciseUITests/testArchivedExerciseMenuAndNameRules": 60.0,
+      "CustomExerciseUITests/testDoubleTapCreatesOneExercise": 40.0
     },
     "3": {
       "BMRCalculatorUITests/testCalculatorWithSavedChoices": 29.6,
@@ -100,7 +109,12 @@
       "WorkoutUITests/testRemoveExerciseCancelAndConfirm": 37.2,
       "WorkoutUITests/testStartFromTheEditor": 26.0,
       "WorkoutsScreenUITests/testTodaysWorkoutIsHighlighted": 14.4,
-      "WorkoutsScreenUITests/testWorkoutsWithPlanAndRecentSessions": 15.1
+      "WorkoutsScreenUITests/testWorkoutsWithPlanAndRecentSessions": 15.1,
+      "CustomExerciseUITests/testCreateFromTheTabOnAMachine": 90.0,
+      "CustomExerciseUITests/testCreateWithTheFiltersAndFromTheEmptySearch": 60.0,
+      "CustomExerciseUITests/testMusclesFollowTheGroupUntilChanged": 60.0,
+      "CustomExerciseUITests/testCustomGravitonInTheDetail": 50.0,
+      "ExerciseDetailUITests/testTappingADeletedSessionSaysSo": 35.0
     }
   }
 }
