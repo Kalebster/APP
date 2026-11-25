@@ -64,11 +64,12 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     /// Ends the typing in `field` with the return key and waits for the keyboard to go. On a slow machine
     /// the field can lose the keyboard focus while the app is busy (run 45679941197: 20 s before the app
     /// was idle after typing the search, then no focus for the return key, which failed the test), and the
-    /// keyboard goes with it, so the return key is typed only while the field still has the focus.
+    /// keyboard goes with it, so the return key is typed only while the keyboard is still there. One look
+    /// at the screen decides it: waiting for the focus with a short limit ran out before the first look on
+    /// a slow machine (run 45703315085), and the keyboard stayed.
     @MainActor
     private func submit(_ field: XCUIElement, in app: XCUIApplication) {
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        if XCTWaiter().wait(for: [focused], timeout: 2) == .completed {
+        if app.keyboards.firstMatch.exists {
             field.typeText("\n")
         }
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
