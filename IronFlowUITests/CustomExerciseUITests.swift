@@ -106,12 +106,30 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(save.waitForNonExistence(timeout: 15), "The form did not close")
     }
 
+    /// Closes the question of "Cancelar" without discarding. iOS 26 shows it with "Descartar" only (no
+    /// "Continuar editando" button, run 45544972877): it closes by tapping outside it, on the title of the
+    /// form. If the system shows the button, it is tapped.
+    @MainActor
+    private func keepEditing(in app: XCUIApplication) {
+        let discard = app.buttons["Descartar"]
+        XCTAssertTrue(discard.waitForExistence(timeout: 10), "No Descartar in the question")
+        let keep = app.buttons["Continuar editando"]
+        if keep.exists {
+            keep.tap()
+        } else {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        }
+        XCTAssertTrue(discard.waitForNonExistence(timeout: 10), "The question did not close")
+        XCTAssertTrue(app.buttons["exerciseForm.save"].exists, "The form closed")
+    }
+
     @MainActor
     private func openMenuItem(_ label: String, in app: XCUIApplication) {
         let menu = app.buttons["exercise.menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 10), "No ⋯ on the exercise screen")
         menu.tap()
-        let item = app.buttons[label]
+        // The menu item, not a button of the screen with the same name ("Restaurar" of the archived card).
+        let item = app.buttons.matching(NSPredicate(format: "label == %@ AND NOT (identifier BEGINSWITH %@)", label, "exercise.")).firstMatch
         XCTAssertTrue(item.waitForExistence(timeout: 10), "No “\(label)” in the menu")
         item.tap()
     }
@@ -300,11 +318,11 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(error.waitForNonExistence(timeout: 10), "The message stays with a free name")
         XCTAssertTrue(app.buttons["exerciseForm.save"].isEnabled, "Criar exercício not enabled")
 
-        // Cancelar with changes asks; "Continuar editando" stays, "Descartar" leaves.
+        // Cancelar with changes asks; closing the question stays, "Descartar" leaves.
         app.buttons["exerciseForm.cancel"].tap()
         XCTAssertTrue(element(labelStartingWith: "Descartar exercício?", in: app).waitForExistence(timeout: 10), "No question before discarding")
         XCTAssertTrue(app.staticTexts["O exercício não será criado."].exists, "No message of the question")
-        app.buttons["Continuar editando"].tap()
+        keepEditing(in: app)
         XCTAssertEqual(app.textFields["exerciseForm.name"].value as? String, "Puxada Nova")
         app.buttons["exerciseForm.cancel"].tap()
         confirmationButton("Descartar", title: "Descartar exercício?", in: app).tap()
@@ -415,7 +433,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         app.buttons["exerciseForm.cancel"].tap()
         XCTAssertTrue(element(labelStartingWith: "Descartar alterações?", in: app).waitForExistence(timeout: 10), "No question before discarding the changes")
         XCTAssertTrue(app.staticTexts["As mudanças não serão salvas."].exists, "No message of the question")
-        app.buttons["Continuar editando"].tap()
+        keepEditing(in: app)
         save("Salvar", in: app)
         waitForExerciseScreen(of: "Puxada Articulada (Smart Fit)", in: app)
         XCTAssertTrue(waitForToast("Exercício salvo", in: app), "No Exercício salvo")

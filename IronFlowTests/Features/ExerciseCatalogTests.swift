@@ -371,7 +371,7 @@ struct ExerciseCatalogTests {
         #expect(ExerciseCatalog.archivedShown(result.archived, group: .mine, equipment: nil, search: "puxada").isEmpty)
         #expect(ExerciseCatalog.archivedShown(result.archived, group: .all, equipment: nil, search: "").isEmpty)
         // Never in the active list nor found by the search.
-        #expect(ExerciseCatalog.filtered(result.active, group: .all, equipment: nil, search: "puxada na maquina").isEmpty)
+        #expect(ExerciseCatalog.filtered(result.active, group: .all, equipment: nil, search: "puxada na maquina articulada").isEmpty)
     }
 
     @Test("Meus is offered in the tab with an archived exercise of the user's own only; in the picker only with an active one")

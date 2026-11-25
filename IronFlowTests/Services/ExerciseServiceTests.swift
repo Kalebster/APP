@@ -265,7 +265,8 @@ struct ExerciseServiceTests {
         var copy = ExerciseDraft(version)
         copy.name = try harness.exercises.copyName(for: version.name)
         let second = try harness.exercises.create(copy)
-        #expect(second.name == "\(entry.name) 3")
+        // As in the prototype, a copy of "… 2" is "… 2 2".
+        #expect(second.name == "\(entry.name) 2 2")
         #expect(second.primaryMuscles == version.primaryMuscles)
         #expect(second.secondaryMuscles == version.secondaryMuscles)
         #expect(second.machineType == version.machineType)
