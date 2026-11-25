@@ -20,10 +20,30 @@ final class CustomExerciseUITests: IronFlowUITestCase {
 
     @MainActor
     private func waitForExerciseScreen(of name: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
-        let title = app.descendants(matching: .any)
+        XCTAssertTrue(exerciseTitle(name, in: app).waitForExistence(timeout: 20), "Exercise screen of \(name) not shown", file: file, line: line)
+    }
+
+    /// The title of the exercise screen of `name`, read by one query.
+    @MainActor
+    private func exerciseTitle(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND label == %@", "exercise.title", name))
             .firstMatch
-        XCTAssertTrue(title.waitForExistence(timeout: 20), "Exercise screen of \(name) not shown", file: file, line: line)
+    }
+
+    /// Taps a card of the Exercícios tab and waits for the exercise screen. A tap on a slow machine can be
+    /// lost, as on the tabs (run 45661838939: 19,5 s from the launch to the automation, and the card still
+    /// on the list 20 s after the tap), so when the screen has not opened in 5 s and the card can still be
+    /// tapped, it is tapped once more. Nothing waits when the first tap works.
+    @MainActor
+    private func openCard(_ card: XCUIElement, of name: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        card.tap()
+        if !exerciseTitle(name, in: app).waitForExistence(timeout: 5), card.exists, card.isHittable {
+            XCTContext.runActivity(named: "Tap lost: tapping the card once more") { _ in
+                card.tap()
+            }
+        }
+        waitForExerciseScreen(of: name, in: app, file: file, line: line)
     }
 
     /// Types `name` in the form's name field, after what it holds.
@@ -148,8 +168,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
             .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "\(name), "))
             .firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), "No card for \(name)")
-        card.tap()
-        waitForExerciseScreen(of: name, in: app)
+        openCard(card, of: name, in: app)
     }
 
     @MainActor
@@ -526,8 +545,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
 
         // Restaurar: back in the list, not in the workout.
         openTab("Exercícios", in: app)
-        archivedCard.tap()
-        waitForExerciseScreen(of: "Puxada na Máquina Articulada", in: app)
+        openCard(archivedCard, of: "Puxada na Máquina Articulada", in: app)
         app.buttons["exercise.restore"].tap()
         XCTAssertTrue(waitForToast("Exercício restaurado", in: app), "No Exercício restaurado")
         XCTAssertTrue(element("exercise.archived", in: app).waitForNonExistence(timeout: 10), "Still archived")
@@ -548,8 +566,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
             .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "Meu Supino, "))
             .firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), "No archived card")
-        card.tap()
-        waitForExerciseScreen(of: "Meu Supino", in: app)
+        openCard(card, of: "Meu Supino", in: app)
         XCTAssertEqual(element("exercise.badge", in: app).label, "ARQUIVADO")
 
         // The menu of an archived exercise: Restaurar, Editar and Duplicar, and nothing that removes it.
