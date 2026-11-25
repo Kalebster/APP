@@ -2894,7 +2894,7 @@ body.has-mini #s-exd { padding-bottom: 184px; }
 
   /* ---------- Toques ---------- */
   document.addEventListener('click', function (ev) {
-    var b = ev.target.closest('[data-act]'); if (!b || b.disabled || !document.contains(b) || b.closest('[hidden]')) return;
+    var b = ev.target.closest('[data-act]'); if (!b || b.disabled || !document.contains(b) || b.closest('.js-scrim[hidden], .js-pk[hidden], .js-xf[hidden]')) return;
     var i = +b.dataset.ex, j = +b.dataset.set, w = b.dataset.w, list;
     /* Um item do menu ou da confirmação fecha o balão; a confirmação seguinte sai do mesmo botão */
     var src = null;
