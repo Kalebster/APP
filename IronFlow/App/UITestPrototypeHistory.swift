@@ -73,7 +73,12 @@ enum UITestPrototypeHistory {
         Profile(name: "Cadeira Extensora (Máquina)", workout: "Pernas", start: 35, end: 45, step: 5, reps: 10...15, workingSets: 2, failure: -5),
         Profile(name: "Mesa Flexora (Máquina)", workout: "Pernas", start: 30, end: 40, step: 5, reps: 10...15, workingSets: 3),
         Profile(name: "Stiff (Barra)", workout: "Pernas", start: 40, end: 50, step: 2, reps: 8...12, workingSets: 3),
+        // The prototype's exercise of the user's own, last, so the others keep their numbers without it.
+        Profile(name: ownExerciseName, workout: "Pull", start: 40, end: 50, step: 5, reps: 8...12, workingSets: 3, lastSessions: 6),
     ]
+
+    /// The exercise of the user's own of the prototype's history (`EX_PROF`), only with `includingOwn`.
+    static let ownExerciseName = "Puxada na Máquina Articulada"
 
     /// JavaScript's `Math.round`: halves go up.
     private static func jsRound(_ value: Double) -> Double {
@@ -81,8 +86,8 @@ enum UITestPrototypeHistory {
     }
 
     /// The sessions, the most recent first, as the prototype's `H_S`, each with its exercises in the
-    /// prototype's order.
-    static func sessions() -> [Session] {
+    /// prototype's order; the exercise of the user's own only with `includingOwn`.
+    static func sessions(includingOwn: Bool = false) -> [Session] {
         var sessions = [
             Session(name: "Pernas", day: DateComponents(year: 2026, month: 10, day: 15), durationMinutes: 55, exercises: []),
             Session(name: "Pull", day: DateComponents(year: 2026, month: 10, day: 12), durationMinutes: 48, exercises: []),
@@ -111,7 +116,7 @@ enum UITestPrototypeHistory {
         }
 
         var exercisesSequence = RandomSequence(seed: 7)
-        for profile in profiles {
+        for profile in profiles where includingOwn || profile.name != ownExerciseName {
             var positions = sessions.indices.filter { sessions[$0].name == profile.workout }
             if let last = profile.lastSessions {
                 positions = Array(positions.prefix(last))

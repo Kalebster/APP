@@ -208,14 +208,15 @@ enum ExercisePeriod: CaseIterable, Sendable {
 }
 
 /// The evolution chart of one metric over one period: its points, axes, change and texts, computed once
-/// for each period and metric. Positions on the X axis are by day, from the start of the period to the
-/// start of today, as in the prototype.
+/// for each period and metric. Positions on the X axis are by the date and time each session started, from
+/// the start of the period to today, as in the prototype: two sessions on the same day are two points.
 struct ExerciseChart: Equatable {
     struct Point: Identifiable, Equatable {
         /// The session's id.
         let id: UUID
         /// The start of the session's day.
         let day: Date
+        /// Where the point is on the X axis.
         let startedAt: Date
         let value: Double
     }
@@ -231,7 +232,8 @@ struct ExerciseChart: Equatable {
     let metric: ExerciseMetric
     let period: ExercisePeriod
     let points: [Point]
-    /// The start of the period and the start of today.
+    /// The start of the period (a day's start) and today, the moment the screen opened (or the last
+    /// session, should it be later).
     let start: Date
     let end: Date
     /// The values of the horizontal lines, from the lowest; the axis goes from the first to the last.
@@ -245,18 +247,18 @@ struct ExerciseChart: Equatable {
     init(history: ExerciseHistory, metric: ExerciseMetric, period: ExercisePeriod, today: Date, calendar: Calendar) {
         self.metric = metric
         self.period = period
-        let end = calendar.startOfDay(for: today)
+        let todayStart = calendar.startOfDay(for: today)
         let start: Date
         if let days = period.days {
-            start = calendar.date(byAdding: .day, value: -days, to: end) ?? end
+            start = calendar.date(byAdding: .day, value: -days, to: todayStart) ?? todayStart
         } else {
-            start = history.entries.first.map { calendar.startOfDay(for: $0.startedAt) } ?? end
+            start = history.entries.first.map { calendar.startOfDay(for: $0.startedAt) } ?? todayStart
         }
         self.start = start
-        self.end = end
+        end = max(today, history.entries.last?.startedAt ?? today)
         points = history.entries.compactMap { entry in
+            guard entry.startedAt >= start else { return nil }
             let day = calendar.startOfDay(for: entry.startedAt)
-            guard day >= start else { return nil }
             return Point(id: entry.id, day: day, startedAt: entry.startedAt, value: ExerciseHistory.value(of: metric, in: entry))
         }
         ticks = Self.ticks(for: points.map(\.value), metric: metric)
@@ -318,13 +320,13 @@ struct ExerciseChart: Equatable {
         return ticks
     }
 
-    /// Where `day` falls between the start of the period and today, from 0 to 1.
-    func fraction(of day: Date) -> Double {
-        Self.fraction(of: day, start: start, end: end)
+    /// Where `date` falls between the start of the period and today, from 0 to 1.
+    func fraction(of date: Date) -> Double {
+        Self.fraction(of: date, start: start, end: end)
     }
 
-    static func fraction(of day: Date, start: Date, end: Date) -> Double {
-        day.timeIntervalSince(start) / max(1, end.timeIntervalSince(start))
+    static func fraction(of date: Date, start: Date, end: Date) -> Double {
+        date.timeIntervalSince(start) / max(1, end.timeIntervalSince(start))
     }
 
     /// The months labeled below the chart: the first day of each month after the start, every other one

@@ -236,6 +236,60 @@ struct UITestSeedTests {
         }
     }
 
+    @Test("An exercise of the user's own gets its equipment, kind of machine and muscles, and is archived when asked")
+    func createsAnOwnExercise() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        try UITestSeed.apply(try UITestSeed.parse(
+            "own-exercise:Puxada na Máquina Articulada:back:machine:lever:lats:biceps|upperBack,own-exercise:Remada Livre:upperBack:other::upperBack::archived"
+        ), in: context)
+
+        let custom = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.isCustom }))
+        let puxada = try #require(custom.first { $0.name == "Puxada na Máquina Articulada" })
+        #expect(puxada.equipment == .machine)
+        #expect(puxada.machineType == .lever)
+        #expect(puxada.primaryMuscles == [.lats])
+        #expect(puxada.secondaryMuscles == [.biceps, .upperBack])
+        #expect(puxada.isArchived == false)
+        let free = try #require(custom.first { $0.name == "Remada Livre" })
+        #expect(free.equipment == nil)
+        #expect(free.machineType == nil)
+        #expect(free.secondaryMuscles.isEmpty)
+        #expect(free.isArchived)
+        for list in ["own-exercise:A:back:machine:lever:lats", "own-exercise:A:costas:machine::lats:", "own-exercise:A:back:trator::lats:",
+                     "own-exercise:A:back:machine:hidraulica:lats:", "own-exercise:A:back:machine::pescoco:", "own-exercise:A:back:machine::lats::sim"] {
+            #expect(throws: UITestSeed.SeedError.self) { try UITestSeed.parse(list) }
+        }
+    }
+
+    @Test("The prototype's history with its exercise of the user's own: in the last 6 Pull, the others unchanged")
+    func prototypeHistoryWithTheOwnExercise() throws {
+        let without = UITestPrototypeHistory.sessions()
+        let with = UITestPrototypeHistory.sessions(includingOwn: true)
+        let own = UITestPrototypeHistory.ownExerciseName
+        #expect(without.allSatisfy { session in !session.exercises.contains { $0.name == own } })
+        let pulls = with.filter { $0.exercises.contains { $0.name == own } }
+        #expect(pulls.count == 6)
+        #expect(pulls.allSatisfy { $0.name == "Pull" })
+        #expect(pulls.first?.day == DateComponents(year: 2026, month: 10, day: 12))
+        // Its sets come last in the prototype's sequence: every other exercise keeps its sets.
+        let others = with.map { session in session.exercises.filter { $0.name != own } }
+        #expect(others == without.map(\.exercises))
+        let last = try #require(pulls.first?.exercises.first { $0.name == own })
+        #expect(last.sets.map(\.weightKg) == [50, 50, 50])
+        #expect(last.sets.map(\.reps) == [12, 11, 10])
+
+        let container = try makeContainer()
+        let context = container.mainContext
+        try UITestSeed.apply(try UITestSeed.parse("own-exercise:\(own):back:machine:lever:lats:biceps|upperBack,prototype-history-own"), in: context)
+        let puxada = try #require(try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.isCustom })).first)
+        #expect(try ExerciseHistoryLoader(context: context).history(of: puxada).entries.count == 6)
+        // At the start of their days, as the prototype's.
+        let starts = try context.fetch(FetchDescriptor<Session>()).map(\.startedAt)
+        #expect(starts.allSatisfy { TrainingDay.calendar.startOfDay(for: $0) == $0 })
+    }
+
     @Test("The first exercise gets the sets of the editor's model, with their types; the others keep the default ones")
     func setsTheSetTypes() throws {
         let container = try makeContainer()
@@ -347,7 +401,7 @@ struct UITestSeedTests {
         #expect(ExerciseDetailToday.current(arguments: ["-ui-today", "2026-10-16"], now: now) == now)
         let day = ExerciseDetailToday.current(arguments: ["-ui-testing", "-ui-today", "2026-10-16"], now: now)
         let components = TrainingDay.calendar.dateComponents([.year, .month, .day, .hour], from: day)
-        #expect(components == DateComponents(year: 2026, month: 10, day: 16, hour: 12))
+        #expect(components == DateComponents(year: 2026, month: 10, day: 16, hour: 0))
         #expect(ExerciseDetailToday.current(arguments: ["-ui-testing", "-ui-today", "ontem"], now: now) == now)
     }
 
