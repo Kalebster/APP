@@ -334,7 +334,9 @@ struct ExerciseCatalogTests {
         let machine = all.first { $0.name == "Puxada na Máquina Articulada" }
         #expect(machine?.equipment == .machine)
         #expect(machine?.focus == nil)
-        #expect(all.first { $0.name == "Meu Outro" }?.equipment == nil)
+        let other = all.first { $0.name == "Meu Outro" }
+        #expect(other != nil)
+        #expect(other?.equipment == nil)
 
         let mine = ExerciseCatalog.filtered(all, group: .mine, equipment: nil, search: "")
         #expect(names(mine) == ["Meu Outro", "Puxada na Máquina Articulada"])
@@ -362,7 +364,7 @@ struct ExerciseCatalogTests {
 
         #expect(result.active.count == DefaultExerciseLibrary.all.count)
         #expect(names(result.archived) == ["Puxada na Máquina Articulada"])
-        #expect(result.archived.allSatisfy(\.isArchived))
+        #expect(result.archived.allSatisfy { $0.isArchived })
         #expect(result.hasCustom)
         #expect(ExerciseCatalog.archivedShown(result.archived, group: .mine, equipment: nil, search: "  ").map(\.name) == ["Puxada na Máquina Articulada"])
         #expect(ExerciseCatalog.archivedShown(result.archived, group: .mine, equipment: .machine, search: "").isEmpty)

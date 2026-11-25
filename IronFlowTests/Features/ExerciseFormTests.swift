@@ -168,7 +168,7 @@ struct ExerciseFormTests {
         #expect(copy.copyNote?.text == "Começa sem histórico, com evolução e recordes próprios. O original continua igual.")
         #expect(copy.draft.primary == [.lats])
         #expect(copy.musclesFollowGroup)
-        #expect(ExerciseForm().copyNote == nil)
+        #expect(ExerciseForm().copyNote?.title == nil)
     }
 
     @Test("Lists read as in Portuguese")
