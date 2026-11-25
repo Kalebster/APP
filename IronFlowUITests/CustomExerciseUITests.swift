@@ -9,6 +9,11 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     private let puxada = "own-exercise:Puxada na Máquina Articulada:back:machine:lever:lats:biceps|upperBack"
     private let pendulo = "own-exercise:Agachamento Pêndulo:quadriceps:machine:lever:quadriceps:glutes|adductors"
     private let prototypeToday = ["-ui-today", "2026-10-16"]
+    /// Keeps each notice 45 s on screen, for the tests that take no screenshot after a notice and do not
+    /// wait for one to leave. These tests run in the first minutes of each CI machine, when the app went
+    /// 20 to 23 s without being idle (runs 45670558383 and 45688000220): "Exercício criado", kept 15 s by
+    /// `longToastArguments`, had gone when the test looked for it.
+    private let lastingToastArguments = ["-ui-toast-seconds", "45"]
 
     // MARK: - Helpers
 
@@ -196,7 +201,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     @MainActor
     func testCreateFromTheTabOnAMachine() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Exercícios", extraArguments: longToastArguments)
+        let app = launchOnTab("Exercícios", extraArguments: lastingToastArguments)
         app.buttons["exercises.new"].tap()
         waitForForm(titled: "Novo exercício", in: app)
         XCTAssertEqual(element("exerciseForm.missing", in: app).label, "Falta: nome, grupo e equipamento.")
@@ -257,7 +262,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     @MainActor
     func testCreateWithTheFiltersAndFromTheEmptySearch() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Exercícios", extraArguments: longToastArguments)
+        let app = launchOnTab("Exercícios", extraArguments: lastingToastArguments)
         tapFilter(app.buttons["exercises.filter.chest"], changing: element("exercises.count", in: app))
         let dumbbells = app.buttons["exercises.equipment.dumbbell"]
         XCTAssertTrue(dumbbells.waitForExistence(timeout: 10), "No Halteres")
@@ -294,7 +299,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     @MainActor
     func testCreateFromThePickerComesBackChosen() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)"], extraArguments: longToastArguments)
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Supino Reto (Barra)"], extraArguments: lastingToastArguments)
         openWorkout(named: "Push", in: app)
         let add = app.buttons["workout.addExercises"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "No Adicionar exercícios")
@@ -569,7 +574,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     @MainActor
     func testArchivedExerciseMenuAndNameRules() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Exercícios", seed: ["own-exercise:Meu Supino:chest:barbell::chest::archived"], extraArguments: longToastArguments)
+        let app = launchOnTab("Exercícios", seed: ["own-exercise:Meu Supino:chest:barbell::chest::archived"], extraArguments: lastingToastArguments)
         // Only archived: "Meus" is offered and shows it alone, under ARQUIVADOS, without a count.
         openMine(in: app)
         XCTAssertTrue(element("exercises.archived.title", in: app).waitForExistence(timeout: 10), "No ARQUIVADOS")
@@ -611,7 +616,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         let app = launchOnTab(
             "Exercícios",
             seed: [pendulo, "workout:Pernas:Agachamento Livre (Barra)|Agachamento Pêndulo|Cadeira Extensora (Máquina)"],
-            extraArguments: longToastArguments
+            extraArguments: lastingToastArguments
         )
         openExercise("Agachamento Pêndulo", search: "pendulo", in: app)
         openMenuItem("Apagar exercício", in: app)
@@ -651,7 +656,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
                 "workout:Pull:Minha Barra Graviton",
                 "finished:Pull:2",
             ],
-            extraArguments: longToastArguments
+            extraArguments: lastingToastArguments
         )
         openExercise("Minha Barra Graviton", search: "graviton minha", in: app)
         XCTAssertTrue(element("exercise.machine", in: app).label.hasPrefix("Graviton (contrapeso)"), "No Graviton row")
