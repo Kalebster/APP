@@ -447,7 +447,8 @@ jobs:
           # Every launch argument the test hooks read, each only inside #if DEBUG, and texts of the hooks' code.
           for marker in "-simulate-persistence-failure" "-ui-testing" "-ui-seed" "-ui-store" "-ui-store-new" \
             "-ui-notifications" "-ui-notification-answer" "-ui-rest-ready-seconds" "-ui-toast-seconds" "-ui-today" \
-            "com.ironflow.app.ui-testing" "UI test seed failed" "UITestSeed"; do
+            "-ui-delete-tapped-session" "com.ironflow.app.ui-testing" "UI test seed failed" "UITestSeed" \
+            "The test hook could not delete the session"; do
             in_debug=não
             in_release=não
             if grep -qF -- "$marker" build/diagnostics/debug-app-text.txt; then in_debug=sim; fi

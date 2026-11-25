@@ -8,8 +8,8 @@ let editorCardGap: CGFloat = 12
 /// its right edge.
 let editorCardInset: CGFloat = 12
 
-/// The first row of an exercise card in the workout editor: the equipment icon (the initial of a custom
-/// exercise), the name, "Grupo · Foco", "Arquivado" when the exercise was archived, and the ⋯ menu with
+/// The first row of an exercise card in the workout editor: the equipment icon (the 4 squares of "Outro"
+/// for an exercise of the user's own without one), the name, "Grupo · Foco", "Arquivado" when the exercise was archived, and the ⋯ menu with
 /// "Ver exercício", "Ordenar exercícios" and "Remover do treino". The question before removing opens from
 /// the ⋯ itself, so it points to the exercise it is about.
 struct EditorExerciseHeader: View {
@@ -33,7 +33,7 @@ struct EditorExerciseHeader: View {
         let exercise = item.exercise
         let entry = EditorExerciseInfo.libraryEntry(of: exercise)
         HStack(spacing: 10) {
-            EditorExerciseTile(exercise: exercise, equipment: entry?.equipment)
+            EditorExerciseTile(exercise: exercise)
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: EditorExerciseInfo.name(of: exercise))
                     .scaledFont(14, weight: .heavy)
@@ -90,16 +90,16 @@ struct EditorExerciseHeader: View {
     }
 }
 
-/// The equipment icon in light gray on the dark gray square, the initial of a custom exercise, or the
-/// dumbbells for an exercise that no longer exists. 32 points at the default text size; it grows with the
+/// The equipment icon in light gray on the dark gray square: the library's, the one an exercise of the
+/// user's own chose (the 4 squares of "Outro" without one), or the dumbbells for an exercise that no longer
+/// exists. 32 points at the default text size; it grows with the
 /// text up to the largest standard size and stops there, so with the accessibility sizes the exercise's
 /// name keeps the room it needs beside it.
 struct EditorExerciseTile: View {
     let exercise: Exercise?
-    let equipment: Equipment?
 
     var body: some View {
-        Square(exercise: exercise, equipment: equipment)
+        Square(exercise: exercise, equipment: exercise.flatMap(DefaultExerciseMuscles.equipment(of:)))
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .accessibilityHidden(true)
     }
@@ -114,13 +114,9 @@ struct EditorExerciseTile: View {
 
         var body: some View {
             Group {
-                if let equipment {
+                if exercise != nil {
                     EquipmentIcon(equipment: equipment)
                         .frame(width: iconSide, height: iconSide)
-                } else if let exercise, let initial = exercise.name.first {
-                    // Bold at a size fixed by the tile, which already follows Dynamic Type.
-                    Text(verbatim: String(initial).uppercased())
-                        .font(.system(size: iconSide * 0.8, weight: .bold))
                 } else {
                     Image(.eqHalteres)
                         .renderingMode(.template)
@@ -420,10 +416,7 @@ struct EditorOrderingRow: View {
         let name = EditorExerciseInfo.name(of: exercise)
         HStack(spacing: 10) {
             HStack(spacing: 10) {
-                EditorExerciseTile(
-                    exercise: exercise,
-                    equipment: EditorExerciseInfo.libraryEntry(of: exercise)?.equipment
-                )
+                EditorExerciseTile(exercise: exercise)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: name)
                         .scaledFont(14, weight: .heavy)

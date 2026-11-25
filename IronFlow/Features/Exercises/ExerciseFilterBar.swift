@@ -16,6 +16,8 @@ struct ExerciseFilterBar: View {
     @Binding var chosenEquipment: Equipment?
     /// The first part of the accessibility identifiers ("exercises", "picker").
     let identifierPrefix: String
+    /// In the Exercícios tab, "Meus" is also offered for an archived exercise of the user's own.
+    var hasArchivedCustom = false
 
     @ScaledMetric(relativeTo: .footnote) private var groupChipHeight: CGFloat = 32
     @ScaledMetric(relativeTo: .caption) private var equipmentChipHeight: CGFloat = 30
@@ -35,10 +37,10 @@ struct ExerciseFilterBar: View {
         }
     }
 
-    /// "Todos", "Meus" when there is a custom exercise, and the groups with exercises.
+    /// "Todos", "Meus" when there is an exercise of the user's own, and the groups with exercises.
     private var groupChips: some View {
         FilterChipRow(chipHeight: groupChipHeight) {
-            ForEach(ExerciseCatalog.groupFilters(in: items), id: \.self) { (filter: ExerciseCatalog.GroupFilter) in
+            ForEach(ExerciseCatalog.groupFilters(in: items, hasArchivedCustom: hasArchivedCustom), id: \.self) { (filter: ExerciseCatalog.GroupFilter) in
                 GroupFilterChip(
                     title: title(of: filter),
                     isSelected: filter == group,

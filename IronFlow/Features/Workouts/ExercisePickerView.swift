@@ -4,8 +4,10 @@ import SwiftUI
 /// Chooses exercises to add to a workout or to the session in progress, full screen: "Cancelar", the
 /// search and the filters of the Exercícios tab, and the same cards with a selection circle. Exercises
 /// already in the workout are shown at half opacity with "NO TREINO" and cannot be chosen. "Adicionar (N)"
-/// stays at the bottom. `onAdd` receives the chosen exercises in the order they were chosen; when it
-/// throws, the picker stays open and shows the error.
+/// stays at the bottom. When the search finds nothing, "+ Criar "texto"" opens the form of a new exercise
+/// over the picker; once created, the picker comes back with every filter off, the search with the new
+/// name and the new exercise chosen. `onAdd` receives the chosen exercises in the order they were chosen;
+/// when it throws, the picker stays open and shows the error.
 struct ExercisePickerView: View {
     let onAdd: @MainActor ([Exercise]) throws -> Void
 
@@ -20,6 +22,17 @@ struct ExercisePickerView: View {
     @State private var errorMessage: String?
     /// Set once the exercises were added, so a second tap while the picker closes adds nothing.
     @State private var isAdded = false
+    /// The form of a new exercise, open over the picker.
+    @State private var newExerciseForm: NewExerciseForm?
+    /// The exercise just created, chosen once the form has closed.
+    @State private var createdExercise: Exercise?
+    /// "Exercício criado e marcado".
+    @State private var toast: ToastMessage?
+
+    private struct NewExerciseForm: Identifiable {
+        let id = UUID()
+        let form: ExerciseForm
+    }
 
     @ScaledMetric(relativeTo: .body) private var addButtonHeight: CGFloat = 46
 
@@ -47,7 +60,7 @@ struct ExercisePickerView: View {
                     chosenEquipment: $chosenEquipment,
                     identifierPrefix: "picker"
                 )
-                cards(shown)
+                cards(shown, group: group, equipment: equipment)
                     .padding(.horizontal, Theme.Metrics.screenPadding)
                     .padding(.top, 14)
             }
@@ -63,14 +76,27 @@ struct ExercisePickerView: View {
             addBar
         }
         .screenBackground()
+        .toast($toast, top: 8)
+        .fullScreenCover(item: $newExerciseForm, onDismiss: chooseCreatedExercise) { request in
+            ExerciseFormView(form: request.form) { exercise in
+                createdExercise = exercise
+            }
+        }
         .errorAlert($errorMessage)
     }
 
-    /// The exercises left, or the card that says none was found.
-    private func cards(_ shown: [ExerciseCatalog.Item]) -> some View {
+    /// The exercises left, or the card that says none was found, with "+ Criar" for the search.
+    private func cards(_ shown: [ExerciseCatalog.Item], group: ExerciseCatalog.GroupFilter, equipment: Equipment?) -> some View {
         LazyVStack(spacing: 8) {
             if shown.isEmpty {
-                ExerciseEmptyCard(identifier: "picker.empty")
+                let search = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                ExerciseEmptyCard(identifier: "picker.empty", search: search) {
+                    var muscleGroup: MuscleGroup?
+                    if case .group(let chosen) = group {
+                        muscleGroup = chosen
+                    }
+                    newExerciseForm = NewExerciseForm(form: ExerciseForm(name: search, group: muscleGroup, equipment: equipment))
+                }
             } else {
                 ForEach(shown) { (item: ExerciseCatalog.Item) in
                     card(item)
@@ -158,6 +184,19 @@ struct ExercisePickerView: View {
         }
         // Opaque, so the list never shows through the button.
         .background(Theme.Colors.screenBackground)
+    }
+
+    /// Back from the form with an exercise created: every filter off, the search with its name, and it chosen.
+    private func chooseCreatedExercise() {
+        guard let createdExercise else { return }
+        self.createdExercise = nil
+        chosenGroup = .all
+        chosenEquipment = nil
+        searchText = createdExercise.name
+        if !selection.isSelected(createdExercise.id) {
+            selection.toggle(createdExercise.id)
+        }
+        toast = ToastMessage(String(localized: "Exercício criado e marcado"))
     }
 
     private func add() {
