@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Exercise = SchemaV7.Exercise
+typealias Exercise = SchemaV8.Exercise
 
-extension SchemaV7 {
+extension SchemaV8 {
     /// An exercise in the library: built into the app or created by the user.
     @Model
     final class Exercise {
@@ -17,6 +17,19 @@ extension SchemaV7 {
         var isArchived: Bool = false
         /// Stable key of a built-in exercise; `nil` for custom exercises.
         var libraryKey: String?
+        /// Stable key of the equipment of a custom exercise (`Equipment`); `nil` is "Outro". Read and write
+        /// it through `equipment`. A built-in exercise leaves it empty: the library knows its equipment.
+        /// Added in version 8; the custom exercises of older stores are migrated without one.
+        var equipmentRaw: String?
+        /// Stable key of the kind of machine of a custom exercise done on a machine (`MachineType`); read and
+        /// write it through `machineType`. Added in version 8, empty for older exercises.
+        var machineTypeRaw: String?
+        /// Stable keys of the main muscles of a custom exercise (`Muscle`), in the order shown; read and write
+        /// them through `primaryMuscles`. Added in version 8, empty for older exercises.
+        var primaryMuscleKeys: [String] = []
+        /// Stable keys of the secondary muscles of a custom exercise, in the order shown; read and write them
+        /// through `secondaryMuscles`. Added in version 8, empty for older exercises.
+        var secondaryMuscleKeys: [String] = []
 
         /// Planned uses of this exercise. Deleting the exercise only clears the reference.
         @Relationship(deleteRule: .nullify, inverse: \WorkoutExercise.exercise)
@@ -40,6 +53,31 @@ extension SchemaV7 {
         var muscleGroup: MuscleGroup {
             get { MuscleGroup(storageKey: muscleGroupRaw) }
             set { muscleGroupRaw = newValue.rawValue }
+        }
+
+        /// The equipment of a custom exercise; `nil` is "Outro". An unknown key, written by a newer version
+        /// of the app, reads as `nil`.
+        var equipment: Equipment? {
+            get { equipmentRaw.flatMap(Equipment.init(rawValue:)) }
+            set { equipmentRaw = newValue?.rawValue }
+        }
+
+        /// The kind of machine of a custom exercise; an unknown key reads as `nil`.
+        var machineType: MachineType? {
+            get { machineTypeRaw.flatMap(MachineType.init(rawValue:)) }
+            set { machineTypeRaw = newValue?.rawValue }
+        }
+
+        /// The main muscles of a custom exercise; unknown keys are left out.
+        var primaryMuscles: [Muscle] {
+            get { primaryMuscleKeys.compactMap(Muscle.init(rawValue:)) }
+            set { primaryMuscleKeys = newValue.map(\.rawValue) }
+        }
+
+        /// The secondary muscles of a custom exercise; unknown keys are left out.
+        var secondaryMuscles: [Muscle] {
+            get { secondaryMuscleKeys.compactMap(Muscle.init(rawValue:)) }
+            set { secondaryMuscleKeys = newValue.map(\.rawValue) }
         }
     }
 }

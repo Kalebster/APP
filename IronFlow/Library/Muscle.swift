@@ -1,9 +1,12 @@
 import Foundation
 
 /// A muscle of the muscle map: the 21 muscles the library names as the main or secondary muscles of
-/// an exercise, drawn on the body figure of the exercise screen. Library data only, never stored.
-/// The order is the order of the approved prototype.
-enum Muscle: CaseIterable, Sendable {
+/// an exercise, drawn on the body figure of the exercise screen. The order is the order of the approved
+/// prototype's legend; `bodyOrder` is the order of the choices, from the top of the body down.
+///
+/// The raw value is the stable storage key of the muscles an exercise of the user's own chooses
+/// (`Exercise.primaryMuscleKeys`): it never changes, whatever the name shown.
+enum Muscle: String, CaseIterable, Sendable {
     case chest
     case frontDelts
     case sideDelts
@@ -51,11 +54,22 @@ enum Muscle: CaseIterable, Sendable {
         case .calves: "Panturrilhas"
         }
     }
+
+    /// The muscles from the top of the body down, as the choices of an exercise of the user's own show
+    /// them (the prototype's `MUS_ORDER`).
+    static let bodyOrder: [Muscle] = [
+        .traps, .frontDelts, .sideDelts, .rearDelts, .rotatorCuff, .chest, .upperBack, .lats, .biceps, .triceps,
+        .forearms, .abs, .obliques, .lowerBack, .glutes, .gluteusMedius, .adductors, .quadriceps, .hamstrings,
+        .tibialis, .calves,
+    ]
 }
 
-/// The kind of machine of a library exercise done on one, shown on the exercise screen and explained in
-/// the "Tipos de máquina" sheet, in this order. Library data only, never stored.
-enum MachineType: CaseIterable, Sendable {
+/// The kind of machine of an exercise done on one, shown on the exercise screen and explained in the
+/// "Tipos de máquina" sheet, in this order.
+///
+/// The raw value is the stable storage key of the kind an exercise of the user's own chooses
+/// (`Exercise.machineTypeRaw`): it never changes, whatever the name shown.
+enum MachineType: String, CaseIterable, Sendable {
     /// A stack of plates, chosen with the pin.
     case plates
     /// Plates loaded on an arm that turns on an axis.
