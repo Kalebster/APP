@@ -115,7 +115,9 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(app.buttons["muscles.done"].waitForNonExistence(timeout: 10), "The muscles sheet did not close")
     }
 
-    /// Saves the form and waits for it to close.
+    /// Saves the form and waits for it to close. The notice comes up as the form closes, so a test looks
+    /// for it before the exercise screen: on a slow machine a look at the screen took 23,6 s (run
+    /// 45670558383), and the notice lasts 15 s.
     @MainActor
     private func save(_ title: String, in app: XCUIApplication) {
         let save = app.buttons["exerciseForm.save"]
@@ -229,8 +231,8 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         attachScreenshot(named: "119-new-exercise-machine", of: app)
 
         save("Criar exercício", in: app)
-        waitForExerciseScreen(of: "Remada Cavalinho (Smart Fit)", in: app)
         XCTAssertTrue(waitForToast("Exercício criado", in: app), "No Exercício criado")
+        waitForExerciseScreen(of: "Remada Cavalinho (Smart Fit)", in: app)
         XCTAssertEqual(element("exercise.subtitle", in: app).label, "Costas superiores · Máquina")
         XCTAssertEqual(element("exercise.badge", in: app).label, "MEU")
         XCTAssertTrue(element("exercise.machine", in: app).label.hasPrefix("Articulada (anilhas)"), "The kind of machine chosen is not shown")
@@ -454,8 +456,8 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(app.staticTexts["As mudanças não serão salvas."].exists, "No message of the question")
         keepEditing(in: app)
         save("Salvar", in: app)
-        waitForExerciseScreen(of: "Puxada Articulada (Smart Fit)", in: app)
         XCTAssertTrue(waitForToast("Exercício salvo", in: app), "No Exercício salvo")
+        waitForExerciseScreen(of: "Puxada Articulada (Smart Fit)", in: app)
 
         // Duplicar: the copy with " 2", a note, and its own screen in the place of this one.
         openMenuItem("Duplicar", in: app)
@@ -463,8 +465,8 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertEqual(app.textFields["exerciseForm.name"].value as? String, "Puxada Articulada (Smart Fit) 2")
         XCTAssertTrue(element("exerciseForm.copyNote", in: app).label.hasPrefix("Cópia de Puxada Articulada (Smart Fit)"), "Note: \(element("exerciseForm.copyNote", in: app).label)")
         save("Criar cópia", in: app)
-        waitForExerciseScreen(of: "Puxada Articulada (Smart Fit) 2", in: app)
         XCTAssertTrue(waitForToast("Cópia criada", in: app), "No Cópia criada")
+        waitForExerciseScreen(of: "Puxada Articulada (Smart Fit) 2", in: app)
         XCTAssertTrue(element("exercise.neverDone", in: app).waitForExistence(timeout: 10), "The copy has a history")
         XCTAssertEqual(app.buttons["exercise.back"].label, "Exercícios")
         app.buttons["exercise.back"].tap()
@@ -489,8 +491,8 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(element("exerciseForm.copyNote", in: app).label.hasPrefix("Sua versão de Leg Press 45° (Máquina)"), "Note: \(element("exerciseForm.copyNote", in: app).label)")
         attachScreenshot(named: "121-my-version", of: app)
         save("Criar minha versão", in: app)
-        waitForExerciseScreen(of: "Leg Press 45° (Máquina) 2", in: app)
         XCTAssertTrue(waitForToast("Sua versão foi criada", in: app), "No Sua versão foi criada")
+        waitForExerciseScreen(of: "Leg Press 45° (Máquina) 2", in: app)
         XCTAssertEqual(element("exercise.badge", in: app).label, "MEU")
     }
 
