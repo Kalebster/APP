@@ -131,6 +131,22 @@ struct DefaultExerciseMusclesTests {
         #expect(DefaultExerciseMuscles.showsGroupMuscles(of: legPress) == false)
     }
 
+    @Test("An exercise of the user's own whose stored muscles are all unknown to this version shows its group's, not none")
+    func unknownMusclesShowTheGroup() {
+        // Keys written by a newer version only: read as nothing, so the screen falls back to the group.
+        let chest = Exercise(name: "Meu Supino", muscleGroup: .chest, isCustom: true)
+        chest.primaryMuscleKeys = ["neck"]
+        chest.secondaryMuscleKeys = []
+        #expect(DefaultExerciseMuscles.muscles(of: chest).primary == [.chest])
+        #expect(DefaultExerciseMuscles.muscles(of: chest).secondary.isEmpty)
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: chest))
+
+        // One known key is enough to show what was chosen.
+        chest.primaryMuscleKeys = ["neck", "triceps"]
+        #expect(DefaultExerciseMuscles.muscles(of: chest).primary == [.triceps])
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: chest) == false)
+    }
+
     @Test("The kinds of machine in the order of the sheet, with the prototype's names")
     func machineTypes() {
         #expect(MachineType.allCases == [.plates, .lever, .track, .graviton, .ghd])

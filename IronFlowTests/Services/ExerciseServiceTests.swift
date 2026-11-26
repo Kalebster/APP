@@ -119,6 +119,22 @@ struct ExerciseServiceTests {
         #expect(ExerciseForm(editing: exercise).musclesFollowGroup == false)
     }
 
+    @Test("A Corpo inteiro exercise saved without muscles keeps \"none chosen\" after the store is closed and reopened")
+    func fullBodyWithoutMusclesSurvivesReopening() throws {
+        var id: UUID?
+        try roundTripThroughDisk(write: { context in
+            let exercise = try ExerciseService(context: context).create(Self.draft("Burpee", group: .fullBody, equipment: .other, primary: [], secondary: []))
+            id = exercise.id
+        }, read: { context in
+            let target = try #require(id)
+            let exercise = try #require(try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == target })).first)
+            #expect(exercise.primaryMuscleKeys == [])
+            #expect(exercise.secondaryMuscleKeys == [])
+            #expect(DefaultExerciseMuscles.showsGroupMuscles(of: exercise) == false)
+            #expect(ExerciseForm(editing: exercise).musclesFollowGroup == false)
+        })
+    }
+
     @Test("\"Outro\" is stored as no equipment, and a kind of machine only counts with the machine")
     func otherEquipmentAndMachineOnlyWithMachine() throws {
         var draft = Self.draft("Remada Livre", equipment: .other)
