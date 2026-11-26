@@ -489,8 +489,8 @@ struct MigrationTests {
             for exercise in exercises {
                 #expect(exercise.equipmentRaw == nil)
                 #expect(exercise.machineTypeRaw == nil)
-                #expect(exercise.primaryMuscleKeys.isEmpty)
-                #expect(exercise.secondaryMuscleKeys.isEmpty)
+                #expect(exercise.primaryMuscleKeys == nil)
+                #expect(exercise.secondaryMuscleKeys == nil)
             }
             let custom = try #require(exercises.first { $0.id == customID })
             #expect(custom.equipment == nil)

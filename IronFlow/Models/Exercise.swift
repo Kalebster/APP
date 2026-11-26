@@ -25,11 +25,12 @@ extension SchemaV8 {
         /// write it through `machineType`. Added in version 8, empty for older exercises.
         var machineTypeRaw: String?
         /// Stable keys of the main muscles of a custom exercise (`Muscle`), in the order shown; read and write
-        /// them through `primaryMuscles`. Added in version 8, empty for older exercises.
-        var primaryMuscleKeys: [String] = []
+        /// them through `primaryMuscles`. Added in version 8: `nil` for the custom exercises of older stores,
+        /// which show the muscle of their group, and empty when none was chosen ("Corpo inteiro").
+        var primaryMuscleKeys: [String]?
         /// Stable keys of the secondary muscles of a custom exercise, in the order shown; read and write them
-        /// through `secondaryMuscles`. Added in version 8, empty for older exercises.
-        var secondaryMuscleKeys: [String] = []
+        /// through `secondaryMuscles`. Added in version 8: `nil` for older exercises, as `primaryMuscleKeys`.
+        var secondaryMuscleKeys: [String]?
 
         /// Planned uses of this exercise. Deleting the exercise only clears the reference.
         @Relationship(deleteRule: .nullify, inverse: \WorkoutExercise.exercise)
@@ -70,14 +71,20 @@ extension SchemaV8 {
 
         /// The main muscles of a custom exercise; unknown keys are left out.
         var primaryMuscles: [Muscle] {
-            get { primaryMuscleKeys.compactMap(Muscle.init(rawValue:)) }
+            get { (primaryMuscleKeys ?? []).compactMap(Muscle.init(rawValue:)) }
             set { primaryMuscleKeys = newValue.map(\.rawValue) }
         }
 
         /// The secondary muscles of a custom exercise; unknown keys are left out.
         var secondaryMuscles: [Muscle] {
-            get { secondaryMuscleKeys.compactMap(Muscle.init(rawValue:)) }
+            get { (secondaryMuscleKeys ?? []).compactMap(Muscle.init(rawValue:)) }
             set { secondaryMuscleKeys = newValue.map(\.rawValue) }
+        }
+
+        /// Whether the muscles of this custom exercise were chosen, none included: every exercise created or
+        /// edited from version 8 on. One from an older store has none stored and shows the muscle of its group.
+        var hasChosenMuscles: Bool {
+            primaryMuscleKeys != nil || secondaryMuscleKeys != nil
         }
     }
 }

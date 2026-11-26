@@ -29,16 +29,14 @@ struct DefaultExerciseMuscles: Equatable, Sendable {
     }
 
     /// The muscles shown for an exercise: those of its library entry, those an exercise of the user's own
-    /// chose, or, for one of the user's own without muscles of its own (created before version 8), the
-    /// muscles of its group (none for "Corpo inteiro" and "Outro").
+    /// chose (none included, for "Corpo inteiro"), or, for one of the user's own from before version 8, which
+    /// has none stored, the muscles of its group (none for "Corpo inteiro" and "Outro").
     static func muscles(of exercise: Exercise) -> (primary: [Muscle], secondary: [Muscle]) {
         if exercise.isCustom {
-            let primary = exercise.primaryMuscles
-            let secondary = exercise.secondaryMuscles
-            if primary.isEmpty && secondary.isEmpty {
+            guard exercise.hasChosenMuscles else {
                 return (muscles(of: exercise.muscleGroup), [])
             }
-            return (primary, secondary)
+            return (exercise.primaryMuscles, exercise.secondaryMuscles)
         }
         if let key = exercise.libraryKey, let entry = byKey[key] {
             return (entry.primary, entry.secondary)
@@ -46,10 +44,10 @@ struct DefaultExerciseMuscles: Equatable, Sendable {
         return (muscles(of: exercise.muscleGroup), [])
     }
 
-    /// Whether the body figure shows the muscles of the exercise's group: an exercise of the user's own
-    /// without muscles of its own.
+    /// Whether the body figure shows the muscles of the exercise's group: an exercise of the user's own from
+    /// before version 8, whose muscles were never chosen. One saved with none chosen shows none.
     static func showsGroupMuscles(of exercise: Exercise) -> Bool {
-        exercise.isCustom && exercise.primaryMuscleKeys.isEmpty && exercise.secondaryMuscleKeys.isEmpty
+        exercise.isCustom && !exercise.hasChosenMuscles
     }
 
     /// The kind of machine: the library's for a built-in exercise, the one chosen for an exercise of the

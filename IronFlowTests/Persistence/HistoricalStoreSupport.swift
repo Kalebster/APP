@@ -556,7 +556,7 @@ func frozenV7SetTypeKeys(_ context: ModelContext) throws -> [String] {
 @MainActor
 func exerciseChoicesSnapshot(_ context: ModelContext) throws -> [String] {
     try context.fetch(FetchDescriptor<Exercise>()).map { item in
-        "\(item.id) equipment=\(text(item.equipmentRaw)) machine=\(text(item.machineTypeRaw)) primary=\(item.primaryMuscleKeys.joined(separator: "|")) secondary=\(item.secondaryMuscleKeys.joined(separator: "|"))"
+        "\(item.id) equipment=\(text(item.equipmentRaw)) machine=\(text(item.machineTypeRaw)) primary=\(text(item.primaryMuscleKeys?.joined(separator: "|"))) secondary=\(text(item.secondaryMuscleKeys?.joined(separator: "|")))"
     }.sorted()
 }
 
