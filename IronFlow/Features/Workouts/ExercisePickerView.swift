@@ -91,6 +91,8 @@ struct ExercisePickerView: View {
             if shown.isEmpty {
                 let search = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 ExerciseEmptyCard(identifier: "picker.empty", search: search) {
+                    // A second tap while the form is opening would open it again.
+                    guard newExerciseForm == nil else { return }
                     var muscleGroup: MuscleGroup?
                     if case .group(let chosen) = group {
                         muscleGroup = chosen

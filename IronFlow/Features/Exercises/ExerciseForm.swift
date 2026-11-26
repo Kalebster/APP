@@ -55,8 +55,10 @@ struct ExerciseForm: Equatable {
     private(set) var musclesFollowGroup: Bool
     private let start: Snapshot
 
-    /// A new exercise, with the name typed in the search and the group and equipment of the filters on.
+    /// A new exercise, with the name typed in the search (cut to the longest name, as the field cuts what is
+    /// typed) and the group and equipment of the filters on.
     init(name: String = "", group: MuscleGroup? = nil, equipment: Equipment? = nil) {
+        let name = String(name.prefix(Validation.maxNameLength))
         let draft = ExerciseDraft(name: name, group: group, equipment: equipment.map(EquipmentChoice.equipment))
         self.init(mode: .new, draft: draft, musclesFollowGroup: true)
     }

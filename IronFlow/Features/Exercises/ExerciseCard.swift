@@ -167,11 +167,17 @@ struct ExerciseEmptyCard: View {
 
     var body: some View {
         VStack(spacing: spacing) {
-            Text("Nenhum exercício encontrado")
-                .scaledFont(14, weight: .bold)
-            Text("Tente outro nome ou outro filtro.")
-                .scaledFont(12)
-                .foregroundStyle(Theme.Colors.secondaryText)
+            // The message is read as one; "+ Criar" stays a button of its own.
+            VStack(spacing: spacing) {
+                Text("Nenhum exercício encontrado")
+                    .scaledFont(14, weight: .bold)
+                Text("Tente outro nome ou outro filtro.")
+                    .scaledFont(12)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text("Nenhum exercício encontrado. Tente outro nome ou outro filtro."))
+            .accessibilityIdentifier(identifier)
             if !search.isEmpty, let onCreate {
                 Button(action: onCreate) {
                     Text(verbatim: String(localized: "+ Criar \"\(search)\""))
@@ -196,9 +202,6 @@ struct ExerciseEmptyCard: View {
         .padding(.vertical, 18)
         .padding(.horizontal, 14)
         .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        // The message is read as one; "+ Criar" stays a button of its own.
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("Nenhum exercício encontrado. Tente outro nome ou outro filtro."))
-        .accessibilityIdentifier(identifier)
     }
 }

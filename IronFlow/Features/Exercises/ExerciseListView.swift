@@ -226,6 +226,8 @@ struct ExerciseListView: View {
     /// The form of a new exercise with the search typed and the group and equipment of the filters on
     /// ("Meus" is no group).
     private func openForm(name: String, group: ExerciseCatalog.GroupFilter, equipment: Equipment?) {
+        // A second tap while the form is opening would open it again, losing what was typed.
+        guard newExerciseForm == nil else { return }
         var muscleGroup: MuscleGroup?
         if case .group(let chosen) = group {
             muscleGroup = chosen

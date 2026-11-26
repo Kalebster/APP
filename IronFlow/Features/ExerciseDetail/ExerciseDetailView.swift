@@ -377,8 +377,9 @@ private struct ExerciseDetailScreen: View {
         }
     }
 
+    /// Acts once: a second tap finds the exercise restored already.
     private func restore() {
-        guard !isActing else { return }
+        guard !isActing, exercise.isArchived else { return }
         isActing = true
         defer { isActing = false }
         do {
