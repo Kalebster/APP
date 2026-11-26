@@ -101,6 +101,24 @@ struct ExerciseServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    @Test("A Corpo inteiro exercise saved without muscles shows none chosen, not its group's, also when edited and saved again")
+    func fullBodyWithoutMuscles() throws {
+        let exercise = try harness.exercises.create(Self.draft("Burpee", group: .fullBody, equipment: .other, primary: [], secondary: []))
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: exercise) == false)
+        #expect(DefaultExerciseMuscles.muscles(of: exercise).primary.isEmpty)
+        #expect(DefaultExerciseMuscles.muscles(of: exercise).secondary.isEmpty)
+
+        // Editing: the muscles chosen (none) stay when the group changes.
+        var form = ExerciseForm(editing: exercise)
+        #expect(form.musclesFollowGroup == false)
+        form.selectGroup(.chest)
+        #expect(form.draft.primary.isEmpty)
+
+        try harness.exercises.update(exercise, with: ExerciseForm(editing: exercise).draft)
+        #expect(DefaultExerciseMuscles.showsGroupMuscles(of: exercise) == false)
+        #expect(ExerciseForm(editing: exercise).musclesFollowGroup == false)
+    }
+
     @Test("\"Outro\" is stored as no equipment, and a kind of machine only counts with the machine")
     func otherEquipmentAndMachineOnlyWithMachine() throws {
         var draft = Self.draft("Remada Livre", equipment: .other)

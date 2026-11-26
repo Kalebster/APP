@@ -496,6 +496,9 @@ struct MigrationTests {
             #expect(custom.equipment == nil)
             #expect(DefaultExerciseMuscles.muscles(of: custom).primary == [.lats])
             #expect(DefaultExerciseMuscles.muscles(of: custom).secondary.isEmpty)
+            #expect(DefaultExerciseMuscles.showsGroupMuscles(of: custom))
+            // Editing it, the muscles still follow its group until the person changes them.
+            #expect(ExerciseForm(editing: custom).musclesFollowGroup)
             #expect(exercises.first { $0.id == archivedID }?.isArchived == true)
 
             // The plan, the finished session and the session in progress keep their exercises.

@@ -174,15 +174,18 @@ struct ExerciseLibrarySeederTests {
         #expect(kept.isArchived == false)
     }
 
-    @Test("A built-in exercise named like an archived custom one is created active")
+    @Test("A built-in exercise named like an archived exercise of the user's own is created archived, so the user's exercise can still be restored")
     func nameClashWithArchivedCustom() throws {
+        // The name of an archived exercise of the user's own stays reserved: restoring it is the way to use it.
         let custom = try harness.exercises.createCustomExercise(name: "Supino Reto (Barra)", muscleGroup: .chest)
         try harness.exercises.archive(custom)
 
         try seeder.seed()
 
-        #expect(try exercise(key: "bench-press-barbell")?.isArchived == false)
+        #expect(try exercise(key: "bench-press-barbell")?.isArchived == true)
         #expect(custom.isArchived)
+        try harness.exercises.unarchive(custom)
+        #expect(custom.isArchived == false)
     }
 
     @Test("A built-in exercise hidden by the user stays hidden")
@@ -548,13 +551,13 @@ struct ExerciseLibrarySeederTests {
         #expect(exercise.isArchived == false && custom.isArchived == false)
     }
 
-    @Test("A corrected name used only by an archived exercise is applied, and an archived built-in exercise takes any corrected name")
+    @Test("A corrected name used only by an archived built-in exercise is applied, and an archived built-in exercise takes any corrected name")
     func correctedNameWithoutActiveClash() throws {
-        try seeder.seed([Self.entryA, Self.entryB])
+        try seeder.seed([Self.entryA, Self.entryB, DefaultExercise(key: "test-c", id: Self.entryC.id, name: "Nome Livre", muscleGroup: .biceps)])
         let first = try #require(try exercise(key: "test-a"))
         let second = try #require(try exercise(key: "test-b"))
-        let archivedCustom = try harness.exercises.createCustomExercise(name: "Nome Livre", muscleGroup: .biceps)
-        try harness.exercises.archive(archivedCustom)
+        // "Nome Livre" is left by a built-in exercise the user hid, which then left the library.
+        try harness.exercises.archive(try #require(try exercise(key: "test-c")))
         try harness.exercises.createCustomExercise(name: "Nome Usado", muscleGroup: .biceps)
         try harness.exercises.archive(second)
 
@@ -568,6 +571,23 @@ struct ExerciseLibrarySeederTests {
         #expect(first.name == "Nome Livre")
         #expect(second.name == "Nome Usado")
         #expect(second.isArchived)
+    }
+
+    @Test("A corrected name used by an archived exercise of the user's own is not applied: the old name stays, the group is still corrected, it is reported, and the user's exercise can still be restored")
+    func correctedNameClashWithArchivedCustom() throws {
+        try seeder.seed([Self.entryA])
+        let builtIn = try #require(try exercise(key: "test-a"))
+        let custom = try harness.exercises.createCustomExercise(name: "Nome Reservado", muscleGroup: .biceps)
+        try harness.exercises.archive(custom)
+
+        let result = try seeder.seed([DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Nome Reservado", muscleGroup: .shoulders)])
+
+        #expect(result.updatedKeys == ["test-a"])
+        #expect(result.keptNameKeys == ["test-a"])
+        #expect(builtIn.name == "Teste A")
+        #expect(builtIn.muscleGroup == .shoulders)
+        try harness.exercises.unarchive(custom)
+        #expect(custom.isArchived == false && custom.name == "Nome Reservado")
     }
 
     @Test("An exercise takes the name another one leaves in the same run, whatever their order in the library")
