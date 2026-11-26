@@ -312,10 +312,10 @@ struct ExerciseFormView: View {
                         .foregroundStyle(Theme.Colors.primaryButtonText)
                         .frame(maxWidth: .infinity, minHeight: buttonHeight)
                         .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                        .opacity(canSave ? 1 : 0.4)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                // Unavailable, the whole white button at 35 %, as in the prototype.
+                .buttonStyle(PrototypeButtonStyle())
                 .disabled(!canSave)
                 .accessibilityIdentifier("exerciseForm.save")
             }

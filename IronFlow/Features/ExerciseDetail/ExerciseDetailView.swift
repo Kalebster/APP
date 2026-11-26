@@ -421,7 +421,7 @@ private struct ArchivedExerciseCard: View {
                     .contentShape(Rectangle())
                     .padding(.vertical, -5)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PrototypeButtonStyle())
             .disabled(isRestoring)
             .padding(.top, 8)
             .accessibilityIdentifier("exercise.restore")
