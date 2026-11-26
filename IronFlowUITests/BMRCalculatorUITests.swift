@@ -104,28 +104,50 @@ final class BMRCalculatorUITests: IronFlowUITestCase {
 
     // MARK: - Support
 
-    /// Opens the calorie goal's editor and, from it, the calculator.
+    /// Opens the calorie goal's editor and, from it, the calculator. This test is the first of its CI
+    /// machine, when a tap can be lost as on the tabs (runs 45679941197, 45688000220 and 45754157149: 6 to
+    /// 21 s from the launch to the automation, "Calculator not shown" and the menus of the date of birth),
+    /// so when the editor or the calculator has not opened in 5 s and what opens it can still be tapped, it
+    /// is tapped once more. Nothing waits when the first tap works.
     @MainActor
     private func openCalculator(in app: XCUIApplication) {
-        app.buttons["home.metric.dailyCalorieGoal"].tap()
+        let card = app.buttons["home.metric.dailyCalorieGoal"]
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "No calorie goal on the Início")
         let link = app.buttons["metric.editor.bmr"]
+        card.tap()
+        if !link.waitForExistence(timeout: 5), card.isHittable {
+            card.tap()
+        }
         XCTAssertTrue(link.waitForExistence(timeout: 10), "No link to the calculator")
         XCTAssertEqual(link.label, "Calcular pela minha TMB")
+        let intro = element("bmr.intro", in: app)
         link.tap()
-        XCTAssertTrue(element("bmr.intro", in: app).waitForExistence(timeout: 10), "Calculator not shown")
+        if !intro.waitForExistence(timeout: 5), link.exists, link.isHittable {
+            link.tap()
+        }
+        XCTAssertTrue(intro.waitForExistence(timeout: 10), "Calculator not shown")
     }
 
-    /// Opens a menu of the date of birth, picks `option` and waits until its box shows it.
+    /// Opens a menu of the date of birth, picks `option` and waits until its box shows it. A lost tap (see
+    /// `openCalculator`) leaves the menu closed or the option not taken, so the choice is made once more
+    /// from what is on the screen: a menu still open is used as it is, a closed one is opened again.
     @MainActor
     private func choose(_ option: String, in menu: String, app: XCUIApplication) {
         let box = app.buttons[menu]
-        box.tap()
         let items = app.buttons.matching(NSPredicate(format: "label == %@", option))
-        XCTAssertTrue(items.firstMatch.waitForExistence(timeout: 5), "No '\(option)' in \(menu)")
-        let item = items.allElementsBoundByIndex.first { $0.isHittable } ?? items.firstMatch
-        item.tap()
-        // Up to 10 s, as the other waits for a value: with the menu closing over the sheet's glass, the
-        // box has taken more than 5 s to show the choice on a slow machine (seen in CI).
-        XCTAssertTrue(box.waitForValue(option, timeout: 10), "\(menu) shows \(String(describing: box.value))")
+        for attempt in 0..<2 {
+            if attempt == 0 || !items.firstMatch.exists {
+                box.tap()
+            }
+            guard items.firstMatch.waitForExistence(timeout: 10) else { continue }
+            let item = items.allElementsBoundByIndex.first { $0.isHittable } ?? items.firstMatch
+            item.tap()
+            // Up to 10 s, as the other waits for a value: with the menu closing over the sheet's glass, the
+            // box has taken more than 5 s to show the choice on a slow machine (seen in CI).
+            if box.waitForValue(option, timeout: 10) {
+                return
+            }
+        }
+        XCTFail("\(menu) shows \(String(describing: box.value)) instead of '\(option)'")
     }
 }
