@@ -93,6 +93,18 @@ struct ExerciseFormTests {
         #expect(ExerciseForm.groups.count == 16)
     }
 
+    @Test("A search longer than a name starts the form cut to the longest name, which can be saved")
+    func longSearchIsCut() throws {
+        let search = String(repeating: "Remada ", count: 10)
+        #expect(search.count > Validation.maxNameLength)
+        var form = ExerciseForm(name: search, group: .upperBack, equipment: .machine)
+        #expect(form.draft.name.count == Validation.maxNameLength)
+        #expect(form.draft.name == String(search.prefix(Validation.maxNameLength)))
+        form.selectMachine(.lever)
+        #expect(form.canSave(taken: noNames))
+        #expect(try Validation.name(form.draft.name).count <= Validation.maxNameLength)
+    }
+
     @Test("The kind of machine only counts with the machine")
     func machineOnlyWithTheMachine() {
         var form = ExerciseForm(name: "Puxada", group: .back, equipment: .machine)

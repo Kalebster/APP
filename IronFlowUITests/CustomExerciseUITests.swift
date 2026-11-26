@@ -287,6 +287,9 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         let create = app.buttons["exercises.empty.create"]
         XCTAssertTrue(create.waitForExistence(timeout: 10), "No + Criar in the empty search")
         XCTAssertEqual(create.label, "+ Criar \"Crucifixo Sentado Livre\"")
+        // VoiceOver reads the message as one, and "+ Criar" as a button of its own.
+        XCTAssertEqual(element("exercises.empty", in: app).label, "Nenhum exercício encontrado. Tente outro nome ou outro filtro.")
+        XCTAssertFalse(app.staticTexts["Tente outro nome ou outro filtro."].exists, "The message is read in two parts")
         create.tap()
         waitForForm(titled: "Novo exercício", in: app)
         XCTAssertEqual(app.textFields["exerciseForm.name"].value as? String, "Crucifixo Sentado Livre")

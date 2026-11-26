@@ -274,12 +274,17 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         scrollToBottom(in: app)
         let count = element("exercise.history.count", in: app)
         XCTAssertEqual(count.label, "2 treinos")
+        XCTAssertTrue(element("exercise.chart.plot", in: app).exists, "No chart with two sessions")
         let session = app.buttons.matching(identifier: "exercise.history.session").firstMatch
         XCTAssertTrue(session.waitForExistence(timeout: 10), "No session card")
         session.tap()
         XCTAssertTrue(waitForToast("Esse treino não está mais no histórico.", in: app), "No notice for a session no longer there")
         XCTAssertFalse(element("history.detail", in: app).exists, "A deleted session opened")
         XCTAssertTrue(waitForLabel(of: element("exercise.history.count", in: app), toBe: "1 treino"), "The history was not read again")
+        // The chart is made again without it: with one session left, it asks for one more.
+        XCTAssertTrue(waitForLabel(of: element("exercise.chart.message", in: app), toBe: "Faça este exercício em mais um treino para ver a evolução."),
+                      "The chart still shows the deleted session")
+        XCTAssertFalse(element("exercise.chart.plot", in: app).exists, "The chart still plots the deleted session")
     }
 
     @MainActor
