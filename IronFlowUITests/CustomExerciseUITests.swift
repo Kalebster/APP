@@ -14,6 +14,10 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     /// 20 to 23 s without being idle (runs 45670558383 and 45688000220): "Exercício criado", kept 15 s by
     /// `longToastArguments`, had gone when the test looked for it.
     private let lastingToastArguments = ["-ui-toast-seconds", "45"]
+    /// How long a field may take to show what was typed. These tests run in the first minutes of each CI
+    /// machine: in run 45905563464 the app went 14,5 s without being idle while a name was typed, and the
+    /// name arrived after the usual 5 s. The wait ends as soon as the text is there.
+    private let typingTimeout: TimeInterval = 15
 
     // MARK: - Helpers
 
@@ -84,7 +88,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         let current = (field.value as? String) ?? ""
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
         field.typeText(name)
-        XCTAssertTrue(field.waitForValue(name), "The name holds \(String(describing: field.value))")
+        XCTAssertTrue(field.waitForValue(name, timeout: typingTimeout), "The name holds \(String(describing: field.value))")
         submit(field, in: app)
     }
 
@@ -180,7 +184,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Search field not found")
         field.tapAndWaitForKeyboardFocus()
         field.typeText(search)
-        XCTAssertTrue(field.waitForValue(search), "The search field holds \(String(describing: field.value))")
+        XCTAssertTrue(field.waitForValue(search, timeout: typingTimeout), "The search field holds \(String(describing: field.value))")
         submit(field, in: app)
         let card = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "\(name), "))
@@ -282,7 +286,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         let field = app.textFields["exercises.search"]
         field.tapAndWaitForKeyboardFocus()
         field.typeText("Crucifixo Sentado Livre")
-        XCTAssertTrue(field.waitForValue("Crucifixo Sentado Livre"), "Search not typed")
+        XCTAssertTrue(field.waitForValue("Crucifixo Sentado Livre", timeout: typingTimeout), "Search not typed")
         submit(field, in: app)
         let create = app.buttons["exercises.empty.create"]
         XCTAssertTrue(create.waitForExistence(timeout: 10), "No + Criar in the empty search")
