@@ -29,11 +29,11 @@ struct DefaultExerciseMuscles: Equatable, Sendable {
     }
 
     /// The muscles shown for an exercise: those of its library entry, those an exercise of the user's own
-    /// chose (none included, for "Corpo inteiro"), or, for one of the user's own from before version 8, which
-    /// has none stored, the muscles of its group (none for "Corpo inteiro" and "Outro").
+    /// chose (none included, for "Corpo inteiro"), or the muscles of its group (none for "Corpo inteiro"
+    /// and "Outro") for one of the user's own that `showsGroupMuscles`.
     static func muscles(of exercise: Exercise) -> (primary: [Muscle], secondary: [Muscle]) {
         if exercise.isCustom {
-            guard exercise.hasChosenMuscles else {
+            if showsGroupMuscles(of: exercise) {
                 return (muscles(of: exercise.muscleGroup), [])
             }
             return (exercise.primaryMuscles, exercise.secondaryMuscles)
@@ -45,9 +45,13 @@ struct DefaultExerciseMuscles: Equatable, Sendable {
     }
 
     /// Whether the body figure shows the muscles of the exercise's group: an exercise of the user's own from
-    /// before version 8, whose muscles were never chosen. One saved with none chosen shows none.
+    /// before version 8, whose muscles were never chosen, or one whose stored muscles are all unknown to this
+    /// version (written by a newer one). One saved with none chosen shows none.
     static func showsGroupMuscles(of exercise: Exercise) -> Bool {
-        exercise.isCustom && !exercise.hasChosenMuscles
+        guard exercise.isCustom else { return false }
+        guard exercise.hasChosenMuscles else { return true }
+        let stored = (exercise.primaryMuscleKeys ?? []) + (exercise.secondaryMuscleKeys ?? [])
+        return !stored.isEmpty && exercise.primaryMuscles.isEmpty && exercise.secondaryMuscles.isEmpty
     }
 
     /// The kind of machine: the library's for a built-in exercise, the one chosen for an exercise of the

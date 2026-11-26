@@ -7,9 +7,9 @@ import SwiftData
 /// models are redeclared here (see `Models/`), not only `Exercise`: their relationships point to each
 /// other's classes, so a version 7 class reused here would still point to the version 7 ones. The models
 /// without relationships (body data, profile, days trained outside the app, weekly plan) are unchanged
-/// and reused as they are. The migration from V7 only adds the new attributes, optional or empty: every
-/// exercise already stored has no equipment ("Outro"), no kind of machine and no muscles of its own, so
-/// the exercise screen keeps showing the muscle of its group. Frozen once released: every model is named
+/// and reused as they are. The migration from V7 only adds the new attributes, all optional: every
+/// exercise already stored has no equipment ("Outro"), no kind of machine and no muscle lists (`nil`, not
+/// empty), so the exercise screen keeps showing the muscle of its group. Frozen once released: every model is named
 /// explicitly, never through the app's aliases.
 enum SchemaV8: VersionedSchema {
     static var versionIdentifier: Schema.Version {

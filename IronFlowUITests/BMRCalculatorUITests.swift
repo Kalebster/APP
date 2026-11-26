@@ -115,7 +115,7 @@ final class BMRCalculatorUITests: IronFlowUITestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 10), "No calorie goal on the Início")
         let link = app.buttons["metric.editor.bmr"]
         card.tap()
-        if !link.waitForExistence(timeout: 5), card.isHittable {
+        if !link.waitForExistence(timeout: 5), card.exists, card.isHittable {
             card.tap()
         }
         XCTAssertTrue(link.waitForExistence(timeout: 10), "No link to the calculator")

@@ -60,7 +60,7 @@ struct IronFlowApp: App {
             // Only the library's own keys are logged, never an exercise name: the clashing exercise
             // may be one the user created.
             if !result.keptNameKeys.isEmpty {
-                persistenceLogger.error("Library names not applied because another active exercise uses them: \(result.keptNameKeys.joined(separator: ", "), privacy: .public)")
+                persistenceLogger.error("Library names not applied because another active exercise, or an archived one of the user's own, uses them: \(result.keptNameKeys.joined(separator: ", "), privacy: .public)")
             }
         } catch {
             persistenceLogger.error("Could not seed the exercise library: \(String(describing: error), privacy: .private)")

@@ -16,8 +16,9 @@ struct ExerciseLibrarySeedResult: Equatable {
     var updatedKeys: [String] = []
     /// Entries not inserted because their fixed id is already used by another record.
     var skippedKeys: [String] = []
-    /// Entries whose corrected name is already used by another active exercise: the exercise keeps
-    /// its current name (a corrected muscle group is still applied).
+    /// Entries whose corrected name is already used by another active exercise, or kept by an archived
+    /// exercise of the user's own: the exercise keeps its current name (a corrected muscle group is still
+    /// applied).
     var keptNameKeys: [String] = []
 }
 
@@ -26,15 +27,16 @@ struct ExerciseLibrarySeedResult: Equatable {
 /// Idempotent: an entry is found by its `libraryKey`. Existing records are never deleted,
 /// never replaced, and their `isArchived`, ids and relationships are never touched; only the
 /// name and muscle group of built-in exercises follow the library, except a corrected name kept by another
-/// active exercise. Custom exercises are never changed.
+/// active exercise or by an archived exercise of the user's own. Custom exercises are never changed.
 ///
 /// Active exercise names stay unique (ignoring case and diacritics). Whether a name is free is decided with
 /// the names the exercises hold once the run is over, never with those of the moment, so neither the order
 /// of the library nor the order of the changes matters: an exercise can take the name another one leaves
 /// in the same run, two exercises can swap names, and a new entry can take a name an existing exercise
-/// leaves. A name is kept only by an active exercise that still has it after the run, such as a custom
-/// exercise of that name: then a corrected exercise keeps its current name (`keptNameKeys`) and a new
-/// entry is created hidden (archived).
+/// leaves. A name is kept by an active exercise that still has it after the run, such as a custom
+/// exercise of that name, and by an archived exercise of the user's own, whose name stays reserved for
+/// restoring it: then a corrected exercise keeps its current name (`keptNameKeys`) and a new entry is
+/// created hidden (archived).
 @MainActor
 struct ExerciseLibrarySeeder {
     let context: ModelContext
