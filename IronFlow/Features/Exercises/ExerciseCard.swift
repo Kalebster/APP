@@ -53,7 +53,7 @@ struct ExerciseCard: View {
                     .lineLimit(dynamicTypeSize > .large ? nil : 2)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(detail)
-                    .scaledFont(11, weight: isChosenSubtitle ? .semibold : .regular)
+                    .scaledFont(11, weight: isChosenSubtitle ? .semibold : .regular, webKitLine: true)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

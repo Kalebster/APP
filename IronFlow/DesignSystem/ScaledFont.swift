@@ -22,22 +22,26 @@ private struct ScaledFont: ViewModifier {
 }
 
 /// The model's CSS `line-height` for a text of SF Pro at `size` and `weight`, scaled like `ScaledFont`:
-/// each line takes `lineHeight` times the size, as in the model, instead of the font's own height. Only
-/// the texts that set a line height have it.
+/// each line takes `lineHeight` times the size, as in the model, instead of the font's own height (`nil`:
+/// the font's own, the model's `normal`). Only the texts that set a line height have it, and those that
+/// take the line in whole points as the prototype's WebKit does (`roundsDown`).
 private struct ScaledLineHeight: ViewModifier {
     @ScaledMetric private var size: CGFloat
     private let weight: Font.Weight
-    private let lineHeight: CGFloat
+    private let lineHeight: CGFloat?
+    private let roundsDown: Bool
     @Environment(\.displayScale) private var displayScale
 
-    init(size: CGFloat, weight: Font.Weight, lineHeight: CGFloat) {
+    init(size: CGFloat, weight: Font.Weight, lineHeight: CGFloat?, roundsDown: Bool) {
         _size = ScaledMetric(wrappedValue: size, relativeTo: .closest(toPoints: size))
         self.weight = weight
         self.lineHeight = lineHeight
+        self.roundsDown = roundsDown
     }
 
     func body(content: Content) -> some View {
-        let metrics = LineHeightMetrics(size: size, weight: weight, lineHeight: lineHeight, displayScale: displayScale)
+        let lineHeight = lineHeight ?? SystemFont.lineHeight(size: size, weight: weight) / size
+        let metrics = LineHeightMetrics(size: size, weight: weight, lineHeight: lineHeight, displayScale: displayScale, roundsDown: roundsDown)
         return content
             .lineSpacing(metrics.lineSpacing)
             .padding(.vertical, metrics.edgePadding)
@@ -77,19 +81,25 @@ extension Font.Weight {
 /// of it between two lines when the text wraps. A line shorter than the font's only moves the text's
 /// neighbours: its letters are drawn whole, never cut. Lines of a wrapped text are never closer than the
 /// font's own height: SwiftUI does not bring them closer.
+///
+/// `roundsDown`: the line in whole points, as the WebKit of the prototype lays it out (it keeps a line
+/// height in whole CSS pixels, rounded down): 16 for a text of 12 at 1,4 (16,8 on iOS), 18 for 13 at 1,4,
+/// and 13 for the `normal` line of a text of 11 (13,33 on iOS). Only in the screens measured against it.
 struct LineHeightMetrics: Equatable {
     /// The space added between two lines of the text.
     let lineSpacing: CGFloat
     /// The space added above the first line and below the last one; negative to take some away.
     let edgePadding: CGFloat
 
-    init(size: CGFloat, weight: Font.Weight, lineHeight: CGFloat, displayScale: CGFloat) {
+    init(size: CGFloat, weight: Font.Weight, lineHeight: CGFloat, displayScale: CGFloat, roundsDown: Bool = false) {
         let ownHeight = SystemFont.lineHeight(size: size, weight: weight)
         // The font's own line, as SwiftUI lays a text out: rounded up to the screen's pixels.
         let scale = max(displayScale, 1)
         let ownLine = (ownHeight * scale).rounded(.up) / scale
-        lineSpacing = max(size * lineHeight - ownHeight, 0)
-        edgePadding = (size * lineHeight - ownLine) / 2
+        // A thousandth more, so 13 / 11 × 11 is never taken for 12,999….
+        let line = roundsDown ? (size * lineHeight + 0.001).rounded(.down) : size * lineHeight
+        lineSpacing = max(line - ownHeight, 0)
+        edgePadding = (line - ownLine) / 2
     }
 }
 
@@ -115,12 +125,14 @@ extension Font.TextStyle {
 extension View {
     /// SF Pro at `size` points of the default text size and `weight`, scaled with Dynamic Type.
     /// `lineHeight` is the model's CSS `line-height`, for the texts that set one (`LineHeightMetrics`);
-    /// without it the text takes the font's own height, the model's `normal`.
+    /// without it the text takes the font's own height, the model's `normal`. `webKitLine` takes the line
+    /// in whole points, rounded down, as the prototype's WebKit does (`LineHeightMetrics.roundsDown`), also
+    /// for the `normal` line: only in the screens measured against the prototype since the base list.
     @ViewBuilder
-    func scaledFont(_ size: CGFloat, weight: Font.Weight = .regular, lineHeight: CGFloat? = nil) -> some View {
-        if let lineHeight {
+    func scaledFont(_ size: CGFloat, weight: Font.Weight = .regular, lineHeight: CGFloat? = nil, webKitLine: Bool = false) -> some View {
+        if lineHeight != nil || webKitLine {
             modifier(ScaledFont(size: size, weight: weight))
-                .modifier(ScaledLineHeight(size: size, weight: weight, lineHeight: lineHeight))
+                .modifier(ScaledLineHeight(size: size, weight: weight, lineHeight: lineHeight, roundsDown: webKitLine))
         } else {
             modifier(ScaledFont(size: size, weight: weight))
         }

@@ -178,7 +178,7 @@ struct ExerciseListView: View {
                         .scaledFont(14, weight: .bold)
                         .foregroundStyle(Theme.Colors.brightText)
                     Text("Escolha os exercícios e crie um treino ou adicione a um que já existe")
-                        .scaledFont(11, lineHeight: 1.35)
+                        .scaledFont(11, lineHeight: 1.35, webKitLine: true)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -201,7 +201,7 @@ struct ExerciseListView: View {
     private func archivedSection(_ archived: [ExerciseCatalog.Item]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                SectionTitle("Arquivados")
+                SectionTitle("Arquivados", webKitLine: true)
                 Spacer(minLength: 8)
                 Text(verbatim: "\(archived.count)")
                     .scaledFont(12)
@@ -212,7 +212,7 @@ struct ExerciseListView: View {
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("exercises.archived.title")
             Text("Não aparecem na lista nem para adicionar a um treino. Toque para ver o histórico ou restaurar.")
-                .scaledFont(12, lineHeight: 1.4)
+                .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
@@ -279,7 +279,7 @@ struct ExerciseListView: View {
     private func countRow(_ count: Int) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(verbatim: ExerciseCatalog.countText(count))
-                .scaledFont(11)
+                .scaledFont(11, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .accessibilityIdentifier("exercises.count")
             Spacer(minLength: 8)
@@ -288,7 +288,7 @@ struct ExerciseListView: View {
                 chosenEquipment = nil
             } label: {
                 Text("Limpar filtros")
-                    .scaledFont(11, weight: .bold)
+                    .scaledFont(11, weight: .bold, webKitLine: true)
                     .foregroundStyle(Theme.Colors.lightAccent)
                     // The touch area grows to 44 points without taking room.
                     .padding(.vertical, 15)

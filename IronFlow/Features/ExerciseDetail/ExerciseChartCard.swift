@@ -46,7 +46,7 @@ struct ExerciseChartCard: View {
                 .padding(.top, 8)
                 if chart.metric.isInverted {
                     Text("Menos ajuda fica mais alto no gráfico.")
-                        .scaledFont(11)
+                        .scaledFont(11, webKitLine: true)
                         .foregroundStyle(Theme.Colors.dimText)
                         .padding(.bottom, 2)
                 }

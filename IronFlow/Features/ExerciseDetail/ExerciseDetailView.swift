@@ -144,7 +144,7 @@ private struct ExerciseDetailScreen: View {
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
-                    SectionTitle("Músculos")
+                    SectionTitle("Músculos", webKitLine: true)
                     ExerciseMusclesCard(
                         primary: muscles.primary,
                         secondary: muscles.secondary,
@@ -161,7 +161,7 @@ private struct ExerciseDetailScreen: View {
                 if let history, historyID == exercise.id {
                     if history.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            SectionTitle("Evolução")
+                            SectionTitle("Evolução", webKitLine: true)
                             ExerciseNeverDoneCard()
                         }
                     } else {
@@ -518,7 +518,7 @@ private struct ArchivedExerciseCard: View {
                 .scaledFont(14, weight: .bold)
                 .accessibilityAddTraits(.isHeader)
             Text("Não aparece na lista nem para adicionar a um treino. O histórico e os recordes continuam aqui.")
-                .scaledFont(12, lineHeight: 1.4)
+                .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
             Button(action: onRestore) {

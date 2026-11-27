@@ -122,7 +122,7 @@ struct ExerciseFormView: View {
                 .scaledFont(14, weight: .bold, lineHeight: 1.3)
                 .fixedSize(horizontal: false, vertical: true)
             Text(verbatim: note.text)
-                .scaledFont(12, lineHeight: 1.4)
+                .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -285,7 +285,7 @@ struct ExerciseFormView: View {
 
     private func hint(_ text: LocalizedStringKey, identifier: String) -> some View {
         Text(text)
-            .scaledFont(12, lineHeight: 1.4)
+            .scaledFont(12, lineHeight: 1.4, webKitLine: true)
             .foregroundStyle(Theme.Colors.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 2)

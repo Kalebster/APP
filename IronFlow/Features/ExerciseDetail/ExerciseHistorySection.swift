@@ -17,7 +17,7 @@ struct ExerciseHistorySection: View {
 
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                SectionTitle("Histórico")
+                SectionTitle("Histórico", webKitLine: true)
                 Spacer(minLength: 0)
                 Text(verbatim: ExerciseHistoryFormatting.countText(history.entries.count, isAssisted: history.kind == .assisted))
                     .scaledFont(12)

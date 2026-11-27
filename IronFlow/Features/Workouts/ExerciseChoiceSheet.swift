@@ -50,7 +50,7 @@ struct ExerciseChoiceSheet: View {
                 shownCombination
                 if !others.isEmpty {
                     Text(verbatim: String(localized: "Também escolhido: \(others.map(ExerciseBaseIndex.optionText).joined(separator: ", "))"))
-                        .scaledFont(12, lineHeight: 1.4)
+                        .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 2)

@@ -39,7 +39,7 @@ struct ExerciseMusclesCard: View {
             // The drawing keeps its size, so its name never goes wider than it: with the largest text sizes
             // "Frente" and "Costas" would run into each other.
             Text(title)
-                .scaledFont(11)
+                .scaledFont(11, webKitLine: true)
                 .foregroundStyle(Theme.Colors.dimText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)

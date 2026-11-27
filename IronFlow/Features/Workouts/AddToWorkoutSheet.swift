@@ -129,7 +129,7 @@ struct AddToWorkoutSheet: View {
                     .foregroundStyle(Theme.Colors.brightText)
                     .lineLimit(1)
                 Text(verbatim: detail)
-                    .scaledFont(11)
+                    .scaledFont(11, webKitLine: true)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .lineLimit(1)
             }
