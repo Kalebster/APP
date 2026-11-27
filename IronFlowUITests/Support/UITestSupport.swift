@@ -443,15 +443,54 @@ extension XCTestCase {
         confirmationButton("Excluir treino", title: "Excluir “", in: app).tap()
     }
 
-    /// Chooses one exercise in the exercise picker on screen (the one of a workout or of a session),
-    /// by searching its exact name, and confirms with "Adicionar".
+    /// Chooses one exercise in the exercise picker on screen (the one of a workout or of a session), and
+    /// confirms with "Adicionar": a base exercise searched by its name, with its combination chosen in the
+    /// choice sheet (`equipment` and `variation` are the buttons' identifiers' ends, such as "cable" and
+    /// "Aberta"; `nil` keeps the one the sheet opens on), or an exercise of the user's own (`isCustom`).
     @MainActor
-    func pickExercise(_ name: String, in app: XCUIApplication) {
+    func pickExercise(_ name: String, equipment: String? = nil, variation: String? = nil, isCustom: Bool = false, in app: XCUIApplication) {
         searchPicker(for: name, in: app)
+        chooseInPicker(name, equipment: equipment, variation: variation, isCustom: isCustom, in: app)
+        app.buttons["picker.add"].tap()
+    }
+
+    /// Taps the card of `name` in the picker on screen and, for a base, chooses the combination in the choice
+    /// sheet with "Escolher" (the sheet closes).
+    @MainActor
+    func chooseInPicker(_ name: String, equipment: String? = nil, variation: String? = nil, isCustom: Bool = false, in app: XCUIApplication) {
         let card = pickerCard(name, in: app)
         XCTAssertTrue(card.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
         card.tap()
-        app.buttons["picker.add"].tap()
+        guard !isCustom else { return }
+        let choose = app.buttons["choice.choose"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 10), "Choice sheet of '\(name)' not shown")
+        chooseCombination(equipment: equipment, variation: variation, prefix: "choice", in: app)
+        choose.tap()
+        XCTAssertTrue(choose.waitForNonExistence(timeout: 10), "Choice sheet of '\(name)' not closed")
+    }
+
+    /// In the rows of a base exercise, on its screen (`prefix` "exercise") or in the choice sheet ("choice"):
+    /// chooses the equipment (the raw value of its `LibraryEquipment`) and the grip or variation (its text)
+    /// given, and waits for each to be chosen. One already chosen is not tapped.
+    @MainActor
+    func chooseCombination(
+        equipment: String? = nil,
+        variation: String? = nil,
+        prefix: String = "exercise",
+        in app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let identifiers = [equipment.map { "\(prefix).equipment.\($0)" }, variation.map { "\(prefix).variation.\($0)" }]
+        for identifier in identifiers.compactMap({ $0 }) {
+            let button = app.buttons[identifier]
+            XCTAssertTrue(button.waitForExistence(timeout: 10), "No \(identifier)", file: file, line: line)
+            if !button.isSelected {
+                button.tap()
+            }
+            let chosen = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: button)
+            XCTAssertEqual(XCTWaiter().wait(for: [chosen], timeout: 10), .completed, "\(identifier) not chosen", file: file, line: line)
+        }
     }
 
     /// Types `text` in the search of the exercise picker on screen, replacing what it held.
@@ -467,8 +506,8 @@ extension XCTestCase {
         search.typeText(text)
     }
 
-    /// The card of the exercise `name` in the exercise picker on screen. Its label starts with the name,
-    /// followed by the group, the focus and the equipment.
+    /// The card of the exercise `name` (a base or an exercise of the user's own) in the exercise picker on
+    /// screen. Its label starts with the name, followed by the group and the equipment.
     @MainActor
     func pickerCard(_ name: String, in app: XCUIApplication) -> XCUIElement {
         app.buttons

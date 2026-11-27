@@ -11,9 +11,11 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
 
     // MARK: - Helpers
 
-    /// On the Exercícios tab: searches `search`, lets the keyboard go and opens the exercise `name`.
+    /// On the Exercícios tab: searches `search`, lets the keyboard go, opens the screen of the base `base`
+    /// and chooses in its rows the `equipment` and `variation` given (the ends of the buttons' identifiers,
+    /// such as "graviton" and "Aberta"), then waits for the history of that combination.
     @MainActor
-    private func openExercise(_ name: String, search: String, in app: XCUIApplication) {
+    private func openExercise(_ base: String, search: String, equipment: String? = nil, variation: String? = nil, in app: XCUIApplication) {
         let field = app.textFields["exercises.search"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Search field not found")
         field.tapAndWaitForKeyboardFocus()
@@ -22,11 +24,22 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         field.typeText("\n")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         let card = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "\(name), "))
+            .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "\(base), "))
             .firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: 10), "No card for \(name)")
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "No card for \(base)")
         card.tap()
-        waitForExerciseScreen(of: name, in: app)
+        waitForExerciseScreen(of: base, in: app)
+        chooseCombination(equipment: equipment, variation: variation, in: app)
+        waitForHistory(in: app)
+    }
+
+    /// Waits for the history of the combination shown: its last time, or the card of one never done.
+    @MainActor
+    private func waitForHistory(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let read = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier IN %@", ["exercise.lastTime", "exercise.neverDone"]))
+            .firstMatch
+        XCTAssertTrue(read.waitForExistence(timeout: 10), "The history was not read", file: file, line: line)
     }
 
     /// Waits for the exercise screen of `name`, its title read by one query.
@@ -51,9 +64,9 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         let app = launchOnExercises()
         // The row ends with the › of a row that opens something.
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "Exercícios not shown")
-        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        openExercise("Supino Reto", search: "supino reto barra", equipment: "barbell", in: app)
 
-        XCTAssertEqual(element("exercise.subtitle", in: app).label, "Peito · Barra")
+        XCTAssertEqual(element("exercise.subtitle", in: app).label, "Peito")
         XCTAssertEqual(app.buttons["exercise.back"].label, "Exercícios")
         // The tab bar stays, with Exercícios chosen.
         let tab = app.tabBars.buttons["Exercícios"]
@@ -77,11 +90,11 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
 
         // Opened again, the tab takes it back to the list.
         let card = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "Supino Reto (Barra), "))
+            .matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "exercises.card", "Supino Reto, "))
             .firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), "The search was not kept")
         card.tap()
-        waitForExerciseScreen(of: "Supino Reto (Barra)", in: app)
+        waitForExerciseScreen(of: "Supino Reto", in: app)
         tab.tap()
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "The tab did not go back to the list")
         XCTAssertFalse(element("exercise.screen", in: app).exists, "The exercise screen is still open")
@@ -91,7 +104,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
     func testPeriodMetricChartHistoryAndShowMore() throws {
         continueAfterFailure = false
         let app = launchOnExercises()
-        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        openExercise("Supino Reto", search: "supino reto barra", equipment: "barbell", in: app)
         let change = element("exercise.chart.change", in: app)
         let date = element("exercise.chart.date", in: app)
 
@@ -176,9 +189,9 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
     func testGravitonShowsTheHelp() throws {
         continueAfterFailure = false
         let app = launchOnExercises()
-        openExercise("Barra Fixa (Graviton)", search: "barra fixa graviton", in: app)
+        openExercise("Barra Fixa", search: "barra fixa graviton", equipment: "graviton", variation: "Aberta", in: app)
 
-        XCTAssertEqual(element("exercise.subtitle", in: app).label, "Dorsais · Máquina")
+        XCTAssertEqual(element("exercise.subtitle", in: app).label, "Dorsais")
         XCTAssertEqual(element("exercise.machine", in: app).label, "Graviton (contrapeso), Mais kg = mais ajuda. Menos kg é progresso.")
         XCTAssertEqual(element("exercise.lastTime", in: app).value as? String, "25 kg × 8, de ajuda · seg, 12 out")
         XCTAssertEqual(app.buttons["exercise.chart.metric.0"].label, "Menor ajuda")
@@ -199,7 +212,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
     func testMachineTypeAndItsSheet() throws {
         continueAfterFailure = false
         let app = launchOnExercises()
-        openExercise("Leg Press 45° (Máquina)", search: "leg press 45", in: app)
+        openExercise("Leg Press", search: "leg press 45", equipment: "machine", variation: "45°", in: app)
 
         let machine = element("exercise.machine", in: app)
         XCTAssertEqual(machine.label, "Trilho (anilhas), Tipo de máquina")
@@ -220,7 +233,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
     func testDoneOnceAndNeverDone() throws {
         continueAfterFailure = false
         let app = launchOnExercises()
-        openExercise("Elevação Lateral (Halter)", search: "elevacao lateral halter", in: app)
+        openExercise("Elevação Lateral", search: "elevacao lateral halter", equipment: "dumbbell", variation: "Normal", in: app)
         XCTAssertEqual(element("exercise.chart.message", in: app).label, "Faça este exercício em mais um treino para ver a evolução.")
         XCTAssertFalse(app.buttons["exercise.chart.period"].exists, "A period menu with one session")
         XCTAssertEqual(element("exercise.lastTime", in: app).value as? String, "10 kg × 12, sex, 9 out")
@@ -233,7 +246,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         let clear = app.buttons["exercises.search.clear"]
         XCTAssertTrue(clear.waitForExistence(timeout: 10), "No clear button")
         clear.tap()
-        openExercise("Cadeira Flexora (Máquina)", search: "cadeira flexora maquina", in: app)
+        openExercise("Cadeira Flexora", search: "cadeira flexora maquina", equipment: "machine", variation: "Normal", in: app)
         XCTAssertTrue(element("exercise.neverDone", in: app).exists, "No card for an exercise never done")
         XCTAssertFalse(element("exercise.lastTime", in: app).exists, "Última vez without a session")
         XCTAssertFalse(element("exercise.chart", in: app).exists, "A chart without a session")
@@ -247,7 +260,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
     func testTwoSessionsOnTheSameDayAreTwoPoints() throws {
         continueAfterFailure = false
         let app = launchOnTab("Exercícios", seed: ["workout:Push:Supino Reto (Barra)", "finished:Push:2"])
-        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        openExercise("Supino Reto", search: "supino reto barra", equipment: "barbell", in: app)
         app.buttons["exercise.chart.period"].tap()
         let all = app.buttons["Tudo"]
         XCTAssertTrue(all.waitForExistence(timeout: 10), "Period menu not shown")
@@ -270,7 +283,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
             seed: ["workout:Push:Supino Reto (Barra)", "finished:Push:2"],
             extraArguments: ["-ui-delete-tapped-session"] + longToastArguments
         )
-        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        openExercise("Supino Reto", search: "supino reto barra", equipment: "barbell", in: app)
         scrollToBottom(in: app)
         let count = element("exercise.history.count", in: app)
         XCTAssertEqual(count.label, "2 treinos")
@@ -292,7 +305,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         continueAfterFailure = false
         let app = launchOnTab("Exercícios", seed: ["exercise-years:Rosca Direta (Halter):3"])
         let opened = Date()
-        openExercise("Rosca Direta (Halter)", search: "rosca direta halter", in: app)
+        openExercise("Rosca Direta", search: "rosca direta halter", equipment: "dumbbell", variation: "Normal", in: app)
         XCTAssertTrue(element("exercise.chart.plot", in: app).waitForExistence(timeout: 10), "No chart")
         recordMeasurement("Medição: abrir o detalhe com 3 anos (312 treinos)", String(format: "%.1f s da busca ao gráfico", Date().timeIntervalSince(opened)))
         app.buttons["exercise.chart.period"].tap()
@@ -312,7 +325,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
             seed: prototype,
             extraArguments: prototypeToday + ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         )
-        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        openExercise("Supino Reto", search: "supino reto barra", equipment: "barbell", in: app)
         let screen = app.windows.firstMatch.frame
         let muscles = element("exercise.muscles", in: app)
         XCTAssertTrue(muscles.exists, "No muscles")
@@ -343,7 +356,7 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         let show = app.buttons["Ver exercício"]
         XCTAssertTrue(show.waitForExistence(timeout: 10), "No Ver exercício in the menu")
         show.tap()
-        waitForExerciseScreen(of: "Supino Reto (Barra)", in: app)
+        waitForExerciseScreen(of: "Supino Reto", in: app)
         XCTAssertEqual(app.buttons["exercise.back"].label, "Push")
         XCTAssertTrue(waitForHiddenTabBar(in: app), "A tab bar over the session")
         // The session in progress never counts: the set just done is not history.
@@ -370,7 +383,9 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         let show = app.buttons["Ver exercício"]
         XCTAssertTrue(show.waitForExistence(timeout: 10), "No Ver exercício in the menu")
         show.tap()
-        waitForExerciseScreen(of: "Supino Inclinado (Halter)", in: app)
+        // A library exercise: the screen of its base, on its combination.
+        waitForExerciseScreen(of: "Supino Inclinado", in: app)
+        XCTAssertTrue(app.buttons["exercise.equipment.dumbbell"].isSelected, "Not on its combination")
         XCTAssertEqual(app.buttons["exercise.back"].label, "Push")
         XCTAssertTrue(waitForHiddenTabBar(in: app), "A tab bar on the exercise screen opened from the editor")
 

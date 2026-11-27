@@ -41,7 +41,9 @@
       "CustomExerciseUITests/testNamesTakenAndCancel": 60.0,
       "CustomExerciseUITests/testDeleteWithoutHistoryGoesBack": 60.0,
       "ExerciseDetailUITests/testTwoSessionsOnTheSameDayAreTwoPoints": 35.0,
-      "CustomExerciseUITests/testLargeTextKeepsTheFormReadable": 30.0
+      "CustomExerciseUITests/testLargeTextKeepsTheFormReadable": 30.0,
+      "ExerciseBaseUITests/testAddToAWorkoutFromTheExerciseScreen": 90.0,
+      "ExerciseBaseUITests/testRowsChooseTheCombination": 50.0
     },
     "2": {
       "BMRCalculatorUITests/testChoicesUpToUsingTheGoal": 53.5,
@@ -77,7 +79,9 @@
       "CustomExerciseUITests/testArchiveLeavesTheWorkoutAndRestore": 100.0,
       "CustomExerciseUITests/testCreateFromThePickerComesBackChosen": 60.0,
       "CustomExerciseUITests/testArchivedExerciseMenuAndNameRules": 60.0,
-      "CustomExerciseUITests/testDoubleTapCreatesOneExercise": 40.0
+      "CustomExerciseUITests/testDoubleTapCreatesOneExercise": 40.0,
+      "ExerciseBaseUITests/testChoiceSheetChoosesAndTheFilterChoosesAtOnce": 100.0,
+      "ExerciseBaseUITests/testBarraWRightAfterBarra": 35.0
     },
     "3": {
       "BMRCalculatorUITests/testCalculatorWithSavedChoices": 29.6,
@@ -114,7 +118,9 @@
       "CustomExerciseUITests/testCreateWithTheFiltersAndFromTheEmptySearch": 60.0,
       "CustomExerciseUITests/testMusclesFollowTheGroupUntilChanged": 60.0,
       "CustomExerciseUITests/testCustomGravitonInTheDetail": 50.0,
-      "ExerciseDetailUITests/testTappingADeletedSessionSaysSo": 35.0
+      "ExerciseDetailUITests/testTappingADeletedSessionSaysSo": 35.0,
+      "ExerciseBaseUITests/testBuildAWorkoutFromTheExercisesTab": 100.0,
+      "ExerciseBaseUITests/testLargeTextKeepsTheRowsOnTheScreen": 30.0
     }
   }
 }

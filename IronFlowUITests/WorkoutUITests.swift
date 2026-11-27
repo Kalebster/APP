@@ -28,21 +28,27 @@ final class WorkoutUITests: IronFlowUITestCase {
         app.textFields.matching(identifier: identifier)
     }
 
-    /// Adds exercises through the picker, choosing each one by searching its exact name.
+    /// A base exercise of the picker and the combination chosen in its sheet (`nil`: the one it opens on).
+    private struct Pick {
+        let base: String
+        var equipment: String?
+        var variation: String?
+    }
+
+    /// Adds exercises through the picker, choosing each base by searching its name and its combination in
+    /// the choice sheet.
     @MainActor
-    private func addExercises(_ names: [String], in app: XCUIApplication) {
+    private func addExercises(_ picks: [Pick], in app: XCUIApplication) {
         let add = app.buttons["workout.addExercises"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Add exercises button not found")
         add.tap()
-        for name in names {
-            searchPicker(for: name, in: app)
-            let card = pickerCard(name, in: app)
-            XCTAssertTrue(card.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
-            card.tap()
+        for pick in picks {
+            searchPicker(for: pick.base, in: app)
+            chooseInPicker(pick.base, equipment: pick.equipment, variation: pick.variation, in: app)
         }
         let confirm = app.buttons["picker.add"]
         XCTAssertTrue(confirm.isEnabled, "Add button disabled after selecting exercises")
-        XCTAssertEqual(confirm.label, "Adicionar (\(names.count))")
+        XCTAssertEqual(confirm.label, "Adicionar (\(picks.count))")
         confirm.tap()
         XCTAssertTrue(confirm.waitForNonExistence(timeout: 10), "Picker not closed")
     }
@@ -262,44 +268,46 @@ final class WorkoutUITests: IronFlowUITestCase {
         waitForEditor(of: "Costas e Bíceps", in: app)
     }
 
-    /// Several exercises enter in the order they were chosen, each with 3 sets; those already in the
-    /// workout show "NO TREINO" and cannot be chosen.
+    /// Several exercises enter in the order they were chosen, each with 3 sets; a base says which of its
+    /// combinations are already in the workout, and its sheet shows one of them as "Já está no treino", off.
     @MainActor
     func testAddSeveralExercisesInOrder() throws {
         continueAfterFailure = false
         let app = launchOnTab("Treinos")
         createWorkout(named: "Push", in: app)
 
-        addExercises(["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"], in: app)
+        addExercises([Pick(base: "Crucifixo Alto"), Pick(base: "Barra Fixa")], in: app)
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
         XCTAssertEqual(headers.count, 2)
-        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crossover (Polia Alta),"), "First: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crucifixo Alto (Polia),"), "First: \(headers.element(boundBy: 0).label)")
         XCTAssertTrue(headers.element(boundBy: 1).label.hasPrefix("Barra Fixa (Pegada Aberta),"), "Second: \(headers.element(boundBy: 1).label)")
         XCTAssertTrue(headers.element(boundBy: 0).label.hasSuffix("3 séries"), "Default sets missing: \(headers.element(boundBy: 0).label)")
         XCTAssertEqual(element("workout.summary", in: app).label, "2 exercícios · 6 séries")
 
-        // The picker again, from the dashed button: the chest exercises, the one already in the workout
-        // at half opacity with "NO TREINO", two more chosen.
+        // The picker again, from the dashed button: the chest exercises, the base with a combination already in
+        // the workout saying so, its sheet with that combination off, and two more chosen.
         scrollToBottom(in: app)
         app.buttons["workout.addExercises"].tap()
         let chest = app.buttons["picker.filter.chest"]
         XCTAssertTrue(chest.waitForExistence(timeout: 10), "Chest filter not shown")
         // The picker has no count: the first card changes from the first exercise of all to the first of the chest.
         tapFilter(chest, changing: app.buttons.matching(identifier: "picker.card").element(boundBy: 0))
-        let inWorkout = pickerCard("Crossover (Polia Alta)", in: app)
+        let inWorkout = pickerCard("Crucifixo Alto", in: app)
         XCTAssertTrue(inWorkout.waitForExistence(timeout: 10), "Exercise not found in the picker")
-        XCTAssertTrue(inWorkout.label.hasSuffix("Já está no treino"), "Missing 'NO TREINO': \(inWorkout.label)")
-        XCTAssertFalse(inWorkout.isEnabled, "An exercise already in the workout can be chosen")
+        XCTAssertTrue(inWorkout.label.hasSuffix("no treino: Polia"), "Missing 'No treino': \(inWorkout.label)")
         let add = app.buttons["picker.add"]
         XCTAssertFalse(add.isEnabled, "Add button enabled without a selection")
         inWorkout.tap()
+        let already = app.buttons["choice.inWorkout"]
+        XCTAssertTrue(already.waitForExistence(timeout: 10), "No 'Já está no treino' in the sheet")
+        XCTAssertFalse(already.isEnabled, "'Já está no treino' can be tapped")
+        app.buttons["choice.close"].tap()
+        XCTAssertTrue(already.waitForNonExistence(timeout: 10), "Sheet not closed")
         XCTAssertFalse(add.isEnabled, "An exercise already in the workout was chosen")
-        for name in ["Crossover (Polia Média)", "Crossover (Polia Baixa)"] {
-            let card = pickerCard(name, in: app)
-            XCTAssertTrue(card.waitForExistence(timeout: 10), "'\(name)' not found in the picker")
-            card.tap()
-            XCTAssertTrue(card.isSelected, "'\(name)' not shown as chosen")
+        for name in ["Crucifixo", "Crucifixo Baixo"] {
+            chooseInPicker(name, in: app)
+            XCTAssertTrue(pickerCard(name, in: app).isSelected, "'\(name)' not shown as chosen")
         }
         XCTAssertEqual(add.label, "Adicionar (2)")
         attachScreenshot(named: "77-exercise-picker", of: app)
@@ -310,14 +318,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertEqual(element("workout.summary", in: app).label, "2 exercícios · 6 séries")
 
         // Added in the order they were chosen.
-        addExercises(["Crossover (Polia Média)", "Crossover (Polia Baixa)"], in: app)
+        addExercises([Pick(base: "Crucifixo"), Pick(base: "Crucifixo Baixo")], in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "4 exercícios · 12 séries"), "Summary after adding")
         scrollToTop(in: app)
         let names = (0..<headers.count).map { headers.element(boundBy: $0).label.components(separatedBy: ",")[0] }
-        XCTAssertEqual(Array(names.prefix(2)), ["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"])
+        XCTAssertEqual(Array(names.prefix(2)), ["Crucifixo Alto (Polia)", "Barra Fixa (Pegada Aberta)"])
         scrollToBottom(in: app)
         let lastNames = (0..<headers.count).map { headers.element(boundBy: $0).label.components(separatedBy: ",")[0] }
-        XCTAssertEqual(Array(lastNames.suffix(2)), ["Crossover (Polia Média)", "Crossover (Polia Baixa)"])
+        XCTAssertEqual(Array(lastNames.suffix(2)), ["Crucifixo (Halter)", "Crucifixo Baixo (Polia)"])
     }
 
     /// A double tap on "Adicionar (N)" adds the exercises once, closes the picker and shows no error.
@@ -328,11 +336,9 @@ final class WorkoutUITests: IronFlowUITestCase {
         openWorkout(named: "Push", in: app)
 
         app.buttons["workout.addExercises"].tap()
-        for name in ["Crossover (Polia Alta)", "Crossover (Polia Baixa)"] {
+        for name in ["Crucifixo Alto", "Crucifixo Baixo"] {
             searchPicker(for: name, in: app)
-            let card = pickerCard(name, in: app)
-            XCTAssertTrue(card.waitForExistence(timeout: 10), "Exercise '\(name)' not found in the picker")
-            card.tap()
+            chooseInPicker(name, in: app)
         }
         let confirm = app.buttons["picker.add"]
         XCTAssertTrue(confirm.isEnabled, "Add button disabled after selecting exercises")
@@ -343,7 +349,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.firstMatch.waitForExistence(timeout: 10), "Exercises not added")
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "2 exercícios · 6 séries"), "Exercises added more than once")
-        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crossover (Polia Alta),"), "First: \(headers.element(boundBy: 0).label)")
+        XCTAssertTrue(headers.element(boundBy: 0).label.hasPrefix("Crucifixo Alto (Polia),"), "First: \(headers.element(boundBy: 0).label)")
     }
 
     // MARK: - Sets
@@ -540,7 +546,7 @@ final class WorkoutUITests: IronFlowUITestCase {
     @MainActor
     func testRemoveExerciseCancelAndConfirm() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Treinos", seed: ["workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta)"])
+        let app = launchOnTab("Treinos", seed: ["workout:Push:Crucifixo Alto (Polia)|Barra Fixa (Pegada Aberta)"])
         openWorkout(named: "Push", in: app)
         let headers = exerciseHeaders(in: app)
         XCTAssertTrue(headers.firstMatch.waitForExistence(timeout: 10), "Exercises not shown")
@@ -548,7 +554,7 @@ final class WorkoutUITests: IronFlowUITestCase {
         let menu = app.buttons.matching(identifier: "workout.exercise.menu").element(boundBy: 0)
         menu.tap()
         app.buttons["Remover do treino"].tap()
-        XCTAssertTrue(app.staticTexts["Remover Crossover (Polia Alta)?"].waitForExistence(timeout: 10), "Removal question not shown")
+        XCTAssertTrue(app.staticTexts["Remover Crucifixo Alto (Polia)?"].waitForExistence(timeout: 10), "Removal question not shown")
         XCTAssertTrue(app.staticTexts["As séries planejadas dele também saem deste treino. O histórico não muda."].exists, "Removal message")
         // The question points to the exercise's ⋯: it opens right below it.
         let menuFrame = menu.frame
@@ -643,13 +649,14 @@ final class WorkoutUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForLabel(of: first, toBe: "Série 1, Aquecimento, atual"), "First set: \(first.label)")
     }
 
-    /// The longest name of the library (54 characters) wraps in two lines, whole and beside the ⋯, as any
-    /// long name does: found by searching in the Exercícios tab, added to a workout through the editor's
-    /// picker and started. Each place is compared with "Tríceps Corda (Polia)", whose name takes one line.
+    /// A long name of the library, "Remada Alta Unilateral Iso-Lateral (Máquina)" (44 characters, common in its
+    /// base), wraps in two lines, whole and beside the ⋯, as any long name does: its base found by searching
+    /// in the Exercícios tab, the combination chosen in the editor's picker, and the workout started. The
+    /// editor and the session compare it with "Tríceps Corda (Polia)", whose name takes one line.
     @MainActor
     func testTheLongestExerciseNameWrapsInTwoLines() throws {
         continueAfterFailure = false
-        let longest = "Extensão de Tríceps Acima da Cabeça Unilateral (Polia)"
+        let longest = "Remada Alta Unilateral Iso-Lateral (Máquina)"
         let short = "Tríceps Corda (Polia)"
         let app = launchOnTab("Exercícios", seed: ["workout:Tríceps:\(short)"])
         let screen = app.windows.firstMatch.frame
@@ -658,9 +665,9 @@ final class WorkoutUITests: IronFlowUITestCase {
             app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", identifier, "Opções de \(name)")).firstMatch
         }
 
-        /// One line of the name more than the short one, never two: a line of 14 is about 17 pt, and the
-        /// icon hides part of it in a card. Nothing leaves the screen. In the editor the names themselves
-        /// are compared, as the 44 pt of the ⋯ set the height of a row with a name in one or two lines.
+        /// One line of the name more than the short one, never two: a line of 14 is about 17 pt. Nothing leaves
+        /// the screen. In the editor the names themselves are compared, as the 44 pt of the ⋯ set the height of
+        /// a row with a name in one or two lines.
         func checkTwoLines(long: CGRect, short: CGRect, in place: String) {
             let extra = long.height - short.height
             measurements.append("\(place): \(Int(short.height)) → \(Int(long.height)) pt, \(Int(long.minX))–\(Int(long.maxX))")
@@ -670,32 +677,29 @@ final class WorkoutUITests: IronFlowUITestCase {
             XCTAssertLessThanOrEqual(long.maxX, screen.maxX, "\(place): leaves the screen")
         }
 
-        // The Exercícios tab: each card found by searching words of its name.
+        // The Exercícios tab shows the bases, whose names are short: the search finds Remada Alta, and Remada
+        // Ombro by the old name "Remada Alta (Barra)"; each card stays on the screen.
         let cards = app.descendants(matching: .any).matching(identifier: "exercises.card")
         let search = app.textFields["exercises.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 10), "Search field not found")
         search.tapAndWaitForKeyboardFocus()
-        search.typeText("triceps corda")
-        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(short), Tríceps, Cabeça lateral, Polia"), "Short card: \(cards.element(boundBy: 0).label)")
-        let shortCard = cards.element(boundBy: 0).frame
-        app.buttons["exercises.search.clear"].tap()
-        search.tapAndWaitForKeyboardFocus()
-        search.typeText("acima unilateral")
-        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "\(longest), Tríceps, Cabeça longa, Polia"), "Long card: \(cards.element(boundBy: 0).label)")
-        // "acima" alone also shows the other five: the list has the whole search once they leave.
-        XCTAssertTrue(cards.element(boundBy: 1).waitForNonExistence(timeout: 10), "The search kept other exercises")
-        XCTAssertEqual(cards.count, 1)
-        checkTwoLines(long: cards.element(boundBy: 0).frame, short: shortCard, in: "Exercícios")
+        search.typeText("remada alta")
+        XCTAssertTrue(waitForLabel(of: cards.element(boundBy: 0), toBe: "Remada Alta, Dorsais, mais comum com Máquina, Máquina iso-lateral"), "Card: \(cards.element(boundBy: 0).label)")
+        XCTAssertTrue(cards.element(boundBy: 1).label.hasPrefix("Remada Ombro,"), "Second card: \(cards.element(boundBy: 1).label)")
+        for index in 0..<cards.count {
+            let frame = cards.element(boundBy: index).frame
+            XCTAssertTrue(frame.minX >= screen.minX && frame.maxX <= screen.maxX, "Card \(index) leaves the screen: \(frame)")
+        }
         search.typeText("\n")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10), "Keyboard still shown")
         attachScreenshot(named: "105-long-name-exercises", of: app)
 
-        // The editor: the long one added through the picker, found by its whole name; then the rows of both
-        // exercises, and the name beside its ⋯.
+        // The editor: the long one added through the picker, its combination chosen in the sheet; then the rows
+        // of both exercises, and the name beside its ⋯.
         openTab("Treinos", in: app)
         openWorkout(named: "Tríceps", in: app)
         scrollToBottom(in: app)
-        addExercises([longest], in: app)
+        addExercises([Pick(base: "Remada Alta", equipment: "isoLateralMachine", variation: "Unilateral")], in: app)
         scrollToTop(in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "2 exercícios · 6 séries"), "Summary after adding: \(element("workout.summary", in: app).label)")
         func header(_ name: String) -> XCUIElement {

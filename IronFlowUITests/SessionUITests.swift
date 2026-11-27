@@ -151,6 +151,8 @@ final class SessionUITests: IronFlowUITestCase {
         discard.tap()
         let confirm = confirmationButton("Descartar treino", title: "Descartar treino?", in: app)
         XCTAssertTrue(app.staticTexts["As séries deste treino não serão salvas. Não dá para desfazer."].exists, "Not the discard message")
+        // iOS 26's question, for the owner to see; the prototype has no reference for it.
+        attachScreenshot(named: "133-session-discard-confirmation", of: app)
         confirm.tap()
         XCTAssertTrue(element("session.name", in: app).waitForNonExistence(timeout: 10), "Session screen not closed")
         XCTAssertTrue(waitForToast("Treino descartado", in: app), "No notice after discarding")
