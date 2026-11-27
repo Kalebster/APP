@@ -56,8 +56,12 @@
       { "click": "[data-act=\"pick\"][data-target=\"editor\"]" },
       { "type": ["#pq", "triceps corda"] },
       { "click": ".pk-item:not(:disabled)", "index": 0 },
-      { "type": ["#pq", "acima unilateral"] },
+      { "click": ".sheet [data-act=\"vk-pick\"]" },
+      { "type": ["#pq", "remada alta"] },
       { "click": ".pk-item:not(:disabled)", "index": 0 },
+      { "click": ".sheet [data-act=\"vk-eq\"][data-v=\"Máquina iso-lateral\"]" },
+      { "click": ".sheet [data-act=\"vk-var\"][data-v=\"Unilateral\"]" },
+      { "click": ".sheet [data-act=\"vk-pick\"]" },
       { "click": "[data-act=\"pk-add\"]" },
       { "wait": 2700 },
       { "scroll": 0 }
@@ -166,7 +170,9 @@
       { "click": "[data-act=\"pick\"][data-target=\"editor\"]" },
       { "click": ".js-pk-groups [data-g=\"Peito\"]" },
       { "click": ".pk-item:not(:disabled)", "index": 0 },
-      { "click": ".pk-item:not(:disabled)", "index": 1 }
+      { "click": ".sheet [data-act=\"vk-pick\"]" },
+      { "click": ".pk-item:not(:disabled)", "index": 2 },
+      { "click": ".sheet [data-act=\"vk-pick\"]" }
     ] },
     { "name": "78-workout-reorder", "url": "#editar", "steps": [
       { "click": "[data-act=\"proto-app\"]" },
@@ -301,7 +307,7 @@
       { "click": ".js-groups [data-g=\"Adutores\"]" },
       { "reveal": ".js-groups [data-g=\"Adutores\"]" }
     ] },
-    { "name": "105-long-name-exercises", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "focus": "#q" }, { "type": ["#q", "acima unilateral"] }] },
+    { "name": "105-long-name-exercises", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "focus": "#q" }, { "type": ["#q", "remada alta"] }] },
     { "name": "106-long-name-editor", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "treino-de-nome-longo" }] },
     { "name": "107-long-name-session", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "treino-de-nome-longo" }, { "click": "[data-act=\"ed-start\"]" }] },
     { "name": "108-exercise-detail", "url": "#exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
@@ -316,6 +322,23 @@
     { "name": "122-edit-exercise", "url": "#editar-exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
     { "name": "123-exercise-mine", "url": "#exercicio-meu", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
     { "name": "124-exercise-archived", "url": "#exercicio-arquivado", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
-    { "name": "125-exercises-mine-archived", "url": "#exercicios-meus", "steps": [{ "click": "[data-act=\"proto-app\"]" }] }
+    { "name": "125-exercises-mine-archived", "url": "#exercicios-meus", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "127-exercise-detail-grip", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "focus": "#q" }, { "type": ["#q", "puxada alta"] }, { "click": "[data-act=\"ex-item\"]", "index": 0 }] },
+    { "name": "128-exercise-detail-ez-bar", "url": "#exercicios", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
+      { "focus": "#q" },
+      { "type": ["#q", "rosca direta"] },
+      { "click": "[data-act=\"ex-item\"]", "index": 0 },
+      { "click": "[data-act=\"exd-eq\"][data-v=\"Barra W\"]" }
+    ] },
+    { "name": "129-choice-sheet", "url": "#editar", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
+      { "click": "[data-act=\"pick\"][data-target=\"editor\"]" },
+      { "type": ["#pq", "supino reto"] },
+      { "click": ".pk-item", "index": 0 }
+    ] },
+    { "name": "130-add-to-workout", "url": "#exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"exd-add\"]" }] },
+    { "name": "131-build-workout-picker", "url": "#lista-base", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"ex-build\"]" }] },
+    { "name": "132-exercise-form-discard", "url": "#novo-exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "type": ["#xfn", "Puxada Nova"] }, { "click": "[data-act=\"xf-cancel\"]" }] }
   ]
 }
