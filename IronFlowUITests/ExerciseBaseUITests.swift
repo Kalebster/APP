@@ -96,6 +96,9 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
             XCTAssertTrue(sameLine ? next.minX > previous.maxX : next.minY > previous.minY + 1, "\(order[index + 1]) is not after \(order[index]): \(previous), \(next)")
             XCTAssertLessThanOrEqual(next.maxX, screen.maxX, "\(order[index + 1]) leaves the screen")
         }
+        // As in the prototype, the four common ones fit on the first line (run 46047186211: Elástico went to the
+        // second line, the first one laid out again in its own width, a fraction of a point short).
+        XCTAssertEqual(frames[3].minY, frames[0].minY, accuracy: 1, "Elástico is not on the first line: \(frames[0]), \(frames[3])")
         XCTAssertEqual(app.buttons["exercise.equipment.machine"].label, "Máquina")
         XCTAssertEqual(app.buttons["exercise.equipment.band"].label, "Elástico")
         XCTAssertEqual(app.buttons["exercise.equipment.kettlebell"].label, "Kettlebell, menos comum")
