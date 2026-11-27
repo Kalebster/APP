@@ -109,4 +109,24 @@ extension DefaultExercise {
     init(key: String, id: String, name: String, muscleGroup: MuscleGroup) {
         self.init(key: key, id: id, name: name, muscleGroup: muscleGroup, equipment: .bodyweight, focus: "Teste")
     }
+
+    /// An entry of a library from before the base list (the fixtures of 157, 220 and 420), which had no base
+    /// exercise: its own name is its base, with its equipment and no variation.
+    init(key: String, id: String, name: String, muscleGroup: MuscleGroup, equipment: Equipment, focus: String) {
+        let option: LibraryEquipment = switch equipment {
+        case .barbell: .barbell
+        case .dumbbell: .dumbbell
+        case .machine: .machine
+        case .cable: .cable
+        case .smith: .smith
+        case .bodyweight: .bodyweight
+        case .kettlebell: .kettlebell
+        case .band: .band
+        case .plate: .plate
+        }
+        self.init(
+            key: key, id: id, name: name, muscleGroup: muscleGroup, base: name, option: option, variation: nil,
+            focus: focus, isCommon: true
+        )
+    }
 }
