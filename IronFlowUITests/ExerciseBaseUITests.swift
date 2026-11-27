@@ -44,6 +44,23 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
         return XCTWaiter().wait(for: [expectation], timeout: 10) == .completed
     }
 
+    /// Opens the editor of the workout `name` from its card on the Treinos list (not the first card).
+    @MainActor
+    private func openWorkoutCard(named name: String, in app: XCUIApplication) {
+        let card = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "workouts.card", "\(name), ")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "No card of \(name)")
+        card.tap()
+        waitForEditor(of: name, in: app)
+    }
+
+    /// In the editor on screen, scrolled to its end: the exercises' headers, top to bottom, as far as they
+    /// are made (the list is lazy).
+    @MainActor
+    private func lastHeaders(in app: XCUIApplication) -> [String] {
+        scrollToBottom(in: app)
+        return app.descendants(matching: .any).matching(identifier: "workout.exercise").allElementsBoundByIndex.map(\.label)
+    }
+
     /// The rows of the sheet "Adicionar a um treino", in the order of the Treinos tab.
     @MainActor
     private func workoutRows(in app: XCUIApplication) -> XCUIElementQuery {
@@ -74,8 +91,9 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
         let frames = order.map { app.buttons["exercise.equipment.\($0)"].frame }
         for (index, pair) in zip(frames, frames.dropFirst()).enumerated() {
             let (previous, next) = pair
+            // On the same line, to its right; or on a line below (the touch areas of two lines meet).
             let sameLine = abs(next.minY - previous.minY) <= 1
-            XCTAssertTrue(sameLine ? next.minX > previous.maxX : next.minY > previous.maxY, "\(order[index + 1]) is not after \(order[index])")
+            XCTAssertTrue(sameLine ? next.minX > previous.maxX : next.minY > previous.minY + 1, "\(order[index + 1]) is not after \(order[index]): \(previous), \(next)")
             XCTAssertLessThanOrEqual(next.maxX, screen.maxX, "\(order[index + 1]) leaves the screen")
         }
         XCTAssertEqual(app.buttons["exercise.equipment.machine"].label, "Máquina")
@@ -167,7 +185,7 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
     func testChoiceSheetChoosesAndTheFilterChoosesAtOnce() throws {
         continueAfterFailure = false
         let app = launchOnTab("Treinos", seed: workouts + ["prototype-history"], extraArguments: prototypeToday)
-        openWorkout(named: "Push", in: app)
+        openWorkoutCard(named: "Push", in: app)
         scrollToBottom(in: app)
         app.buttons["workout.addExercises"].tap()
         let add = app.buttons["picker.add"]
@@ -249,11 +267,12 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
 
         // Adicionar: the two combinations at the end of the workout.
         add.tap()
-        waitForEditor(of: "Push", in: app)
-        let headers = app.descendants(matching: .any).matching(identifier: "workout.exercise")
+        XCTAssertTrue(add.waitForNonExistence(timeout: 10), "The picker did not close")
+        let headers = lastHeaders(in: app)
+        XCTAssertTrue(headers.suffix(2).first?.hasPrefix("Supino Reto (Halter),") ?? false, "Exercises at the end: \(headers)")
+        XCTAssertTrue(headers.last?.hasPrefix("Supino Inclinado (Polia),") ?? false, "Exercises at the end: \(headers)")
+        scrollToTop(in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "6 exercícios · 18 séries"), "Summary: \(element("workout.summary", in: app).label)")
-        XCTAssertTrue(headers.element(boundBy: 4).label.hasPrefix("Supino Reto (Halter),"), "Fifth: \(headers.element(boundBy: 4).label)")
-        XCTAssertTrue(headers.element(boundBy: 5).label.hasPrefix("Supino Inclinado (Polia),"), "Sixth: \(headers.element(boundBy: 5).label)")
     }
 
     // MARK: - Adicionar a um treino
@@ -311,8 +330,9 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
         XCTAssertTrue(element(labelStartingWith: "Peito", in: app).exists, "No Peito on the list")
 
         // Pull has it at its end.
-        openWorkout(named: "Pull", in: app)
+        openWorkoutCard(named: "Pull", in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "3 exercícios · 9 séries"), "Summary: \(element("workout.summary", in: app).label)")
+        XCTAssertTrue(lastHeaders(in: app).last?.hasPrefix("Supino Reto (Barra),") ?? false, "Pull does not end with Supino Reto (Barra)")
     }
 
     @MainActor
@@ -358,10 +378,10 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
         XCTAssertTrue(title.waitForNonExistence(timeout: 10), "The picker did not close")
         XCTAssertTrue(element("exercises.total", in: app).exists, "Not back on the Exercícios tab")
         openTab("Treinos", in: app)
-        openWorkout(named: "Push", in: app)
-        let headers = app.descendants(matching: .any).matching(identifier: "workout.exercise")
+        openWorkoutCard(named: "Push", in: app)
         XCTAssertTrue(waitForLabel(of: element("workout.summary", in: app), toBe: "5 exercícios · 15 séries"), "Summary: \(element("workout.summary", in: app).label)")
-        XCTAssertTrue(headers.element(boundBy: 4).label.hasPrefix("Crucifixo (Halter),"), "Fifth: \(headers.element(boundBy: 4).label)")
+        let pushHeaders = lastHeaders(in: app)
+        XCTAssertTrue(pushHeaders.last?.hasPrefix("Crucifixo (Halter),") ?? false, "Push does not end with Crucifixo (Halter): \(pushHeaders)")
         goBackFromEditor(in: app)
 
         // A new workout with one: its editor opens.
@@ -380,6 +400,7 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
         app.buttons["workout.name.save"].tap()
         waitForEditor(of: "Costas", in: app)
         XCTAssertTrue(waitForToast("Treino criado com 1 exercício", in: app), "No Treino criado com 1 exercício")
+        let headers = app.descendants(matching: .any).matching(identifier: "workout.exercise")
         XCTAssertTrue(headers.firstMatch.label.hasPrefix("Remada Curvada (Barra),"), "Exercise: \(headers.firstMatch.label)")
     }
 }
