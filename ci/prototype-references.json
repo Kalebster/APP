@@ -64,55 +64,62 @@
     ]
   },
   "references": [
-    { "name": "1-home", "url": "", "steps": [{ "do": "apagar-treinos" }, { "click": ".tabs [data-to=\"home\"]" }] },
-    { "name": "2-workouts", "url": "", "steps": [{ "do": "apagar-treinos" }] },
-    { "name": "3-exercises", "url": "#exercicios", "steps": [] },
-    { "name": "11-workouts-empty", "url": "", "steps": [{ "do": "apagar-treinos" }] },
+    { "name": "1-home", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "apagar-treinos" }, { "click": ".tabs [data-to=\"home\"]" }] },
+    { "name": "2-workouts", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "apagar-treinos" }] },
+    { "name": "3-exercises", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "11-workouts-empty", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "apagar-treinos" }] },
     { "name": "15-workout-delete-confirmation", "url": "#editar", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"ed-menu\"]" },
       { "click": ".ios-wrap [data-act=\"w-delete-ask\"]" }
     ] },
     { "name": "22-home", "url": "", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "apagar-treinos" },
       { "click": ".tabs [data-to=\"home\"]" },
       { "click": "[data-act=\"metric\"][data-m=\"kcal\"]" },
       { "click": ".sheet [data-act=\"m-save\"]" }
     ] },
-    { "name": "23-home-customize", "url": "", "steps": [{ "click": "[data-act=\"customize\"]" }] },
+    { "name": "23-home-customize", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"customize\"]" }] },
     { "name": "25-session", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "click": "[data-act=\"check\"][data-ex=\"0\"][data-set=\"1\"]" },
       { "wait": 2700 }
     ] },
     { "name": "26-session-bar", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"start\"][data-w=\"push\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "wait": 2700 },
       { "click": "[data-act=\"minimize\"]" }
     ] },
     { "name": "28-session-finish-last-record", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "wait": 2700 },
       { "click": "[data-act=\"finish\"]" }
     ] },
-    { "name": "30-home-actions-no-workouts", "url": "", "steps": [{ "do": "apagar-treinos" }, { "click": ".tabs [data-to=\"home\"]" }] },
-    { "name": "31-home-actions", "url": "", "steps": [{ "do": "descanso-hoje" }] },
-    { "name": "32-workout-picker", "url": "", "steps": [{ "do": "descanso-hoje" }, { "click": ".js-hero-start" }] },
+    { "name": "30-home-actions-no-workouts", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "apagar-treinos" }, { "click": ".tabs [data-to=\"home\"]" }] },
+    { "name": "31-home-actions", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "descanso-hoje" }] },
+    { "name": "32-workout-picker", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "descanso-hoje" }, { "click": ".js-hero-start" }] },
     { "name": "38-home-week", "url": "", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "apagar-treinos" },
       { "click": ".tabs [data-to=\"home\"]" },
       { "click": "[data-act=\"day\"][data-i=\"4\"]" }
     ] },
-    { "name": "39-home-week-app", "url": "#treino", "steps": [{ "do": "concluir-e-salvar" }] },
-    { "name": "41-weekly-plan", "url": "#treinos", "steps": [{ "click": "#s-treinos [data-act=\"plan-open\"]" }] },
-    { "name": "42-home-planned", "url": "", "steps": [] },
-    { "name": "43-workouts", "url": "#treinos", "steps": [] },
-    { "name": "44-workouts-recent", "url": "#treinos", "steps": [{ "scroll": "bottom" }] },
-    { "name": "50-home-scheduled", "url": "", "steps": [] },
-    { "name": "51-home-in-progress", "url": "#treino", "steps": [{ "click": "[data-act=\"minimize\"]" }] },
-    { "name": "52-home-completed", "url": "#treino", "steps": [{ "do": "concluir-e-salvar" }, { "wait": 4200 }] },
-    { "name": "53-home-no-workouts", "url": "", "steps": [{ "do": "apagar-treinos" }, { "click": ".tabs [data-to=\"home\"]" }] },
+    { "name": "39-home-week-app", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "concluir-e-salvar" }] },
+    { "name": "41-weekly-plan", "url": "#treinos", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "#s-treinos [data-act=\"plan-open\"]" }] },
+    { "name": "42-home-planned", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "43-workouts", "url": "#treinos", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "44-workouts-recent", "url": "#treinos", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "scroll": "bottom" }] },
+    { "name": "50-home-scheduled", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "51-home-in-progress", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"minimize\"]" }] },
+    { "name": "52-home-completed", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "concluir-e-salvar" }, { "wait": 4200 }] },
+    { "name": "53-home-no-workouts", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "apagar-treinos" }, { "click": ".tabs [data-to=\"home\"]" }] },
     { "name": "54-home-nothing-planned", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "#s-treinos [data-act=\"plan-open\"]" },
       { "click": "[data-act=\"plan-day\"][data-d=\"0\"]" },
       { "click": ".sheet [data-act=\"plan-set\"][data-d=\"0\"][data-w=\"\"]" },
@@ -126,12 +133,13 @@
       { "click": "[data-act=\"plan-back\"]" },
       { "click": ".tabs [data-to=\"home\"]" }
     ] },
-    { "name": "55-home-week-goal", "url": "#treino", "steps": [{ "do": "concluir-e-salvar" }, { "wait": 4200 }] },
-    { "name": "56-workouts", "url": "#treinos", "steps": [] },
-    { "name": "57-workouts-empty", "url": "", "steps": [{ "do": "apagar-treinos" }] },
-    { "name": "58-workouts-today", "url": "#treinos", "steps": [] },
-    { "name": "63-session-last-time-rest", "url": "#treino", "steps": [{ "do": "primeira-serie-sem-aviso" }, { "wait": 2700 }] },
+    { "name": "55-home-week-goal", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "concluir-e-salvar" }, { "wait": 4200 }] },
+    { "name": "56-workouts", "url": "#treinos", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "57-workouts-empty", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "apagar-treinos" }] },
+    { "name": "58-workouts-today", "url": "#treinos", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "63-session-last-time-rest", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "primeira-serie-sem-aviso" }, { "wait": 2700 }] },
     { "name": "64-session-exercise-done", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "click": "[data-act=\"check\"][data-ex=\"0\"][data-set=\"1\"]" },
       { "click": "[data-act=\"check\"][data-ex=\"0\"][data-set=\"2\"]" },
@@ -140,52 +148,60 @@
       { "wait": 2700 },
       { "scroll": 0 }
     ] },
-    { "name": "65-session-current-set", "url": "#treino", "steps": [] },
-    { "name": "68-session-end-of-list-rest", "url": "#treino", "steps": [{ "do": "primeira-serie-sem-aviso" }, { "wait": 2700 }, { "scroll": "bottom" }] },
-    { "name": "69-session-done-without-load", "url": "#treino", "steps": [{ "do": "primeira-serie-sem-aviso" }, { "wait": 2700 }] },
-    { "name": "70-exercises-all", "url": "#exercicios", "steps": [] },
+    { "name": "65-session-current-set", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "68-session-end-of-list-rest", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "primeira-serie-sem-aviso" }, { "wait": 2700 }, { "scroll": "bottom" }] },
+    { "name": "69-session-done-without-load", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "primeira-serie-sem-aviso" }, { "wait": 2700 }] },
+    { "name": "70-exercises-all", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
     { "name": "71-exercises-chest-dumbbells", "url": "#exercicios", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": ".js-groups [data-g=\"Peito\"]" },
       { "click": ".js-eq [data-e=\"Halteres\"]" }
     ] },
-    { "name": "72-exercises-no-results", "url": "#exercicios", "steps": [{ "focus": "#q" }, { "type": ["#q", "supino xyz"] }] },
-    { "name": "73-exercises-mine", "url": "#exercicios", "steps": [{ "click": ".js-groups [data-g=\"Meus\"]" }] },
-    { "name": "75-workout-editor", "url": "#editar", "steps": [] },
-    { "name": "76-set-type-sheet", "url": "#editar", "steps": [{ "click": "[data-act=\"type\"][data-scope=\"e\"][data-ex=\"0\"][data-set=\"2\"]" }] },
+    { "name": "72-exercises-no-results", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "focus": "#q" }, { "type": ["#q", "supino xyz"] }] },
+    { "name": "73-exercises-mine", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": ".js-groups [data-g=\"Meus\"]" }] },
+    { "name": "75-workout-editor", "url": "#editar", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "76-set-type-sheet", "url": "#editar", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"type\"][data-scope=\"e\"][data-ex=\"0\"][data-set=\"2\"]" }] },
     { "name": "77-exercise-picker", "url": "#editar", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"pick\"][data-target=\"editor\"]" },
       { "click": ".js-pk-groups [data-g=\"Peito\"]" },
       { "click": ".pk-item:not(:disabled)", "index": 0 },
       { "click": ".pk-item:not(:disabled)", "index": 1 }
     ] },
     { "name": "78-workout-reorder", "url": "#editar", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"ed-menu\"]" },
       { "click": ".ios-wrap [data-act=\"ord-start\"]" }
     ] },
     { "name": "79-workout-new", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"create\"]" },
       { "type": ["#wname", "Costas e Bíceps"] },
       { "click": ".sheet [data-act=\"create-save\"]" },
       { "wait": 2700 }
     ] },
     { "name": "80-session-set-types", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "click": "[data-act=\"check\"][data-ex=\"0\"][data-set=\"1\"]" },
       { "wait": 2700 }
     ] },
     { "name": "82-workouts-delete-confirmation", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"w-menu\"][data-w=\"pull\"]" },
       { "click": ".ios-wrap [data-act=\"w-delete-ask\"]" }
     ] },
-    { "name": "83-home-rest-day", "url": "", "steps": [{ "do": "descanso-hoje" }] },
-    { "name": "84-workout-picker", "url": "", "steps": [{ "click": ".js-hero-other" }] },
-    { "name": "85-weight-editor", "url": "", "steps": [{ "click": "[data-act=\"metric\"][data-m=\"weight\"]" }] },
-    { "name": "86-customize", "url": "", "steps": [{ "click": "[data-act=\"customize\"]" }] },
+    { "name": "83-home-rest-day", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "descanso-hoje" }] },
+    { "name": "84-workout-picker", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": ".js-hero-other" }] },
+    { "name": "85-weight-editor", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"metric\"][data-m=\"weight\"]" }] },
+    { "name": "86-customize", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"customize\"]" }] },
     { "name": "87-bmr-calculator", "url": "", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"metric\"][data-m=\"kcal\"]" },
       { "click": ".sheet [data-act=\"calc-open\"]" }
     ] },
     { "name": "88-bmr-result", "url": "", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"metric\"][data-m=\"kcal\"]" },
       { "click": ".sheet [data-act=\"calc-open\"]" },
       { "click": ".sheet [data-act=\"calc-sex\"][data-v=\"m\"]" },
@@ -195,44 +211,52 @@
       { "click": ".sheet [data-act=\"calc-goal\"][data-v=\"lose\"]" },
       { "scrollIn": [".sheet", "bottom"] }
     ] },
-    { "name": "89-weekly-plan", "url": "#treinos", "steps": [{ "click": "#s-treinos [data-act=\"plan-open\"]" }] },
+    { "name": "89-weekly-plan", "url": "#treinos", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "#s-treinos [data-act=\"plan-open\"]" }] },
     { "name": "90-plan-day-sheet", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "#s-treinos [data-act=\"plan-open\"]" },
       { "click": "[data-act=\"plan-day\"][data-d=\"2\"]" }
     ] },
     { "name": "91-session-finish", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "click": "[data-act=\"check\"][data-ex=\"0\"][data-set=\"1\"]" },
       { "wait": 2700 },
       { "click": "[data-act=\"finish\"]" }
     ] },
-    { "name": "92-session-finish-nothing-done", "url": "#treino", "steps": [{ "click": "[data-act=\"finish\"]" }] },
-    { "name": "93-workout-saved-notice", "url": "#treino", "steps": [{ "do": "concluir-e-salvar" }] },
+    { "name": "92-session-finish-nothing-done", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"finish\"]" }] },
+    { "name": "93-workout-saved-notice", "url": "#treino", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "concluir-e-salvar" }] },
     { "name": "94-workout-name-empty", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"create\"]" },
       { "click": ".sheet [data-act=\"create-save\"]" }
     ] },
     { "name": "95-editor-rest", "url": "#editar", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"e-rest\"]", "index": 0 },
       { "click": ".sheet [data-act=\"e-rest-set\"][data-v=\"120\"]" },
       { "wait": 1000 }
     ] },
-    { "name": "96-rest-sheet", "url": "#editar", "steps": [{ "click": "[data-act=\"e-rest\"]", "index": 0 }] },
+    { "name": "96-rest-sheet", "url": "#editar", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "click": "[data-act=\"e-rest\"]", "index": 0 }] },
     { "name": "97-rest-alert-offer", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"check\"][data-ex=\"0\"][data-set=\"0\"]" },
       { "wait": 800 }
     ] },
     { "name": "98-rest-running", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "pedir-aviso" },
       { "click": ".sysalert-wrap [data-act=\"sys-yes\"]" }
     ] },
     { "name": "99-session-options", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "pedir-aviso" },
       { "click": ".sysalert-wrap [data-act=\"sys-yes\"]" },
       { "wait": 2700 },
       { "click": "[data-act=\"session-menu\"]" }
     ] },
     { "name": "100-rest-ready", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "wait": 2700 },
       { "click": "[data-act=\"rest-minus\"]" },
@@ -246,16 +270,19 @@
       { "click": "[data-act=\"rest-minus\"]" }
     ] },
     { "name": "101-rest-alert-refused", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "pedir-aviso" },
       { "click": ".sysalert-wrap [data-act=\"sys-no\"]" }
     ] },
     { "name": "102-session-options-refused", "url": "#treino", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "do": "pedir-aviso" },
       { "click": ".sysalert-wrap [data-act=\"sys-no\"]" },
       { "wait": 4200 },
       { "click": "[data-act=\"session-menu\"]" }
     ] },
     { "name": "103-rest-ended-elsewhere", "url": "#treinos", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "click": "[data-act=\"start\"][data-w=\"push\"]" },
       { "do": "primeira-serie-sem-aviso" },
       { "click": "[data-act=\"rest-minus\"]" },
@@ -269,25 +296,26 @@
       { "wait": 12000 }
     ] },
     { "name": "104-exercises-adductors", "url": "#exercicios", "steps": [
+      { "click": "[data-act=\"proto-app\"]" },
       { "reveal": ".js-groups [data-g=\"Adutores\"]" },
       { "click": ".js-groups [data-g=\"Adutores\"]" },
       { "reveal": ".js-groups [data-g=\"Adutores\"]" }
     ] },
-    { "name": "105-long-name-exercises", "url": "#exercicios", "steps": [{ "focus": "#q" }, { "type": ["#q", "acima unilateral"] }] },
-    { "name": "106-long-name-editor", "url": "", "steps": [{ "do": "treino-de-nome-longo" }] },
-    { "name": "107-long-name-session", "url": "", "steps": [{ "do": "treino-de-nome-longo" }, { "click": "[data-act=\"ed-start\"]" }] },
-    { "name": "108-exercise-detail", "url": "#exercicio", "steps": [] },
-    { "name": "109-exercise-detail-graviton", "url": "#exercicio-graviton", "steps": [] },
-    { "name": "110-exercise-detail-machine", "url": "#exercicio-maquina", "steps": [] },
-    { "name": "111-exercise-detail-once", "url": "#exercicio-uma-vez", "steps": [] },
-    { "name": "112-exercise-detail-never", "url": "#exercicio-novo", "steps": [] },
-    { "name": "118-new-exercise", "url": "#novo-exercicio", "steps": [] },
-    { "name": "119-new-exercise-machine", "url": "#novo-exercicio-maquina", "steps": [] },
-    { "name": "120-muscles-sheet", "url": "#musculos", "steps": [] },
-    { "name": "121-my-version", "url": "#minha-versao", "steps": [] },
-    { "name": "122-edit-exercise", "url": "#editar-exercicio", "steps": [] },
-    { "name": "123-exercise-mine", "url": "#exercicio-meu", "steps": [] },
-    { "name": "124-exercise-archived", "url": "#exercicio-arquivado", "steps": [] },
-    { "name": "125-exercises-mine-archived", "url": "#exercicios-meus", "steps": [] }
+    { "name": "105-long-name-exercises", "url": "#exercicios", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "focus": "#q" }, { "type": ["#q", "acima unilateral"] }] },
+    { "name": "106-long-name-editor", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "treino-de-nome-longo" }] },
+    { "name": "107-long-name-session", "url": "", "steps": [{ "click": "[data-act=\"proto-app\"]" }, { "do": "treino-de-nome-longo" }, { "click": "[data-act=\"ed-start\"]" }] },
+    { "name": "108-exercise-detail", "url": "#exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "109-exercise-detail-graviton", "url": "#exercicio-graviton", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "110-exercise-detail-machine", "url": "#exercicio-maquina", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "111-exercise-detail-once", "url": "#exercicio-uma-vez", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "112-exercise-detail-never", "url": "#exercicio-novo", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "118-new-exercise", "url": "#novo-exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "119-new-exercise-machine", "url": "#novo-exercicio-maquina", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "120-muscles-sheet", "url": "#musculos", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "121-my-version", "url": "#minha-versao", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "122-edit-exercise", "url": "#editar-exercicio", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "123-exercise-mine", "url": "#exercicio-meu", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "124-exercise-archived", "url": "#exercicio-arquivado", "steps": [{ "click": "[data-act=\"proto-app\"]" }] },
+    { "name": "125-exercises-mine-archived", "url": "#exercicios-meus", "steps": [{ "click": "[data-act=\"proto-app\"]" }] }
   ]
 }
