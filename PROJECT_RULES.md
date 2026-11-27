@@ -356,21 +356,24 @@ Only add dependencies when there is a clear benefit.
 
 ---
 
-## 15. SECURITY AND PRIVACY
+## 15. Segurança permanente
 
-Never hardcode:
+Vale desde já e principalmente na conta, na sincronização e na assinatura (plano de segurança antes do lançamento, aprovado pelo dono em 27/11/2026). Siga também as boas práticas de segurança e privacidade da Apple.
 
-- passwords;
-- API keys;
-- private tokens;
-- secrets;
-- credentials.
+1. Nenhuma chave secreta no app nem no repositório: senhas, chaves de API, tokens e credenciais nunca ficam escritos no código. No app vai só a chave pública do servidor. As secretas (a que ignora as regras do banco, a de administração, a chave .p8 da Apple, a chave da API da App Store) ficam só no servidor, no cofre do próprio provedor. Nunca em commits, prints, relatórios ou conversas.
+2. Todo dado externo é tratado como não confiável. O servidor nunca confia no app: valida as entradas e as permissões, e a identidade vem só do token de login. Assinatura, preço, dono, papel, permissão e datas do servidor são decididos no servidor, nunca pelo que o app manda.
+3. Tudo nasce fechado. Tabela ou coleção nova começa sem acesso nenhum, e a regra só libera o que o dono pode fazer com os próprios dados: cada pessoa só acessa e altera os próprios dados.
+4. Toda mudança no servidor vem com teste de ataque no CI: outra pessoa, sem login, conta apagada, token vencido e campo proibido. O teste só passa se tudo for negado.
+5. Dados mínimos. Só o que o app precisa; o "esconder meu e-mail" da Apple é respeitado; o percurso do cardio fica no aparelho, salvo decisão do dono.
+6. Treino, peso e saúde são tratados como dados sensíveis (a LGPD protege mais os dados de saúde). Dados do Apple Saúde só com permissão e nunca para publicidade. Os dados das pessoas são protegidos e nunca expostos.
+7. Nada pessoal em registros técnicos, relatórios de travamento ou análises.
+8. Só conexões seguras: HTTPS com o certificado validado pelo iOS, sem exceções liberadas.
+9. As contas do dono (GitHub, Apple, painel do servidor) usam verificação em duas etapas.
+10. Biblioteca nova só com aprovação, depois de avaliar licença, tamanho, falhas conhecidas e se ainda é mantida. Investigar alternativas não precisa de aprovação; incluir precisa.
+11. Chave trocada ao menor sinal de vazamento; projetos separados para teste e produção; chaves de produção criadas só no lançamento.
+12. Plano de resposta a incidente pronto antes do lançamento: conter, trocar as chaves, registrar e avisar quem precisa, no prazo da lei.
 
-Protect user data appropriately.
-
-Do not expose private user information.
-
-Follow Apple's security and privacy best practices.
+Quando uma exigência de segurança não puder ser atendida, não contorne em silêncio: explique o risco e peça orientação.
 
 ---
 
@@ -513,12 +516,8 @@ Testes e regressões
 - Se um teste não puder rodar, diga por quê e qual risco fica.
 - Antes de concluir, revise o diff completo e procure mudanças fora do escopo. Nunca declare ausência absoluta de regressões: diga o que foi conferido e as limitações.
 
-Segurança (vale desde já e principalmente na conta e na assinatura)
-- Trate todo dado externo como não confiável.
-- No servidor: valide as entradas e as permissões; nunca confie em identificador, papel, permissão, preço ou estado enviados pelo app; cada pessoa só acessa e altera os próprios dados.
-- Nenhum segredo administrativo ou credencial privilegiada dentro do app. Conexões seguras, com certificados validados.
-- Dependências: avalie também licença, tamanho e vulnerabilidades conhecidas. Investigar alternativas não precisa de aprovação; incluir precisa.
-- Quando uma exigência de segurança não puder ser atendida, não contorne em silêncio: explique o risco e peça orientação.
+Segurança
+- As regras de segurança ficam na seção 15 (Segurança permanente).
 
 Relatório
 - Enquanto trabalha, não escreva texto entre um comando e outro: nada de 'agora vou…', 'inspecionando…', 'continuo', nem resumo do que acabou de ler ou do próximo passo. Escreva só para uma pergunta ao dono, um problema que muda o plano, uma parte pronta (uma linha com o hash do commit) e o relatório final. Sempre em português. O plano e o relatório final continuam completos.
