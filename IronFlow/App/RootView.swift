@@ -33,6 +33,8 @@ struct RootView: View {
     @State private var feedback = RootFeedback()
     /// Changed to show the Início from its top, with nothing open over it.
     @State private var homeStackID = UUID()
+    /// The workout whose editor the Treinos tab opens: one created by "Adicionar a um treino" elsewhere.
+    @State private var requestedWorkout: Workout?
 
     var body: some View {
         // Normally at most one; should there be more, the most recent is shown first.
@@ -54,7 +56,7 @@ struct RootView: View {
 
             Tab("Treinos", image: "tab-workouts", value: AppTab.workouts) {
                 NavigationStack {
-                    WorkoutListView(sessionActions: sessionActions) {
+                    WorkoutListView(sessionActions: sessionActions, requestedWorkout: $requestedWorkout) {
                         selectedTab = .history
                     }
                         .accessibilityElement(children: .contain)
@@ -101,6 +103,12 @@ struct RootView: View {
         // The chosen tab in white; inside each tab and on the session screen, the blue of the details
         // stays (switches, the text cursor).
         .tint(Theme.Colors.selectedTab)
+        // "Criar treino novo" of "Adicionar a um treino": the Treinos tab, with the new workout's editor.
+        .environment(\.openWorkoutEditor) { workout in
+            openedSession = nil
+            selectedTab = .workouts
+            requestedWorkout = workout
+        }
         .fullScreenCover(item: $openedSession) { session in
             SessionView(session: session, rest: rest, onFinish: showHomeAfterFinishing) {
                 openedSession = nil

@@ -1,12 +1,24 @@
 import SwiftUI
 
-/// An exercise of the Exercícios tab and of the exercise picker: the icon of its equipment (the 4 squares
-/// of "Outro" for an exercise of the user's own without one), the name, "Grupo · Foco" (only the group for
-/// an exercise of the user's own) and its badge, "MEU" or "ARQUIVADO", with the name of an archived one in
-/// a softer white. VoiceOver reads it as one item. In the Exercícios tab it ends with the › of the row that
-/// opens the exercise screen; in the picker it shows whether it is chosen, or "NO TREINO" when the
-/// workout already has it.
+/// A row of the Exercícios tab and of the exercise picker: a base exercise of the library or an exercise of
+/// the user's own. The icon of its equipment (the 4 squares of "Outro" for an exercise of the user's own
+/// without one; for a base, the combination done last or the one its screen opens on), the name, "Grupo ·
+/// Barra, Halteres, Máquina +3" (for an exercise of the user's own, its equipment; only the group when it is
+/// archived) and its badge, "MEU" or "ARQUIVADO", with the name of an archived one in a softer white.
+/// VoiceOver reads it as one item. In the Exercícios tab it ends with the › of the row that opens the
+/// exercise screen; in the picker it shows whether it is chosen, or "NO TREINO" when the workout already has
+/// it, and a base's line says which combinations are chosen or already in the workout.
 struct ExerciseCard: View {
+    /// The line under the name.
+    enum Subtitle: Equatable {
+        /// "Grupo · Barra, Halteres, Máquina +3", or "Grupo · Polia" for an exercise of the user's own.
+        case standard
+        /// The combinations chosen in the picker: "Polia · Triângulo, Máquina · Neutra".
+        case chosen(String)
+        /// The combinations of the base already in the workout: "No treino: Barra, Halteres".
+        case inWorkout(String)
+    }
+
     /// What the card shows about choosing it.
     enum Selection: Equatable {
         /// Nothing: the Exercícios tab, where the row opens the exercise (the ›).
@@ -19,6 +31,10 @@ struct ExerciseCard: View {
 
     let item: ExerciseCatalog.Item
     var selection: Selection = .none
+    var subtitle: Subtitle = .standard
+    /// The icon's equipment, when it is not the item's: a base shows the combination done last, or the one
+    /// chosen first in the picker.
+    var iconEquipment: Equipment??
     var identifier = "exercises.card"
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -37,7 +53,7 @@ struct ExerciseCard: View {
                     .lineLimit(dynamicTypeSize > .large ? nil : 2)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(detail)
-                    .scaledFont(11)
+                    .scaledFont(11, weight: isChosenSubtitle ? .semibold : .regular)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -79,6 +95,11 @@ struct ExerciseCard: View {
         selection == .selectable(isSelected: true)
     }
 
+    private var isChosenSubtitle: Bool {
+        if case .chosen = subtitle { return true }
+        return false
+    }
+
     private func badge(
         _ text: String,
         foreground: Color = Theme.Colors.highlightText,
@@ -111,7 +132,7 @@ struct ExerciseCard: View {
 
     /// The equipment icon (or "Outro") in light gray on the dark gray square.
     private var tile: some View {
-        EquipmentIcon(equipment: item.equipment)
+        EquipmentIcon(equipment: iconEquipment ?? item.equipment)
             .frame(width: iconSide, height: iconSide)
             .foregroundStyle(Theme.Colors.lightAccent)
             .frame(width: tileSide, height: tileSide)
@@ -119,32 +140,52 @@ struct ExerciseCard: View {
             .accessibilityHidden(true)
     }
 
-    /// "Peito" in gray and " · Peitoral médio" darker; only the group when there is no focus.
+    /// "Peito" in gray and " · Barra, Halteres, Máquina +3" darker; only the group for an archived exercise
+    /// of the user's own; the chosen combinations in a lighter white, or those already in the workout darker.
     private var detail: AttributedString {
-        var text = AttributedString(String(localized: item.group.displayName))
-        text.foregroundColor = Theme.Colors.secondaryText
-        if let focus = item.focus {
-            var focusText = AttributedString(" · \(focus)")
-            focusText.foregroundColor = Theme.Colors.dimText
-            text += focusText
+        switch subtitle {
+        case .chosen(let chosen):
+            var text = AttributedString(chosen)
+            text.foregroundColor = Theme.Colors.highlightText
+            return text
+        case .inWorkout(let options):
+            var text = AttributedString(String(localized: "No treino: \(options)"))
+            text.foregroundColor = Theme.Colors.dimText
+            return text
+        case .standard:
+            var text = AttributedString(String(localized: item.group.displayName))
+            text.foregroundColor = Theme.Colors.secondaryText
+            if !item.isArchived {
+                var detailText = AttributedString(" · \(item.detail)")
+                detailText.foregroundColor = Theme.Colors.dimText
+                text += detailText
+            }
+            return text
         }
-        return text
     }
 
-    /// "Supino Reto com Barra, Peito, Peitoral médio, Barra"; "Meu Supino, Peito, Outro, Meu exercício";
-    /// "Puxada, Dorsais, Máquina, Exercício arquivado".
+    /// "Supino Reto, Peito, mais comum com Barra, Halteres, Máquina, Máquina iso-lateral, Smith, Polia";
+    /// "Meu Supino, Peito, Outro, Meu exercício"; "Puxada, Dorsais, Máquina, Exercício arquivado".
     private var accessibilityText: String {
         var parts = [item.name, String(localized: item.group.displayName)]
-        if let focus = item.focus {
-            parts.append(focus)
-        }
-        if let equipment = item.equipment {
+        if let base = item.base {
+            let common = base.common.map { String(localized: $0.displayName) }.joined(separator: ", ")
+            parts.append(String(localized: "mais comum com \(common)"))
+        } else if let equipment = item.equipment {
             parts.append(String(localized: equipment.displayName))
-        } else if item.isCustom {
+        } else {
             parts.append(String(localized: "Outro"))
         }
         if item.isCustom {
             parts.append(item.isArchived ? String(localized: "Exercício arquivado") : String(localized: "Meu exercício"))
+        }
+        switch subtitle {
+        case .chosen(let chosen):
+            parts.append(String(localized: "escolhido: \(chosen)"))
+        case .inWorkout(let options):
+            parts.append(String(localized: "no treino: \(options)"))
+        case .standard:
+            break
         }
         if selection == .inWorkout {
             parts.append(String(localized: "Já está no treino"))

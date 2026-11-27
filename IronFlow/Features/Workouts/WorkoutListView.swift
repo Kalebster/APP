@@ -7,6 +7,9 @@ import SwiftUI
 struct WorkoutListView: View {
     /// Starts a session from a workout (▶) or a free one ("Treino livre").
     let sessionActions: SessionActions
+    /// A workout whose editor opens as soon as the tab shows it (created from the Exercícios tab); set back to
+    /// `nil` once opened.
+    @Binding var requestedWorkout: Workout?
     /// Opens the Histórico tab ("Ver tudo").
     let onShowHistory: @MainActor () -> Void
 
@@ -75,6 +78,11 @@ struct WorkoutListView: View {
                 try WorkoutService(context: context).rename(workout, to: name)
                 rootFeedback?.show(String(localized: "Nome salvo"))
             }
+        }
+        .task(id: requestedWorkout?.id) {
+            guard let workout = requestedWorkout else { return }
+            requestedWorkout = nil
+            openedWorkout = workout
         }
         .navigationDestination(item: $openedWorkout) { workout in
             WorkoutEditorView(workout: workout, sessionActions: sessionActions)

@@ -71,33 +71,48 @@ struct SheetButton: View {
 
     let title: Text
     let kind: Kind
+    /// Unavailable and pressed as in the prototype (`PrototypeButtonStyle`): the whole button at 35 % and 70 %.
+    /// The sheets from before the base list keep 0.4 until the stage of each one.
+    let usesPrototypeStyle: Bool
     let action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
     @ScaledMetric(relativeTo: .subheadline) private var height: CGFloat = 46
 
-    init(_ title: Text, kind: Kind, action: @escaping () -> Void) {
+    init(_ title: Text, kind: Kind, usesPrototypeStyle: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.kind = kind
+        self.usesPrototypeStyle = usesPrototypeStyle
         self.action = action
     }
 
     var body: some View {
-        Button(action: action) {
-            title
-                .scaledFont(15, weight: .bold)
-                .foregroundStyle(foreground)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 12)
-                .frame(maxWidth: .infinity, minHeight: height)
-                .background(
-                    kind == .primary ? Theme.Colors.primaryButton : Theme.Colors.setFieldBackground,
-                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
-                )
-                .opacity(isEnabled ? 1 : 0.4)
-                .contentShape(Rectangle())
+        if usesPrototypeStyle {
+            Button(action: action) {
+                label
+            }
+            .buttonStyle(PrototypeButtonStyle())
+        } else {
+            Button(action: action) {
+                label
+                    .opacity(isEnabled ? 1 : 0.4)
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    private var label: some View {
+        title
+            .scaledFont(15, weight: .bold)
+            .foregroundStyle(foreground)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: height)
+            .background(
+                kind == .primary ? Theme.Colors.primaryButton : Theme.Colors.setFieldBackground,
+                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+            )
+            .contentShape(Rectangle())
     }
 
     private var foreground: Color {
