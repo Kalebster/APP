@@ -74,10 +74,14 @@ struct ExerciseService {
     func update(_ exercise: Exercise, with draft: ExerciseDraft) throws {
         guard exercise.isCustom else { throw ExerciseError.systemExerciseNotEditable }
         let valid = try validated(draft, ignoring: exercise)
+        let oldName = exercise.name
         exercise.name = valid.name
         exercise.muscleGroup = valid.group
         apply(valid, to: exercise)
         exercise.updatedAt = now()
+        if Validation.comparisonKey(forName: oldName) != Validation.comparisonKey(forName: valid.name) {
+            try revealLibraryExercise(named: oldName, ignoring: nil)
+        }
         try context.saveOrRollback()
     }
 
@@ -103,8 +107,8 @@ struct ExerciseService {
     }
 
     /// The names an exercise cannot take, by `Validation.comparisonKey`: those of the active exercises
-    /// and of the archived exercises of the user's own (an archived built-in exercise left the library
-    /// and frees its name), except `excluded`'s own. The value says whether the name is an archived one.
+    /// and of the archived exercises of the user's own (an archived built-in exercise is hidden because its
+    /// name was taken, and does not keep it), except `excluded`'s own. The value says whether the name is an archived one.
     func takenNames(ignoring excluded: Exercise?) throws -> [String: ExerciseNameOwner] {
         let exercises = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isArchived || $0.isCustom }))
         var taken: [String: ExerciseNameOwner] = [:]
@@ -188,6 +192,7 @@ struct ExerciseService {
             exercise.updatedAt = timestamp
             outcome = .archived
         } else {
+            try revealLibraryExercise(named: exercise.name, ignoring: exercise)
             context.delete(exercise)
             outcome = .deleted
         }
@@ -247,6 +252,21 @@ struct ExerciseService {
             if lhs.name != rhs.name { return lhs.name < rhs.name }
             return lhs.id < rhs.id
         }
+    }
+
+    /// Shows again the library exercise hidden because an exercise of the user's own had `freedName`, now that
+    /// the user's exercise has another name or is being deleted (`excluded`), unless another exercise still
+    /// keeps the name (`takenNames`). Not saved here: it goes with the change that freed the name.
+    private func revealLibraryExercise(named freedName: String, ignoring excluded: Exercise?) throws {
+        let key = Validation.comparisonKey(forName: freedName)
+        let hidden = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.isArchived && !$0.isCustom }))
+        guard let exercise = hidden.first(where: { exercise in
+            Validation.comparisonKey(forName: exercise.name) == key
+                && exercise.libraryKey.map { DefaultExerciseLibrary.byKey[$0] != nil } == true
+        }) else { return }
+        guard try takenNames(ignoring: excluded)[key] == nil else { return }
+        exercise.isArchived = false
+        exercise.updatedAt = now()
     }
 
     /// The name must not be taken (`takenNames`): by an active exercise, `duplicateExerciseName`; by an

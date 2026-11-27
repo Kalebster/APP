@@ -17,10 +17,10 @@ struct UITestSeedTests {
 
     @Test("A list of items is read in order, with the exercises of a workout split by |")
     func parsesItems() throws {
-        let items = try UITestSeed.parse("workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta),workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push,weights:81.2@14|80.6@7|80@2,profile:180:2300,bmr:male:30:lose")
+        let items = try UITestSeed.parse("workout:Push:Crucifixo Alto (Polia)|Barra Fixa (Pegada Aberta),workout:Vazio,plan-today:Push,finished:Push:4,session-detail:Push,open-session:Push,plan:Push:1|3|7,finished-today:Push,last-time:Push,custom-exercise:Meu Supino:chest,set-types:Push,weights:81.2@14|80.6@7|80@2,profile:180:2300,bmr:male:30:lose")
 
         #expect(items == [
-            .workout(name: "Push", exercises: ["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"]),
+            .workout(name: "Push", exercises: ["Crucifixo Alto (Polia)", "Barra Fixa (Pegada Aberta)"]),
             .workout(name: "Vazio", exercises: []),
             .planToday(workout: "Push"),
             .finishedSessions(workout: "Push", count: 4),
@@ -77,12 +77,12 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta),workout:Vazio"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crucifixo Alto (Polia)|Barra Fixa (Pegada Aberta),workout:Vazio"), in: context)
 
         let workouts = try context.fetch(FetchDescriptor<Workout>())
         #expect(workouts.count == 2)
         let push = try #require(workouts.first { $0.name == "Push" })
-        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Crossover (Polia Alta)", "Barra Fixa (Pegada Aberta)"])
+        #expect(push.orderedExercises.compactMap { $0.exercise?.name } == ["Crucifixo Alto (Polia)", "Barra Fixa (Pegada Aberta)"])
         #expect(push.orderedExercises.map { $0.plannedSets.count } == [3, 3])
         let empty = try #require(workouts.first { $0.name == "Vazio" })
         #expect(empty.exercises.isEmpty)
@@ -195,7 +195,7 @@ struct UITestSeedTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crossover (Polia Alta)|Barra Fixa (Pegada Aberta),last-time:Push"), in: context)
+        try UITestSeed.apply(try UITestSeed.parse("workout:Push:Crucifixo Alto (Polia)|Barra Fixa (Pegada Aberta),last-time:Push"), in: context)
 
         let session = try #require(try context.fetch(FetchDescriptor<Session>()).first)
         let ended = try #require(session.endedAt)

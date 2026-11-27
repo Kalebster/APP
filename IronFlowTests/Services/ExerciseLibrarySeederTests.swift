@@ -22,6 +22,34 @@ struct ExerciseLibrarySeederTests {
         try harness.context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.libraryKey == key })).first
     }
 
+    /// The library of 420 by key: the library the upgrades from the older libraries reached before the base list.
+    private static let library420 = Dictionary(uniqueKeysWithValues: Library420Fixture.entries.map { ($0.key, $0) })
+
+    /// Seeds the library of 420, as the app did until the base list: no exercise retired or merged.
+    @discardableResult
+    private static func seed420(with seeder: ExerciseLibrarySeeder) throws -> ExerciseLibrarySeedResult {
+        try seeder.seed(Library420Fixture.entries, retired: [], junctions: [])
+    }
+
+    /// Then the base list: every library exercise in the store with its fixed id and name, no built-in exercise
+    /// left with a key the library does not have, and none of the person's workouts, planned sets, sessions
+    /// and sets lost.
+    private static func expectTheBaseList(in harness: ServiceTestHarness) throws {
+        let before = try storeCounts(in: harness.context)
+        try ExerciseLibrarySeeder(context: harness.context, now: harness.clock.now).seed()
+        let builtIn = try harness.context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isCustom }))
+        #expect(builtIn.count == DefaultExerciseLibrary.all.count)
+        let byKey = Dictionary(builtIn.map { ($0.libraryKey ?? "", $0) }) { first, _ in first }
+        for entry in DefaultExerciseLibrary.all {
+            #expect(byKey[entry.key]?.id.uuidString == entry.id, "\(entry.key)")
+            #expect(byKey[entry.key]?.name == entry.name, "\(entry.key)")
+        }
+        let after = try storeCounts(in: harness.context)
+        for model in ["Workout", "WorkoutExercise", "PlannedSet", "Session", "SessionExercise", "SetLog"] {
+            #expect(after[model] == before[model], "\(model)")
+        }
+    }
+
     private static let entryA = DefaultExercise(key: "test-a", id: "0A000000-0000-4000-8000-00000000000A", name: "Teste A", muscleGroup: .chest)
     private static let entryB = DefaultExercise(key: "test-b", id: "0B000000-0000-4000-8000-00000000000B", name: "Teste B", muscleGroup: .back)
     private static let entryC = DefaultExercise(key: "test-c", id: "0C000000-0000-4000-8000-00000000000C", name: "Teste C", muscleGroup: .biceps)
@@ -58,10 +86,11 @@ struct ExerciseLibrarySeederTests {
     func freshInstall() throws {
         let result = try seeder.seed()
 
-        #expect(result.insertedKeys.count == 420)
+        #expect(result.insertedKeys.count == 1_525)
         #expect(result.updatedKeys.isEmpty && result.skippedKeys.isEmpty)
+        #expect(result.mergedKeys.isEmpty && result.convertedKeys.isEmpty && result.deletedKeys.isEmpty)
         let stored = try systemExercises()
-        #expect(stored.count == 420)
+        #expect(stored.count == 1_525)
         let byKey = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
         for entry in library {
             let exercise = try #require(byKey[entry.key])
@@ -86,7 +115,7 @@ struct ExerciseLibrarySeederTests {
             #expect(try seeder.seed() == ExerciseLibrarySeedResult())
             #expect(harness.context.hasChanges == false)
         }
-        #expect(try count(Exercise.self, in: harness.context) == 420)
+        #expect(try count(Exercise.self, in: harness.context) == 1_525)
         #expect(try systemExercises().map(\.updatedAt) == updatedAt)
     }
 
@@ -97,14 +126,14 @@ struct ExerciseLibrarySeederTests {
         } read: { context in
             #expect(try ExerciseLibrarySeeder(context: context).seed() == ExerciseLibrarySeedResult())
             let stored = try context.fetch(FetchDescriptor<Exercise>())
-            #expect(stored.count == 420)
+            #expect(stored.count == 1_525)
             #expect(Set(stored.map(\.id.uuidString)) == Set(library.map(\.id)))
         }
     }
 
     /// Not a limit, a measure: how long seeding takes when the app opens with the library already
     /// installed (nothing to insert or correct), each time from a store on disk opened again.
-    @Test("Seeding on a normal launch, with the 420 already in the store on disk, changes nothing (its time is printed)")
+    @Test("Seeding on a normal launch, with the 1,525 already in the store on disk, changes nothing (its time is printed)")
     func seedTimeOnANormalLaunch() throws {
         let directory = try makeTemporaryDirectory()
         defer { removeTemporaryDirectory(directory) }
@@ -123,7 +152,7 @@ struct ExerciseLibrarySeederTests {
             durations.append(start.duration(to: clock.now))
             #expect(result == ExerciseLibrarySeedResult())
             #expect(container.mainContext.hasChanges == false)
-            #expect(try count(Exercise.self, in: container.mainContext) == 420)
+            #expect(try count(Exercise.self, in: container.mainContext) == 1_525)
         }
         let sorted = durations.sorted()
         print("Medição do seed numa abertura normal (\(library.count) exercícios, 5 aberturas): mediana \(sorted[2]), mínimo \(sorted[0]), máximo \(sorted[4])")
@@ -144,7 +173,7 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.libraryKey == nil)
         #expect(custom.updatedAt == custom.createdAt)
         #expect(workout.orderedExercises.first?.exercise?.id == custom.id)
-        #expect(try count(Exercise.self, in: harness.context) == 421)
+        #expect(try count(Exercise.self, in: harness.context) == 1_526)
     }
 
     @Test("A built-in exercise named like an active custom one is created archived")
@@ -188,14 +217,23 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.isArchived == false)
     }
 
-    @Test("A built-in exercise hidden by the user stays hidden")
-    func userArchivePreserved() throws {
+    @Test("A built-in exercise hidden because its name was taken stays hidden while it is, and is shown again on the next launch once the name is free")
+    func hiddenExerciseComesBack() throws {
+        // Built-in exercises are hidden only by the seeder: the person can neither edit nor remove one.
+        let custom = try harness.exercises.createCustomExercise(name: "Supino Reto (Barra)", muscleGroup: .chest)
         try seeder.seed()
         let bench = try #require(try exercise(key: "bench-press-barbell"))
-        try harness.exercises.archive(bench)
-
-        try seeder.seed()
         #expect(bench.isArchived)
+        #expect(try seeder.seed() == ExerciseLibrarySeedResult())
+        #expect(bench.isArchived)
+
+        harness.context.delete(custom)
+        try harness.context.save()
+        harness.clock.advance(by: 60)
+        #expect(try seeder.seed() == ExerciseLibrarySeedResult(revealedKeys: ["bench-press-barbell"]))
+        #expect(bench.isArchived == false)
+        #expect(bench.updatedAt == harness.clock.current)
+        #expect(harness.context.hasChanges == false)
     }
 
     @Test("Built-in exercises used in workouts and sessions keep their links and history")
@@ -218,7 +256,7 @@ struct ExerciseLibrarySeederTests {
 
     // MARK: - Library updates
 
-    @Test("A store with the first library (71) gets the 420: 67 names and 5 groups corrected with the same ids, the new Agachamento Búlgaro active with the name the old one leaves, workouts and history linked as before, custom exercises untouched; seeding again changes nothing")
+    @Test("A store with the first library (71) got the 420: 67 names and 5 groups corrected with the same ids, the new Agachamento Búlgaro active with the name the old one leaves, workouts and history linked as before, custom exercises untouched; seeding again changes nothing; and then gets the base list")
     func upgradeFromTheFirstLibrary() throws {
         try seeder.seed(LibraryV1Fixture.entries)
         let idsBefore = Dictionary(uniqueKeysWithValues: try systemExercises().map { ($0.libraryKey ?? "", $0.id) })
@@ -239,14 +277,14 @@ struct ExerciseLibrarySeederTests {
         try harness.sessions.finishSession(session)
         harness.clock.advance(by: 3_600)
 
-        let result = try seeder.seed()
+        let result = try Self.seed420(with: seeder)
 
         let oldKeys = Set(LibraryV1Fixture.entries.map(\.key))
-        let newKeys = Set(library.map(\.key)).subtracting(oldKeys)
+        let newKeys = Set(Library420Fixture.entries.map(\.key)).subtracting(oldKeys)
         #expect(newKeys.count == 349)
         #expect(Set(result.insertedKeys) == newKeys)
         let corrected = LibraryV1Fixture.entries.filter { old in
-            let entry = DefaultExerciseLibrary.byKey[old.key]
+            let entry = Self.library420[old.key]
             return entry?.name != old.name || entry?.muscleGroup != old.muscleGroup
         }
         #expect(corrected.count == 67)
@@ -257,7 +295,7 @@ struct ExerciseLibrarySeederTests {
         let stored = try systemExercises()
         #expect(stored.count == 420)
         let byKey = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
-        for entry in library {
+        for entry in Library420Fixture.entries {
             let exercise = try #require(byKey[entry.key])
             #expect(exercise.id.uuidString == entry.id)
             #expect(exercise.name == entry.name)
@@ -289,12 +327,14 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.updatedAt == customUpdatedAt)
 
         harness.clock.advance(by: 3_600)
-        #expect(try seeder.seed() == ExerciseLibrarySeedResult())
+        #expect(try Self.seed420(with: seeder) == ExerciseLibrarySeedResult())
         #expect(harness.context.hasChanges == false)
         #expect(try count(Exercise.self, in: harness.context) == 421)
+
+        try Self.expectTheBaseList(in: harness)
     }
 
-    @Test("A store with the library of 157, with workouts, sessions and a custom exercise stored with back, gets the 420: 144 names and 13 groups corrected, the 263 new ones active, nothing skipped, kept with the old name, archived or deleted, the same ids, workouts and history; seeding again changes nothing")
+    @Test("A store with the library of 157, with workouts, sessions and a custom exercise stored with back, got the 420: 144 names and 13 groups corrected, the 263 new ones active, nothing skipped, kept with the old name, archived or deleted, the same ids, workouts and history; seeding again changes nothing; and then gets the base list")
     func upgradeFromTheLibraryOf157() throws {
         try seeder.seed(Library157Fixture.entries)
         let before = try systemExercises()
@@ -334,15 +374,15 @@ struct ExerciseLibrarySeederTests {
         let countsBefore = try storeCounts(in: harness.context)
         harness.clock.advance(by: 3_600)
 
-        let result = try seeder.seed()
+        let result = try Self.seed420(with: seeder)
 
         let oldKeys = Set(Library157Fixture.entries.map(\.key))
-        let newKeys = Set(library.map(\.key)).subtracting(oldKeys)
+        let newKeys = Set(Library420Fixture.entries.map(\.key)).subtracting(oldKeys)
         #expect(newKeys.count == 263)
         #expect(result.insertedKeys.count == 263)
         #expect(Set(result.insertedKeys) == newKeys)
         let corrected = Library157Fixture.entries.filter { old in
-            let entry = DefaultExerciseLibrary.byKey[old.key]
+            let entry = Self.library420[old.key]
             return entry?.name != old.name || entry?.muscleGroup != old.muscleGroup
         }
         #expect(corrected.count == 144)
@@ -357,7 +397,7 @@ struct ExerciseLibrarySeederTests {
         #expect(stored.count == 420)
         let byKey = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
         let correctedKeys = Set(corrected.map(\.key))
-        for entry in library {
+        for entry in Library420Fixture.entries {
             let exercise = try #require(byKey[entry.key])
             #expect(exercise.id.uuidString == entry.id)
             #expect(exercise.name == entry.name)
@@ -414,13 +454,15 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.updatedAt == customUpdatedAt)
 
         harness.clock.advance(by: 3_600)
-        #expect(try seeder.seed() == ExerciseLibrarySeedResult())
+        #expect(try Self.seed420(with: seeder) == ExerciseLibrarySeedResult())
         #expect(harness.context.hasChanges == false)
         #expect(try count(Exercise.self, in: harness.context) == 421)
+
+        try Self.expectTheBaseList(in: harness)
     }
 
 
-    @Test("A store with the library of 220, with a workout, a session and a custom exercise, gets the 420: the 200 new ones active, Remada Alta (Máquina) renamed, nothing skipped, kept, archived or deleted, ids and history as before; seeding again changes nothing")
+    @Test("A store with the library of 220, with a workout, a session and a custom exercise, got the 420: the 200 new ones active, Remada Alta (Máquina) renamed, nothing skipped, kept, archived or deleted, ids and history as before; seeding again changes nothing; and then gets the base list")
     func upgradeFromTheLibraryOf220() throws {
         try seeder.seed(Library220Fixture.entries)
         let before = try systemExercises()
@@ -445,11 +487,11 @@ struct ExerciseLibrarySeederTests {
         let countsBefore = try storeCounts(in: harness.context)
         harness.clock.advance(by: 3_600)
 
-        let result = try seeder.seed()
+        let result = try Self.seed420(with: seeder)
 
-        let newKeys = Set(library.map(\.key)).subtracting(idsBefore.keys)
+        let newKeys = Set(Library420Fixture.entries.map(\.key)).subtracting(idsBefore.keys)
         #expect(newKeys.count == 200)
-        #expect(result.insertedKeys == library.map(\.key).filter { newKeys.contains($0) })
+        #expect(result.insertedKeys == Library420Fixture.entries.map(\.key).filter { newKeys.contains($0) })
         #expect(result.updatedKeys == ["high-row-machine"])
         #expect(result.skippedKeys.isEmpty)
         #expect(result.keptNameKeys.isEmpty)
@@ -459,7 +501,7 @@ struct ExerciseLibrarySeederTests {
         let stored = try systemExercises()
         #expect(stored.count == 420)
         let byKey = Dictionary(uniqueKeysWithValues: stored.map { ($0.libraryKey ?? "", $0) })
-        for entry in library {
+        for entry in Library420Fixture.entries {
             let exercise = try #require(byKey[entry.key])
             #expect(exercise.id.uuidString == entry.id)
             #expect(exercise.name == entry.name)
@@ -492,9 +534,11 @@ struct ExerciseLibrarySeederTests {
         #expect(custom.updatedAt == customUpdatedAt)
 
         harness.clock.advance(by: 3_600)
-        #expect(try seeder.seed() == ExerciseLibrarySeedResult())
+        #expect(try Self.seed420(with: seeder) == ExerciseLibrarySeedResult())
         #expect(harness.context.hasChanges == false)
         #expect(try count(Exercise.self, in: harness.context) == 421)
+
+        try Self.expectTheBaseList(in: harness)
     }
 
     @Test("A corrected name or group in a later library updates the built-in exercise, not the history")
@@ -517,14 +561,22 @@ struct ExerciseLibrarySeederTests {
         #expect(session.orderedExercises[0].muscleGroupSnapshot == .chest)
     }
 
-    @Test("A correction never changes whether the user archived the exercise")
-    func correctionKeepsArchive() throws {
+    @Test("A hidden built-in exercise takes its corrected name, and stays hidden only while that name is taken")
+    func correctionOfAHiddenExercise() throws {
+        let custom = try harness.exercises.createCustomExercise(name: "Teste A", muscleGroup: .biceps)
         try seeder.seed([Self.entryA])
         let exercise = try #require(try exercise(key: "test-a"))
-        try harness.exercises.archive(exercise)
-
-        try seeder.seed([DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Outro Nome", muscleGroup: .back)])
         #expect(exercise.isArchived)
+        try harness.exercises.createCustomExercise(name: "Nome Usado", muscleGroup: .biceps)
+
+        let taken = try seeder.seed([DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Nome Usado", muscleGroup: .back)])
+        #expect(taken.updatedKeys == ["test-a"] && taken.revealedKeys.isEmpty)
+        #expect(exercise.name == "Nome Usado" && exercise.isArchived)
+
+        let free = try seeder.seed([DefaultExercise(key: "test-a", id: Self.entryA.id, name: "Outro Nome", muscleGroup: .back)])
+        #expect(free.updatedKeys == ["test-a"] && free.revealedKeys == ["test-a"])
+        #expect(exercise.name == "Outro Nome" && exercise.isArchived == false)
+        #expect(custom.name == "Teste A" && custom.isArchived == false)
     }
 
     @Test("A corrected name already used by another active exercise is not applied: the old name stays, the group is still corrected, and it is reported")
@@ -767,6 +819,6 @@ struct ExerciseLibrarySeederTests {
         let session = try harness.sessions.startSession(from: workout)
         #expect(session.orderedExercises.map(\.exerciseNameSnapshot) == ["Supino Reto (Barra)", "Rosca Direta (Barra)"])
         #expect(session.orderedExercises.map(\.muscleGroupSnapshot) == [.chest, .biceps])
-        #expect(try count(Exercise.self, in: harness.context) == 420)
+        #expect(try count(Exercise.self, in: harness.context) == 1_525)
     }
 }
