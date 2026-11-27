@@ -1,9 +1,10 @@
 import Foundation
 
-/// What a built-in exercise is done with.
+/// What an exercise is done with.
 ///
-/// Library data only, never stored: the raw value is a stable key of the library and `displayName`
-/// the name shown to the user. The order of the cases is the order of the equipment filters.
+/// The raw value is a stable key: the library names the equipment of each built-in exercise with it, and
+/// an exercise of the user's own stores it (`Exercise.equipmentRaw`, none being "Outro"). `displayName`
+/// is the name shown to the user. The order of the cases is the order of the equipment filters.
 enum Equipment: String, CaseIterable, Sendable {
     case barbell
     case dumbbell

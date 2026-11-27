@@ -60,7 +60,7 @@ struct ExerciseChartPlot: View {
         return Chart {
             ForEach(chart.points) { point in
                 AreaMark(
-                    x: .value("Dia", point.day),
+                    x: .value("Dia", point.startedAt),
                     yStart: .value("Base", low),
                     yEnd: .value(chart.metric.title, plotted(point.value))
                 )
@@ -68,17 +68,17 @@ struct ExerciseChartPlot: View {
                 .accessibilityHidden(true)
             }
             ForEach(chart.points) { point in
-                LineMark(x: .value("Dia", point.day), y: .value(chart.metric.title, plotted(point.value)))
+                LineMark(x: .value("Dia", point.startedAt), y: .value(chart.metric.title, plotted(point.value)))
                     .foregroundStyle(Theme.Colors.accent)
                     .lineStyle(StrokeStyle(lineWidth: 2 * scale, lineCap: .round, lineJoin: .round))
                     .accessibilityHidden(true)
             }
-            RuleMark(x: .value("Dia", selected.day), yStart: .value("Base", low), yEnd: .value("Topo", high))
+            RuleMark(x: .value("Dia", selected.startedAt), yStart: .value("Base", low), yEnd: .value("Topo", high))
                 .foregroundStyle(Theme.Colors.chartRule)
                 .lineStyle(StrokeStyle(lineWidth: 1 * scale))
                 .accessibilityHidden(true)
             ForEach(Array(chart.points.enumerated()), id: \.element.id) { index, point in
-                PointMark(x: .value("Dia", point.day), y: .value(chart.metric.title, plotted(point.value)))
+                PointMark(x: .value("Dia", point.startedAt), y: .value(chart.metric.title, plotted(point.value)))
                     .symbol {
                         if index == selectedIndex {
                             // r 5, white, with a 2,5 outline in the accent color.
@@ -110,11 +110,11 @@ struct ExerciseChartPlot: View {
         chart.metric.isInverted ? -value : value
     }
 
-    /// Chooses the session whose point is nearest to `x`.
+    /// Chooses the session whose point is nearest to `x`: two sessions on the same day are apart by their time.
     private func select(at x: CGFloat, scale: CGFloat) {
         guard chart.points.count > 1 else { return }
         let unitX = Double(x / max(scale, 0.01))
-        let positions = chart.points.map { PrototypeChart.plotLeft + chart.fraction(of: $0.day) * (PrototypeChart.plotRight - PrototypeChart.plotLeft) }
+        let positions = chart.points.map { PrototypeChart.plotLeft + chart.fraction(of: $0.startedAt) * (PrototypeChart.plotRight - PrototypeChart.plotLeft) }
         guard let nearest = positions.indices.min(by: { abs(positions[$0] - unitX) < abs(positions[$1] - unitX) }) else { return }
         if nearest != selectedIndex {
             onSelect(nearest)

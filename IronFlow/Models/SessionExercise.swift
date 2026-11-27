@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias SessionExercise = SchemaV7.SessionExercise
+typealias SessionExercise = SchemaV8.SessionExercise
 
-extension SchemaV7 {
+extension SchemaV8 {
     /// An exercise performed in a session. Keeps snapshots so the history stays
     /// readable after the original exercise is renamed, archived or deleted.
     @Model

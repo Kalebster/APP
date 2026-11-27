@@ -4,7 +4,7 @@ import SwiftData
 /// Version 5 of the Iron Flow data schema.
 ///
 /// Adds the set type (`setTypeRaw`) to `PlannedSet` and `SetLog`. The seven models of `SchemaV1` are
-/// redeclared here (below, as they were released; the app's own are those of `SchemaV7`), not only
+/// redeclared here (below, as they were released; the app's own are those of `SchemaV8`), not only
 /// those two: their relationships point to each other's
 /// classes, so a version 1 class reused here would still point to the version 1 sets. The models
 /// without relationships (body data, days trained outside the app, weekly plan) are unchanged and

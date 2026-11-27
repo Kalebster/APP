@@ -315,4 +315,76 @@ struct ExerciseCatalogTests {
         #expect(cache.items(for: exercises).count == 420)
         #expect(cache.builds == 3)
     }
+
+    // MARK: - Exercises of the user's own
+
+    private func custom(_ name: String, _ group: MuscleGroup, equipment: Equipment?, archived: Bool = false) -> Exercise {
+        let exercise = custom(name, group, archived: archived)
+        exercise.equipment = equipment
+        return exercise
+    }
+
+    private func lists(_ exercises: [Exercise]) -> ExerciseCatalog.Lists {
+        ExerciseCatalog.lists(from: exercises.map { ExerciseCatalog.Source($0) })
+    }
+
+    @Test("An exercise of the user's own shows its equipment and no focus; its equipment filter keeps it")
+    func customEquipment() {
+        let all = items(library + [custom("Puxada na Máquina Articulada", .back, equipment: .machine), custom("Meu Outro", .back, equipment: nil)])
+        let machine = all.first { $0.name == "Puxada na Máquina Articulada" }
+        #expect(machine?.equipment == .machine)
+        #expect(machine?.focus == nil)
+        let other = all.first { $0.name == "Meu Outro" }
+        #expect(other != nil)
+        #expect(other?.equipment == nil)
+
+        let mine = ExerciseCatalog.filtered(all, group: .mine, equipment: nil, search: "")
+        #expect(names(mine) == ["Meu Outro", "Puxada na Máquina Articulada"])
+        #expect(ExerciseCatalog.equipment(for: .mine, in: all) == [.machine])
+        #expect(names(ExerciseCatalog.filtered(all, group: .mine, equipment: .machine, search: "")) == ["Puxada na Máquina Articulada"])
+        #expect(names(ExerciseCatalog.filtered(all, group: .group(.back), equipment: .machine, search: "puxada articulada")) == ["Puxada na Máquina Articulada"])
+    }
+
+    @Test("An exercise of the user's own is found by its equipment's name, never by \"Outro\"")
+    func customSearchByEquipment() {
+        let all = items([custom("Remada Cavalinho", .upperBack, equipment: .machine), custom("Remada Livre", .upperBack, equipment: nil)])
+        #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "remada maquina")) == ["Remada Cavalinho"])
+        #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "MÁQUINA")) == ["Remada Cavalinho"])
+        #expect(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "outro").isEmpty)
+        #expect(names(ExerciseCatalog.filtered(all, group: .all, equipment: nil, search: "livre")) == ["Remada Livre"])
+    }
+
+    @Test("The archived exercises of the user's own are apart: out of the count and the filters, at the end of Meus without search or equipment")
+    func archivedCustom() {
+        let active = custom("Agachamento Pêndulo", .quadriceps, equipment: .machine)
+        let archived = custom("Puxada na Máquina Articulada", .back, equipment: .machine, archived: true)
+        let archivedBuiltIn = builtIn(DefaultExerciseLibrary.all[0])
+        archivedBuiltIn.isArchived = true
+        let result = lists(Array(library.dropFirst()) + [active, archived, archivedBuiltIn])
+
+        #expect(result.active.count == DefaultExerciseLibrary.all.count)
+        #expect(names(result.archived) == ["Puxada na Máquina Articulada"])
+        #expect(result.archived.allSatisfy { $0.isArchived })
+        #expect(result.hasCustom)
+        #expect(ExerciseCatalog.archivedShown(result.archived, group: .mine, equipment: nil, search: "  ").map(\.name) == ["Puxada na Máquina Articulada"])
+        #expect(ExerciseCatalog.archivedShown(result.archived, group: .mine, equipment: .machine, search: "").isEmpty)
+        #expect(ExerciseCatalog.archivedShown(result.archived, group: .mine, equipment: nil, search: "puxada").isEmpty)
+        #expect(ExerciseCatalog.archivedShown(result.archived, group: .all, equipment: nil, search: "").isEmpty)
+        // Never in the active list nor found by the search.
+        #expect(ExerciseCatalog.filtered(result.active, group: .all, equipment: nil, search: "puxada na maquina articulada").isEmpty)
+    }
+
+    @Test("Meus is offered in the tab with an archived exercise of the user's own only; in the picker only with an active one")
+    func mineWithArchivedOnly() {
+        let archived = custom("Puxada na Máquina Articulada", .back, equipment: .machine, archived: true)
+        let result = lists(library + [archived])
+        #expect(result.hasCustom)
+        #expect(ExerciseCatalog.groupFilters(in: result.active, hasArchivedCustom: !result.archived.isEmpty).contains(.mine))
+        #expect(ExerciseCatalog.groupFilter(.mine, in: result.active, hasArchivedCustom: true) == .mine)
+        // The picker reads only the active exercises.
+        #expect(ExerciseCatalog.groupFilters(in: result.active).contains(.mine) == false)
+        #expect(ExerciseCatalog.groupFilter(.mine, in: result.active) == .all)
+        // Nothing of the user's own: no Meus anywhere.
+        #expect(lists(library).hasCustom == false)
+    }
 }

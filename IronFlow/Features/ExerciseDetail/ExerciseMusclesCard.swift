@@ -2,13 +2,14 @@ import SwiftUI
 
 /// The muscles of the exercise: the body figure from the front and from the back and, on its right, the
 /// legend: PRINCIPAL (PRINCIPAIS with more than one), SECUNDÁRIOS (only when there are some) and FOCO, or,
-/// for an exercise of the user's own, the note that the figure shows its group. With the largest text
+/// for an exercise of the user's own without muscles of its own, the note that the figure shows its group. With the largest text
 /// sizes the legend goes below the figure. VoiceOver reads the card as one item.
 struct ExerciseMusclesCard: View {
     let primary: [Muscle]
     let secondary: [Muscle]
     let focus: String?
-    let isCustom: Bool
+    /// An exercise of the user's own without muscles of its own: the figure shows its group.
+    let showsGroupNote: Bool
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -22,7 +23,7 @@ struct ExerciseMusclesCard: View {
                 figure(.back, title: "Costas")
             }
             .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil)
-            MusclesLegend(primary: primary, secondary: secondary, focus: focus, isCustom: isCustom)
+            MusclesLegend(primary: primary, secondary: secondary, focus: focus, showsGroupNote: showsGroupNote)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .cardStyle(padding: EdgeInsets(top: 14, leading: 14, bottom: 12, trailing: 14), cornerRadius: 17)
@@ -62,7 +63,7 @@ struct ExerciseMusclesCard: View {
 
     /// What follows the muscles: the focus, or the note of an exercise of the user's own.
     private var accessibilityDetail: String {
-        if isCustom {
+        if showsGroupNote {
             return String(localized: "Exercício seu: o boneco mostra o grupo dele.")
         }
         return focus.map { String(localized: "Foco: \($0)") } ?? ""
@@ -74,7 +75,7 @@ private struct MusclesLegend: View {
     let primary: [Muscle]
     let secondary: [Muscle]
     let focus: String?
-    let isCustom: Bool
+    let showsGroupNote: Bool
 
     @ScaledMetric(relativeTo: .caption2) private var swatchSide: CGFloat = 9
 
@@ -88,7 +89,7 @@ private struct MusclesLegend: View {
             if !secondary.isEmpty {
                 group(title: "SECUNDÁRIOS", swatch: Theme.Colors.muscleSecondary, values: secondary.map { String(localized: $0.displayName) })
             }
-            if isCustom {
+            if showsGroupNote {
                 Text("Exercício seu: o boneco mostra o grupo dele.")
                     .scaledFont(12, lineHeight: 1.35)
                     .foregroundStyle(Theme.Colors.secondaryText)

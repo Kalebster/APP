@@ -241,6 +241,52 @@ final class ExerciseDetailUITests: IronFlowUITestCase {
         attachScreenshot(named: "112-exercise-detail-never", of: app)
     }
 
+    /// Two sessions of the same day are two points: a tap on the left chooses the first, one on the right
+    /// the last (the change shows only with the last). With the points by day, both taps chose the first.
+    @MainActor
+    func testTwoSessionsOnTheSameDayAreTwoPoints() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Exercícios", seed: ["workout:Push:Supino Reto (Barra)", "finished:Push:2"])
+        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        app.buttons["exercise.chart.period"].tap()
+        let all = app.buttons["Tudo"]
+        XCTAssertTrue(all.waitForExistence(timeout: 10), "Period menu not shown")
+        all.tap()
+        let change = element("exercise.chart.change", in: app)
+        XCTAssertTrue(waitForLabel(of: change, containing: "desde o primeiro treino"), "Tudo not shown")
+        let plot = element("exercise.chart.plot", in: app)
+        plot.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)).tap()
+        XCTAssertTrue(change.waitForNonExistence(timeout: 10), "The first session was not chosen")
+        plot.coordinate(withNormalizedOffset: CGVector(dx: 0.86, dy: 0.5)).tap()
+        XCTAssertTrue(change.waitForExistence(timeout: 10), "The second session of the day cannot be chosen")
+    }
+
+    /// A session deleted since the screen read its history: the notice, and the history read again.
+    @MainActor
+    func testTappingADeletedSessionSaysSo() throws {
+        continueAfterFailure = false
+        let app = launchOnTab(
+            "Exercícios",
+            seed: ["workout:Push:Supino Reto (Barra)", "finished:Push:2"],
+            extraArguments: ["-ui-delete-tapped-session"] + longToastArguments
+        )
+        openExercise("Supino Reto (Barra)", search: "supino reto barra", in: app)
+        scrollToBottom(in: app)
+        let count = element("exercise.history.count", in: app)
+        XCTAssertEqual(count.label, "2 treinos")
+        XCTAssertTrue(element("exercise.chart.plot", in: app).exists, "No chart with two sessions")
+        let session = app.buttons.matching(identifier: "exercise.history.session").firstMatch
+        XCTAssertTrue(session.waitForExistence(timeout: 10), "No session card")
+        session.tap()
+        XCTAssertTrue(waitForToast("Esse treino não está mais no histórico.", in: app), "No notice for a session no longer there")
+        XCTAssertFalse(element("history.detail", in: app).exists, "A deleted session opened")
+        XCTAssertTrue(waitForLabel(of: element("exercise.history.count", in: app), toBe: "1 treino"), "The history was not read again")
+        // The chart is made again without it: with one session left, it asks for one more.
+        XCTAssertTrue(waitForLabel(of: element("exercise.chart.message", in: app), toBe: "Faça este exercício em mais um treino para ver a evolução."),
+                      "The chart still shows the deleted session")
+        XCTAssertFalse(element("exercise.chart.plot", in: app).exists, "The chart still plots the deleted session")
+    }
+
     @MainActor
     func testThreeYearsOpenWithoutHanging() throws {
         continueAfterFailure = false

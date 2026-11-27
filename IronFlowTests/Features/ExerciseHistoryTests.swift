@@ -110,7 +110,7 @@ struct ExerciseHistoryTests {
 
     // MARK: - Periods
 
-    @Test("The period counts back from the start of today: 90 days includes the session 90 days ago, not 91")
+    @Test("The period counts back from the start of today: 90 days includes the session 90 days ago, not 91; the axis ends today")
     func periods() {
         let ninety = Self.entry(Self.date(2026, 7, 18), [Self.set(50, 10)])
         let ninetyOne = Self.entry(Self.date(2026, 7, 17), [Self.set(48, 10)])
@@ -122,7 +122,7 @@ struct ExerciseHistoryTests {
         let threeMonths = history.chart(metric: .maxLoad, period: .threeMonths, today: Self.today, calendar: Self.calendar)
         #expect(threeMonths.points.map(\.id) == [ninety.id, recent.id])
         #expect(threeMonths.start == Self.date(2026, 7, 18, hour: 0))
-        #expect(threeMonths.end == Self.date(2026, 10, 16, hour: 0))
+        #expect(threeMonths.end == Self.today)
 
         let year = history.chart(metric: .maxLoad, period: .oneYear, today: Self.today, calendar: Self.calendar)
         #expect(year.points.map(\.id) == [yearAgo.id, ninetyOne.id, ninety.id, recent.id])
@@ -131,6 +131,29 @@ struct ExerciseHistoryTests {
         #expect(all.points.count == 5)
         #expect(all.start == Self.date(2025, 10, 15, hour: 0))
         #expect(all.points.first?.day == Self.date(2025, 10, 15, hour: 0))
+    }
+
+    @Test("Two sessions on the same day are two points, apart by their time, each one chosen by a tap on it")
+    func sameDaySessions() {
+        let morning = Self.entry(Self.date(2026, 10, 9, hour: 7), [Self.set(60, 10)])
+        let evening = Self.entry(Self.date(2026, 10, 9, hour: 19), [Self.set(62, 8)])
+        let earlier = Self.entry(Self.date(2026, 9, 1), [Self.set(55, 10)])
+        let history = ExerciseHistory(entries: [morning, evening, earlier], isAssisted: false)
+        let chart = history.chart(metric: .maxLoad, period: .threeMonths, today: Self.today, calendar: Self.calendar)
+
+        #expect(chart.points.map(\.id) == [earlier.id, morning.id, evening.id])
+        let morningX = chart.fraction(of: morning.startedAt)
+        let eveningX = chart.fraction(of: evening.startedAt)
+        // 12 hours apart in 90 days and a half: about 1,6 points of the prototype's 292.
+        #expect(abs((eveningX - morningX) - 12 * 3_600 / Self.today.timeIntervalSince(chart.start)) < 1e-9)
+        #expect(eveningX > morningX)
+        #expect(chart.fraction(of: chart.end) == 1)
+        // A session today, after the start of the day, is still on the chart.
+        let today = Self.entry(Self.date(2026, 10, 16, hour: 9), [Self.set(63, 8)])
+        let withToday = ExerciseHistory(entries: [earlier, today], isAssisted: false)
+            .chart(metric: .maxLoad, period: .threeMonths, today: Self.today, calendar: Self.calendar)
+        #expect(withToday.points.count == 2)
+        #expect(withToday.fraction(of: today.startedAt) < 1)
     }
 
     // MARK: - Change

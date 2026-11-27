@@ -250,28 +250,36 @@ final class ExerciseListUITests: IronFlowUITestCase {
     @MainActor
     func testMineShowsTheCustomExercise() throws {
         continueAfterFailure = false
-        let app = launchOnTab("Exercícios", seed: ["custom-exercise:Meu Supino:chest"])
+        // The two exercises of the user's own of the prototype, on a machine.
+        let app = launchOnTab("Exercícios", seed: [
+            "own-exercise:Puxada na Máquina Articulada:back:machine:lever:lats:biceps|upperBack",
+            "own-exercise:Agachamento Pêndulo:quadriceps:machine:lever:quadriceps:glutes|adductors",
+        ])
 
         XCTAssertTrue(element("exercises.total", in: app).waitForExistence(timeout: 10), "Header not shown")
-        XCTAssertEqual(element("exercises.total", in: app).label, "421 exercícios")
+        XCTAssertEqual(element("exercises.total", in: app).label, "422 exercícios")
         let mine = groupChip("mine", in: app)
         XCTAssertTrue(mine.exists, "No Meus with a custom exercise")
         tapFilter(mine, changing: count(in: app))
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "1 exercício"), "Meus count")
+        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "2 exercícios"), "Meus count")
         XCTAssertTrue(mine.isSelected, "Meus is not selected")
-        XCTAssertEqual(cards(in: app).count, 1)
-        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Meu Supino, Peito, Meu exercício")
-        // A custom exercise has no equipment to choose.
-        XCTAssertFalse(equipmentChip("barbell", in: app).exists, "Equipment offered for Meus")
+        XCTAssertEqual(cards(in: app).count, 2)
+        // The icon of its equipment and only its group, with MEU.
+        XCTAssertEqual(cards(in: app).element(boundBy: 0).label, "Agachamento Pêndulo, Quadríceps, Máquina, Meu exercício")
+        XCTAssertEqual(cards(in: app).element(boundBy: 1).label, "Puxada na Máquina Articulada, Dorsais, Máquina, Meu exercício")
+        // Its equipment is offered, and nothing is archived.
+        XCTAssertTrue(equipmentChip("machine", in: app).exists, "Máquina not offered for Meus")
+        XCTAssertFalse(element("exercises.archived.title", in: app).exists, "ARQUIVADOS without an archived exercise")
         attachScreenshot(named: "73-exercises-mine", of: app)
 
-        // With an equipment chosen, the custom exercise is not shown.
-        tapFilter(groupChip("chest", in: app), changing: count(in: app))
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "59 exercícios"), "Peito count with the custom exercise")
-        tapFilter(equipmentChip("dumbbell", in: app), changing: count(in: app))
-        XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "12 exercícios"), "The custom exercise counted with Halteres")
-        search("meu", in: app)
-        XCTAssertTrue(element("exercises.empty", in: app).waitForExistence(timeout: 10), "The custom exercise shown with Halteres")
+        // With Halteres chosen in Dorsais, the exercise on a machine is not shown; with Máquina it is.
+        tapFilter(groupChip("back", in: app), changing: count(in: app))
+        let backCount = count(in: app).label
+        tapChip(equipmentChip("machine", in: app), in: app)
+        XCTAssertNotEqual(count(in: app).label, backCount)
+        search("puxada articulada", in: app)
+        XCTAssertTrue(cards(in: app).element(boundBy: 0).waitForExistence(timeout: 10), "The exercise of the user's own not found with Máquina")
+        XCTAssertEqual(cards(in: app).count, 1)
     }
 
     @MainActor

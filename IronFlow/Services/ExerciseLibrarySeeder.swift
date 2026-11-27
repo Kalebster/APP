@@ -16,8 +16,9 @@ struct ExerciseLibrarySeedResult: Equatable {
     var updatedKeys: [String] = []
     /// Entries not inserted because their fixed id is already used by another record.
     var skippedKeys: [String] = []
-    /// Entries whose corrected name is already used by another active exercise: the exercise keeps
-    /// its current name (a corrected muscle group is still applied).
+    /// Entries whose corrected name is already used by another active exercise, or kept by an archived
+    /// exercise of the user's own: the exercise keeps its current name (a corrected muscle group is still
+    /// applied).
     var keptNameKeys: [String] = []
 }
 
@@ -26,15 +27,16 @@ struct ExerciseLibrarySeedResult: Equatable {
 /// Idempotent: an entry is found by its `libraryKey`. Existing records are never deleted,
 /// never replaced, and their `isArchived`, ids and relationships are never touched; only the
 /// name and muscle group of built-in exercises follow the library, except a corrected name kept by another
-/// active exercise. Custom exercises are never changed.
+/// active exercise or by an archived exercise of the user's own. Custom exercises are never changed.
 ///
 /// Active exercise names stay unique (ignoring case and diacritics). Whether a name is free is decided with
 /// the names the exercises hold once the run is over, never with those of the moment, so neither the order
 /// of the library nor the order of the changes matters: an exercise can take the name another one leaves
 /// in the same run, two exercises can swap names, and a new entry can take a name an existing exercise
-/// leaves. A name is kept only by an active exercise that still has it after the run, such as a custom
-/// exercise of that name: then a corrected exercise keeps its current name (`keptNameKeys`) and a new
-/// entry is created hidden (archived).
+/// leaves. A name is kept by an active exercise that still has it after the run, such as a custom
+/// exercise of that name, and by an archived exercise of the user's own, whose name stays reserved for
+/// restoring it: then a corrected exercise keeps its current name (`keptNameKeys`) and a new entry is
+/// created hidden (archived).
 @MainActor
 struct ExerciseLibrarySeeder {
     let context: ModelContext
@@ -111,7 +113,8 @@ struct ExerciseLibrarySeeder {
             exercise.id = id
             exercise.createdAt = timestamp
             exercise.updatedAt = timestamp
-            // A built-in exercise whose name another active exercise keeps is created hidden.
+            // A built-in exercise whose name another active exercise, or an archived one of the user's own,
+            // keeps is created hidden.
             exercise.isArchived = names.taken.contains(Validation.comparisonKey(forName: entry.name))
             context.insert(exercise)
             result.insertedKeys.append(entry.key)
@@ -125,15 +128,18 @@ struct ExerciseLibrarySeeder {
 
     // MARK: - Private
 
-    /// The names the active exercises hold once the run is over (as `Validation.comparisonKey`), and the
-    /// corrected exercises that keep their current name because another active exercise keeps the new one.
+    /// The names taken once the run is over (as `Validation.comparisonKey`): those the active exercises hold
+    /// and those the archived exercises of the user's own keep reserved, as `ExerciseService` counts them
+    /// (restoring one is the way to use its name). Also the corrected exercises that keep their current name
+    /// because one of those names is the new one.
     ///
     /// Every correction of a name is applied at first. An active exercise that the run does not rename
     /// keeps its name: a custom exercise, one that left the library, the second record of a key, or one
-    /// whose name does not change. A correction to a name one of those keeps is not applied, and that
-    /// exercise then keeps its own name too, which may stop another correction: this goes on until no
-    /// correction changes. An archived exercise takes any corrected name, as unarchiving checks the name
-    /// again, and so does a correction of case or diacritics only.
+    /// whose name does not change. A correction to a name one of those keeps, or an archived exercise of the
+    /// user's own keeps, is not applied, and that exercise then keeps its own name too, which may stop
+    /// another correction: this goes on until no correction changes. An archived built-in exercise takes any
+    /// corrected name, as unarchiving checks the name again, and so does a correction of case or diacritics
+    /// only.
     private static func finalNames(
         of stored: [Exercise],
         corrections: [(exercise: Exercise, entry: DefaultExercise)]
@@ -147,7 +153,7 @@ struct ExerciseLibrarySeeder {
                 renames[ObjectIdentifier(exercise)] = (current, new)
             }
         }
-        var taken = Set(stored.filter { !$0.isArchived && renames[ObjectIdentifier($0)] == nil }
+        var taken = Set(stored.filter { (!$0.isArchived || $0.isCustom) && renames[ObjectIdentifier($0)] == nil }
             .map { Validation.comparisonKey(forName: $0.name) })
         var kept: Set<ObjectIdentifier> = []
         while true {

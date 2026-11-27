@@ -57,12 +57,18 @@ struct ModelContainerFactoryTests {
         ]
         #expect(v6.intersection(v7) == Set(reusedBy7.map { ObjectIdentifier($0) }))
         #expect(SchemaV7.models.count == 11)
-        // The app's main models are the version 7 ones.
-        #expect(ObjectIdentifier(PlannedSet.self) == ObjectIdentifier(SchemaV7.PlannedSet.self))
-        #expect(ObjectIdentifier(SetLog.self) == ObjectIdentifier(SchemaV7.SetLog.self))
-        #expect(ObjectIdentifier(Workout.self) == ObjectIdentifier(SchemaV7.Workout.self))
-        #expect(ObjectIdentifier(WorkoutExercise.self) == ObjectIdentifier(SchemaV7.WorkoutExercise.self))
-        #expect(ObjectIdentifier(SessionExercise.self) == ObjectIdentifier(SchemaV7.SessionExercise.self))
+        // Version 8 redeclares the seven main models and reuses the four other models of version 7.
+        let v8 = Set(SchemaV8.models.map { ObjectIdentifier($0) })
+        #expect(v7.intersection(v8) == Set(reusedBy7.map { ObjectIdentifier($0) }))
+        #expect(SchemaV8.models.count == 11)
+        // The app's main models are the version 8 ones.
+        #expect(ObjectIdentifier(Exercise.self) == ObjectIdentifier(SchemaV8.Exercise.self))
+        #expect(ObjectIdentifier(PlannedSet.self) == ObjectIdentifier(SchemaV8.PlannedSet.self))
+        #expect(ObjectIdentifier(SetLog.self) == ObjectIdentifier(SchemaV8.SetLog.self))
+        #expect(ObjectIdentifier(Workout.self) == ObjectIdentifier(SchemaV8.Workout.self))
+        #expect(ObjectIdentifier(WorkoutExercise.self) == ObjectIdentifier(SchemaV8.WorkoutExercise.self))
+        #expect(ObjectIdentifier(SessionExercise.self) == ObjectIdentifier(SchemaV8.SessionExercise.self))
+        #expect(ObjectIdentifier(Session.self) == ObjectIdentifier(SchemaV8.Session.self))
 
         #expect(SchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
         #expect(SchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
@@ -71,12 +77,13 @@ struct ModelContainerFactoryTests {
         #expect(SchemaV5.versionIdentifier == Schema.Version(5, 0, 0))
         #expect(SchemaV6.versionIdentifier == Schema.Version(6, 0, 0))
         #expect(SchemaV7.versionIdentifier == Schema.Version(7, 0, 0))
+        #expect(SchemaV8.versionIdentifier == Schema.Version(8, 0, 0))
         #expect(IronFlowMigrationPlan.schemas.map { ObjectIdentifier($0) } == [
             ObjectIdentifier(SchemaV1.self), ObjectIdentifier(SchemaV2.self), ObjectIdentifier(SchemaV3.self),
             ObjectIdentifier(SchemaV4.self), ObjectIdentifier(SchemaV5.self), ObjectIdentifier(SchemaV6.self),
-            ObjectIdentifier(SchemaV7.self),
+            ObjectIdentifier(SchemaV7.self), ObjectIdentifier(SchemaV8.self),
         ])
-        #expect(IronFlowMigrationPlan.stages.count == 6)
+        #expect(IronFlowMigrationPlan.stages.count == 7)
     }
 
     @Test("In-memory stores are isolated from each other")

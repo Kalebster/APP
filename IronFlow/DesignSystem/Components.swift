@@ -183,3 +183,24 @@ struct SectionHeader: View {
         }
     }
 }
+
+/// A button dimmed as in the prototype: the whole button, its background and its text together, at 35 %
+/// when unavailable (`button:disabled { opacity: .35 }`) and at 70 % while pressed
+/// (`button:not(:disabled):active { opacity: .7 }`). A white button then keeps its black text readable over
+/// the dark screen; the system's own dimming of an unavailable plain button left the text almost invisible.
+struct PrototypeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        PrototypeButtonBody(configuration: configuration)
+    }
+
+    private struct PrototypeButtonBody: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .compositingGroup()
+                .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.35)
+        }
+    }
+}

@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias PlannedSet = SchemaV7.PlannedSet
+typealias PlannedSet = SchemaV8.PlannedSet
 
-extension SchemaV7 {
+extension SchemaV8 {
     /// One planned set of an exercise in a workout.
     @Model
     final class PlannedSet {

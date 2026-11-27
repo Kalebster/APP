@@ -110,6 +110,18 @@ enum UserFacingError {
             String(localized: "Exercícios padrão não podem ser excluídos, apenas arquivados.")
         case .confirmationRequired:
             String(localized: "Este exercício está em uso em treinos. Confirme a remoção.")
+        case .muscleGroupMissing:
+            String(localized: "Escolha o grupo muscular.")
+        case .equipmentMissing:
+            String(localized: "Escolha o equipamento.")
+        case .primaryMuscleMissing:
+            String(localized: "Escolha pelo menos 1 músculo principal.")
+        case .muscleInBothLists:
+            String(localized: "Um músculo não pode ser principal e secundário ao mesmo tempo.")
+        case .archivedExerciseHasName(let name):
+            String(localized: "Você já tem “\(name)” arquivado. Restaure em Exercícios › Meus ou use outro nome.")
+        case .nameTakenByActiveExercise(let name):
+            String(localized: "Já existe “\(name)”. Mude o nome deste exercício em Editar e tente de novo.")
         }
     }
 }

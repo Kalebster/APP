@@ -47,5 +47,15 @@ struct ExerciseEvolutionSection: View {
             chart = history.chart(metric: key.metric, period: key.period, today: today, calendar: calendar)
             selectedID = nil
         }
+        // The history read again (a session gone, a new kind of machine): the chart is made again. A new kind
+        // (Graviton or not) has other metrics: the first one is chosen, unless the one in use is still offered.
+        .onChange(of: history) {
+            if !history.metrics.contains(metric) {
+                metric = history.metrics[0]
+            } else {
+                chart = history.chart(metric: metric, period: period, today: today, calendar: calendar)
+                selectedID = nil
+            }
+        }
     }
 }

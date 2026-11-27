@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias SetLog = SchemaV7.SetLog
+typealias SetLog = SchemaV8.SetLog
 
-extension SchemaV7 {
+extension SchemaV8 {
     /// One set of a performed exercise. A set that was not done stays recorded with
     /// `isCompleted == false` and `completedAt == nil`.
     @Model

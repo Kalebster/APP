@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// The icon of an equipment, as in the model: its eq-* icon of the asset catalog. It fills its frame,
-/// so the line grows with the icon. Decorative: the text next to it says what it is.
+/// The icon of an equipment, as in the model: its eq-* icon of the asset catalog, or the 4 squares of
+/// "Outro" (`nil`: an exercise of the user's own without equipment). It fills its frame, so the line grows
+/// with the icon. Decorative: the text next to it says what it is.
 struct EquipmentIcon: View {
-    let equipment: Equipment
+    let equipment: Equipment?
 
     var body: some View {
-        Image(equipment.icon)
+        Image(equipment?.icon ?? .eqOutro)
             .renderingMode(.template)
             .resizable()
             .aspectRatio(1, contentMode: .fit)

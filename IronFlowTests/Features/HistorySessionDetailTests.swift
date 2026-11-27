@@ -57,7 +57,7 @@ struct HistorySessionDetailTests {
         let before = HistorySessionDetail(session)
 
         try harness.workouts.rename(workout, to: "Bíceps")
-        try harness.exercises.updateCustomExercise(curl, name: "Rosca Martelo", muscleGroup: .forearms)
+        try harness.exercises.update(curl, with: ExerciseDraft(name: "Rosca Martelo", group: .forearms, equipment: .equipment(.dumbbell), primary: [.forearms]))
         try harness.exercises.archive(curl)
         try harness.workouts.delete(workout)
 

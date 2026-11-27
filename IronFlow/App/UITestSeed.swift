@@ -27,7 +27,11 @@ import SwiftData
 ///   with every set done: exercise 1 with 60 kg, 2 with 22, 3 with 18, 4 with 25 (and so on again),
 ///   10, 10, 9 and 8 repetitions for sets 1 to 4 (8 after that); it lasted 45 minutes;
 /// - `custom-exercise:<name>:<group>`: an exercise of the user's own, in the muscle group with that
-///   storage key ("chest", "back"...);
+///   storage key ("chest", "back"...), without equipment or muscles of its own, as before version 8;
+/// - `own-exercise:<name>:<group>:<equipment>:<machine>:<main>:<secondary>` (and `:archived` after it):
+///   an exercise of the user's own created as the form does, by storage keys: the equipment ("other" is
+///   "Outro"), the kind of machine (empty for none), the main and the secondary muscles (`|` between them,
+///   empty for none); archived when asked;
 /// - `set-types:<workout>`: the planned sets of the workout's first exercise become those of the workout
 ///   editor's model: a warm-up of 40 kg for 12–15, a feeder of 50 kg for 5–6, two working sets of 60 kg
 ///   for 8–10 and a failure set of 55 kg for 8–12;
@@ -38,8 +42,10 @@ import SwiftData
 /// - `bmr:<sex>:<age>:<goal>`: the calculator's choices: the sex and goal by storage key ("male",
 ///   "lose"), and a date of birth on 1 January that gives that age in full years today;
 /// - `prototype-history`: the finished sessions of the approved prototype's history ("Push", "Pull" and
-///   "Pernas", 24 April to 15 October 2026, at 18:00), with the sets of its 15 exercises
+///   "Pernas", 24 April to 15 October 2026, at the start of each day), with the sets of its 15 exercises
 ///   (`UITestPrototypeHistory`), for the exercise screen with `-ui-today 2026-10-16`;
+/// - `prototype-history-own`: the same history with, in its last 6 "Pull", the prototype's exercise of the
+///   user's own "Puxada na Máquina Articulada", which an `own-exercise` item creates before;
 /// - `exercise-years:<exercise>:<years>`: that many years of finished sessions of one exercise, two a week
 ///   up to yesterday, each with a warm-up, three working sets and a failure set, the load growing slowly.
 ///
@@ -63,12 +69,14 @@ enum UITestSeed {
         case finishedToday(workout: String)
         case lastTime(workout: String)
         case customExercise(name: String, group: MuscleGroup)
+        case ownExercise(draft: ExerciseDraft, isArchived: Bool)
         case setTypes(workout: String)
         case rest(workout: String, seconds: Int)
         case weights([WeightRecord])
         case profile(heightCm: Int, goalKcal: Int)
         case bmr(sex: BiologicalSex, age: Int, goal: WeightGoal)
         case prototypeHistory
+        case prototypeHistoryWithOwn
         case exerciseYears(exercise: String, years: Int)
     }
 
@@ -148,6 +156,8 @@ enum UITestSeed {
             case ("custom-exercise", 3):
                 guard let group = MuscleGroup(rawValue: parts[2]) else { throw SeedError.unknownItem(String(token)) }
                 return .customExercise(name: parts[1], group: group)
+            case ("own-exercise", 7), ("own-exercise", 8):
+                return try ownExercise(parts, token: String(token))
             case ("set-types", 2):
                 return .setTypes(workout: parts[1])
             case ("rest", 3):
@@ -173,6 +183,8 @@ enum UITestSeed {
                 return .bmr(sex: sex, age: age, goal: goal)
             case ("prototype-history", 1):
                 return .prototypeHistory
+            case ("prototype-history-own", 1):
+                return .prototypeHistoryWithOwn
             case ("exercise-years", 3):
                 guard let years = Int(parts[2]), (1...5).contains(years) else { throw SeedError.unknownItem(String(token)) }
                 return .exerciseYears(exercise: parts[1], years: years)
@@ -266,6 +278,12 @@ enum UITestSeed {
                 try service.finishSession(session)
             case .customExercise(let name, let group):
                 try ExerciseService(context: context).createCustomExercise(name: name, muscleGroup: group)
+            case .ownExercise(let draft, let isArchived):
+                let service = ExerciseService(context: context)
+                let exercise = try service.create(draft)
+                if isArchived {
+                    try service.archive(exercise)
+                }
             case .setTypes(let name):
                 let workout = try findWorkout(named: name, in: context)
                 guard let item = workout.orderedExercises.first else { throw SeedError.workoutHasNoExercises(name) }
@@ -303,21 +321,52 @@ enum UITestSeed {
                 try service.setBirthDate(BirthDate(day: 1, month: 1, year: year))
                 try service.setWeightGoal(goal)
             case .prototypeHistory:
-                try insertPrototypeHistory(in: context)
+                try insertPrototypeHistory(includingOwn: false, in: context)
+            case .prototypeHistoryWithOwn:
+                try insertPrototypeHistory(includingOwn: true, in: context)
             case .exerciseYears(let name, let years):
                 try insertYears(years, of: name, in: context)
             }
         }
     }
 
-    /// The prototype's sessions, at 18:00 of their days, finished after their duration.
-    private static func insertPrototypeHistory(in context: ModelContext) throws {
+    /// `own-exercise:<name>:<group>:<equipment>:<machine>:<main>:<secondary>[:archived]`, by storage keys.
+    private static func ownExercise(_ parts: [String], token: String) throws -> Item {
+        func muscles(_ field: String) throws -> [Muscle] {
+            try field.split(separator: "|").map { key in
+                guard let muscle = Muscle(rawValue: String(key)) else { throw SeedError.unknownItem(token) }
+                return muscle
+            }
+        }
+        guard let group = MuscleGroup(rawValue: parts[2]) else { throw SeedError.unknownItem(token) }
+        let equipment: EquipmentChoice
+        if parts[3] == "other" {
+            equipment = .other
+        } else if let chosen = Equipment(rawValue: parts[3]) {
+            equipment = .equipment(chosen)
+        } else {
+            throw SeedError.unknownItem(token)
+        }
+        var machine: MachineType?
+        if !parts[4].isEmpty {
+            guard let chosen = MachineType(rawValue: parts[4]) else { throw SeedError.unknownItem(token) }
+            machine = chosen
+        }
+        if parts.count == 8 && parts[7] != "archived" {
+            throw SeedError.unknownItem(token)
+        }
+        let draft = ExerciseDraft(name: parts[1], group: group, equipment: equipment, machine: machine, primary: try muscles(parts[5]), secondary: try muscles(parts[6]))
+        return .ownExercise(draft: draft, isArchived: parts.count == 8)
+    }
+
+    /// The prototype's sessions, at the start of their days as in the prototype (`H_S`), so the chart places
+    /// them where it does, finished after their duration; with the exercise of the user's own of the
+    /// prototype when asked.
+    private static func insertPrototypeHistory(includingOwn: Bool, in context: ModelContext) throws {
         let calendar = TrainingDay.calendar
         var exercises: [String: Exercise] = [:]
-        for session in UITestPrototypeHistory.sessions().reversed() {
-            var components = session.day
-            components.hour = 18
-            guard let start = calendar.date(from: components) else { continue }
+        for session in UITestPrototypeHistory.sessions(includingOwn: includingOwn).reversed() {
+            guard let start = calendar.date(from: session.day) else { continue }
             var performed: [(Exercise, [(SetType, Double?, Int)])] = []
             for item in session.exercises {
                 let exercise = try exercises[item.name] ?? findExercise(named: item.name, in: context)
