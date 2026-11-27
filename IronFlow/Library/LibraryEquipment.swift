@@ -6,7 +6,7 @@ import Foundation
 ///
 /// Library data only, never stored: an exercise's combination is found by its stable key
 /// (`Exercise.libraryKey`). The order of the cases is the standard order.
-enum LibraryEquipment: String, CaseIterable, Sendable {
+enum LibraryEquipment: String, CaseIterable, Decodable, Sendable {
     case barbell
     /// Barra W (EZ bar): only in Rosca Direta, Rosca Scott, Rosca Spider, Rosca Invertida, Tríceps Francês
     /// and Tríceps Testa.

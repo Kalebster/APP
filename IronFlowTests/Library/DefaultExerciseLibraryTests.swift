@@ -3,7 +3,9 @@ import Testing
 @testable import IronFlow
 
 /// The library against the approved base list (design/lista-base-dados.json, the owner's approval of
-/// 26/11/2026), read from the repository: the code must hold exactly what was approved.
+/// 26/11/2026), read from the repository: what the app reads from its own `ExerciseLibrary.json` (the
+/// combinations, with their muscles and kind of machine) and what its code has (the bases, the retired
+/// exercises and the junctions) must be exactly what was approved.
 struct DefaultExerciseLibraryTests {
     let library = DefaultExerciseLibrary.all
     let bases = ExerciseBaseLibrary.all

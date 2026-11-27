@@ -8,6 +8,9 @@ enum ExerciseLibraryError: Error, Equatable {
     case duplicateKey(String)
     case duplicateID(String)
     case duplicateName(key: String)
+    /// The app's library file could not be read (`ExerciseLibraryFile`): nothing is changed, so a store is
+    /// never migrated against an empty library.
+    case libraryFileUnreadable
 }
 
 /// What a seeding run changed.
@@ -72,6 +75,9 @@ struct ExerciseLibrarySeeder {
         retired: [RetiredExercise] = RetiredExercises.all,
         junctions: [(kept: String, merged: String)] = RetiredExercises.junctions
     ) throws -> ExerciseLibrarySeedResult {
+        if entries.isEmpty && ExerciseLibraryFile.error != nil {
+            throw ExerciseLibraryError.libraryFileUnreadable
+        }
         let library = try validated(entries)
         let libraryKeys = Set(entries.map(\.key))
         let timestamp = now()
