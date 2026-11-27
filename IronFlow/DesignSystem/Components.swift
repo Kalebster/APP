@@ -131,7 +131,10 @@ struct FlowLayout: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var index = 0
         var y = bounds.minY
-        for row in rows(of: subviews, maxWidth: bounds.width) {
+        // The rows of `sizeThatFits`, from the same proposal. Not from `bounds`: its width is the widest row,
+        // rounded to the screen's pixels, and a row that filled it could come out a fraction of a point too
+        // wide and lose its last subview to the next row (Elástico, run 46047186211).
+        for row in rows(of: subviews, maxWidth: proposal.width ?? .infinity) {
             var x = bounds.minX
             for size in row {
                 subviews[index].place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
