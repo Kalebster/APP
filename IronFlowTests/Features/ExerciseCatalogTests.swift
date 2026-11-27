@@ -197,7 +197,8 @@ struct ExerciseCatalogTests {
     func searchCustom() {
         let all = items([custom("Remada Cavalinho Smart", .upperBack, equipment: .machine), custom("Remada Livre", .upperBack)])
         #expect(search("cavalinho smart maquina", in: all) == ["Remada Cavalinho Smart"])
-        #expect(search("livre", in: all) == ["Remada Livre"])
+        // Its name; the base Agachamento too, by its common "Agachamento Livre (Barra)".
+        #expect(search("livre", in: all) == ["Agachamento", "Remada Livre"])
         #expect(!search("outro", in: all).contains("Remada Livre"))
     }
 
