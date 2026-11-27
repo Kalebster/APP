@@ -50,6 +50,8 @@ enum DefaultExerciseLibrary {
 
     /// The entries, one statement each, so the compiler checks each on its own instead of one expression of
     /// 1,525 entries.
+    // DIAGNÓSTICO TEMPORÁRIO (será desfeito): sem otimização, para medir o Build Release.
+    @_optimize(none)
     private static func makeAll() -> [DefaultExercise] {
         var all: [DefaultExercise] = []
         all.reserveCapacity(1525)

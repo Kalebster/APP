@@ -100,6 +100,8 @@ struct DefaultExerciseMuscles: Equatable, Sendable {
 
     /// The entries, one statement each, so the compiler checks each on its own instead of one expression of
     /// 1,525 entries.
+    // DIAGNÓSTICO TEMPORÁRIO (será desfeito): sem otimização, para medir o Build Release.
+    @_optimize(none)
     private static func makeAll() -> [DefaultExerciseMuscles] {
         var all: [DefaultExerciseMuscles] = []
         all.reserveCapacity(1525)
