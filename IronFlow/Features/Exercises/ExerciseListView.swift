@@ -1,19 +1,28 @@
+import OSLog
 import SwiftData
 import SwiftUI
 
-/// The Exercícios tab: the active exercises in one alphabetical list, with a search, the group filters
-/// ("Todos", "Meus" and the muscle groups) and the equipment of the chosen group. "Limpar filtros" goes
-/// back to "Todos" without equipment and keeps the search. "+ Novo" (and "+ Criar" when the search finds
-/// nothing) opens the form of a new exercise with the filters on; once created, its screen opens. In
-/// "Meus", without a search or an equipment, the archived exercises of the user's own come at the end. A
-/// row opens the exercise screen, with the tab bar still there; tapping the tab again goes back to the list.
+/// The Exercícios tab: the 103 base exercises of the library and the exercises of the user's own, in one
+/// alphabetical list, with a search, the group filters ("Todos", "Meus" and the muscle groups) and the
+/// equipment of the chosen group (a base by its common equipment). "Montar treino" at the top (not while
+/// searching) opens the picker to build a workout or add to one. "Limpar filtros" goes back to "Todos"
+/// without equipment and keeps the search. "+ Novo" (and "+ Criar" when the search finds nothing) opens the
+/// form of a new exercise with the filters on; once created, its screen opens. In "Meus", without a search
+/// or an equipment, the archived exercises of the user's own come at the end. A row opens the exercise
+/// screen (a base on the combination done last, or on its first), with the tab bar still there; tapping the
+/// tab again goes back to the list.
 struct ExerciseListView: View {
-    /// Every exercise, the archived ones too: an archived exercise of the user's own is listed in "Meus",
-    /// and its screen stays open once it is archived.
-    @Query private var exercises: [Exercise]
-    /// The items built from the exercises, kept until one of them changes: typing a search or choosing a
-    /// filter does not build them again.
+    /// The exercises of the user's own, the archived ones too: an archived one is listed in "Meus", and its
+    /// screen stays open once it is archived.
+    @Query(filter: #Predicate<Exercise> { $0.isCustom }) private var customs: [Exercise]
+    @Environment(\.modelContext) private var context
+    @Environment(\.openWorkoutEditor) private var openWorkoutEditor
+    /// The rows built from the exercises of the user's own, kept until one of them changes: typing a search
+    /// or choosing a filter does not build them again. The bases are built once for all.
     @State private var cache = ExerciseCatalogCache()
+    /// When each combination was last done, and the hidden ones, read when the tab appears.
+    @State private var lastDone = ExerciseLastDone()
+    @State private var hiddenKeys: Set<String> = []
     @State private var searchText = ""
     @State private var chosenGroup: ExerciseCatalog.GroupFilter = .all
     @State private var chosenEquipment: Equipment?
@@ -22,7 +31,10 @@ struct ExerciseListView: View {
     /// The exercise just created, opened once the form has closed.
     @State private var createdExercise: Exercise?
     @State private var openedExercise: Exercise?
-    /// Shows "Exercício criado".
+    /// "Montar treino": the picker that builds a workout.
+    @State private var isBuildingWorkout = false
+    @State private var errorMessage: String?
+    /// Shows "Exercício criado" and the notices of "Adicionar a um treino".
     @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
 
     private struct NewExerciseForm: Identifiable {
@@ -31,7 +43,7 @@ struct ExerciseListView: View {
     }
 
     var body: some View {
-        let lists = cache.lists(for: exercises)
+        let lists = cache.lists(for: customs)
         let items = lists.active
         let hasArchivedCustom = !lists.archived.isEmpty
         let group = ExerciseCatalog.groupFilter(chosenGroup, in: items, hasArchivedCustom: hasArchivedCustom)
@@ -41,6 +53,9 @@ struct ExerciseListView: View {
         let archived = ExerciseCatalog.archivedShown(lists.archived, group: group, equipment: equipment, search: searchText)
         // With only archived exercises to show, they take the list's place, as in the prototype.
         let showsCount = ExerciseCatalog.isFiltering(group: group, equipment: equipment) && !(shown.isEmpty && !archived.isEmpty)
+        let isSearching = !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        // "Montar treino" with the rows, as the prototype's list; not while searching or with nothing found.
+        let showsBuild = !isSearching && !shown.isEmpty
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -58,10 +73,16 @@ struct ExerciseListView: View {
                     hasArchivedCustom: hasArchivedCustom
                 )
                 .padding(.top, 14)
+                if showsBuild {
+                    buildRow
+                        .padding(.horizontal, Theme.Metrics.screenPadding)
+                        .padding(.top, 14)
+                }
                 if showsCount {
                     countRow(shown.count)
                         .padding(.horizontal, Theme.Metrics.screenPadding)
-                        .padding(.top, 10)
+                        // 10 below the filters, as in the prototype; 4 below "Montar treino".
+                        .padding(.top, showsBuild ? 4 : 10)
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     if !(shown.isEmpty && !archived.isEmpty) {
@@ -73,17 +94,21 @@ struct ExerciseListView: View {
                     }
                 }
                 .padding(.horizontal, Theme.Metrics.screenPadding)
-                // The prototype's 8 below the count, 14 below the filters.
-                .padding(.top, showsCount ? 8 : 14)
+                // The prototype's 8 below the count and below "Montar treino", 14 below the filters.
+                .padding(.top, showsCount || showsBuild ? 8 : 14)
             }
             .padding(.top, 16)
             .padding(.bottom, Theme.Metrics.screenPadding)
         }
         .scrollDismissesKeyboard(.immediately)
+        .onAppear(perform: readUsage)
         .navigationDestination(for: ExerciseRoute.self) { route in
-            if let exercise = exercises.first(where: { $0.id == route.exerciseID }) {
+            if let exercise = customs.first(where: { $0.id == route.exerciseID }) {
                 ExerciseDetailView(exercise: exercise, origin: .exercises)
             }
+        }
+        .navigationDestination(for: ExerciseBaseRoute.self) { route in
+            LibraryExerciseDestination(key: route.key)
         }
         .navigationDestination(item: $openedExercise) { exercise in
             ExerciseDetailView(exercise: exercise, origin: .exercises)
@@ -93,11 +118,15 @@ struct ExerciseListView: View {
                 createdExercise = exercise
             }
         }
+        .fullScreenCover(isPresented: $isBuildingWorkout) {
+            ExercisePickerView(buildingWorkout: finishBuilding)
+        }
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
+        .errorAlert($errorMessage)
     }
 
-    /// The exercises left, or the card that says none was found.
+    /// The rows left, or the card that says none was found.
     private func cards(_ shown: [ExerciseCatalog.Item], group: ExerciseCatalog.GroupFilter, equipment: Equipment?) -> some View {
         LazyVStack(spacing: 8) {
             if shown.isEmpty {
@@ -113,18 +142,65 @@ struct ExerciseListView: View {
         }
     }
 
+    @ViewBuilder
     private func row(_ item: ExerciseCatalog.Item) -> some View {
-        NavigationLink(value: ExerciseRoute(exerciseID: item.id)) {
-            ExerciseCard(item: item)
+        if let base = item.base {
+            let opening = lastDone.openingCombination(of: base, hiddenKeys: hiddenKeys)
+            NavigationLink(value: ExerciseBaseRoute(key: opening?.key ?? "")) {
+                ExerciseCard(item: item, iconEquipment: opening?.equipment)
+            }
+            .buttonStyle(.plain)
+            .disabled(opening == nil)
+        } else if let id = item.exerciseID {
+            NavigationLink(value: ExerciseRoute(exerciseID: id)) {
+                ExerciseCard(item: item)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    /// "Montar treino": the white + on its square, what it does, and the ›. Opens the picker that builds a
+    /// workout.
+    private var buildRow: some View {
+        Button {
+            guard !isBuildingWorkout else { return }
+            isBuildingWorkout = true
+        } label: {
+            HStack(spacing: 12) {
+                AppIcon(.plus, size: 16)
+                    .foregroundStyle(Theme.Colors.primaryButtonText)
+                    .frame(width: 36, height: 36)
+                    .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Montar treino")
+                        .scaledFont(14, weight: .bold)
+                        .foregroundStyle(Theme.Colors.brightText)
+                    Text("Escolha os exercícios e crie um treino ou adicione a um que já existe")
+                        .scaledFont(11, lineHeight: 1.35, webKitLine: true)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                AppIcon(.chevronRightList, size: 13)
+                    .foregroundStyle(Theme.Colors.futureDayText)
+                    .accessibilityHidden(true)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(Theme.Colors.cardBackground, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("exercises.build")
     }
 
     /// ARQUIVADOS, how many, what it means, and the archived exercises of the user's own.
     private func archivedSection(_ archived: [ExerciseCatalog.Item]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                SectionTitle("Arquivados")
+                SectionTitle("Arquivados", webKitLine: true)
                 Spacer(minLength: 8)
                 Text(verbatim: "\(archived.count)")
                     .scaledFont(12)
@@ -135,7 +211,7 @@ struct ExerciseListView: View {
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("exercises.archived.title")
             Text("Não aparecem na lista nem para adicionar a um treino. Toque para ver o histórico ou restaurar.")
-                .scaledFont(12, lineHeight: 1.4)
+                .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
@@ -161,7 +237,7 @@ struct ExerciseListView: View {
                 .accessibilityIdentifier("exercises.total")
         }
         let newButton = Button {
-            let lists = cache.lists(for: exercises)
+            let lists = cache.lists(for: customs)
             let group = ExerciseCatalog.groupFilter(chosenGroup, in: lists.active, hasArchivedCustom: !lists.archived.isEmpty)
             openForm(name: "", group: group, equipment: ExerciseCatalog.equipment(chosenEquipment, for: group, in: lists.active))
         } label: {
@@ -202,7 +278,7 @@ struct ExerciseListView: View {
     private func countRow(_ count: Int) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(verbatim: ExerciseCatalog.countText(count))
-                .scaledFont(11)
+                .scaledFont(11, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .accessibilityIdentifier("exercises.count")
             Spacer(minLength: 8)
@@ -211,7 +287,7 @@ struct ExerciseListView: View {
                 chosenEquipment = nil
             } label: {
                 Text("Limpar filtros")
-                    .scaledFont(11, weight: .bold)
+                    .scaledFont(11, weight: .bold, webKitLine: true)
                     .foregroundStyle(Theme.Colors.lightAccent)
                     // The touch area grows to 44 points without taking room.
                     .padding(.vertical, 15)
@@ -241,5 +317,63 @@ struct ExerciseListView: View {
         self.createdExercise = nil
         openedExercise = createdExercise
         rootFeedback?.show(String(localized: "Exercício criado"))
+    }
+
+    /// When each combination was last done and which are hidden, read when the tab appears (and when it comes
+    /// back from a screen over it): the icon of a base and the combination its screen opens on.
+    private func readUsage() {
+        do {
+            lastDone = try ExerciseLastDone.read(in: context)
+            hiddenKeys = try LibraryRecords.hiddenKeys(in: context)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// "Montar treino" added to a workout, or created one: its notice and, for a new one, its editor.
+    private func finishBuilding(_ outcome: AddToWorkoutOutcome) {
+        rootFeedback?.show(outcome.notice)
+        if case .created(let workout, _) = outcome {
+            openWorkoutEditor(workout)
+        }
+    }
+}
+
+/// The screen of a base's row: the library exercise of `key`, read when it opens. Should the store not have
+/// it (the library could not be installed) or the reading fail, the screen goes back with the error, in the
+/// root's alert, instead of staying blank.
+private struct LibraryExerciseDestination: View {
+    let key: String
+
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
+    @State private var exercise: Exercise?
+
+    private static let logger = Logger(subsystem: "com.ironflow.app", category: "library")
+
+    var body: some View {
+        if let exercise {
+            ExerciseDetailView(exercise: exercise, origin: .exercises)
+        } else {
+            Color.clear
+                .screenBackground()
+                .task { read() }
+        }
+    }
+
+    private func read() {
+        do {
+            if let record = try LibraryRecords.record(forKey: key, in: context) {
+                exercise = record
+                return
+            }
+            Self.logger.error("No library exercise in the store for the key \(key, privacy: .public)")
+            rootFeedback?.errorMessage = UserFacingError.message(for: ExerciseLibraryError.libraryFileUnreadable)
+        } catch {
+            Self.logger.error("Could not read the library exercise \(key, privacy: .public): \(String(reflecting: type(of: error)), privacy: .public)")
+            rootFeedback?.errorMessage = UserFacingError.message(for: error)
+        }
+        dismiss()
     }
 }

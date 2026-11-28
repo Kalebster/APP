@@ -60,6 +60,27 @@ struct SystemFontTests {
         #expect(abs(twoX.edgePadding - (18.2 - (own * 2).rounded(.up) / 2) / 2) < 0.001)
     }
 
+    @Test("The WebKit line of the prototype is in whole points, rounded down: 16 for 12 at 1,4, 18 for 13 at 1,4, 13 for the normal line of 11")
+    func webKitLine() {
+        for (size, lineHeight, line) in [(12, 1.4, 16), (13, 1.4, 18), (11, 1.35, 14), (11, 13.0 / 11, 13)] as [(CGFloat, CGFloat, CGFloat)] {
+            let own = SystemFont.lineHeight(size: size, weight: .regular)
+            let metrics = LineHeightMetrics(size: size, weight: .regular, lineHeight: lineHeight, displayScale: 3, roundsDown: true)
+            #expect(abs(own + metrics.lineSpacing - line) < 0.001 || metrics.lineSpacing == 0, "\(size) at \(lineHeight)")
+            #expect(abs(metrics.edgePadding - (line - (own * 3).rounded(.up) / 3) / 2) < 0.001, "\(size) at \(lineHeight)")
+        }
+    }
+
+    @Test("Laid out by SwiftUI, a text with the WebKit line is as tall as in the prototype")
+    func measuredWebKitLines() {
+        // A note of 12 at 1,4 in two lines: 16 each, as the prototype's WebKit lays it out.
+        let note = size(of: Text(verbatim: "Primeira linha\nSegunda linha").scaledFont(12, lineHeight: 1.4, webKitLine: true))
+        #expect(abs(note.height - 32) < 0.67, "Note: \(note.height)")
+        // A title of 11 with the normal line: 13.
+        let title = size(of: Text(verbatim: "MÚSCULOS").scaledFont(11, weight: .heavy, webKitLine: true))
+        #expect(abs(title.height - 13) < 0.34, "Title: \(title.height)")
+        print("MEDIÇÃO linha do WebKit: 12 a 1,4 em duas linhas \(note.height) pt, 11 normal \(title.height) pt")
+    }
+
     @Test("Laid out by SwiftUI, a text with a line height of the model is as tall as in the model")
     func measuredLineHeights() {
         // A title of 29 at 1,05: one line of 30,45.

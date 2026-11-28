@@ -182,6 +182,13 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     private func openExercise(_ name: String, search: String, in app: XCUIApplication) {
         let field = app.textFields["exercises.search"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Search field not found")
+        // A search kept from before is cleared first, once the tab is on screen: right after the tab was
+        // chosen, the ✕ was not there yet and the new search went after the old one (run 46087661184).
+        let clear = app.buttons["exercises.search.clear"]
+        if clear.exists {
+            clear.tap()
+            XCTAssertTrue(clear.waitForNonExistence(timeout: 10), "The search was not cleared")
+        }
         field.tapAndWaitForKeyboardFocus()
         field.typeText(search)
         XCTAssertTrue(field.waitForValue(search, timeout: typingTimeout), "The search field holds \(String(describing: field.value))")
@@ -261,7 +268,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
 
         // Back on the list: the count has it, and it is found by its equipment.
         app.buttons["exercise.back"].tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "421 exercícios"), "Count without the new exercise")
+        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "104 exercícios"), "Count without the new exercise")
     }
 
     @MainActor
@@ -368,12 +375,13 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         app.buttons["exerciseForm.cancel"].tap()
         XCTAssertTrue(element(labelStartingWith: "Descartar exercício?", in: app).waitForExistence(timeout: 10), "No question before discarding")
         XCTAssertTrue(app.staticTexts["O exercício não será criado."].exists, "No message of the question")
+        attachScreenshot(named: "132-exercise-form-discard", of: app)
         keepEditing(in: app)
         XCTAssertEqual(app.textFields["exerciseForm.name"].value as? String, "Puxada Nova")
         app.buttons["exerciseForm.cancel"].tap()
         confirmationButton("Descartar", title: "Descartar exercício?", in: app).tap()
         XCTAssertTrue(app.buttons["exerciseForm.save"].waitForNonExistence(timeout: 10), "The form did not close")
-        XCTAssertEqual(element("exercises.total", in: app).label, "420 exercícios")
+        XCTAssertEqual(element("exercises.total", in: app).label, "103 exercícios")
     }
 
     @MainActor
@@ -430,7 +438,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         save.doubleTap()
         waitForExerciseScreen(of: "Toque Duplo", in: app)
         app.buttons["exercise.back"].tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "421 exercícios"), "Not exactly one exercise created: \(element("exercises.total", in: app).label)")
+        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "104 exercícios"), "Not exactly one exercise created: \(element("exercises.total", in: app).label)")
         openMine(in: app)
         XCTAssertTrue(waitForLabel(of: element("exercises.count", in: app), toBe: "1 exercício"), "Meus: \(element("exercises.count", in: app).label)")
     }
@@ -508,7 +516,9 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         if clear.exists {
             clear.tap()
         }
-        openExercise("Leg Press 45° (Máquina)", search: "leg press 45", in: app)
+        // The screen of the base, on the combination whose copy is made.
+        openExercise("Leg Press", search: "leg press 45", in: app)
+        chooseCombination(equipment: "machine", variation: "45°", in: app)
         openMenuItem("Criar minha versão", in: app)
         waitForForm(titled: "Minha versão", in: app)
         XCTAssertEqual(app.textFields["exerciseForm.name"].value as? String, "Leg Press 45° (Máquina) 2")
@@ -553,7 +563,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         let clear = app.buttons["exercises.search.clear"]
         XCTAssertTrue(clear.waitForExistence(timeout: 10), "No clear button")
         clear.tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "421 exercícios"), "The archived exercise counted")
+        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "104 exercícios"), "The archived exercise counted")
         openMine(in: app)
         XCTAssertTrue(element("exercises.archived.title", in: app).waitForExistence(timeout: 10), "No ARQUIVADOS")
         XCTAssertEqual(element("exercises.count", in: app).label, "1 exercício")
@@ -578,7 +588,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(element("exercise.archived", in: app).waitForNonExistence(timeout: 10), "Still archived")
         XCTAssertEqual(element("exercise.badge", in: app).label, "MEU")
         app.buttons["exercise.back"].tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "422 exercícios"), "The restored exercise is not counted")
+        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "105 exercícios"), "The restored exercise is not counted")
     }
 
     @MainActor
@@ -616,7 +626,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         XCTAssertTrue(waitForToast("Exercício restaurado", in: app), "No Exercício restaurado")
         XCTAssertTrue(element("exercise.archived", in: app).waitForNonExistence(timeout: 10), "Still archived")
         app.buttons["exercise.back"].tap()
-        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "421 exercícios"), "The restored exercise is not counted")
+        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "104 exercícios"), "The restored exercise is not counted")
         XCTAssertFalse(element("exercises.archived.title", in: app).exists, "ARQUIVADOS without an archived exercise")
     }
 
@@ -641,7 +651,7 @@ final class CustomExerciseUITests: IronFlowUITestCase {
         if clear.exists {
             clear.tap()
         }
-        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "420 exercícios"), "Still counted")
+        XCTAssertTrue(waitForLabel(of: element("exercises.total", in: app), toBe: "103 exercícios"), "Still counted")
         XCTAssertFalse(app.buttons["exercises.filter.mine"].exists, "Meus without an exercise of the user's own")
 
         // It left the workout, whose other exercises keep their order.

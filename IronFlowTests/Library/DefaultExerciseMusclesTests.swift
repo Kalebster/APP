@@ -2,14 +2,14 @@ import Foundation
 import Testing
 @testable import IronFlow
 
-/// The muscles and the kind of machine of each library exercise, from the approved prototype.
+/// The muscles and the kind of machine of each library exercise, from the approved base list.
 struct DefaultExerciseMusclesTests {
     let table = DefaultExerciseMuscles.all
 
     @Test("Every key of the library has exactly one entry, in the library's order, and no entry is left over")
     func everyKeyIsThere() {
         #expect(table.map(\.key) == DefaultExerciseLibrary.all.map(\.key))
-        #expect(DefaultExerciseMuscles.byKey.count == 420)
+        #expect(DefaultExerciseMuscles.byKey.count == 1_525)
     }
 
     @Test("Every exercise has at least one main muscle")
@@ -35,23 +35,30 @@ struct DefaultExerciseMusclesTests {
         }
     }
 
-    @Test("Graviton is exactly the 4 exercises of the plan, and the GHD bench is the Glute Ham Raise")
+    @Test("Graviton is exactly the 6 Graviton combinations (the 4 of the library of 420 keep their keys), and no library exercise is on the GHD bench")
     func gravitonAndGHD() throws {
         let graviton = table.filter { $0.machine == .graviton }.map(\.key)
-        #expect(Set(graviton) == ["assisted-pull-up", "assisted-chin-up", "assisted-chest-dips", "assisted-dips"])
+        #expect(graviton.count == 6)
+        for key in ["assisted-pull-up", "assisted-chin-up", "assisted-chest-dips", "assisted-dips"] {
+            #expect(graviton.contains(key), "\(key)")
+        }
         let names = try graviton.map { try #require(DefaultExerciseLibrary.byKey[$0]).name }
         #expect(Set(names) == [
-            "Barra Fixa (Graviton)", "Barra Fixa Supinada (Graviton)", "Peito na Paralela (Graviton)", "Tríceps na Paralela (Graviton)",
+            "Peito na Paralela (Graviton)", "Barra Fixa (Graviton)", "Barra Fixa Fechada (Graviton)",
+            "Barra Fixa Supinada (Graviton)", "Barra Fixa Neutra (Graviton)", "Tríceps na Paralela (Graviton)",
         ])
-        let ghd = try table.filter { $0.machine == .ghd }.map { try #require(DefaultExerciseLibrary.byKey[$0.key]).name }
-        #expect(ghd == ["Glute Ham Raise (Máquina)"])
+        for key in graviton {
+            #expect(DefaultExerciseLibrary.byKey[key]?.option == .graviton, "\(key)")
+        }
+        // The Glute Ham Raise left the list; the bench stays a kind an exercise of the user's own can choose.
+        #expect(table.filter { $0.machine == .ghd }.isEmpty)
     }
 
-    @Test("All 21 muscles are used by the library")
+    @Test("20 of the 21 muscles are used by the library: Tibial anterior left it with Elevação de Ponta dos Pés, now Panturrilha em Pé")
     func everyMuscleUsed() {
         let used = Set(table.flatMap { $0.primary + $0.secondary })
         #expect(Muscle.allCases.count == 21)
-        #expect(used == Set(Muscle.allCases))
+        #expect(used == Set(Muscle.allCases).subtracting([.tibialis]))
     }
 
     @Test("A few entries as in the prototype")

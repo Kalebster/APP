@@ -39,7 +39,7 @@ struct ExerciseMusclesCard: View {
             // The drawing keeps its size, so its name never goes wider than it: with the largest text sizes
             // "Frente" and "Costas" would run into each other.
             Text(title)
-                .scaledFont(11)
+                .scaledFont(11, webKitLine: true)
                 .foregroundStyle(Theme.Colors.dimText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -116,7 +116,9 @@ private struct MusclesLegend: View {
             VStack(alignment: .leading, spacing: 3) {
                 ForEach(values, id: \.self) { value in
                     Text(verbatim: value)
-                        .scaledFont(14, weight: .semibold, lineHeight: 1.25)
+                        // The prototype's WebKit line, 17 (17,5 on iOS): with it the legend sits where it
+                        // does in the prototype, within 1 point (run 46047186211: down to −2 without it).
+                        .scaledFont(14, weight: .semibold, lineHeight: 1.25, webKitLine: true)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

@@ -1,10 +1,11 @@
 import Foundation
 
-/// The Exercícios tab: each exercise as it is shown (with the equipment and focus the library knows of a
-/// built-in one, and the equipment an exercise of the user's own chose), the group and equipment filters,
-/// the search and the archived exercises of the user's own. Pure logic: no UI and no store access.
+/// The Exercícios tab and the picker: one row per base exercise of the library ("Supino Reto"), whose
+/// equipment and grip or variation are chosen on its screen or in the choice sheet, and one per exercise of
+/// the user's own; the group and equipment filters, the search and the archived exercises of the user's
+/// own. Pure logic: no UI and no store access.
 enum ExerciseCatalog {
-    /// What the tab reads of a stored exercise.
+    /// What the tab reads of a stored exercise of the user's own.
     struct Source: Equatable {
         let id: UUID
         let name: String
@@ -16,25 +17,33 @@ enum ExerciseCatalog {
         var equipmentKey: String?
     }
 
-    /// An exercise as the tab shows it.
+    /// A row as the tab and the picker show it.
     struct Item: Identifiable, Equatable {
-        let id: UUID
+        /// "base:" and the base's name, or the id of the exercise of the user's own.
+        let id: String
         let name: String
         let group: MuscleGroup
-        /// From the library, found by the exercise's key, or the one an exercise of the user's own chose;
-        /// `nil` is "Outro".
+        /// The base exercise of a library row; `nil` for an exercise of the user's own.
+        let base: ExerciseBase?
+        /// The exercise of the user's own; `nil` for a base.
+        let exerciseID: UUID?
+        /// The icon: the equipment an exercise of the user's own chose (`nil` is "Outro"); for a base, that of
+        /// the combination its screen opens on when none was done (the screens show the one done last).
         let equipment: Equipment?
-        /// From the library; `nil` for an exercise of the user's own.
-        let focus: String?
+        /// The equipment the filter finds the row by: the common ones of a base, the one of the user's own.
+        let filterEquipment: Set<Equipment>
+        /// After the group: a base's common equipment ("Barra, Halteres, Máquina +3"), or the equipment of an
+        /// exercise of the user's own ("Outro" without one).
+        let detail: String
         let isCustom: Bool
         var isArchived = false
-        /// What the search compares, computed once (`Validation.comparisonKey`): the name, and the name of its
-        /// equipment after it, as the equipment filter shows it ("halteres"); "Outro" is not searched.
+        /// What the search compares, computed once (`Validation.comparisonKey`): for a base, `ExerciseBaseIndex.searchKeys`;
+        /// for an exercise of the user's own, its name and the name of its equipment ("Outro" is not searched).
         let searchKey: String
     }
 
-    /// The exercises of the tab: the active ones, and the archived exercises of the user's own, each in
-    /// alphabetical order.
+    /// The rows: the bases and the active exercises of the user's own, and the archived exercises of the
+    /// user's own, each in alphabetical order.
     struct Lists: Equatable {
         var active: [Item] = []
         var archived: [Item] = []
@@ -52,36 +61,51 @@ enum ExerciseCatalog {
         case group(MuscleGroup)
     }
 
-    /// The active exercises, in alphabetical order (Portuguese, ignoring case and diacritics).
+    /// The 103 bases as rows, built once.
+    static let baseItems: [Item] = ExerciseBaseLibrary.all.map { base in
+        Item(
+            id: "base:\(base.name)",
+            name: base.name,
+            group: base.group,
+            base: base,
+            exerciseID: nil,
+            equipment: ExerciseBaseIndex.combinations[base.name]?.first?.equipment,
+            filterEquipment: ExerciseBaseIndex.filterEquipment[base.name] ?? [],
+            detail: ExerciseBaseIndex.commonText(of: base),
+            isCustom: false,
+            searchKey: ExerciseBaseIndex.searchKeys[base.name] ?? Validation.comparisonKey(forName: base.name)
+        )
+    }
+
+    /// The bases and the active exercises of the user's own, in alphabetical order.
     static func items(from sources: [Source]) -> [Item] {
         lists(from: sources).active
     }
 
-    /// The active exercises and the archived exercises of the user's own, each in alphabetical order
-    /// (Portuguese, ignoring case and diacritics). An archived built-in exercise left the library and is
-    /// in neither.
+    /// The bases with the active exercises of the user's own, and the archived exercises of the user's own,
+    /// each in alphabetical order (Portuguese, ignoring case and diacritics). The library exercises among
+    /// `sources` (hidden ones) are in neither: their base is.
     static func lists(from sources: [Source]) -> Lists {
-        // The equipment names as the search compares them, read once for all the items.
-        let equipmentKeys = Dictionary(uniqueKeysWithValues: Equipment.allCases.map { equipment in
-            (equipment, Validation.comparisonKey(forName: String(localized: equipment.displayName)))
-        })
-        var lists = Lists()
-        for source in sources where !source.isArchived || source.isCustom {
-            let entry = source.isCustom ? nil : source.libraryKey.flatMap { DefaultExerciseLibrary.byKey[$0] }
-            let equipment = source.isCustom ? source.equipmentKey.flatMap(Equipment.init(rawValue:)) : entry?.equipment
+        var lists = Lists(active: baseItems)
+        for source in sources where source.isCustom {
+            let equipment = source.equipmentKey.flatMap(Equipment.init(rawValue:))
+            let equipmentName = equipment.map { String(localized: $0.displayName) }
             var searchKey = Validation.comparisonKey(forName: source.name)
-            if let equipment, let equipmentKey = equipmentKeys[equipment] {
+            if let equipmentName {
                 // A space between them: a word typed never has one, so it never runs from the name into
                 // the equipment.
-                searchKey += " " + equipmentKey
+                searchKey += " " + Validation.comparisonKey(forName: equipmentName)
             }
             let item = Item(
-                id: source.id,
+                id: source.id.uuidString,
                 name: source.name,
                 group: source.group,
+                base: nil,
+                exerciseID: source.id,
                 equipment: equipment,
-                focus: entry?.focus,
-                isCustom: source.isCustom,
+                filterEquipment: equipment.map { [$0] } ?? [],
+                detail: equipmentName ?? String(localized: "Outro"),
+                isCustom: true,
                 isArchived: source.isArchived,
                 searchKey: searchKey
             )
@@ -105,8 +129,8 @@ enum ExerciseCatalog {
     }
 
     /// The group filters offered: "Todos", "Meus" when there is an active exercise of the user's own (or,
-    /// in the Exercícios tab, an archived one: `hasArchivedCustom`), and the groups that have an active
-    /// exercise, in the group order.
+    /// in the Exercícios tab, an archived one: `hasArchivedCustom`), and the groups that have a row, in the
+    /// group order.
     static func groupFilters(in items: [Item], hasArchivedCustom: Bool = false) -> [GroupFilter] {
         let groups = Set(items.map(\.group))
         let mine: [GroupFilter] = hasArchivedCustom || items.contains(where: \.isCustom) ? [.mine] : []
@@ -126,31 +150,35 @@ enum ExerciseCatalog {
         return archived
     }
 
-    /// The equipment of the exercises of the group, in the equipment order.
+    /// The equipment of the rows of the group (a base's common ones), in the equipment order.
     static func equipment(for group: GroupFilter, in items: [Item]) -> [Equipment] {
-        let used = Set(items.filter { matches($0, group: group) }.compactMap(\.equipment))
+        var used = Set<Equipment>()
+        for item in items where matches(item, group: group) {
+            used.formUnion(item.filterEquipment)
+        }
         return Equipment.allCases.filter(used.contains)
     }
 
-    /// The equipment in use: the one chosen, or none when the group has no exercise with it.
+    /// The equipment in use: the one chosen, or none when the group has no row with it.
     static func equipment(_ chosen: Equipment?, for group: GroupFilter, in items: [Item]) -> Equipment? {
         guard let chosen, equipment(for: group, in: items).contains(chosen) else { return nil }
         return chosen
     }
 
-    /// The items of the group, with the equipment, that have every word of the search, in the order given.
+    /// The rows of the group, with the equipment (a base by its common equipment only), that have every
+    /// word of the search, in the order given.
     ///
     /// The search is split into words at any whitespace, so extra spaces do not count, and each word may
-    /// be any part of the name, in any order ("barra supino" finds "Supino Reto (Barra)"), ignoring case
-    /// and diacritics. An exercise is also found by the name of its equipment, as the equipment filter
-    /// shows it ("supino halteres" finds "Supino Reto (Halter)", "peso do corpo" the exercises done with the
-    /// body only); an exercise of the user's own with "Outro" only by its name. An empty search keeps every
-    /// item. An exercise of the user's own with "Outro" has no equipment, so choosing one leaves it out.
+    /// be any part of the row's search text, in any order ("barra supino" finds "Supino Reto"), ignoring
+    /// case and diacritics. A base is found by its name, its extra words, the options of its second row,
+    /// its common combinations and their equipment, and the old names of its combinations; an exercise of
+    /// the user's own by its name and its equipment (with "Outro" only by its name). An empty search keeps
+    /// every row. An exercise of the user's own with "Outro" has no equipment, so choosing one leaves it out.
     static func filtered(_ items: [Item], group: GroupFilter, equipment: Equipment?, search: String) -> [Item] {
         let words = Validation.comparisonKey(forName: search).split(whereSeparator: \.isWhitespace)
         return items.filter { item in
             guard matches(item, group: group) else { return false }
-            if let equipment, item.equipment != equipment { return false }
+            if let equipment, !item.filterEquipment.contains(equipment) { return false }
             return words.allSatisfy { item.searchKey.contains($0) }
         }
     }
@@ -160,7 +188,7 @@ enum ExerciseCatalog {
         group != .all || equipment != nil
     }
 
-    /// "420 exercícios", "1 exercício", "0 exercícios". The Portuguese plural rules treat 0 as singular,
+    /// "103 exercícios", "1 exercício", "0 exercícios". The Portuguese plural rules treat 0 as singular,
     /// which would read "0 exercício", so 0 has a text of its own.
     static func countText(_ count: Int) -> String {
         count == 0 ? String(localized: "0 exercícios") : String(localized: "\(count) exercícios")
@@ -189,22 +217,22 @@ extension ExerciseCatalog.Source {
     }
 }
 
-/// Keeps the items built from the stored exercises until those change, so typing a search or choosing
-/// a filter neither normalizes nor sorts the names again.
+/// Keeps the rows built from the stored exercises of the user's own until those change, so typing a search
+/// or choosing a filter neither normalizes nor sorts the names again. The bases are built once for all.
 final class ExerciseCatalogCache {
     private var sources: [ExerciseCatalog.Source]?
     private var lists = ExerciseCatalog.Lists()
-    /// How many times the items were built.
+    /// How many times the rows were built.
     private(set) var builds = 0
 
-    /// The active exercises.
+    /// The bases and the active exercises of the user's own.
     func items(for exercises: [Exercise]) -> [ExerciseCatalog.Item] {
         lists(for: exercises).active
     }
 
-    /// The active exercises and the archived exercises of the user's own.
+    /// The bases with the active exercises of the user's own, and the archived exercises of the user's own.
     func lists(for exercises: [Exercise]) -> ExerciseCatalog.Lists {
-        let current = exercises.map { ExerciseCatalog.Source($0) }
+        let current = exercises.filter(\.isCustom).map { ExerciseCatalog.Source($0) }
         if current != sources {
             sources = current
             lists = ExerciseCatalog.lists(from: current)

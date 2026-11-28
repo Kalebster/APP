@@ -1,11 +1,15 @@
 import SwiftData
 import SwiftUI
 
-/// The exercise screen, as in the approved prototype: the name, "grupo · equipamento" (with MEU or
-/// ARQUIVADO for an exercise of the user's own), the muscles on the body figure, the kind of machine, and
-/// the person's history with the exercise (the last time, the best set, the evolution chart and the
-/// sessions). The ⋯ at the top offers "Criar minha versão" for a library exercise, and "Editar",
-/// "Duplicar" and "Apagar exercício" or "Arquivar exercício" (or "Restaurar") for one of the user's own.
+/// The exercise screen, as in the approved prototype. For a library exercise: the name of its base and its
+/// group, the rows EQUIPAMENTO and PEGADA or VARIAÇÃO, which choose the combination shown (each with its own
+/// muscles, kind of machine, evolution and history; changing the equipment keeps the grip or variation, and
+/// the screen keeps its place), and "+ Adicionar a um treino" with the combination chosen. For an exercise
+/// of the user's own: its name, "grupo · equipamento" with MEU or ARQUIVADO, and the same button (not when
+/// archived). Then the muscles on the body figure, the kind of machine, and the person's history with the
+/// exercise (the last time, the best set, the evolution chart and the sessions). The ⋯ at the top offers
+/// "Criar minha versão" for a library exercise (of the combination chosen), and "Editar", "Duplicar" and
+/// "Apagar exercício" or "Arquivar exercício" (or "Restaurar") for one of the user's own.
 ///
 /// It opens from a row of the Exercícios tab (the tab bar stays, with Exercícios chosen) and from
 /// "Ver exercício" in the ⋯ of an exercise in the workout editor or in the session (without the tab bar,
@@ -15,14 +19,19 @@ struct ExerciseDetailView: View {
     /// Where the screen was opened from: the back button and the tab bar follow it.
     enum Origin: Hashable {
         case exercises
-        /// The workout editor or the session, with the workout's name.
+        /// The workout editor, with the workout's name.
         case workout(name: String)
+        /// The session in progress, with its name.
+        case session(name: String)
     }
 
     let origin: Origin
 
-    /// The exercise shown: the one opened, or the copy made from it.
+    /// The exercise shown: the one opened, the combination chosen in the rows, or the copy made from it.
     @State private var exercise: Exercise
+    /// Changed by a copy: a new screen, whose history, chart and scroll start over. Choosing another
+    /// combination keeps the screen and its place.
+    @State private var screenID = UUID()
     /// The notices of this screen ("Exercício salvo", "Cópia criada"), over whatever opened it.
     @State private var toast: ToastMessage?
 
@@ -32,12 +41,20 @@ struct ExerciseDetailView: View {
     }
 
     var body: some View {
-        ExerciseDetailScreen(exercise: exercise, origin: origin, toast: $toast) { copy, notice in
-            exercise = copy
-            toast = ToastMessage(notice)
-        }
-        // A copy is a new screen: its history, chart and scroll start over.
-        .id(exercise.id)
+        ExerciseDetailScreen(
+            exercise: exercise,
+            origin: origin,
+            toast: $toast,
+            onShowCopy: { copy, notice in
+                exercise = copy
+                screenID = UUID()
+                toast = ToastMessage(notice)
+            },
+            onChoose: { combination in
+                exercise = combination
+            }
+        )
+        .id(screenID)
         .toast($toast)
     }
 }
@@ -49,6 +66,8 @@ private struct ExerciseDetailScreen: View {
     @Binding var toast: ToastMessage?
     /// Shows the copy just made, with its notice.
     let onShowCopy: @MainActor (Exercise, String) -> Void
+    /// Shows another combination of the base, chosen in the rows.
+    let onChoose: @MainActor (Exercise) -> Void
 
     /// The form open over the screen.
     private struct FormRequest: Identifiable {
@@ -67,10 +86,17 @@ private struct ExerciseDetailScreen: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openWorkoutEditor) private var openWorkoutEditor
     /// The root's notices and errors, for what happens once the screen has closed ("Exercício apagado").
     @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
     /// `nil` until read.
     @State private var history: ExerciseHistory?
+    /// The exercise whose history was read, so a combination chosen in the rows reads its own.
+    @State private var historyID: UUID?
+    /// The library exercises hidden because their name is taken: unavailable in the rows.
+    @State private var hiddenKeys: Set<String> = []
+    /// "Adicionar a um treino", over the screen.
+    @State private var isAddingToWorkout = false
     /// "Today" for the periods of the chart, taken when the screen opens.
     @State private var today = ExerciseDetailToday.current()
     @State private var isShowingMachineTypes = false
@@ -92,6 +118,7 @@ private struct ExerciseDetailScreen: View {
     @State private var scrollPosition = ScrollPosition(edge: .top)
 
     @ScaledMetric(relativeTo: .body) private var menuSide: CGFloat = 32
+    @ScaledMetric(relativeTo: .subheadline) private var addButtonHeight: CGFloat = 44
 
     var body: some View {
         let muscles = DefaultExerciseMuscles.muscles(of: exercise)
@@ -99,16 +126,27 @@ private struct ExerciseDetailScreen: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                ExerciseDetailTitle(name: exercise.name, detail: detailText, badge: badge)
-                    // 52 below the top of the screen, as in the prototype: 4 below the 44-point top row.
-                    .padding(.top, 4)
+                VStack(alignment: .leading, spacing: 0) {
+                    ExerciseDetailTitle(name: title, detail: detailText, badge: badge)
+                    if let base, let entry = libraryEntry {
+                        ExerciseOptionRows(base: base, selected: entry, hiddenKeys: hiddenKeys, onChoose: choose)
+                            // 12 below the subtitle and its 3, as in the prototype.
+                            .padding(.top, 15)
+                    }
+                    if !exercise.isArchived {
+                        addToWorkoutButton
+                            .padding(.top, 17)
+                    }
+                }
+                // 52 below the top of the screen, as in the prototype: 4 below the 44-point top row.
+                .padding(.top, 4)
 
                 if exercise.isCustom && exercise.isArchived {
                     ArchivedExerciseCard(isRestoring: isActing, onRestore: restore)
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
-                    SectionTitle("Músculos")
+                    SectionTitle("Músculos", webKitLine: true)
                     ExerciseMusclesCard(
                         primary: muscles.primary,
                         secondary: muscles.secondary,
@@ -122,15 +160,18 @@ private struct ExerciseDetailScreen: View {
                     }
                 }
 
-                if let history {
+                if let history, historyID == exercise.id {
                     if history.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            SectionTitle("Evolução")
+                            SectionTitle("Evolução", webKitLine: true)
                             ExerciseNeverDoneCard()
                         }
                     } else {
+                        // Each combination's chart and history start over: their period, metric and point chosen.
                         ExerciseEvolutionSection(history: history, today: today, calendar: TrainingDay.calendar)
+                            .id(exercise.id)
                         ExerciseHistorySection(history: history, today: today, calendar: TrainingDay.calendar, onOpen: openSession)
+                            .id(exercise.id)
                     }
                 }
             }
@@ -157,13 +198,14 @@ private struct ExerciseDetailScreen: View {
         .accessibilityIdentifier("exercise.screen")
         // The navigation bar is hidden for the prototype's own top row; the swipe back stays. The name is the
         // title the session detail's back button shows.
-        .navigationTitle(exercise.name)
+        .navigationTitle(title)
         .background(InteractivePopEnabler())
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(origin == .exercises ? .automatic : .hidden, for: .tabBar)
         .task(id: exercise.id) {
             loadHistory()
         }
+        .onAppear(perform: readHiddenKeys)
         // A new kind of machine (Graviton or not) reads the same sessions with other metrics.
         .onChange(of: DefaultExerciseMuscles.isAssisted(exercise)) { _, isAssisted in
             if let history {
@@ -172,6 +214,9 @@ private struct ExerciseDetailScreen: View {
         }
         .sheet(isPresented: $isShowingMachineTypes) {
             MachineTypesSheet(current: machine, context: exercise.isCustom ? .custom : .library)
+        }
+        .sheet(isPresented: $isAddingToWorkout) {
+            AddToWorkoutSheet(exercises: [exercise], onDone: finishAdding)
         }
         .fullScreenCover(item: $formRequest, onDismiss: showSavedCopy) { request in
             ExerciseFormView(form: request.form, editing: request.isEditing ? exercise : nil) { saved in
@@ -252,17 +297,53 @@ private struct ExerciseDetailScreen: View {
     private var backTitle: String {
         switch origin {
         case .exercises: String(localized: "Exercícios")
-        case .workout(let name): name
+        case .workout(let name), .session(let name): name
         }
     }
 
-    /// "Peito · Barra"; for an exercise of the user's own, its equipment or "Outro".
+    /// The library entry of a library exercise.
+    private var libraryEntry: DefaultExercise? {
+        guard !exercise.isCustom else { return nil }
+        return exercise.libraryKey.flatMap { DefaultExerciseLibrary.byKey[$0] }
+    }
+
+    /// The base of a library exercise.
+    private var base: ExerciseBase? {
+        libraryEntry.flatMap { ExerciseBaseIndex.bases[$0.base] }
+    }
+
+    /// The base's name for a library exercise; the name of an exercise of the user's own.
+    private var title: String {
+        base?.name ?? exercise.name
+    }
+
+    /// The base's group for a library exercise ("Peito"); for an exercise of the user's own, "Peito · Barra",
+    /// with its equipment or "Outro".
     private var detailText: String {
         let group = String(localized: exercise.muscleGroup.displayName)
-        if let equipment = DefaultExerciseMuscles.equipment(of: exercise) {
-            return "\(group) · \(String(localized: equipment.displayName))"
+        guard exercise.isCustom else { return base.map { String(localized: $0.group.displayName) } ?? group }
+        let equipment = DefaultExerciseMuscles.equipment(of: exercise).map { String(localized: $0.displayName) }
+        return "\(group) · \(equipment ?? String(localized: "Outro"))"
+    }
+
+    /// "+ Adicionar a um treino": white, 44 high, corners 12, 15 bold black, with the combination chosen.
+    private var addToWorkoutButton: some View {
+        Button {
+            guard !isAddingToWorkout else { return }
+            isAddingToWorkout = true
+        } label: {
+            HStack(spacing: 8) {
+                AppIcon(.plus, size: 14)
+                Text("Adicionar a um treino")
+                    .scaledFont(15, weight: .bold)
+            }
+            .foregroundStyle(Theme.Colors.primaryButtonText)
+            .frame(maxWidth: .infinity, minHeight: addButtonHeight)
+            .background(Theme.Colors.primaryButton, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .contentShape(Rectangle())
         }
-        return exercise.isCustom ? "\(group) · \(String(localized: "Outro"))" : group
+        .buttonStyle(PrototypeButtonStyle())
+        .accessibilityIdentifier("exercise.addToWorkout")
     }
 
     /// MEU or ARQUIVADO after the subtitle of an exercise of the user's own.
@@ -278,13 +359,52 @@ private struct ExerciseDetailScreen: View {
 
     // MARK: - Actions
 
-    /// Reads the history once: coming back from a session's detail does not read it again.
+    /// Reads the history once for each exercise shown: coming back from a session's detail does not read it
+    /// again, and a combination chosen in the rows reads its own.
     private func loadHistory() {
-        guard history == nil else { return }
+        guard history == nil || historyID != exercise.id else { return }
         do {
             history = try ExerciseHistoryLoader(context: context).history(of: exercise)
+            historyID = exercise.id
         } catch {
             errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    private func readHiddenKeys() {
+        guard !exercise.isCustom else { return }
+        do {
+            hiddenKeys = try LibraryRecords.hiddenKeys(in: context)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// Another combination of the base, chosen in the rows: its own record, history and chart.
+    private func choose(_ combination: DefaultExercise) {
+        do {
+            guard let record = try LibraryRecords.record(forKey: combination.key, in: context) else { return }
+            onChoose(record)
+        } catch {
+            errorMessage = UserFacingError.message(for: error)
+        }
+    }
+
+    /// Added to a workout: the notice here, where the person stays; a new workout: its editor, with the
+    /// notice over it.
+    /// In the session in progress, a new workout only gets the notice here, and the session stays (decision
+    /// of the owner on the base list's report): its editor opens from the Treinos tab later.
+    private func finishAdding(_ outcome: AddToWorkoutOutcome) {
+        switch outcome {
+        case .added:
+            toast = ToastMessage(outcome.notice)
+        case .created(let workout, _):
+            if case .session = origin {
+                toast = ToastMessage(outcome.notice)
+            } else {
+                rootFeedback?.show(outcome.notice)
+                openWorkoutEditor(workout)
+            }
         }
     }
 
@@ -406,7 +526,7 @@ private struct ArchivedExerciseCard: View {
                 .scaledFont(14, weight: .bold)
                 .accessibilityAddTraits(.isHeader)
             Text("Não aparece na lista nem para adicionar a um treino. O histórico e os recordes continuam aqui.")
-                .scaledFont(12, lineHeight: 1.4)
+                .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
             Button(action: onRestore) {

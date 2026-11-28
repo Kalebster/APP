@@ -6,7 +6,7 @@ import Foundation
 ///
 /// The raw value is the stable storage key of the muscles an exercise of the user's own chooses
 /// (`Exercise.primaryMuscleKeys`): it never changes, whatever the name shown.
-enum Muscle: String, CaseIterable, Sendable {
+enum Muscle: String, CaseIterable, Decodable, Sendable {
     case chest
     case frontDelts
     case sideDelts
@@ -69,7 +69,7 @@ enum Muscle: String, CaseIterable, Sendable {
 ///
 /// The raw value is the stable storage key of the kind an exercise of the user's own chooses
 /// (`Exercise.machineTypeRaw`): it never changes, whatever the name shown.
-enum MachineType: String, CaseIterable, Sendable {
+enum MachineType: String, CaseIterable, Decodable, Sendable {
     /// A stack of plates, chosen with the pin.
     case plates
     /// Plates loaded on an arm that turns on an axis.

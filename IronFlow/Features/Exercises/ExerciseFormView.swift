@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// The form of an exercise of the user's own, full screen like the exercise picker, as in the approved
-/// prototype: "Cancelar" and the title at the top, then NOME, GRUPO MUSCULAR, EQUIPAMENTO, TIPO DE MÁQUINA
+/// prototype: "Cancelar" and the title at the top, then NOME, GRUPO PRINCIPAL, EQUIPAMENTO, TIPO DE MÁQUINA
 /// (only with the machine) and MÚSCULOS, and the main button at the bottom with what is still missing
 /// above it. A copy starts with a note of what it copies. "Cancelar" asks before leaving changes behind.
 /// The main button acts once: a second tap while the form closes does nothing.
@@ -41,15 +41,19 @@ struct ExerciseFormView: View {
                     copyNote(note)
                 }
                 nameSection
-                ExerciseFormChips(
-                    title: "Grupo muscular",
-                    identifier: "exerciseForm.group",
-                    options: ExerciseForm.groups.map { group in
-                        FormChipOption(id: group.rawValue, title: String(localized: group.displayName), isOn: form.draft.group == group) {
-                            form.selectGroup(group)
+                // One group: where the exercise is in the list's filter; its muscles, as many as it has, below.
+                VStack(alignment: .leading, spacing: 10) {
+                    ExerciseFormChips(
+                        title: "Grupo principal",
+                        identifier: "exerciseForm.group",
+                        options: ExerciseForm.groups.map { group in
+                            FormChipOption(id: group.rawValue, title: String(localized: group.displayName), isOn: form.draft.group == group) {
+                                form.selectGroup(group)
+                            }
                         }
-                    }
-                )
+                    )
+                    hint("Escolha 1: é onde ele aparece na lista. Mais de um músculo? Marque em Músculos, logo abaixo.", identifier: "exerciseForm.groupChoiceHint")
+                }
                 ExerciseFormChips(
                     title: "Equipamento",
                     identifier: "exerciseForm.equipment",
@@ -118,7 +122,7 @@ struct ExerciseFormView: View {
                 .scaledFont(14, weight: .bold, lineHeight: 1.3)
                 .fixedSize(horizontal: false, vertical: true)
             Text(verbatim: note.text)
-                .scaledFont(12, lineHeight: 1.4)
+                .scaledFont(12, lineHeight: 1.4, webKitLine: true)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -281,7 +285,7 @@ struct ExerciseFormView: View {
 
     private func hint(_ text: LocalizedStringKey, identifier: String) -> some View {
         Text(text)
-            .scaledFont(12, lineHeight: 1.4)
+            .scaledFont(12, lineHeight: 1.4, webKitLine: true)
             .foregroundStyle(Theme.Colors.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 2)
@@ -403,7 +407,7 @@ struct MuscleListTitle: View {
     }
 }
 
-/// A title of the form ("NOME", "GRUPO MUSCULAR"): 11 heavy, spaced 2,1, on a 14-point line.
+/// A title of the form ("NOME", "GRUPO PRINCIPAL"): 11 heavy, spaced 2,1, on a 14-point line.
 struct ExerciseFormSectionTitle: View {
     let title: LocalizedStringKey
 

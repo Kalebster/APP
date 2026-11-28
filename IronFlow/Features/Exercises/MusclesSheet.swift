@@ -22,8 +22,8 @@ struct MusclesSheet: View {
                 SheetHeader(
                     isPrimary ? Text("Músculos principais") : Text("Músculos secundários"),
                     explanation: isPrimary
-                        ? Text("Os que o exercício mais trabalha. Ficam em destaque no boneco.")
-                        : Text("Os que ajudam no movimento. Ficam num tom mais escuro no boneco. Opcional.")
+                        ? Text("Os que o exercício mais trabalha. Pode marcar mais de um. Ficam em destaque no boneco.")
+                        : Text("Os que ajudam no movimento. Pode marcar mais de um. Ficam num tom mais escuro no boneco. Opcional.")
                 )
                 HStack(spacing: 12) {
                     BodyFigure(side: .front, primary: Set(form.draft.primary), secondary: Set(form.draft.secondary), size: Self.figureSize)

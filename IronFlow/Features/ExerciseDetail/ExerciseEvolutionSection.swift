@@ -28,7 +28,7 @@ struct ExerciseEvolutionSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle("Evolução")
+            SectionTitle("Evolução", webKitLine: true)
             ExerciseBestSetTiles(history: history, today: today, calendar: calendar)
             if let chart {
                 ExerciseChartCard(

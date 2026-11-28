@@ -202,6 +202,42 @@ struct WorkoutServiceTests {
         #expect(harness.context.hasChanges == false)
     }
 
+    @Test("A workout created with exercises has them in order, each with 3 sets of 8–12 reps and no load, in one save")
+    func createWorkoutWithExercises() throws {
+        let workout = try harness.workouts.createWorkout(name: " Montado ", exercises: [row, bench])
+
+        #expect(workout.name == "Montado")
+        #expect(workout.orderedExercises.map { $0.exercise?.id } == [row.id, bench.id])
+        #expect(sortIndexes(of: workout) == [0, 1])
+        for item in workout.orderedExercises {
+            #expect(sortIndexes(of: item) == [0, 1, 2])
+            #expect(item.orderedPlannedSets.allSatisfy { $0.repsMin == 8 && $0.repsMax == 12 && $0.weightKg == nil })
+            #expect(item.createdAt == harness.clock.current)
+        }
+        #expect(workout.createdAt == harness.clock.current)
+        #expect(harness.context.hasChanges == false)
+        #expect(try count(Workout.self, in: harness.context) == 1)
+    }
+
+    @Test("A workout is not created when its name is empty or one of its exercises is archived or repeated")
+    func createWorkoutWithExercisesAllOrNothing() throws {
+        try harness.exercises.archive(row)
+        let before = try storeCounts(in: harness.context)
+
+        #expect(throws: ValidationError.emptyName) {
+            try harness.workouts.createWorkout(name: " ", exercises: [bench])
+        }
+        #expect(throws: WorkoutError.exerciseArchived) {
+            try harness.workouts.createWorkout(name: "Push", exercises: [bench, row])
+        }
+        #expect(throws: WorkoutError.exerciseAlreadyInWorkout) {
+            try harness.workouts.createWorkout(name: "Push", exercises: [bench, squat, bench])
+        }
+        #expect(try storeCounts(in: harness.context) == before)
+        #expect(try count(Workout.self, in: harness.context) == 0)
+        #expect(harness.context.hasChanges == false)
+    }
+
     @Test("After reordering and removing others, an exercise still in the workout cannot be added again")
     func duplicateCheckFollowsPlanChanges() throws {
         let workout = try harness.workouts.createWorkout(name: "Full")

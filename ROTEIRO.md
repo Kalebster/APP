@@ -33,13 +33,16 @@ Plano das etapas do app. Atualizado ao fim de cada etapa. A ordem e o escopo de 
 - Visual novo — o protótipo aprovado "Iron Flow — visual novo" em todas as telas que já existiam, sem mudar layout, textos, medidas nem funções: cores neutras (preto, branco e cinza, com o azul #3D7BF0 só em detalhes; botões principais brancos com texto preto); a fonte SF Pro, a do sistema, no lugar da Inter, com as alturas de linha do protótipo calculadas sobre a altura real da fonte; o vidro do iOS 26 nas barras "Treino em andamento" e do descanso, nos botões redondos, nos botões secundários do "Treino de hoje" e nas folhas do sistema; a coluna ÚLTIMA da série atual em #A6A6AC (7,0:1); o protótipo em `design/prototipo.html` e o workflow manual "Referências do protótipo", que gera as imagens de comparação com a SF Pro (PR #38).
 - Detalhe do exercício e Mapa dos músculos: tela nova pela linha da aba Exercícios (com o ›) e pelo "Ver exercício" do ⋯ do editor e do treino; boneco de frente e de costas com os músculos principais e secundários dos 420 exercícios (dados no código, pela key) e o músculo do grupo nos exercícios próprios; tipo de máquina com a folha "Tipos de máquina"; última vez, melhor série, gráfico de evolução em Swift Charts (3 meses, 1 ano e Tudo; maior carga e volume, ou menor ajuda e mais repetições no Graviton, ou repetições sem carga) e o histórico do exercício; as séries dos 4 exercícios Graviton deixam de contar nos kg levantados, também nos treinos antigos; gancho só de teste `-ui-today` (PR #40).
 - S4-C — Exercícios próprios: criar, editar, duplicar e "Criar minha versão" de um exercício da lista, com nome (até 60 letras, único sem diferença de maiúsculas e acentos, contando os próprios arquivados), grupo, equipamento ("Outro" vale, com ícone novo), tipo de máquina (só com Máquina) e músculos principais e secundários (vindos do grupo até a pessoa mexer, nenhum nas duas listas), no formulário em tela cheia e nas folhas dos músculos; remover (decisão do dono, 1A): com histórico ou no treino em andamento o exercício é arquivado, sem histórico é apagado, e nos dois ele sai de todos os treinos planejados, com a ordem renumerada e o histórico com o nome do dia; restaurar volta para a lista e não para os treinos, com alerta se um exercício ativo tem o nome; Meus com os arquivados no fim; + Novo e + Criar na aba e no seletor (volta marcado); ⋯ no detalhe, selos MEU e ARQUIVADO e cartão do arquivado; Graviton próprio fora dos kg levantados e com a evolução invertida; busca pelo equipamento do próprio; SchemaV8 com migração testada; dois treinos no mesmo dia viram dois pontos do gráfico; os cartões de Exercícios com filtros no lugar do protótipo (71); treino apagado avisa no detalhe (gancho só de teste `-ui-delete-tapped-session`) (PR #41).
+- Lista base de exercícios: biblioteca de 420 para 103 exercícios base e 1.525 combinações (391 comuns), cada combinação com histórico, evolução e recordes próprios, lidas de um JSON no app (`IronFlow/Library/ExerciseLibrary.json`, gerado do design/lista-base-dados.json aprovado e conferido por teste; escrita em Swift, a lista levava o build Release a mais de 28 minutos); migração na primeira abertura, numa gravação só e sem schema novo: 283 com o mesmo nome, 32 renomeados (os 4 "Remada Alta (…)" viram "Remada Ombro (…)"), 4 junções que levam o histórico e os treinos do segundo para o primeiro, e 105 que saem (com uso, viram exercícios em Meus com o histórico; sem uso, são apagados); combinação com o nome de um exercício próprio entra escondida e volta quando o nome fica livre; aba Exercícios e seletor com os exercícios base, filtro de equipamento pelos comuns e busca por nome base, variações, comuns, nomes antigos e populares; detalhe com as filas EQUIPAMENTO e PEGADA/VARIAÇÃO (cinzas, Barra W e Graviton) e "+ Adicionar a um treino"; folha de escolha no seletor (Escolher, Desmarcar, "Já está no treino", "Também escolhido", toque direto com o filtro de equipamento); "Montar treino" na aba e a folha "Adicionar a um treino" (treino que já tem tudo desligado, só o que falta entra, treino novo abre no editor); textos do formulário do exercício próprio ("Grupo principal" e "Pode marcar mais de um"); acabamentos: linha do WebKit nos textos de 11 e 12 pt das telas da etapa, e os botões da etapa desligados a 35 % (`PrototypeButtonStyle`); seção 15 "Segurança permanente" no PROJECT_RULES e as linhas de segredos no .gitignore; a abertura normal só confere a versão da biblioteca e a contagem (0,003 s, contra 0,048 s no main), e a aba lê só o treino mais recente de cada exercício feito (66 ms com 3 anos de 4 treinos por semana, eram 1,8 s) (PR #42).
 
 ## Próximas etapas
 
 Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem protótipo aprovado antes de qualquer tela nova e começa numa conversa nova do Code. Sem recursos sociais.
 
 ### Ajustar o treino na hora
-- Trocar exercício: no treino em andamento, trocar um exercício que ainda não tem série marcada por outro (o seletor abre no mesmo grupo), mantendo a posição e o número de séries, sem copiar cargas e com a "Última vez" do novo. No editor do treino, trocar mantém as séries planejadas.
+- Substituir exercício: item no ⋯ de cada exercício, no editor do treino e no treino em andamento, logo depois de "Ver exercício". Abre o seletor no grupo do exercício, com o título "Substituir exercício" e a linha do que acontece; escolher um exercício (toque direto ou "Substituir" na folha de equipamento) já substitui na mesma posição, com o aviso "Substituído por <nome>".
+- No editor, as séries planejadas ficam. No treino em andamento, ficam o número e o tipo das séries, sem as cargas e com a "Última vez" do novo; o treino planejado não muda. Com série já marcada (resposta 1B do dono): as séries feitas ficam com o exercício antigo e o novo entra logo depois com as que faltavam; o item mostra "Nas séries que faltam" e o aviso é "<novo> entrou nas séries que faltam". No histórico, a sessão guarda os dois exercícios, cada um com as suas séries.
+- A combinação atual aparece como "É o exercício atual" e a que já está no treino como "Já está no treino", as duas desligadas. Toque duplo substitui uma vez só.
 - M18 — Mover o treino de um dia para outro, sem mudar a programação semanal.
 - M4 — Ao concluir, salvar no treino planejado a carga nova, a série a mais ou a troca de exercício (conferir antes o que o app já faz).
 - Entram junto os 4 acabamentos da lista (deslizar série, tela acesa por 1 h, desmarcar encerra o descanso, '+N' dos grupos) (16/11).
@@ -107,23 +110,30 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - Exportar os dados em planilha (CSV).
 - Backup completo: um arquivo com todos os dados, que dá para guardar fora do iPhone, e "Restaurar backup", com teste de ida e volta. O backup leva também as preferências guardadas fora do banco (indicadores escolhidos e opções do treino). O "Restaurar" confere os ids que já existem antes de gravar, porque um id repetido substituiria o registro em silêncio.
 - Lembrete periódico de fazer o backup.
-- O arquivo de backup e a importação do Hevy e do Strong são tratados como não confiáveis: um arquivo malfeito, gigante ou com valores absurdos não trava o app nem estraga os dados. Testes com arquivos ruins e checagem do Claude Security.
+- O arquivo de backup e a importação do Hevy e do Strong são tratados como não confiáveis: um arquivo malfeito, gigante ou com valores absurdos não trava o app nem estraga os dados. Checagem do Claude Security.
 - Com a conta, as exclusões deixam uma marca, para a sincronização apagar nos outros aparelhos.
+- Segurança (plano de 27/11): todo arquivo de fora é não confiável: limite de tamanho, validação de cada valor, nada é trocado antes de tudo ser conferido; o backup avisa que leva dados pessoais e fica onde a pessoa escolher; testes com arquivo vazio, gigante, cortado, com texto no lugar de número, com datas absurdas e com ids repetidos.
 
 ### Conta e sincronização
 - Antes desta etapa, o chat lembra o dono da decisão do repositório: ele fica público enquanto isso não pesa na segurança (nenhuma chave secreta no repositório) e vira privado perto do lançamento.
 - Firebase ou Supabase se decide no começo desta etapa, com uma comparação feita pelo chat com os números reais do app.
-- Conta obrigatória na primeira abertura, com Entrar com a Apple; os dados de login só no Keychain, sem guardar senhas no app.
-- Regras do servidor fechadas por padrão (cada pessoa só vê e altera os próprios dados), testadas com tentativas de acesso indevido; os dados também são validados no servidor, e os campos protegidos (por exemplo, a assinatura) o app não pode alterar.
-- App Check, alerta de gasto e limite de pedidos.
+- Conta obrigatória na primeira abertura, com Entrar com a Apple, sem guardar senhas no app.
+- Os dados também são validados no servidor.
 - Nenhuma chave de administrador no app, e o arquivo de configuração do servidor fora do repositório público.
 - Funcionar sem sinal e sincronizar depois, sem perder nem duplicar, inclusive com dois aparelhos; sincronizar só o que mudou e tentar de novo com espera crescente.
 - Teste de carga no emulador do servidor.
-- Apagar a conta dentro do app.
-- Política de privacidade (LGPD) e relatório de privacidade do app atualizado.
 - Relatório de travamentos.
 - Avaliação do SDK do servidor (licença, tamanho e falhas conhecidas), com os alertas de dependências do GitHub ligados quando ele entrar.
 - Checagem do Claude Security nas mudanças.
+- Segurança (plano de 27/11):
+  - toda linha tem dono, e a regra do banco compara o dono com o login; tudo começa negado; o servidor tira a identidade só do token e ignora qualquer id de dono que o app mande;
+  - campos que só o servidor escreve (assinatura, dono, datas do servidor) ficam travados;
+  - login só com Entrar com a Apple, no modo nativo, com nonce contra repetição; sessão no Keychain; sair apaga a sessão do aparelho;
+  - apagar a conta dentro do app: revoga o login da Apple, apaga os dados do servidor e limpa o aparelho, dizendo quanto tempo leva;
+  - abuso: só o app verdadeiro fala com o servidor (App Check ou equivalente), limite de pedidos e de tamanho, consultas paginadas, alerta e teto de gasto;
+  - painel do servidor com verificação em duas etapas, conexão segura obrigatória, cópias automáticas do banco e um teste de restauração;
+  - privacidade: política (LGPD), etiquetas da App Store e o manifesto de privacidade da Apple; treino, peso e saúde tratados como dados sensíveis;
+  - testes de ataque no CI, num servidor local de teste: a pessoa A tenta ler, mudar e apagar os dados da B; sem login; token vencido; conta apagada; campo proibido; consulta gigante; texto com comando de banco. Tudo tem de ser negado.
 
 ### Assinatura
 - Assinatura pela App Store (StoreKit), presa à conta e conferida no servidor pelos avisos da App Store: 30 dias grátis e depois pago, "Restaurar compras" e "Gerenciar assinatura". O preço é decidido pelo dono perto do lançamento.
@@ -132,6 +142,7 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - A assinatura é sempre conferida com a Apple (transações assinadas do StoreKit), nunca por um valor salvo no iPhone.
 - Um único lugar inicia sessões (`RootView.startSession`): é ali que entra a conferência da assinatura.
 - Checagem do Claude Security nesta etapa.
+- Segurança (plano de 27/11): o servidor recebe os avisos da App Store (versão 2) e confere a assinatura digital da Apple em cada um; o estado da assinatura é gravado só pelo servidor; a chave da API da App Store fica só no servidor; testes: aviso falso recusado, aviso repetido sem efeito, app tentando gravar "assinante" recusado.
 
 ### Primeira abertura e planos prontos
 - M19 — Boas-vindas na primeira abertura: meta por semana, peso (opcional) e começar por um plano pronto.
@@ -139,7 +150,20 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - O fluxo começa com Entrar com a Apple (conta obrigatória) e termina na tela da assinatura: a pessoa começa o teste grátis de 30 dias (ou assina) antes de usar o app, sem pular.
 
 ### M9 — Cardio
-- Área de cardio: a pessoa cronometra a corrida e o histórico guarda pace, gasto calórico aproximado e dados parecidos; calorias aproximadas também na musculação.
+Ideia 3 do dono; desenho no protótipo, aba Treinos › Cardio.
+- Aba Treinos em duas páginas lado a lado, "Musculação | Cardio" (seletor de duas partes nativo e páginas que se arrastam para o lado; abre na Musculação). Na página Cardio, as atividades em cartões como os treinos, com ▶ para começar direto, e CARDIO RECENTE.
+- Atividades: corrida, caminhada, bicicleta, elíptico e natação. Corrida, caminhada e bicicleta na rua com o GPS do iPhone (distância, pace ou velocidade, voltas por km e percurso no mapa); esteira, ergométrica e elíptico só cronometram e a distância entra no fim; natação e qualquer outra se registram à mão.
+- Tipos de corrida: Livre, Intervalado, Longão, Regenerativo e Prova.
+- Intervalado com timer próprio (resposta 3B do dono): aquecimento opcional, tiros por tempo ou distância (na esteira, só por tempo), descanso por tempo e quantidade de tiros, com o Stepper do iOS; em andamento, a contagem da etapa, a barra de progresso, "A seguir" e "Pular"; a cada troca, vibração e um som curto que não para a música, também com o celular bloqueado; desaquecimento livre no fim; o resumo lista os tiros com o pace e o mais rápido.
+- Registrar um cardio pelo Histórico ("Registrar" no bloco CARDIO), escolhendo a atividade na mesma folha.
+- Ajustes › "Cardio conta na meta" (escolha da pessoa, começa desligado): ligado, um dia com cardio conta 1 no anel da semana.
+- Permissão de localização só durante o cardio (pergunta do próprio iOS, com o motivo); negada, a rua explica e oferece a esteira. O percurso fica só com a pessoa.
+- O tempo continua com o celular bloqueado; tempo e pace na tela de bloqueio (junto com a etapa da tela de bloqueio).
+- Linhas de cardio numa linha só (tipo de corrida no lugar do local) com a duração à direita.
+- Resumo com tempo, distância, pace/velocidade, voltas, mapa e calorias aproximadas pelo peso do perfil; entra no Histórico (bloco CARDIO) e pode ser apagado.
+- Trazer do Apple Saúde o cardio que o Apple Watch (ou outro app) gravou, sem duplicar o que já veio do Iron Flow (resposta 3A do dono).
+- Novidade de banco: uma versão nova do schema para o cardio (atividade, local, tipo, início, duração, distância, voltas, percurso e, no intervalado, a configuração e os tiros), com migração e teste.
+- Segurança (plano de 27/11): o percurso do GPS fica no aparelho; do Apple Saúde, só o necessário, com permissão e nunca para publicidade.
 
 ### S10 — Revisão final e TestFlight
 - Revisão completa do app inteiro antes do TestFlight, e de novo antes do lançamento (as duas únicas revisões do app inteiro; nas outras etapas, o /code-review e as conferências olham só o que mudou).
@@ -155,7 +179,15 @@ Ordem aprovada pelo dono até o lançamento, nesta sequência. Cada etapa tem pr
 - Ícone do app.
 - Mensagem amigável na tela de erro ao abrir os dados.
 - Datas do Histórico e dos treinos recentes com o calendário do app (`TrainingDay.calendar`) em vez do calendário do aparelho: hoje o `SessionFormatting` usa o do aparelho por padrão, e num calendário budista ou japonês o ano sai errado.
-- A biblioteca de 420 exercícios é lida e conferida a cada abertura, antes da primeira tela; guardar a versão aplicada e pular quando for a mesma, gravando a versão só quando a correção dos nomes terminar sem nenhum nome mantido (`keptNameKeys` vazio).
+- A biblioteca de 1.525 exercícios é lida e conferida a cada abertura, antes da primeira tela; guardar a versão aplicada e pular quando for a mesma, gravando a versão só quando a correção dos nomes terminar sem nenhum nome mantido (`keptNameKeys` vazio).
+- Revisar, com o dono, quais equipamentos são comuns e quais ficam em cinza em cada exercício da lista base: alguns estão trocados (ex.: máquina em cinza onde é comum). O funcionamento fica como está (dono, 26/11).
+- Segurança (plano de 27/11):
+  - revisão das regras do banco por um agente que não escreveu o código;
+  - teste de ataque manual com duas contas no TestFlight;
+  - chaves de produção novas e projetos de teste e produção separados;
+  - varredura de segredos no arquivo do app pronto (.ipa) e no repositório;
+  - plano de resposta a incidente escrito: conter, trocar as chaves, registrar e avisar as pessoas e a ANPD em até 3 dias úteis quando houver risco relevante (Resolução CD/ANPD nº 15/2024);
+  - checklist final de segurança, item por item, com a prova de cada um: tabelas fechadas por padrão; testes de ataque passando; revisão independente das regras; Claude Security sem achado grave aberto; nenhuma chave secreta no app; chaves de produção novas só no servidor; login da Apple nativo com nonce e sessão no Keychain; apagar a conta funcionando com o login revogado; assinatura conferida no servidor; só o app verdadeiro fala com o servidor e limites ligados; alerta e teto de gasto testados; conexão segura obrigatória; cópias do banco e restauração testada; nada pessoal em registros e relatórios de travamento; política, etiquetas e manifesto de privacidade; verificação em duas etapas nas contas; main protegido e decisão sobre o repositório privado; alertas do Dependabot e varredura de segredos ligados; plano de incidente; teste manual com duas contas.
 - Limpeza de código:
   - só usado nos testes: `SessionService.activeSession()` (com o erro `multipleActiveSessions`); o `RestTimer.isOver(at:)` é usado pelo app, no `RestController`.
   - sem tela: `WorkoutService.movePlannedSets`;
@@ -182,15 +214,14 @@ Fora do plano: desafios entre amigos e feed social. Ideias avaliadas e não esco
 
 Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cada um entra junto da próxima etapa que mexe naquela tela, com a aprovação do dono, como o resto do escopo.
 
+- Testes: `SessionUITests.testStartCheckMinimizeContinueAndFinish` falha quando atravessa a meia-noite do simulador (UTC no CI): o treino começa num dia e termina no outro, e o Início mostra o dia novo, "Descanso hoje" (run 46082603203, das 23:59:15 às 00:00:34). Fixar o "hoje" do teste, como o `-ui-today` faz no detalhe do exercício (achado na lista base).
+- Testes: em `HomeWeekUITests.testMarkAndUnmarkToday`, o toque fora da pergunta "Desmarcar este dia?" (ajudante `cancelDialog`) pode se perder numa máquina lenta, e a pergunta não fecha (run 46103823321, parte 2); repetir o toque uma vez quando a pergunta continua na tela, como nos toques perdidos das abas (achado na lista base).
 - Tela do treino: deslizar uma série para apagar (com Desfazer) ou para copiar.
 - Tela do treino: com "Manter a tela ligada", a tela pode apagar depois de 1 hora sem série marcada, o mesmo tempo do treino esquecido; hoje ela nunca apaga com um treino esquecido aberto (decisão do dono).
 - Tela do treino: desmarcar a série que começou o descanso atual encerra esse descanso, com a barra e o aviso; hoje eles continuam correndo (decisão do dono).
 - "Escolher treino" e Programação semanal: um treino com muitos grupos fica cortado com "…". Mostrar no máximo alguns grupos e "+N"; os detalhes se decidem quando a tela for mexida.
 - Início: o ponto do dia programado fica branco dentro das abas, e na referência 42 ele é azul. O `Color.accentColor` segue o tint, que nas abas é o branco da aba escolhida; o ponto passa a usar o `Theme.Colors.accent`. Conferir também o arco do anel da semana, que deve ter o mesmo problema (achado na etapa Detalhe do exercício).
-- Etapa "Lista base de exercícios" (decisão do dono na S4-C), nas telas que ela tocar (o detalhe do exercício e a lista):
-  - altura de linha dos textos de 11 pt: 13,33 pt no iOS e 13 no WebKit; a regra vale para todos os textos de 11 pt dessas telas (as medidas de 108 a 111 estão abaixo);
-  - textos de 12 pt com altura 1,4 em duas linhas: a segunda linha fica 1 pt mais baixa que no protótipo (121, 124 e 125, abaixo).
-- Botão principal desligado nas telas de antes da S4-C: o `SheetButton` primário (por exemplo, "Salvar" do editor das métricas com o campo vazio) e o "Adicionar" do seletor de exercícios ficam com opacidade 0,4 e o estilo `.plain`, que escurece o texto de novo e o deixa quase invisível. No protótipo, o botão branco inteiro fica a 35 % (`button:disabled { opacity: .35 }`), com o texto preto legível; o `PrototypeButtonStyle`, usado no formulário do exercício próprio e no "Restaurar" desde a S4-C, faz isso (achado do dono na S4-C).
+- Botão principal desligado nas telas de antes da S4-C: o `SheetButton` primário das folhas de antes (por exemplo, "Salvar" do editor das métricas com o campo vazio) fica com opacidade 0,4 e o estilo `.plain`, que escurece o texto de novo e o deixa quase invisível (o "Adicionar" do seletor e as folhas novas já passaram ao `PrototypeButtonStyle` na lista base; nas folhas de antes, basta `usesPrototypeStyle: true` no `SheetButton`). No protótipo, o botão branco inteiro fica a 35 % (`button:disabled { opacity: .35 }`), com o texto preto legível; o `PrototypeButtonStyle`, usado no formulário do exercício próprio e no "Restaurar" desde a S4-C, faz isso (achado do dono na S4-C).
 - Medidas acima de 1 pt contra o protótipo, achadas na etapa Visual novo (screenshots do CI contra as referências do workflow "Referências do protótipo"). Parte delas vem de dados de exemplo diferentes entre o protótipo e os testes: na hora de corrigir, comparar com os mesmos dados.
   - Início (screenshots 1, 22, 30, 38, 42, 50, 52, 53, 55 e 93): os cartões do resumo rápido estão 1,7 pt mais baixos que no protótipo (98,3 × 100). Nos estados "Descanso hoje", "Em andamento" e "Nada programado" (31, 32, 51, 54 e 83), o cartão da semana e o que vem abaixo ficam de 2,3 a 3,7 pt mais acima, porque o link "Programar semana" ocupa menos altura que no protótipo.
   - Treinos (2, 11, 26, 56, 57 e 58): cada cartão da grade de treinos está 2,7 pt mais alto (143,7 × 141), e a segunda linha da grade desce de 3 a 4,3 pt; o cartão "Nenhum treino ainda" e a linha da Programação semanal ficam 1,3 pt abaixo.
@@ -199,14 +230,11 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
   - Seletor de exercícios (77): a barra de cima ("Cancelar" e o título) está 4,3 pt mais alta.
   - Treino em andamento (25, 63 a 69, 80, 91, 92, 98 a 102 e 107): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt a partir do segundo cartão).
   - Folha "Avisar quando o descanso acabar?" (97): a tela bloqueada de exemplo tem a data em 13 e a hora em 52 (no protótipo, 12 e 46), e o conteúdo fica de 1,3 a 2,7 pt fora de lugar.
-  - Detalhe do exercício (108 a 111), achadas na etapa dele e medidas de novo na S4-C (iguais ao main):
-    - do bloco EVOLUÇÃO para baixo, os cartões ficam de +1,0 a +1,4 pt e os números dentro deles até +1,7 pt: três textos de 11 pt acima (MÚSCULOS, Frente/Costas e EVOLUÇÃO) têm linha de 13,33 pt no iOS e de 13 no WebKit; igualar só a linha deixa os cartões no lugar, mas leva a legenda a −1,8 pt, porque no iOS a letra fica mais alta dentro da linha. Entra na etapa "Lista base de exercícios" (decisão do dono na S4-C), no acabamento da altura de linha dos textos de 11 pt;
-    - o primeiro músculo da legenda fica a −1,3 pt e, no Graviton (109), EVOLUÇÃO a −1,3 pt;
+  - Detalhe do exercício (108 a 112, 127 e 128), medidas de novo na lista base (run 46092177996): tudo a até 1 pt do protótipo. Os textos de 11 pt, os nomes da legenda e os de 12 pt em duas linhas usam a linha do WebKit (`webKitLine`). Fica:
     - no Graviton (109), a frase "Mais kg = mais ajuda. Menos kg é progresso." quebra antes do "é", porque o iOS evita uma palavra sozinha na última linha; a altura é a mesma (aceito pelo dono).
-  - Exercícios próprios (120 a 125), achadas na S4-C:
-    - textos de 12 pt com altura 1,4 em duas linhas (nota da cópia em 121, cartão do arquivado em 124, nota de ARQUIVADOS em 125): a segunda linha fica 1 pt mais baixa que no protótipo (nos de 13 pt, 0,3 pt), e o que vem abaixo desce de 1,7 a 2 pt; Entra na etapa "Lista base de exercícios" (decisão do dono na S4-C), no acabamento dos textos de 12 pt;
+  - Exercícios próprios (120 a 125), achadas na S4-C (a linha dos textos de 12 pt em duas linhas foi acertada na lista base):
     - folha dos músculos (120): no protótipo os chips aparecem com letra de uns 13,6 px, embora o CSS diga 13 px; no app (13 pt, como o CSS) cabem mais chips por linha, a folha tem uma linha de chips a menos e começa mais abaixo, e "Concluir" fica 15 pt mais abaixo. Decisão do dono na S4-C: fica 13 pt, como o CSS; a diferença vem do desenho da SF Pro no WebKit do Mac, sem o tracking do iOS, e não do tamanho;
-    - exercício próprio de nome longo (123 e 124): o título em duas linhas (aceito pelo dono) desce o resto 4,4 pt; em Meus (125) e em 71, o nome longo quebra em duas linhas no app (regra do app) e termina em "…" no protótipo.
+    - exercício próprio de nome longo (123 e 124): o título em duas linhas (aceito pelo dono) desce o resto de 2,3 a 4 pt (medido de novo na lista base); em Meus (125) e em 71, o nome longo quebra em duas linhas no app (regra do app) e termina em "…" no protótipo.
 
 ## Pendências da vistoria
 
@@ -220,6 +248,8 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - HomeUITests.testEditSummaryValues falhou uma vez por um toque perdido durante animação (run 39884902708) e falhou de novo no CI da main em db5c717 (run 40437064904, digitação antes de o campo ficar ativo); corrigido no PR #27, que também deixa mais lento o arraste do WorkoutUITests.testReorderExercises.
 - Proteger o main no GitHub com uma regra (bloquear apagar e reescrever o main e exigir PR). O dono fará isso quando tiver um computador, porque pelo ambiente do Claude a alteração é bloqueada. Checks a exigir: 'Interface tests complete' e 'Unit tests and Release (Xcode 26.6, iPhone 17, iOS 26.5)'. O antigo 'Build and test' não existe mais.
 - O primeiro toque nos filtros de Exercícios às vezes se perde no CI (PR #39: 2 vezes em 6 runs, cerca de 7 s depois de abrir a aba); o ajudante `tapFilter` toca de novo. Na etapa Detalhe do exercício, um diagnóstico temporário (os toques que chegam à janela, as ações dos filtros e as fases de rolagem, no commit ef18676) não reproduziu a perda em 66 toques: 60 em duas rodadas curtas (antes e depois de as linhas virarem links) e 6 em runs completos. Todo toque que chegou ao app acionou o filtro em até 4 ms, sem rolagem no meio. No run em que a perda fez o teste falhar (44635190069), o mesmo teste também perdeu o toque na barra de abas do sistema, com o app levando 20 s para abrir e cada consulta da tela até 10 s: tudo indica perda do toque sintetizado pelo simulador sob carga, não do app, mas sem prova direta. Se voltar a acontecer, rodar de novo o diagnóstico para ver se o toque chega à janela.
+- App do Apple Watch e conexão com o Strava: o dono quer os dois; quando entram no plano fica para decidir depois (dono, 26/11).
+- O dono liga a verificação em duas etapas no GitHub, no Apple ID e no Apple Developer (e no painel do servidor quando existir), e liga no GitHub os alertas do Dependabot e a varredura de segredos genéricos (o ambiente do Claude não pode mudar configurações do repositório).
 - Aquecimento do simulador no CI: custa de 25 a 87 s por parte e não mostrou ganho claro em 2 runs. Comparar o tempo do primeiro teste de cada parte nos próximos runs e decidir na próxima etapa que mexer no CI.
 
 ## Decisões
@@ -245,3 +275,9 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
 - O app pede o iOS 26.0 ou mais novo (app e alvos de teste): ele só é testado e medido no iOS 26.
 - Nomes dos exercícios no padrão do Hevy, com o equipamento entre parênteses (os de peso do corpo ficam sem parênteses). Exceções aprovadas: a pegada ou a máquina entre parênteses quando é isso que diferencia (por exemplo, "Barra Fixa (Pegada Aberta)" e "Barra Fixa (Graviton)"), e nomes conhecidos sem parênteses (por exemplo, "Kettlebell Swing"). Cada exercício fica no grupo do músculo que ele mais trabalha.
 - O openGym (licença AGPL) serve só de fonte de ideias: nenhum código nem dado dele é copiado.
+- Lista base (26/11): um exercício base por nome; o equipamento e a pegada ou variação são escolhidos nas filas do detalhe e na folha de escolha; cada combinação tem histórico, evolução e recordes próprios (resposta 1A do dono). As variações que saíram da lista e tinham histórico (ou estavam num treino) viram exercícios próprios em "Meus", com o histórico.
+- Exercício próprio (26/11, resposta 1A): um grupo principal (onde ele aparece no filtro da lista) e vários músculos principais e secundários; não há vários grupos.
+- Cardio na meta da semana (26/11): é uma escolha da pessoa nos Ajustes, e começa desligada (resposta 1A).
+- Protótipo com etapas futuras (27/11): o botão escondido [data-act="proto-app"] ("Só o app") esconde os desenhos de etapas futuras que mudam telas já construídas; o workflow "Referências do protótipo" toca nele antes de cada referência. A cada etapa construída, o Claude do chat tira dali o que ela fez.
+- Plano de segurança antes do lançamento (27/11), com as 12 regras permanentes no PROJECT_RULES (seção 15, Segurança permanente).
+- Respostas ao relatório da lista base (28/11): "Criar treino novo" pelo detalhe aberto no treino em andamento cria o treino e mostra o aviso, sem sair do treino (1A); na junção cuja combinação está escondida, o exercício que sairia vira um exercício próprio, em Meus, com o histórico, como os 105 que saem (2B); a biblioteca guarda a versão conferida e as aberturas normais só conferem a versão e a contagem, com a conferência completa quando a versão muda ou quando um exercício próprio é criado, renomeado, arquivado, restaurado ou apagado (3A); as folhas ficam a 96 % e as perguntas "Descartar exercício?" e "Descartar treino?" no meio da tela, como o iOS 26 desenha, e o protótipo é atualizado depois do merge (4A).

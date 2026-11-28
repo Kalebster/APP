@@ -22,13 +22,23 @@ struct WorkoutService {
 
     @discardableResult
     func createWorkout(name: String) throws -> Workout {
+        try createWorkout(name: name, exercises: [])
+    }
+
+    /// Creates a workout that already has `exercises`, in the given order, each with `defaultPlannedSets`
+    /// ("Criar treino novo" of "Adicionar a um treino"). All or nothing, in one save: if any exercise breaks a
+    /// rule of `addExercises`, no workout is created.
+    @discardableResult
+    func createWorkout(name: String, exercises: [Exercise]) throws -> Workout {
         let validName = try Validation.name(name)
+        try Self.checkAddable(exercises, to: [])
 
         let timestamp = now()
         let workout = Workout(name: validName)
         workout.createdAt = timestamp
         workout.updatedAt = timestamp
         context.insert(workout)
+        appendItems(exercises, to: workout, at: timestamp)
         try context.saveOrRollback()
         return workout
     }
@@ -63,16 +73,30 @@ struct WorkoutService {
     /// All or nothing: if any exercise breaks a rule, nothing is changed.
     @discardableResult
     func addExercises(_ exercises: [Exercise], to workout: Workout) throws -> [WorkoutExercise] {
-        var usedIDs = Set(workout.exercises.compactMap { $0.exercise?.id })
+        try Self.checkAddable(exercises, to: Set(workout.exercises.compactMap { $0.exercise?.id }))
+        guard !exercises.isEmpty else { return [] }
+
+        let timestamp = now()
+        let items = appendItems(exercises, to: workout, at: timestamp)
+        workout.updatedAt = timestamp
+        try context.saveOrRollback()
+        return items
+    }
+
+    /// The rules of adding exercises to a workout that has `usedIDs`: none archived, none twice.
+    private static func checkAddable(_ exercises: [Exercise], to usedIDs: Set<UUID>) throws {
+        var usedIDs = usedIDs
         for exercise in exercises {
             guard !exercise.isArchived else { throw WorkoutError.exerciseArchived }
             guard usedIDs.insert(exercise.id).inserted else { throw WorkoutError.exerciseAlreadyInWorkout }
         }
-        guard !exercises.isEmpty else { return [] }
+    }
 
-        let timestamp = now()
+    /// The items of `exercises` at the end of the workout, each with `defaultPlannedSets`. Not saved here.
+    @discardableResult
+    private func appendItems(_ exercises: [Exercise], to workout: Workout, at timestamp: Date) -> [WorkoutExercise] {
         let firstIndex = workout.exercises.count
-        let items = exercises.enumerated().map { offset, exercise in
+        return exercises.enumerated().map { offset, exercise in
             let item = WorkoutExercise(sortIndex: firstIndex + offset)
             item.createdAt = timestamp
             item.updatedAt = timestamp
@@ -84,10 +108,6 @@ struct WorkoutService {
             }
             return item
         }
-
-        workout.updatedAt = timestamp
-        try context.saveOrRollback()
-        return items
     }
 
     /// Removes the item and its planned sets, then renumbers the remaining items.

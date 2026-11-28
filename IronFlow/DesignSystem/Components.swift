@@ -110,28 +110,38 @@ struct CapsuleBadge: View {
 }
 
 /// Lays its subviews out in rows, left to right, and starts a new row when the next one does not fit:
-/// the muscle group chips of today's workout. A subview wider than a row wraps its own text.
+/// the muscle group chips of today's workout, the option rows of an exercise. A subview wider than a row
+/// wraps its own text. `spacing` goes between the subviews of a row, and between the rows unless
+/// `lineSpacing` says otherwise.
 struct FlowLayout: Layout {
     var spacing: CGFloat
+    var lineSpacing: CGFloat?
+
+    private var rowGap: CGFloat {
+        lineSpacing ?? spacing
+    }
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let rows = rows(of: subviews, maxWidth: proposal.width ?? .infinity)
         let width = rows.map { row in row.reduce(0) { $0 + $1.width } + spacing * CGFloat(max(row.count - 1, 0)) }.max() ?? 0
-        let height = rows.reduce(0) { $0 + ($1.map(\.height).max() ?? 0) } + spacing * CGFloat(max(rows.count - 1, 0))
+        let height = rows.reduce(0) { $0 + ($1.map(\.height).max() ?? 0) } + rowGap * CGFloat(max(rows.count - 1, 0))
         return CGSize(width: width, height: height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var index = 0
         var y = bounds.minY
-        for row in rows(of: subviews, maxWidth: bounds.width) {
+        // The rows of `sizeThatFits`, from the same proposal. Not from `bounds`: its width is the widest row,
+        // rounded to the screen's pixels, and a row that filled it could come out a fraction of a point too
+        // wide and lose its last subview to the next row (Elástico, run 46047186211).
+        for row in rows(of: subviews, maxWidth: proposal.width ?? .infinity) {
             var x = bounds.minX
             for size in row {
                 subviews[index].place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
                 x += size.width + spacing
                 index += 1
             }
-            y += (row.map(\.height).max() ?? 0) + spacing
+            y += (row.map(\.height).max() ?? 0) + rowGap
         }
     }
 

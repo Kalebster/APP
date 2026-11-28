@@ -9,3 +9,14 @@ DerivedData/
 
 # macOS
 .DS_Store
+
+# Segredos: nunca entram no repositório
+.env
+.env.*
+*.p8
+*.p12
+*.pem
+*.key
+*.mobileprovision
+Secrets*.xcconfig
+GoogleService-Info.plist
