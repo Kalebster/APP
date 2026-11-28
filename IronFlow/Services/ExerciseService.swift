@@ -80,7 +80,7 @@ struct ExerciseService {
         apply(valid, to: exercise)
         exercise.updatedAt = now()
         if Validation.comparisonKey(forName: oldName) != Validation.comparisonKey(forName: valid.name) {
-            try revealLibraryExercise(named: oldName, ignoring: nil)
+            try revealOrRollBack(named: oldName, ignoring: nil)
         }
         try context.saveOrRollback()
     }
@@ -192,7 +192,7 @@ struct ExerciseService {
             exercise.updatedAt = timestamp
             outcome = .archived
         } else {
-            try revealLibraryExercise(named: exercise.name, ignoring: exercise)
+            try revealOrRollBack(named: exercise.name, ignoring: exercise)
             context.delete(exercise)
             outcome = .deleted
         }
@@ -257,6 +257,17 @@ struct ExerciseService {
     /// Shows again the library exercise hidden because an exercise of the user's own had `freedName`, now that
     /// the user's exercise has another name or is being deleted (`excluded`), unless another exercise still
     /// keeps the name (`takenNames`). Not saved here: it goes with the change that freed the name.
+    /// `revealLibraryExercise`, after the changes of `update` or `remove` were made: if it fails, they are
+    /// undone too, so nothing of the failed operation is left to a later save.
+    private func revealOrRollBack(named freedName: String, ignoring excluded: Exercise?) throws {
+        do {
+            try revealLibraryExercise(named: freedName, ignoring: excluded)
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
     private func revealLibraryExercise(named freedName: String, ignoring excluded: Exercise?) throws {
         let key = Validation.comparisonKey(forName: freedName)
         let hidden = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.isArchived && !$0.isCustom }))
