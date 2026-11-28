@@ -227,6 +227,19 @@ struct DefaultExerciseLibraryTests {
         #expect(retired.isDisjoint(with: ids))
     }
 
+    @Test("The exercises merged in the 4 junctions keep the data the library of 420 gave them: what they become when the junction cannot be done")
+    func mergedExercises() throws {
+        #expect(RetiredExercises.merged.map(\.key) == RetiredExercises.junctions.map(\.merged))
+        let old = Dictionary(uniqueKeysWithValues: Library420Fixture.entries.map { ($0.key, $0) })
+        for exercise in RetiredExercises.merged {
+            let before = try #require(old[exercise.key], "\(exercise.key)")
+            #expect(exercise.id == before.id && exercise.name == before.name, "\(exercise.key)")
+            #expect(exercise.muscleGroup == before.muscleGroup && exercise.equipment == before.equipment, "\(exercise.key)")
+            #expect(!exercise.primary.isEmpty, "\(exercise.key)")
+            #expect(!library.contains { $0.key == exercise.key }, "\(exercise.key) is still in the library")
+        }
+    }
+
     @Test("Names are unique ignoring case and diacritics, without spaces around them, with up to 62 characters; only one has more than 60")
     func names() {
         #expect(Set(library.map { Validation.comparisonKey(forName: $0.name) }).count == library.count)

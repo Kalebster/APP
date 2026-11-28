@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import OSLog
 
@@ -33,14 +34,26 @@ enum ExerciseLibraryFile {
         let machine: MachineType?
     }
 
+    /// The file, read: its entries and its fingerprint, the SHA-256 of its bytes, which changes with any
+    /// change of the file (`ExerciseLibrarySeeder.libraryVersion`).
+    struct Contents: Equatable, Sendable {
+        let entries: [Entry]
+        let fingerprint: String
+    }
+
     static let fileName = "ExerciseLibrary"
 
-    /// The file's entries, read once.
-    static let contents: Result<[Entry], ExerciseLibraryFileError> = read()
+    /// The file, read once.
+    static let contents: Result<Contents, ExerciseLibraryFileError> = load()
 
     /// The entries; empty when the file could not be read.
     static var entries: [Entry] {
-        (try? contents.get()) ?? []
+        (try? contents.get())?.entries ?? []
+    }
+
+    /// The fingerprint of the file; `nil` when it could not be read.
+    static var fingerprint: String? {
+        (try? contents.get())?.fingerprint
     }
 
     /// Why the file could not be read; `nil` when it was.
@@ -53,13 +66,20 @@ enum ExerciseLibraryFile {
 
     /// Reads and decodes the file of `bundle`.
     static func read(from bundle: Bundle = .main) -> Result<[Entry], ExerciseLibraryFileError> {
+        load(from: bundle).map(\.entries)
+    }
+
+    /// Reads and decodes the file of `bundle`, with its fingerprint.
+    static func load(from bundle: Bundle = .main) -> Result<Contents, ExerciseLibraryFileError> {
         guard let url = bundle.url(forResource: fileName, withExtension: "json") else {
             logger.error("Exercise library file missing from the bundle")
             return .failure(ExerciseLibraryFileError(reason: "missing"))
         }
         do {
             let data = try Data(contentsOf: url, options: .mappedIfSafe)
-            return .success(try JSONDecoder().decode([Entry].self, from: data))
+            let entries = try JSONDecoder().decode([Entry].self, from: data)
+            let fingerprint = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            return .success(Contents(entries: entries, fingerprint: fingerprint))
         } catch {
             let nsError = error as NSError
             logger.error("Could not read the exercise library file: \(String(reflecting: type(of: error)), privacy: .public) \(nsError.domain, privacy: .public) \(nsError.code, privacy: .public)")

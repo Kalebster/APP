@@ -53,7 +53,8 @@ struct IronFlowApp: App {
     @MainActor
     private static func seedExerciseLibrary(in container: ModelContainer) {
         do {
-            let result = try ExerciseLibrarySeeder(context: container.mainContext).seed()
+            // A normal launch only counts the library exercises; the full check runs when something changed.
+            guard let result = try ExerciseLibrarySeeder(context: container.mainContext).seedIfNeeded(marker: .app) else { return }
             if !result.skippedKeys.isEmpty {
                 persistenceLogger.error("Library entries skipped because their id is in use: \(result.skippedKeys.joined(separator: ", "), privacy: .public)")
             }

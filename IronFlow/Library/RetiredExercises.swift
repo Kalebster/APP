@@ -130,6 +130,16 @@ enum RetiredExercises {
         RetiredExercise(key: "single-arm-reverse-grip-pushdown", id: "0EFDC351-6501-41D3-BCC3-8438D6B2CC61", name: "Tríceps Unilateral Invertido (Polia)", muscleGroup: .triceps, equipment: .cable, primary: [.triceps], secondary: []),
     ]
 
+    /// The exercises merged in a junction, as the library of 420 had them: what one of them becomes, like a
+    /// retired exercise, when the combination that stays is hidden (an exercise of the user's own has its
+    /// name), so the junction cannot be done (decision of the owner on the base list's report).
+    static let merged: [RetiredExercise] = [
+        RetiredExercise(key: "cable-crossover-mid", id: "256DF723-7783-41B1-A8D8-18F1551FA20C", name: "Crossover (Polia Média)", muscleGroup: .chest, equipment: .cable, primary: [.chest], secondary: [.frontDelts]),
+        RetiredExercise(key: "chest-supported-row-machine", id: "5CC53827-418E-48B2-8248-DBA45FB5647D", name: "Remada Apoiada (Máquina)", muscleGroup: .upperBack, equipment: .machine, primary: [.upperBack], secondary: [.lats, .rearDelts, .biceps], machine: .lever),
+        RetiredExercise(key: "seated-overhead-press-barbell", id: "4939E190-2875-422D-96A3-B91A1C53B1CD", name: "Desenvolvimento Sentado (Barra)", muscleGroup: .shoulders, equipment: .barbell, primary: [.frontDelts], secondary: [.sideDelts, .triceps]),
+        RetiredExercise(key: "tibialis-raise", id: "F449F243-5DB1-4FE5-BA8B-AFED69DB9472", name: "Elevação de Ponta dos Pés", muscleGroup: .calves, equipment: .bodyweight, primary: [.tibialis], secondary: []),
+    ]
+
     /// The junctions: the exercise that stays (its key and id are the combination's) and the one merged into
     /// it, whose history, planned workouts and session in progress go to the one that stays.
     static let junctions: [(kept: String, merged: String)] = [

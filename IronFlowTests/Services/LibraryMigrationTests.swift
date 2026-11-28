@@ -186,8 +186,8 @@ struct LibraryMigrationTests {
         #expect(try Self.exercise(Fixed.tibialis, in: context) == nil)
     }
 
-    @Test("A junction waits while the exercise that stays is hidden, or its name is taken: the merged exercise keeps its history, and no two active exercises share a name")
-    func junctionWaitsForAHiddenExercise() throws {
+    @Test("A junction whose exercise that stays is hidden, or would be (its name is taken): the merged exercise becomes the person's own, in Meus, with its history, as a retired one; no two active exercises share a name")
+    func junctionWithAHiddenExercise() throws {
         for keptExists in [true, false] {
             let store = try Self.makeOldStore()
             defer { removeTemporaryDirectory(store.directory) }
@@ -202,20 +202,30 @@ struct LibraryMigrationTests {
             }
             try ExerciseService(context: context).createCustomExercise(name: "Panturrilha em pé", muscleGroup: .calves)
             try context.save()
+            let tibialisID = try Self.id(of: Fixed.tibialis)
 
             let result = try ExerciseLibrarySeeder(context: context).seed()
 
             #expect(!result.mergedKeys.contains(Fixed.tibialis), "kept exists: \(keptExists)")
-            let tibialis = try #require(try Self.exercise(Fixed.tibialis, in: context), "kept exists: \(keptExists)")
-            #expect(tibialis.sessionExercises.count == 1, "kept exists: \(keptExists)")
+            #expect(result.convertedKeys.contains(Fixed.tibialis), "kept exists: \(keptExists)")
+            // The same record, now the person's own, with its set of the session in progress.
+            let own = try #require(try Self.exercise(id: tibialisID, in: context), "kept exists: \(keptExists)")
+            #expect(own.isCustom && own.libraryKey == nil && !own.isArchived, "kept exists: \(keptExists)")
+            #expect(own.name == "Elevação de Ponta dos Pés")
+            #expect(own.equipment == .bodyweight)
+            #expect(own.primaryMuscles == [.tibialis])
+            #expect(own.sessionExercises.count == 1, "kept exists: \(keptExists)")
+            #expect(own.sessionExercises.first?.orderedSetLogs.first?.reps == 12)
+            // The combination stays hidden, without anything of the merged one.
             let hidden = try #require(try Self.exercise(Fixed.calfRaise, in: context))
             #expect(hidden.isArchived, "kept exists: \(keptExists)")
             #expect(hidden.sessionExercises.isEmpty, "kept exists: \(keptExists)")
             let active = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isArchived }))
             let names = active.map { Validation.comparisonKey(forName: $0.name) }
             #expect(Set(names).count == names.count, "Two active exercises share a name (kept exists: \(keptExists))")
-            // The other junctions are done.
+            // The other junctions are done, and the next launch changes nothing.
             #expect(result.mergedKeys.contains(Fixed.crossoverMid))
+            #expect(try ExerciseLibrarySeeder(context: context).seed() == ExerciseLibrarySeedResult())
         }
     }
 
@@ -425,11 +435,17 @@ struct LibraryMigrationTests {
 
     /// Not a limit, a measure (the owner asked to be told if it passes 1 s): how long the first launch after
     /// the update takes to migrate a store of 420 with history, and a new install to insert the 1,525.
-    @Test("The time of the migration on the first launch after the update, and of a new install, is printed")
+    @Test("The time of the migration on the first launch after the update, of a new install, and of the launches after them (with the check recorded, and with the full check), is printed")
     func migrationTime() throws {
         let clock = ContinuousClock()
         var migration: [Duration] = []
         var install: [Duration] = []
+        var normal: [Duration] = []
+        var full: [Duration] = []
+        let suiteName = "IronFlowTests.migrationTime.\(UUID().uuidString)"
+        defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+        let marker = LibraryCheckMarker(store: try #require(UserDefaults(suiteName: suiteName)))
+        let version = try #require(ExerciseLibrarySeeder.libraryVersion)
         for _ in 0..<5 {
             let store = try Self.makeOldStore()
             defer { removeTemporaryDirectory(store.directory) }
@@ -438,6 +454,19 @@ struct LibraryMigrationTests {
             let result = try ExerciseLibrarySeeder(context: container.mainContext).seed()
             migration.append(start.duration(to: clock.now))
             #expect(result.insertedKeys.count == 1_214)
+
+            // The launches after it, with the check recorded: only the library exercises are counted.
+            marker.recordCheck(of: version)
+            let normalStart = clock.now
+            let relaunched = try ModelContainerFactory.makePersistent(at: store.url)
+            let skipped = try ExerciseLibrarySeeder(context: relaunched.mainContext).seedIfNeeded(marker: marker)
+            normal.append(normalStart.duration(to: clock.now))
+            #expect(skipped == nil)
+            // For comparison, the full check, as every launch did before the marker.
+            let fullStart = clock.now
+            let checked = try ModelContainerFactory.makePersistent(at: store.url)
+            #expect(try ExerciseLibrarySeeder(context: checked.mainContext).seed() == ExerciseLibrarySeedResult())
+            full.append(fullStart.duration(to: clock.now))
 
             let directory = try makeTemporaryDirectory()
             defer { removeTemporaryDirectory(directory) }
@@ -451,5 +480,9 @@ struct LibraryMigrationTests {
         let i = install.sorted()
         print("MEDIÇÃO migração na primeira abertura (420 → 1.525, com histórico, abrir o banco e semear, 5 vezes): mediana \(m[2]), mínimo \(m[0]), máximo \(m[4])")
         print("MEDIÇÃO instalação nova (banco vazio → 1.525, abrir o banco e semear, 5 vezes): mediana \(i[2]), mínimo \(i[0]), máximo \(i[4])")
+        let n = normal.sorted()
+        let c = full.sorted()
+        print("MEDIÇÃO abertura normal (banco com 1.525 e histórico, abrir o banco e conferir só a versão e a contagem, 5 vezes): mediana \(n[2]), mínimo \(n[0]), máximo \(n[4])")
+        print("MEDIÇÃO abertura com a conferência completa (para comparar, 5 vezes): mediana \(c[2]), mínimo \(c[0]), máximo \(c[4])")
     }
 }

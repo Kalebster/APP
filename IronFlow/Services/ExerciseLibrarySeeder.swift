@@ -53,7 +53,9 @@ struct ExerciseLibrarySeedResult: Equatable {
 /// library seeded no longer has:
 /// - a junction (`RetiredExercises.junctions`) moves the history, the planned workouts and the session in
 ///   progress of the merged exercise to the one that stays, then deletes the merged record, which holds
-///   nothing else of the person's: a built-in exercise is never edited, and only this seeder hides one;
+///   nothing else of the person's: a built-in exercise is never edited, and only this seeder hides one.
+///   When the one that stays is hidden, or would be (an exercise of the user's own, or another active one,
+///   has its name), the merged exercise is treated as a retired one (`RetiredExercises.merged`) instead;
 /// - a retired exercise (`RetiredExercises.all`) that was used (history, planned workout or session in
 ///   progress) becomes an exercise of the user's own, with its id, name, group, equipment, kind of machine
 ///   and muscles, so its history stays; an unused one is deleted.
@@ -69,11 +71,41 @@ struct ExerciseLibrarySeeder {
         self.now = now
     }
 
+    /// Bumped when the rules of this seeder change (what left the library, the junctions, the names), so every
+    /// store is checked in full again even if the library file is the same.
+    static let rulesVersion = 1
+
+    /// The version a full check is recorded with: the rules and the fingerprint of the library file; `nil`
+    /// when the file could not be read.
+    static var libraryVersion: String? {
+        ExerciseLibraryFile.fingerprint.map { "\(rulesVersion)-\($0)" }
+    }
+
+    /// A launch: the full check (`seed`) only when the library or these rules changed since the last full
+    /// check, when an exercise of the user's own was created, renamed, archived, restored or deleted since
+    /// (`LibraryCheckMarker`), or when the store does not have one library exercise per entry (a new or
+    /// replaced store, or one the last check could not complete). Otherwise only the library exercises are
+    /// counted, and `nil` is returned. A check that fails is not recorded, so the next launch runs it again.
+    @discardableResult
+    func seedIfNeeded(marker: LibraryCheckMarker) throws -> ExerciseLibrarySeedResult? {
+        let version = Self.libraryVersion
+        if let version, marker.checkedVersion == version, !marker.isCheckPending,
+           try context.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isCustom })) == DefaultExerciseLibrary.all.count {
+            return nil
+        }
+        let result = try seed()
+        if let version {
+            marker.recordCheck(of: version)
+        }
+        return result
+    }
+
     @discardableResult
     func seed(
         _ entries: [DefaultExercise] = DefaultExerciseLibrary.all,
         retired: [RetiredExercise] = RetiredExercises.all,
-        junctions: [(kept: String, merged: String)] = RetiredExercises.junctions
+        junctions: [(kept: String, merged: String)] = RetiredExercises.junctions,
+        merged: [RetiredExercise] = RetiredExercises.merged
     ) throws -> ExerciseLibrarySeedResult {
         if entries.isEmpty && ExerciseLibraryFile.error != nil {
             throw ExerciseLibraryError.libraryFileUnreadable
@@ -92,7 +124,7 @@ struct ExerciseLibrarySeeder {
         // What left the library, first: the records it deletes no longer count for the names.
         let migration = migrateWhatLeft(
             stored: stored, library: library, libraryKeys: libraryKeys, retired: retired, junctions: junctions,
-            timestamp: timestamp, result: &result
+            merged: merged, timestamp: timestamp, result: &result
         )
         if !migration.deleted.isEmpty {
             stored.removeAll { migration.deleted.contains(ObjectIdentifier($0)) }
@@ -203,6 +235,7 @@ struct ExerciseLibrarySeeder {
         libraryKeys: Set<String>,
         retired: [RetiredExercise],
         junctions: [(kept: String, merged: String)],
+        merged: [RetiredExercise],
         timestamp: Date,
         result: inout ExerciseLibrarySeedResult
     ) -> Migration {
@@ -216,20 +249,29 @@ struct ExerciseLibrarySeeder {
 
         // Junctions: the history, the planned workouts and the session in progress of the merged exercise go
         // to the one that stays. A session or workout that had both keeps both items, now of one exercise.
-        // While the one that stays is hidden, or would be (an exercise of the user's own, or another active
-        // one, has its name), the junction waits and the merged exercise keeps everything: moved to a hidden
-        // exercise, the history would leave the lists, and created active, two exercises would share a name.
+        // When the one that stays is hidden, or would be (an exercise of the user's own, or another active
+        // one, has its name), the merged exercise is treated as a retired one: moved to a hidden exercise, its
+        // history would leave the lists, and created active, two exercises would share a name.
         let entries = Dictionary(library.map { ($0.entry.key, $0) }) { first, _ in first }
         let takenNames = Set(stored.filter { !$0.isArchived || $0.isCustom }.map { Validation.comparisonKey(forName: $0.name) })
+        let mergedData = Dictionary(merged.map { ($0.key, $0) }) { first, _ in first }
         for junction in junctions where !libraryKeys.contains(junction.merged) {
             guard let mergedRecords = builtInByKey[junction.merged], !mergedRecords.isEmpty,
                   let keptEntry = entries[junction.kept] else { continue }
+            let existingKept = builtInByKey[junction.kept]?.first
+            let keptIsHidden = existingKept.map(\.isArchived)
+                ?? takenNames.contains(Validation.comparisonKey(forName: keptEntry.entry.name))
+            if keptIsHidden {
+                guard let data = mergedData[junction.merged] else { continue }
+                for record in mergedRecords {
+                    retire(record, as: data, at: timestamp, migration: &migration, result: &result)
+                }
+                continue
+            }
             let kept: Exercise
-            if let existing = builtInByKey[junction.kept]?.first {
-                guard !existing.isArchived else { continue }
-                kept = existing
+            if let existingKept {
+                kept = existingKept
             } else {
-                guard !takenNames.contains(Validation.comparisonKey(forName: keptEntry.entry.name)) else { continue }
                 // The store never had the exercise that stays: it is created now, with its fixed id, unless
                 // another record has that id (then nothing of this junction changes).
                 guard !stored.contains(where: { $0.id == keptEntry.id }) else {
@@ -242,17 +284,17 @@ struct ExerciseLibrarySeeder {
                 migration.inserted.append(kept)
                 result.insertedKeys.append(junction.kept)
             }
-            for merged in mergedRecords {
-                for performed in merged.sessionExercises {
+            for record in mergedRecords {
+                for performed in record.sessionExercises {
                     performed.exercise = kept
                     performed.updatedAt = timestamp
                 }
-                for planned in merged.workoutExercises {
+                for planned in record.workoutExercises {
                     planned.exercise = kept
                     planned.updatedAt = timestamp
                 }
-                context.delete(merged)
-                migration.deleted.insert(ObjectIdentifier(merged))
+                context.delete(record)
+                migration.deleted.insert(ObjectIdentifier(record))
             }
             result.mergedKeys.append(junction.merged)
             migration.changed = true
@@ -261,26 +303,38 @@ struct ExerciseLibrarySeeder {
         // Retired exercises: the person's own when used, deleted when not.
         for exercise in retired where !libraryKeys.contains(exercise.key) {
             for record in builtInByKey[exercise.key] ?? [] {
-                migration.changed = true
-                if record.sessionExercises.isEmpty && record.workoutExercises.isEmpty {
-                    context.delete(record)
-                    migration.deleted.insert(ObjectIdentifier(record))
-                    result.deletedKeys.append(exercise.key)
-                    continue
-                }
-                // The same record, so its history, planned workouts and session in progress stay with it; its
-                // name, group and whether it is archived stay as they are.
-                record.isCustom = true
-                record.libraryKey = nil
-                record.equipment = exercise.equipment
-                record.machineType = exercise.equipment == .machine ? exercise.machine : nil
-                record.primaryMuscles = exercise.primary
-                record.secondaryMuscles = exercise.secondary
-                record.updatedAt = timestamp
-                result.convertedKeys.append(exercise.key)
+                retire(record, as: exercise, at: timestamp, migration: &migration, result: &result)
             }
         }
         return migration
+    }
+
+    /// A built-in record whose exercise left the library: deleted when unused; when used (history, planned
+    /// workout or session in progress), the person's own, in "Meus".
+    private func retire(
+        _ record: Exercise,
+        as exercise: RetiredExercise,
+        at timestamp: Date,
+        migration: inout Migration,
+        result: inout ExerciseLibrarySeedResult
+    ) {
+        migration.changed = true
+        if record.sessionExercises.isEmpty && record.workoutExercises.isEmpty {
+            context.delete(record)
+            migration.deleted.insert(ObjectIdentifier(record))
+            result.deletedKeys.append(exercise.key)
+            return
+        }
+        // The same record, so its history, planned workouts and session in progress stay with it; its name,
+        // group and whether it is archived stay as they are.
+        record.isCustom = true
+        record.libraryKey = nil
+        record.equipment = exercise.equipment
+        record.machineType = exercise.equipment == .machine ? exercise.machine : nil
+        record.primaryMuscles = exercise.primary
+        record.secondaryMuscles = exercise.secondary
+        record.updatedAt = timestamp
+        result.convertedKeys.append(exercise.key)
     }
 
     // MARK: - Private

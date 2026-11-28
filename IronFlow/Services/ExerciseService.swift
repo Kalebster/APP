@@ -30,10 +30,14 @@ enum ExerciseRemovalOutcome: Equatable {
 struct ExerciseService {
     let context: ModelContext
     let now: @MainActor () -> Date
+    /// Told when an exercise of the user's own is created, renamed, archived, restored or deleted, so the
+    /// next launch checks the library in full (`ExerciseLibrarySeeder.seedIfNeeded`).
+    let libraryMarker: LibraryCheckMarker
 
-    init(context: ModelContext, now: @escaping @MainActor () -> Date = { Date.now }) {
+    init(context: ModelContext, now: @escaping @MainActor () -> Date = { Date.now }, libraryMarker: LibraryCheckMarker? = nil) {
         self.context = context
         self.now = now
+        self.libraryMarker = libraryMarker ?? .app
     }
 
     // MARK: - Create and edit
@@ -49,6 +53,7 @@ struct ExerciseService {
         apply(valid, to: exercise)
         context.insert(exercise)
         try context.saveOrRollback()
+        libraryMarker.requestCheck()
         return exercise
     }
 
@@ -66,6 +71,7 @@ struct ExerciseService {
         exercise.updatedAt = timestamp
         context.insert(exercise)
         try context.saveOrRollback()
+        libraryMarker.requestCheck()
         return exercise
     }
 
@@ -79,10 +85,14 @@ struct ExerciseService {
         exercise.muscleGroup = valid.group
         apply(valid, to: exercise)
         exercise.updatedAt = now()
-        if Validation.comparisonKey(forName: oldName) != Validation.comparisonKey(forName: valid.name) {
+        let isRenamed = Validation.comparisonKey(forName: oldName) != Validation.comparisonKey(forName: valid.name)
+        if isRenamed {
             try revealOrRollBack(named: oldName, ignoring: nil)
         }
         try context.saveOrRollback()
+        if isRenamed {
+            libraryMarker.requestCheck()
+        }
     }
 
     /// The name offered for a copy of `name`: the name with " 2" (or " 3", " 4"…) after it, the first one
@@ -129,6 +139,7 @@ struct ExerciseService {
         exercise.isArchived = true
         exercise.updatedAt = now()
         try context.saveOrRollback()
+        libraryMarker.requestCheck()
     }
 
     /// Shows an archived exercise again, in the list and the picker; it does not go back to any workout.
@@ -145,6 +156,7 @@ struct ExerciseService {
         exercise.isArchived = false
         exercise.updatedAt = now()
         try context.saveOrRollback()
+        libraryMarker.requestCheck()
     }
 
     // MARK: - Removal
@@ -197,6 +209,7 @@ struct ExerciseService {
             outcome = .deleted
         }
         try context.saveOrRollback()
+        libraryMarker.requestCheck()
         return outcome
     }
 
