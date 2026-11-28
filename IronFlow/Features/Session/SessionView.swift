@@ -241,7 +241,7 @@ struct SessionView: View {
             // "Ver exercício": the screen opens over the session, which goes on (the clock, the rest and its
             // notice).
             .navigationDestination(item: $shownExercise) { exercise in
-                ExerciseDetailView(exercise: exercise, origin: .workout(name: SessionFormatting.name(session.workoutNameSnapshot)))
+                ExerciseDetailView(exercise: exercise, origin: .session(name: SessionFormatting.name(session.workoutNameSnapshot)))
             }
             // Back on the session, a notice of the exercise screen not seen to its end is not shown again.
             .onChange(of: shownExercise) { _, exercise in

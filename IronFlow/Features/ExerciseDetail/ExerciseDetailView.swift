@@ -19,8 +19,10 @@ struct ExerciseDetailView: View {
     /// Where the screen was opened from: the back button and the tab bar follow it.
     enum Origin: Hashable {
         case exercises
-        /// The workout editor or the session, with the workout's name.
+        /// The workout editor, with the workout's name.
         case workout(name: String)
+        /// The session in progress, with its name.
+        case session(name: String)
     }
 
     let origin: Origin
@@ -295,7 +297,7 @@ private struct ExerciseDetailScreen: View {
     private var backTitle: String {
         switch origin {
         case .exercises: String(localized: "Exercícios")
-        case .workout(let name): name
+        case .workout(let name), .session(let name): name
         }
     }
 
@@ -390,13 +392,19 @@ private struct ExerciseDetailScreen: View {
 
     /// Added to a workout: the notice here, where the person stays; a new workout: its editor, with the
     /// notice over it.
+    /// In the session in progress, a new workout only gets the notice here, and the session stays (decision
+    /// of the owner on the base list's report): its editor opens from the Treinos tab later.
     private func finishAdding(_ outcome: AddToWorkoutOutcome) {
         switch outcome {
         case .added:
             toast = ToastMessage(outcome.notice)
         case .created(let workout, _):
-            rootFeedback?.show(outcome.notice)
-            openWorkoutEditor(workout)
+            if case .session = origin {
+                toast = ToastMessage(outcome.notice)
+            } else {
+                rootFeedback?.show(outcome.notice)
+                openWorkoutEditor(workout)
+            }
         }
     }
 

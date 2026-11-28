@@ -338,6 +338,46 @@ final class ExerciseBaseUITests: IronFlowUITestCase {
         XCTAssertTrue(lastHeaders(in: app).last?.hasPrefix("Supino Reto (Barra),") ?? false, "Pull does not end with Supino Reto (Barra)")
     }
 
+    /// Opened from the session in progress, a new workout gets the notice on the exercise screen, and the
+    /// session stays: its editor opens later, from the Treinos tab (decision of the owner).
+    @MainActor
+    func testCreatingFromTheSessionKeepsTheSession() throws {
+        continueAfterFailure = false
+        let app = launchOnTab("Treinos", seed: [workouts[0]], extraArguments: longToastArguments)
+        startWorkout(named: "Push", in: app)
+        app.buttons.matching(identifier: "session.exercise.menu").element(boundBy: 0).tap()
+        let show = app.buttons["Ver exercício"]
+        XCTAssertTrue(show.waitForExistence(timeout: 10), "No Ver exercício in the menu")
+        show.tap()
+        let title = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND label == %@", "exercise.title", "Supino Reto"))
+            .firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 20), "Exercise screen not shown")
+
+        app.buttons["exercise.addToWorkout"].tap()
+        let new = app.buttons["addToWorkout.new"]
+        XCTAssertTrue(new.waitForExistence(timeout: 10), "Adicionar a um treino not shown")
+        new.tap()
+        let field = app.textFields["workout.name.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "No name sheet")
+        field.tap()
+        field.typeText("Peito")
+        app.buttons["workout.name.save"].tap()
+
+        // The notice here, on the exercise screen, over the session.
+        XCTAssertTrue(waitForToast("Treino criado com 1 exercício", in: app), "No Treino criado com 1 exercício")
+        XCTAssertTrue(title.exists, "The exercise screen closed")
+        XCTAssertEqual(app.buttons["exercise.back"].label, "Push")
+        app.buttons["exercise.back"].tap()
+        XCTAssertTrue(element("session.name", in: app).waitForExistence(timeout: 10), "The session closed")
+
+        // The new workout is on the Treinos tab, under the session.
+        app.buttons["session.minimize"].tap()
+        let card = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label BEGINSWITH %@", "workouts.card", "Peito, ")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "Peito not on the Treinos tab")
+        XCTAssertTrue(app.buttons["session.bar"].exists, "No bar of the session in progress")
+    }
+
     @MainActor
     func testBuildAWorkoutFromTheExercisesTab() throws {
         continueAfterFailure = false

@@ -81,7 +81,8 @@
       "CustomExerciseUITests/testArchivedExerciseMenuAndNameRules": 60.0,
       "CustomExerciseUITests/testDoubleTapCreatesOneExercise": 40.0,
       "ExerciseBaseUITests/testChoiceSheetChoosesAndTheFilterChoosesAtOnce": 100.0,
-      "ExerciseBaseUITests/testBarraWRightAfterBarra": 35.0
+      "ExerciseBaseUITests/testBarraWRightAfterBarra": 35.0,
+      "ExerciseBaseUITests/testCreatingFromTheSessionKeepsTheSession": 60.0
     },
     "3": {
       "BMRCalculatorUITests/testCalculatorWithSavedChoices": 29.6,
