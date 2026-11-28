@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import Testing
 @testable import IronFlow
 
@@ -125,7 +126,43 @@ struct ExercisePickerRulesTests {
         #expect(lastDone.openingCombination(of: supino, hiddenKeys: all) == smith)
     }
 
-    // MARK: - The records
+    @Test("Read from the store, the day each exercise was last done is that of its latest finished session; the session in progress never counts, and an exercise of the user's own counts by its id only")
+    func lastDoneFromTheStore() throws {
+        let harness = try ServiceTestHarness()
+        try ExerciseLibrarySeeder(context: harness.context, now: harness.clock.now).seed()
+        let bench = try #require(try harness.context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.name == "Supino Reto (Barra)" })).first)
+        let fly = try #require(try harness.context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.name == "Crucifixo (Halter)" })).first)
+        let own = try harness.exercises.createCustomExercise(name: "Meu Supino", muscleGroup: .chest)
+        let workout = try harness.makeWorkout(name: "Push", items: [(bench, [.reps(8, 10)]), (own, [.reps(8, 10)])])
+
+        var starts: [Date] = []
+        for _ in 0..<2 {
+            harness.clock.advance(by: 86_400)
+            let session = try harness.sessions.startSession(from: workout)
+            starts.append(session.startedAt)
+            try harness.sessions.completeSet(session.orderedExercises[0].orderedSetLogs[0], weightKg: 60, reps: 8)
+            try harness.sessions.completeSet(session.orderedExercises[1].orderedSetLogs[0], weightKg: 20, reps: 8)
+            try harness.sessions.finishSession(session)
+        }
+        // In progress: Crucifixo (Halter) only there, Supino Reto again.
+        harness.clock.advance(by: 86_400)
+        let active = try harness.sessions.startSession(from: workout)
+        try harness.sessions.addExercises([fly], to: active)
+
+        let lastDone = try ExerciseLastDone.read(in: harness.context)
+        let benchKey = try #require(bench.libraryKey)
+        let flyKey = try #require(fly.libraryKey)
+        #expect(lastDone.byKey[benchKey] == starts[1])
+        #expect(lastDone.byID[bench.id] == starts[1])
+        #expect(lastDone.byID[own.id] == starts[1])
+        #expect(!lastDone.byKey.values.contains(active.startedAt))
+        #expect(lastDone.byKey[flyKey] == nil)
+        #expect(lastDone.byKey.count == 1)
+        let finished = try harness.context.fetch(SessionService.finishedSessionsDescriptor)
+        #expect(lastDone == ExerciseLastDone(sessions: finished))
+    }
+
+    // MARK: - The records    // MARK: - The records
 
     @Test("The records are the library's, by key: the archived ones are the hidden ones; an exercise of the user's own is never one")
     func libraryRecords() throws {

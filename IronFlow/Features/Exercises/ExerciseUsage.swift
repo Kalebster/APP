@@ -10,7 +10,7 @@ struct ExerciseLastDone: Equatable {
 
     init() {}
 
-    /// From the finished sessions.
+    /// From the finished sessions, read whole: what `read(in:)` finds, the long way (its tests compare both).
     init(sessions: [Session]) {
         for session in sessions where session.endedAt != nil {
             for performed in session.exercises {
@@ -25,12 +25,30 @@ struct ExerciseLastDone: Equatable {
         }
     }
 
-    /// Reads the finished sessions of the store.
+    /// Reads the store: for each exercise done at least once, only its latest finished session, which the
+    /// store finds (sorted, one result), never the whole history. Reading every session with its exercises
+    /// took 1,8 s with 3 years of 4 workouts a week (run 46100373787), every time the tab appeared.
     @MainActor
     static func read(in context: ModelContext) throws -> ExerciseLastDone {
-        var descriptor = SessionService.finishedSessionsDescriptor
-        descriptor.relationshipKeyPathsForPrefetching = [\.exercises]
-        return ExerciseLastDone(sessions: try context.fetch(descriptor))
+        var lastDone = ExerciseLastDone()
+        let done = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.sessionExercises.isEmpty }))
+        for exercise in done {
+            let exerciseID = exercise.id
+            var latest = FetchDescriptor<Session>(
+                predicate: #Predicate { session in
+                    session.endedAt != nil && session.exercises.contains { $0.exercise?.id == exerciseID }
+                },
+                sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+            )
+            latest.fetchLimit = 1
+            // Only in the session in progress: never done.
+            guard let startedAt = try context.fetch(latest).first?.startedAt else { continue }
+            lastDone.byID[exerciseID] = startedAt
+            if let key = exercise.libraryKey, !exercise.isCustom, lastDone.byKey[key].map({ $0 < startedAt }) ?? true {
+                lastDone.byKey[key] = startedAt
+            }
+        }
+        return lastDone
     }
 
     /// The combination of `base` its screen and the choice sheet open on: the one done last, or the first of

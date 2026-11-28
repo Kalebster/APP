@@ -69,6 +69,12 @@ struct ExerciseUsageTimeTests {
             _ = try LibraryRecords.hiddenKeys(in: context)
             again.append(next.duration(to: clock.now))
         }
+        // The same as reading every finished session whole.
+        let container = try ModelContainerFactory.makePersistent(at: url)
+        let read = try ExerciseLastDone.read(in: container.mainContext)
+        let sessions = try container.mainContext.fetch(SessionService.finishedSessionsDescriptor)
+        #expect(read == ExerciseLastDone(sessions: sessions))
+
         let f = first.sorted()
         let a = again.sorted()
         print("MEDIÇÃO aba Exercícios, leitura do histórico (3 anos, 4 treinos por semana: 624 treinos, 3.744 exercícios feitos), 5 vezes: primeira vez mediana \(f[2]), mínimo \(f[0]), máximo \(f[4]); ao voltar à aba mediana \(a[2]), mínimo \(a[0]), máximo \(a[4])")
