@@ -216,14 +216,20 @@ struct ExerciseLibrarySeeder {
 
         // Junctions: the history, the planned workouts and the session in progress of the merged exercise go
         // to the one that stays. A session or workout that had both keeps both items, now of one exercise.
+        // While the one that stays is hidden, or would be (an exercise of the user's own, or another active
+        // one, has its name), the junction waits and the merged exercise keeps everything: moved to a hidden
+        // exercise, the history would leave the lists, and created active, two exercises would share a name.
         let entries = Dictionary(library.map { ($0.entry.key, $0) }) { first, _ in first }
+        let takenNames = Set(stored.filter { !$0.isArchived || $0.isCustom }.map { Validation.comparisonKey(forName: $0.name) })
         for junction in junctions where !libraryKeys.contains(junction.merged) {
             guard let mergedRecords = builtInByKey[junction.merged], !mergedRecords.isEmpty,
                   let keptEntry = entries[junction.kept] else { continue }
             let kept: Exercise
             if let existing = builtInByKey[junction.kept]?.first {
+                guard !existing.isArchived else { continue }
                 kept = existing
             } else {
+                guard !takenNames.contains(Validation.comparisonKey(forName: keptEntry.entry.name)) else { continue }
                 // The store never had the exercise that stays: it is created now, with its fixed id, unless
                 // another record has that id (then nothing of this junction changes).
                 guard !stored.contains(where: { $0.id == keptEntry.id }) else {

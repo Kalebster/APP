@@ -186,6 +186,39 @@ struct LibraryMigrationTests {
         #expect(try Self.exercise(Fixed.tibialis, in: context) == nil)
     }
 
+    @Test("A junction waits while the exercise that stays is hidden, or its name is taken: the merged exercise keeps its history, and no two active exercises share a name")
+    func junctionWaitsForAHiddenExercise() throws {
+        for keptExists in [true, false] {
+            let store = try Self.makeOldStore()
+            defer { removeTemporaryDirectory(store.directory) }
+            let container = try ModelContainerFactory.makePersistent(at: store.url)
+            let context = container.mainContext
+            // Panturrilha em Pé hidden by the person's exercise with its name, or not in the store at all.
+            let calf = try #require(try Self.exercise(Fixed.calfRaise, in: context))
+            if keptExists {
+                calf.isArchived = true
+            } else {
+                context.delete(calf)
+            }
+            try ExerciseService(context: context).createCustomExercise(name: "Panturrilha em pé", muscleGroup: .calves)
+            try context.save()
+
+            let result = try ExerciseLibrarySeeder(context: context).seed()
+
+            #expect(!result.mergedKeys.contains(Fixed.tibialis), "kept exists: \(keptExists)")
+            let tibialis = try #require(try Self.exercise(Fixed.tibialis, in: context), "kept exists: \(keptExists)")
+            #expect(tibialis.sessionExercises.count == 1, "kept exists: \(keptExists)")
+            let hidden = try #require(try Self.exercise(Fixed.calfRaise, in: context))
+            #expect(hidden.isArchived, "kept exists: \(keptExists)")
+            #expect(hidden.sessionExercises.isEmpty, "kept exists: \(keptExists)")
+            let active = try context.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isArchived }))
+            let names = active.map { Validation.comparisonKey(forName: $0.name) }
+            #expect(Set(names).count == names.count, "Two active exercises share a name (kept exists: \(keptExists))")
+            // The other junctions are done.
+            #expect(result.mergedKeys.contains(Fixed.crossoverMid))
+        }
+    }
+
     @Test("Exercises that left the list: used ones (history, a planned workout or the session in progress) become the person's own with everything they had; unused ones are deleted")
     func retiredExercises() throws {
         let store = try Self.makeOldStore()
