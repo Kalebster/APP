@@ -1,3 +1,4 @@
+import OSLog
 import SwiftData
 import SwiftUI
 
@@ -107,9 +108,7 @@ struct ExerciseListView: View {
             }
         }
         .navigationDestination(for: ExerciseBaseRoute.self) { route in
-            if let exercise = try? LibraryRecords.record(forKey: route.key, in: context) {
-                ExerciseDetailView(exercise: exercise, origin: .exercises)
-            }
+            LibraryExerciseDestination(key: route.key)
         }
         .navigationDestination(item: $openedExercise) { exercise in
             ExerciseDetailView(exercise: exercise, origin: .exercises)
@@ -337,5 +336,44 @@ struct ExerciseListView: View {
         if case .created(let workout, _) = outcome {
             openWorkoutEditor(workout)
         }
+    }
+}
+
+/// The screen of a base's row: the library exercise of `key`, read when it opens. Should the store not have
+/// it (the library could not be installed) or the reading fail, the screen goes back with the error, in the
+/// root's alert, instead of staying blank.
+private struct LibraryExerciseDestination: View {
+    let key: String
+
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    @Environment(RootFeedback.self) private var rootFeedback: RootFeedback?
+    @State private var exercise: Exercise?
+
+    private static let logger = Logger(subsystem: "com.ironflow.app", category: "library")
+
+    var body: some View {
+        if let exercise {
+            ExerciseDetailView(exercise: exercise, origin: .exercises)
+        } else {
+            Color.clear
+                .screenBackground()
+                .task { read() }
+        }
+    }
+
+    private func read() {
+        do {
+            if let record = try LibraryRecords.record(forKey: key, in: context) {
+                exercise = record
+                return
+            }
+            Self.logger.error("No library exercise in the store for the key \(key, privacy: .public)")
+            rootFeedback?.errorMessage = UserFacingError.message(for: ExerciseLibraryError.libraryFileUnreadable)
+        } catch {
+            Self.logger.error("Could not read the library exercise \(key, privacy: .public): \(String(reflecting: type(of: error)), privacy: .public)")
+            rootFeedback?.errorMessage = UserFacingError.message(for: error)
+        }
+        dismiss()
     }
 }
