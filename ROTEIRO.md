@@ -214,6 +214,7 @@ Fora do plano: desafios entre amigos e feed social. Ideias avaliadas e não esco
 
 Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cada um entra junto da próxima etapa que mexe naquela tela, com a aprovação do dono, como o resto do escopo.
 
+- Testes: `SessionUITests.testStartCheckMinimizeContinueAndFinish` falha quando atravessa a meia-noite do simulador (UTC no CI): o treino começa num dia e termina no outro, e o Início mostra o dia novo, "Descanso hoje" (run 46082603203, das 23:59:15 às 00:00:34). Fixar o "hoje" do teste, como o `-ui-today` faz no detalhe do exercício (achado na lista base).
 - Tela do treino: deslizar uma série para apagar (com Desfazer) ou para copiar.
 - Tela do treino: com "Manter a tela ligada", a tela pode apagar depois de 1 hora sem série marcada, o mesmo tempo do treino esquecido; hoje ela nunca apaga com um treino esquecido aberto (decisão do dono).
 - Tela do treino: desmarcar a série que começou o descanso atual encerra esse descanso, com a barra e o aviso; hoje eles continuam correndo (decisão do dono).
@@ -228,14 +229,11 @@ Detalhes pequenos achados no caminho ficam aqui e não viram etapa sozinhos: cad
   - Seletor de exercícios (77): a barra de cima ("Cancelar" e o título) está 4,3 pt mais alta.
   - Treino em andamento (25, 63 a 69, 80, 91, 92, 98 a 102 e 107): cada linha de série fica cerca de 0,3 pt mais baixa (−1,3 pt a partir do segundo cartão).
   - Folha "Avisar quando o descanso acabar?" (97): a tela bloqueada de exemplo tem a data em 13 e a hora em 52 (no protótipo, 12 e 46), e o conteúdo fica de 1,3 a 2,7 pt fora de lugar.
-  - Detalhe do exercício (108 a 111), achadas na etapa dele e medidas de novo na S4-C (iguais ao main):
-    - do bloco EVOLUÇÃO para baixo, os cartões ficam de +1,0 a +1,4 pt e os números dentro deles até +1,7 pt: três textos de 11 pt acima (MÚSCULOS, Frente/Costas e EVOLUÇÃO) têm linha de 13,33 pt no iOS e de 13 no WebKit; igualar só a linha deixa os cartões no lugar, mas leva a legenda a −1,8 pt, porque no iOS a letra fica mais alta dentro da linha. Entra na etapa "Lista base de exercícios" (decisão do dono na S4-C), no acabamento da altura de linha dos textos de 11 pt;
-    - o primeiro músculo da legenda fica a −1,3 pt e, no Graviton (109), EVOLUÇÃO a −1,3 pt;
+  - Detalhe do exercício (108 a 112, 127 e 128), medidas de novo na lista base (run 46092177996): tudo a até 1 pt do protótipo. Os textos de 11 pt, os nomes da legenda e os de 12 pt em duas linhas usam a linha do WebKit (`webKitLine`). Fica:
     - no Graviton (109), a frase "Mais kg = mais ajuda. Menos kg é progresso." quebra antes do "é", porque o iOS evita uma palavra sozinha na última linha; a altura é a mesma (aceito pelo dono).
-  - Exercícios próprios (120 a 125), achadas na S4-C:
-    - textos de 12 pt com altura 1,4 em duas linhas (nota da cópia em 121, cartão do arquivado em 124, nota de ARQUIVADOS em 125): a segunda linha fica 1 pt mais baixa que no protótipo (nos de 13 pt, 0,3 pt), e o que vem abaixo desce de 1,7 a 2 pt; Entra na etapa "Lista base de exercícios" (decisão do dono na S4-C), no acabamento dos textos de 12 pt;
+  - Exercícios próprios (120 a 125), achadas na S4-C (a linha dos textos de 12 pt em duas linhas foi acertada na lista base):
     - folha dos músculos (120): no protótipo os chips aparecem com letra de uns 13,6 px, embora o CSS diga 13 px; no app (13 pt, como o CSS) cabem mais chips por linha, a folha tem uma linha de chips a menos e começa mais abaixo, e "Concluir" fica 15 pt mais abaixo. Decisão do dono na S4-C: fica 13 pt, como o CSS; a diferença vem do desenho da SF Pro no WebKit do Mac, sem o tracking do iOS, e não do tamanho;
-    - exercício próprio de nome longo (123 e 124): o título em duas linhas (aceito pelo dono) desce o resto 4,4 pt; em Meus (125) e em 71, o nome longo quebra em duas linhas no app (regra do app) e termina em "…" no protótipo.
+    - exercício próprio de nome longo (123 e 124): o título em duas linhas (aceito pelo dono) desce o resto de 2,3 a 4 pt (medido de novo na lista base); em Meus (125) e em 71, o nome longo quebra em duas linhas no app (regra do app) e termina em "…" no protótipo.
 
 ## Pendências da vistoria
 
