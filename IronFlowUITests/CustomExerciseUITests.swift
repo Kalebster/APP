@@ -182,6 +182,13 @@ final class CustomExerciseUITests: IronFlowUITestCase {
     private func openExercise(_ name: String, search: String, in app: XCUIApplication) {
         let field = app.textFields["exercises.search"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Search field not found")
+        // A search kept from before is cleared first, once the tab is on screen: right after the tab was
+        // chosen, the ✕ was not there yet and the new search went after the old one (run 46087661184).
+        let clear = app.buttons["exercises.search.clear"]
+        if clear.exists {
+            clear.tap()
+            XCTAssertTrue(clear.waitForNonExistence(timeout: 10), "The search was not cleared")
+        }
         field.tapAndWaitForKeyboardFocus()
         field.typeText(search)
         XCTAssertTrue(field.waitForValue(search, timeout: typingTimeout), "The search field holds \(String(describing: field.value))")
